@@ -13,7 +13,7 @@ import com.hfr.command.CommandClowder;
 import com.hfr.command.CommandClowderChat;
 import com.hfr.data.ClowderData;
 import com.hfr.handler.BobbyBreaker;
-import com.hfr.handler.ExplosionSound;
+//import com.hfr.handler.ExplosionSound;
 import com.hfr.items.ItemMace;
 import com.hfr.items.ModItems;
 import com.hfr.main.MainRegistry;
@@ -327,7 +327,8 @@ public class ClowderEvents {
 		//if(bb)
 		//	BobbyBreaker.handleExplosionEvent(event);
 		
-		ExplosionSound.handleExplosion(event.world, event.explosion);
+		//ExplosionSound.handleExplosion(event.world, event.explosion);
+		//might implement a check for mchelio to test if hfr is installed to add this back idk idrc it's not important
 	}
 	
 	public static boolean canExplode(Ownership owner, World world, int x, int y, int z) {

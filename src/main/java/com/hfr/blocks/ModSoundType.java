@@ -12,6 +12,8 @@ public class ModSoundType extends Block.SoundType {
         return "hfr:" + super.getBreakSound();
     }
 
+    //todo gitblame ?
+
     public String getStepResourcePath()
     {
         return "hfr:" + super.getStepResourcePath();
