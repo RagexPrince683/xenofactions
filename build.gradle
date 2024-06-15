@@ -1,9 +1,9 @@
 buildscript {
     repositories {
         mavenCentral()
+        //jcenter()
         maven {
-            name = "forge"
-            url = "https://files.minecraftforge.net/maven"
+            url = "https://maven.minecraftforge.net"
         }
         maven {
             name = "sonatype"
@@ -14,11 +14,18 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT'
+                classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT'
+                classpath ('com.anatawa12.forge:ForgeGradle:1.2-1.1.+') {
+                        changing = true
+                    }
     }
 }
 
+
+
 apply plugin: 'forge'
+
+
 
 version = "1.0"
 group= "com.yourname.modid" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
@@ -29,21 +36,35 @@ minecraft {
     runDir = "eclipse"
 }
 
+//repositories {
+//    maven {
+//        name = "chickenbones"
+//        url = "http://chickenbones.net/maven/"
+//    }
+//}
+
 dependencies {
+
+	
+   // compile "com.xcompwiz.lookingglass:lookingglass:0.2.0.00:dev"
     // you may put jars on which you depend on in ./libs
     // or you may define them like so..
     //compile "some.group:artifact:version:classifier"
     //compile "some.group:artifact:version"
-      
+    //runtime "codechicken:CodeChickenLib:1.7.10-1.1.3.140:dev"
+    //runtime "codechicken:CodeChickenCore:1.7.10-1.0.7.47:dev"
+    //runtime "codechicken:NotEnoughItems:1.7.10-1.0.5.120:dev"
+    //compile fileTree(dir: 'lib', include: ['*.jar'])
     // real examples
     //compile 'com.mod-buildcraft:buildcraft:6.0.8:dev'  // adds buildcraft to the dev env
     //compile 'com.googlecode.efficient-java-matrix-library:ejml:0.24' // adds ejml to the dev env
-
     // for more info...
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 
 }
+
+
 
 processResources
 {
@@ -64,3 +85,10 @@ processResources
         exclude 'mcmod.info'
     }
 }
+
+
+//apply plugin: 'java'
+//compileJava {
+//    sourceCompatibility = '1.8'
+//    targetCompatibility = '1.8'
+//}
