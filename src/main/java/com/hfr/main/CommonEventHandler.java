@@ -68,6 +68,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
+import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.BlockEvent.BreakEvent;
 
@@ -432,6 +433,33 @@ public class CommonEventHandler {
 		return list;
 	}
 
+	@SubscribeEvent
+	public void onEntityTick(LivingUpdateEvent event) {
+		
+		Entity e = event.entityLiving;
+		if(e.worldObj.isRemote) return;
+		
+		if(e instanceof EntityZombie || e instanceof EntityCreeper || e instanceof EntitySkeleton) {
+			EntityMob mob = (EntityMob) e;
+
+			if (mob.getEntityToAttack() == null)
+				mob.setTarget(mob.worldObj.getClosestVulnerablePlayerToEntity(mob, MainRegistry.mlpf));
+
+			if (mob.getEntityToAttack() != null && !mob.hasPath()) {
+				mob.setPathToEntity(EntityAI_MLPF.getPathEntityToEntityPartial(mob.worldObj, mob, mob.getEntityToAttack(), 16, true, true, false, true));
+				
+				if(mob.isCollidedVertically && mob.ticksExisted % 50 == 0 && mob.getDistanceToEntity(mob.getEntityToAttack()) > 10)  {
+					Vec3 vec = Vec3.createVectorHelper(mob.getEntityToAttack().posX - mob.posX, 0, mob.getEntityToAttack().posZ - mob.posZ);
+					vec = vec.normalize();
+					mob.motionX += vec.xCoord * 2;
+					mob.motionY += 0.5;
+					mob.motionZ += vec.zCoord * 2;
+					mob.faceEntity(mob.getEntityToAttack(), 90F, 90F);
+				}
+			}
+		}
+	}
+
 	int timer = 0;
 	
 	//handles the anti-mob wand
@@ -502,47 +530,6 @@ public class CommonEventHandler {
 		if(event.world.isRemote)
 			return;
 		
-		/*if(event.entity instanceof EntityPlayer) {
-			EntityPlayer player = (EntityPlayer)event.entity;
-			
-			String[] schems = new String[MainRegistry.schems.size()];
-			
-			for(int i = 0; i < schems.length; i++) {
-				schems[i] = MainRegistry.schems.get(i).name + "_" + MainRegistry.schems.get(i).value;
-			}
-			
-			PacketDispatcher.wrapper.sendTo(new SchemOfferPacket(schems), (EntityPlayerMP) player);
-			
-			ResourceData res = ResourceData.getData(event.world);
-			NBTTagCompound areaData = new NBTTagCompound();
-			int areaCount = 0;
-			
-			for(int[] pos : res.coal) {
-
-				areaData.setInteger("minX" + areaCount, pos[0]);
-				areaData.setInteger("minZ" + areaCount, pos[1]);
-				areaData.setInteger("maxX" + areaCount, pos[2]);
-				areaData.setInteger("maxZ" + areaCount, pos[3]);
-				areaData.setInteger("color" + areaCount, 0x0f0f0f);
-				areaCount++;
-			}
-			
-			for(int[] pos : res.iron) {
-
-				areaData.setInteger("minX" + areaCount, pos[0]);
-				areaData.setInteger("minZ" + areaCount, pos[1]);
-				areaData.setInteger("maxX" + areaCount, pos[2]);
-				areaData.setInteger("maxZ" + areaCount, pos[3]);
-				areaData.setInteger("color" + areaCount, 0xC5AE71);
-				areaCount++;
-			}
-			
-			areaData.setInteger("count", areaCount);
-			areaData.setString("type", "resources");
-			
-			PacketDispatcher.wrapper.sendTo(new AuxParticlePacketNT(areaData, 0, 0, 0), (EntityPlayerMP) player);
-		}*/
-		
 		int chance = ControlEntry.getEntry(event.entity);
 		
 		if(chance > 0 && event.entity.worldObj.rand.nextInt(100) > chance) {
@@ -558,15 +545,9 @@ public class CommonEventHandler {
 			//enables block-breaking behavior for zomberts
 			if(MainRegistry.zombAI)
 				zomb.tasks.addTask(1, new EntityAIBreaking(zomb));
-			//zomb.tasks.addTask(2, new EntityAIAttackOnCollide(zomb, EntityPlayer.class, 1.0D, false));
 			//duplicate of player targeting behavior, but ignoring line of sight restrictions (xray!)
 			zomb.targetTasks.addTask(2, new EntityAINearestAttackableTarget(zomb, EntityPlayer.class, 0, false));
-			zomb.targetTasks.addTask(3, new EntityAI_MLPF(zomb, EntityPlayer.class, MainRegistry.mlpf, 1D, 20));
-			//zomb.targetTasks.addTask(2, new EntityAIHFTargeter(zomb, EntityPlayer.class, 0, false));
-			
-	        /*Multimap multimap = HashMultimap.create();
-			multimap.put(SharedMonsterAttributes.followRange.getAttributeUnlocalizedName(), new AttributeModifier(zomb.field_110179_h, "Range modifier", 0, 0));
-			zomb.getAttributeMap().applyAttributeModifiers(multimap);*/
+			//zomb.targetTasks.addTask(3, new EntityAI_MLPF(zomb, EntityPlayer.class, MainRegistry.mlpf, 1D, 20));
 		}
 		
 		if(event.entity instanceof EntityCreeper) {
@@ -575,7 +556,7 @@ public class CommonEventHandler {
 			if(MainRegistry.creepAI)
 				pensi.tasks.addTask(1, new EntityAIAllah(pensi));
 			pensi.targetTasks.addTask(2, new EntityAINearestAttackableTarget(pensi, EntityPlayer.class, 0, false));
-			pensi.targetTasks.addTask(3, new EntityAI_MLPF(pensi, EntityPlayer.class, MainRegistry.mlpf, 1D, 15));
+			//pensi.targetTasks.addTask(3, new EntityAI_MLPF(pensi, EntityPlayer.class, MainRegistry.mlpf, 1D, 15));
 			//pensi.targetTasks.addTask(3, new EntityAI_MLPF(pensi, EntityPlayer.class, MainRegistry.mlpf, 1D));
 			//pensi.targetTasks.addTask(2, new EntityAIHFTargeter(pensi, EntityPlayer.class, 0, false));
 			//pensi.targetTasks.addTask(2, new EntityAIHFTargeter(pensi, EntityVillager.class, 0, false));
@@ -621,6 +602,8 @@ public class CommonEventHandler {
 		DamageSource dmg = event.source;
 		
 		List<String> pot = ImmunityEntry.getEntry(e);
+		
+		if(event.entity instanceof EntityMob && dmg == DamageSource.fall) event.setCanceled(true);
 		
 		if(!pot.isEmpty()) {
 			

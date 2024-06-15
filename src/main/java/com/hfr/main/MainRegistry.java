@@ -26,8 +26,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import org.apache.logging.log4j.Logger;
 
@@ -484,7 +486,7 @@ public class MainRegistry
 	}
 
 	public static List<Block> blastShields = new ArrayList();
-	public static List<GriefEntry> zombWhitelist = new ArrayList();
+	public static Set<Block> zombBlacklist = new HashSet();
 	public static List<ControlEntry> controlList = new ArrayList();
 	public static List<PotionEntry> potionList = new ArrayList();
 	public static List<ImmunityEntry> immunityList = new ArrayList();
@@ -495,6 +497,7 @@ public class MainRegistry
 	public static boolean zombAI = true;
 	public static boolean creepAI = true;
 	public static boolean surfaceMobs = false;
+	public static double zombMiningMult = 1.0D;
 
 	public static List<String> u2 = new ArrayList();
 	public static List<String> u1 = new ArrayList();
@@ -808,8 +811,8 @@ public class MainRegistry
         skeletonHIV = (float)pHiv.getDouble();
         
         /////////////////////////////////////////////////////////////////////////
-        Property zombgrief = config.get("ZOMBIE", "griefableBlocks", new String[] { "dirt:1", "grass:1", "planks:2", "cobblestone:3" });
-        zombgrief.comment = "What blocks can be griefed by zomberts (syntax: [shortname]:[HP amount])";
+        Property zombgrief = config.get("ZOMBIE", "griefableBlacklist", new String[] { "dirt", "grass", "planks", "cobblestone" });
+        zombgrief.comment = "What blocks can't be griefed by zomberts (syntax: [shortname])";
         //rather than being processed instantly (and by doing so, missing out half the blocks), the config data is being loaded into a string-based buffer
         twilightBuffer = zombgrief.getStringList();
         /////////////////////////////////////////////////////////////////////////
@@ -996,6 +999,7 @@ public class MainRegistry
         zombAI = createConfigBool(config, "ENTITYCONTROL", "zombAI", "Enables advanced zombert AI", true);
         creepAI = createConfigBool(config, "ENTITYCONTROL", "creepAI", "Enables advanced creeper AI", true);
         surfaceMobs = createConfigBool(config, "ENTITYCONTROL", "surfaceMobs", "Forces hostiles to spawn on the surface", true);
+        zombMiningMult = createConfigDouble(config, "ENTITYCONTROL", "zombMiningMult", "Multiplier for mining shit", 1.0);
 
         border = createConfigBool(config, "WORLDBORDER", "enableBorder", "Toggles the world border", true);
         borderBuffer = createConfigInt(config, "WORLDBORDER", "borderBuffer", "The width of the warning area", 100);
@@ -1063,11 +1067,9 @@ public class MainRegistry
 	}
 	
 	private static void processBuffer() {
-		for(String val : twilightBuffer) {
+		for(String name : twilightBuffer) {
         	
         	try {
-        		
-        		String name = val.split(":")[0];
         		//gets block from string with no modifiers (intended for vanilla)
         		Block b = Block.getBlockFromName(name);
         		
@@ -1091,16 +1093,14 @@ public class MainRegistry
         			//b = Block.getBlockFromName(nname.replaceFirst("_", ":"));
         			b = RegistryUtil.getBlockByNameNoCaseOrPoint(nname);
         		}
-        		
-	        	int hp = Integer.valueOf(val.split(":")[1]);
 	        	
 	        	if(b != null)
-	        		zombWhitelist.add(new GriefEntry(b, hp));
+	        		zombBlacklist.add(b);
 	        	else
-	        		logger.error("Invalid block entry '" + val.split(":")[0] + "'");
+	        		logger.error("Invalid block entry '" + name + "'");
         	
         	} catch(Exception ex) {
-        		logger.error("Invalid config entry '" + val + "'");
+        		logger.error("Invalid config entry '" + name + "'");
         	}
         }
 		
@@ -1110,27 +1110,6 @@ public class MainRegistry
 			
 			if(b != Blocks.air)
 				blastShields.add(b);
-		}
-	}
-	
-	public static class GriefEntry {
-		
-		int hp;
-		Block block;
-		
-		public GriefEntry(Block b, int hp) {
-			this.block = b;
-			this.hp = hp;
-		}
-		
-		public static int getEntry(Block b) {
-			
-			for(GriefEntry ent : zombWhitelist) {
-				if(ent.block == b)
-					return ent.hp;
-			}
-			
-			return -1;
 		}
 	}
 	
