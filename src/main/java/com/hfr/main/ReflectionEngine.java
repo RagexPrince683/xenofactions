@@ -117,6 +117,8 @@ public class ReflectionEngine {
 		
 		if(e == null || !MainRegistry.enableRadar)
 			return null;
+
+		//what on earth even is this
 		
 		Object driveable = hasValue(e, Object.class, "driveable", null);
 		

@@ -549,8 +549,8 @@ public class MainRegistry
         Property pFTankAltitude = config.get("RADAR", "FxR_tankAltitude", 30);
         pFTankAltitude.comment = "Minimum altitude for flans non-planes' radars to work";
         fTankAltitude = pFTankAltitude.getInt();
-        
-        enableRadar = this.createConfigBool(config, "RADAR", "FxR_enableRadar", "Whether FMU+ radars should be enaables (dissaable to fix crashes with McHeli)", true);
+        //??? what the hell even is this and why does it break MCH_sound bs???
+        enableRadar = this.createConfigBool(config, "RADAR", "FxR_enableRadar", "Whether FMU+ radars should be enabled (disable to fix retarded crashes with McHeli)", false);
         
         Property pFOffset = config.get("RADAR", "FxR_radarYOffset", 2);
         pFOffset.comment = "Y-axis offset from where the \"is below roof\" measurement is taken (to avoid ship radars from breaking)";
