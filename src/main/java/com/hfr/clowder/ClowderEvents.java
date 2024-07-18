@@ -583,28 +583,30 @@ public class ClowderEvents {
 				}
 				
 				if(!Clowder.retreating.contains(name)) {
-					
+
+
+					//System.out.println("POV: I mog you");
 					//10 minutes
-					long time = 60 * 10 * 1000;
+					//long time = 60 * 10 * 1000;
 					//updates the time on the online timer until the player is retreating
-					clowder.members.put(player.getDisplayName(), System.currentTimeMillis() + time);
+					//clowder.members.put(player.getDisplayName(), System.currentTimeMillis() + time);
 					
 				} else {
 					
-					Long l = clowder.members.get(name);
+					//Long l = clowder.members.get(name);
 					
 					//retreats if the time is up
-					if(l < System.currentTimeMillis()) {
-						mp.playerNetServerHandler.kickPlayerFromServer("You have just retreated!");
-					}
+					//if(l < System.currentTimeMillis()) {
+					//	mp.playerNetServerHandler.kickPlayerFromServer("You have just retreated!");
+					//}
 				}
 				
 			//is not in any clowder
 			} else {
 				
-				if(Clowder.retreating.contains(name)) {
-					Clowder.retreating.remove(name);
-				}
+				//if(Clowder.retreating.contains(name)) {
+				//	Clowder.retreating.remove(name);
+				//}
 				
 				if(owner != null && owner.zone == Zone.FACTION) {
 					player.addPotionEffect(new PotionEffect(Potion.digSlowdown.id, 20, 2));
@@ -637,17 +639,17 @@ public class ClowderEvents {
 		String name = player.getDisplayName();
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
 		
-		if(clowder != null && clowder.retreating.contains(name)) {
-			
-			Long l = clowder.members.get(name);
-			
-			if(l != null && l < System.currentTimeMillis()) {
-				clowder.notifyAll(player.worldObj, new ChatComponentText(CommandClowder.INFO + "Player " + name + " has just retreated!"));
-				clowder.members.put(name, System.currentTimeMillis());
-			}
-			
-			clowder.retreating.remove(name);
-		}
+	//	if(clowder != null && clowder.retreating.contains(name)) {
+	//
+	//		Long l = clowder.members.get(name);
+	//
+	//		if(l != null && l < System.currentTimeMillis()) {
+	//			clowder.notifyAll(player.worldObj, new ChatComponentText(CommandClowder.INFO + "Player " + name + " has just retreated!"));
+	//			clowder.members.put(name, System.currentTimeMillis());
+	//		}
+	//
+	//		clowder.retreating.remove(name);
+	//	}
 	}
 
 	int delay = 0;

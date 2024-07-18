@@ -775,14 +775,15 @@ public class CommandClowder extends CommandBase {
 		if(clowder != null) {
 
 			if(!Clowder.retreating.contains(player.getDisplayName())) {
+				//System.out.println("POV: I mog you");
+				sender.addChatMessage(new ChatComponentText(INFO + "POV: I mog you"));
+				//clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Player " + player.getDisplayName() + " is retreating!"));
+				//sender.addChatMessage(new ChatComponentText(INFO + "You will be automatically kicked in 10 minutes!"));
+				//Clowder.retreating.add(player.getDisplayName());
 				
-				clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Player " + player.getDisplayName() + " is retreating!"));
-				sender.addChatMessage(new ChatComponentText(INFO + "You will be automatically kicked in 10 minutes!"));
-				Clowder.retreating.add(player.getDisplayName());
-				
-			} else {
-				sender.addChatMessage(new ChatComponentText(ERROR + "You are already retreating!"));
-			}
+			}// else {
+				//sender.addChatMessage(new ChatComponentText(ERROR + "You are already retreating!"));
+			//}
 			
 		} else {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));

@@ -996,12 +996,12 @@ public class MainRegistry
         mlpf = createConfigInt(config, "ENTITYCONTROL", "MLPF", "How far the multi-layered pathfinder for zombs and creeps reaches", 100);
         caveCap = createConfigInt(config, "ENTITYCONTROL", "caveCap_New", "Sets the maximum Y-coord where cave sickness kick in", -10);
 
-        zombAI = createConfigBool(config, "ENTITYCONTROL", "zombAI", "Enables advanced zombert AI", true);
-        creepAI = createConfigBool(config, "ENTITYCONTROL", "creepAI", "Enables advanced creeper AI", true);
-        surfaceMobs = createConfigBool(config, "ENTITYCONTROL", "surfaceMobs", "Forces hostiles to spawn on the surface", true);
+        zombAI = createConfigBool(config, "ENTITYCONTROL", "zombAI", "Enables advanced zombert AI", false);
+        creepAI = createConfigBool(config, "ENTITYCONTROL", "creepAI", "Enables advanced creeper AI", false);
+		surfaceMobs = createConfigBool(config, "ENTITYCONTROL", "surfaceMobs", "Prevents mobs from spawning underground", false);
         zombMiningMult = createConfigDouble(config, "ENTITYCONTROL", "zombMiningMult", "Multiplier for mining shit", 1.0);
 
-        border = createConfigBool(config, "WORLDBORDER", "enableBorder", "Toggles the world border", true);
+        border = createConfigBool(config, "WORLDBORDER", "enableBorder", "Toggles the world border", false);
         borderBuffer = createConfigInt(config, "WORLDBORDER", "borderBuffer", "The width of the warning area", 100);
         borderPosX = createConfigInt(config, "WORLDBORDER", "borderPosX", "World border in the positive X direction", 10000);
         borderNegX = createConfigInt(config, "WORLDBORDER", "borderNegX", "World border in the negative X direction", -10000);

@@ -69,6 +69,7 @@ import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
+import net.minecraftforge.event.entity.living.LivingSpawnEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.BlockEvent.BreakEvent;
 
@@ -583,14 +584,21 @@ public class CommonEventHandler {
 				fireball.accelerationZ *= 10;
 			}
 		}
+
+	}
+
+	@SubscribeEvent
+	public void onCheckSpawn(LivingSpawnEvent.CheckSpawn event) {
 		
 		if(event.entity instanceof EntityMob && MainRegistry.surfaceMobs) {
 
 			double x = event.entity.posX;
 			double z = event.entity.posZ;
-			double y = event.entity.worldObj.getHeightValue((int)x - 1, (int)z);
-			
-			event.entity.setLocationAndAngles(x, y, z, event.entity.rotationYaw, event.entity.rotationPitch);
+			double y = event.entity.worldObj.getHeightValue((int) Math.floor(x), (int) Math.floor(z));
+
+			if(event.entity.posY < y - 1) {
+				event.setCanceled(true);
+			}
 		}
 	}
 
