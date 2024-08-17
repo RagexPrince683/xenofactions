@@ -565,27 +565,42 @@ public class ClowderEvents {
 			event.setCanceled(true);
 	}
 	//todo: test that this works and does not fuck up
-	@SubscribeEvent
-	public void onProjectileSpawn(EntityJoinWorldEvent event) {
-		Entity entity = event.entity;
+	private void checkAndDeleteProjectile(Entity entity) {
+		if (entity instanceof EntityArrow || entity instanceof EntityThrowable) { //try to test for MCH bullets
+			int x = (int) entity.posX;
+			int y = (int) entity.posY;
+			int z = (int) entity.posZ;
 
-		if (entity instanceof EntityArrow || entity instanceof EntityThrowable) {
-			Ownership owner = ClowderTerritory.getOwner((int) entity.posX, (int) entity.posZ);
+			Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
 
-			//if (owner != null) {
-				switch (owner.zone) {
-					case SAFEZONE:
-						System.out.println(entity + "should have died");
-						event.setCanceled(true);
-						entity.setDead();  // This will despawn the projectile
-						break;
-					// Add more cases as needed
-					default:
-						break;
-				}
-			//}
+			if (owner != null && (owner.zone == Zone.SAFEZONE)) {
+				entity.setDead(); // Deletes the projectile
+			}
 		}
+
+	//	try {
+	//		Class<?> bulletClass = Class.forName("mcheli.weapon.MCH_EntityBaseBullet");
+//
+	//		if (bulletClass.isInstance(entity)) {
+	//			int x = (int) entity.posX;
+	//			int y = (int) entity.posY;
+	//			int z = (int) entity.posZ;
+//
+	//			Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
+//
+	//			if (owner != null && (owner.zone == Zone.SAFEZONE)) {
+	//				entity.setDead(); // Deletes the MCH_EntityBaseBullet
+	//			}
+	//		}
+	//	} catch (ClassNotFoundException e) {
+	//		// Class not found, meaning the mod isn't installed. No action needed.
+	//	}
+
 	}
+
+
+
+
 	
 	/**
 	 * Handles player ticks for clowders, mainly the flag popup and online times (with retreat kick)
@@ -691,6 +706,14 @@ public class ClowderEvents {
 	 */
 	@SubscribeEvent
 	public void onWorldTick(WorldTickEvent event) {
+
+		if (event.phase == Phase.END) { // After all entities have moved
+			List<Entity> entities = event.world.loadedEntityList;
+
+			for (Entity entity : entities) {
+				checkAndDeleteProjectile(entity);
+			}
+		}
 		
 		World world = event.world;
 		
