@@ -34,6 +34,8 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.projectile.EntityArrow;
+import net.minecraft.entity.projectile.EntityThrowable;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -48,6 +50,7 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.event.ServerChatEvent;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -57,6 +60,11 @@ import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.event.world.BlockEvent.BreakEvent;
 import net.minecraftforge.event.world.BlockEvent.PlaceEvent;
 import net.minecraftforge.event.world.ExplosionEvent.Detonate;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.projectile.EntityArrow;
+import net.minecraft.entity.projectile.EntityThrowable;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
 public class ClowderEvents {
 
@@ -334,6 +342,7 @@ public class ClowderEvents {
 		
 		if(owner.zone == Zone.SAFEZONE || owner.zone == Zone.WARZONE ) {
 			return false;
+
 		}
 		
 		if(owner.zone == Zone.FACTION) {
@@ -555,6 +564,28 @@ public class ClowderEvents {
 		if(e instanceof EntityPlayer && owner != null && owner.zone == Zone.SAFEZONE)
 			event.setCanceled(true);
 	}
+	//todo: test that this works and does not fuck up
+	@SubscribeEvent
+	public void onProjectileSpawn(EntityJoinWorldEvent event) {
+		Entity entity = event.entity;
+
+		if (entity instanceof EntityArrow || entity instanceof EntityThrowable) {
+			Ownership owner = ClowderTerritory.getOwner((int) entity.posX, (int) entity.posZ);
+
+			//if (owner != null) {
+				switch (owner.zone) {
+					case SAFEZONE:
+						System.out.println(entity + "should have died");
+						event.setCanceled(true);
+						entity.setDead();  // This will despawn the projectile
+						break;
+					// Add more cases as needed
+					default:
+						break;
+				}
+			//}
+		}
+	}
 	
 	/**
 	 * Handles player ticks for clowders, mainly the flag popup and online times (with retreat kick)
@@ -671,7 +702,7 @@ public class ClowderEvents {
 		} else {
 			hour = MainRegistry.prestigeDelay;
 			Clowder.updatePrestige(world);
-			MainRegistry.logger.info("Updated clowder prestige levels!");
+			//MainRegistry.logger.info("Updated clowder prestige levels!"); im sure its fine
 		}
 		
 		if(delay > 0) {
