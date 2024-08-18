@@ -34,8 +34,7 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.entity.projectile.EntityArrow;
-import net.minecraft.entity.projectile.EntityThrowable;
+import net.minecraft.entity.projectile.*;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -43,19 +42,20 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.ChunkCoordinates;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.*;
+import net.minecraft.world.Explosion;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.Action;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.event.world.BlockEvent.BreakEvent;
 import net.minecraftforge.event.world.BlockEvent.PlaceEvent;
@@ -566,7 +566,7 @@ public class ClowderEvents {
 	}
 	//todo: test that this works and does not fuck up
 	private void checkAndDeleteProjectile(Entity entity) {
-		if (entity instanceof EntityArrow || entity instanceof EntityThrowable) { //try to test for MCH bullets
+		if (entity instanceof EntityArrow || entity instanceof EntityThrowable || entity instanceof EntityFireball) { //try to test for MCH bullets
 			int x = (int) entity.posX;
 			int y = (int) entity.posY;
 			int z = (int) entity.posZ;
@@ -595,8 +595,108 @@ public class ClowderEvents {
 	//	} catch (ClassNotFoundException e) {
 	//		// Class not found, meaning the mod isn't installed. No action needed.
 	//	}
+		//this errors because mcheli hates reflections or something
 
 	}
+
+
+	@SubscribeEvent
+	public void onEntityDamage(LivingHurtEvent event) {
+
+		EntityLivingBase e = event.entityLiving;
+		DamageSource dmg = event.source;
+
+		// Check if the entity is a player and inside the safezone
+		if (e instanceof EntityPlayer) {
+			int x = (int) e.posX;
+			int y = (int) e.posY;
+			int z = (int) e.posZ;
+			Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
+			if (owner != null && owner.zone == Zone.SAFEZONE) {
+				// Cancel the event to prevent any damage
+				event.setCanceled(true);
+			}
+		}
+	}
+
+	@SubscribeEvent
+	public void onEntityUpdate(LivingEvent.LivingUpdateEvent event) {
+		EntityLivingBase e = event.entityLiving;
+
+		// Check if the entity is a player and inside the safezone
+		if (e instanceof EntityPlayer) {
+			int x = (int) e.posX;
+			int y = (int) e.posY;
+			int z = (int) e.posZ;
+			Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
+			if (owner != null && owner.zone == Zone.SAFEZONE) {
+				// Apply a regeneration effect
+				e.addPotionEffect(new PotionEffect(Potion.regeneration.id, 40));
+				e.addPotionEffect(new PotionEffect(Potion.resistance.id, 40));
+				e.heal(5.0F);
+				//todo: radaway given or just set player's rad to 0 without reflections
+				//try {
+				//	e.
+				//} catch (Exception ex) {
+				//	return;
+				//}
+
+	//		if (event.entity instanceof MCH_EntityBaseBullet) {
+	//			MCH_EntityBaseBullet bullet = (MCH_EntityBaseBullet) event.entity;
+	//			World world = bullet.worldObj;
+	//			int x = MathHelper.floor_double(bullet.posX);
+	//			int z = MathHelper.floor_double(bullet.posZ);
+
+	//			// Check if the bullet is in a safezone
+	//			Ownership owner = ClowderTerritory.getOwner(x, z);
+	//			if (owner != null && owner.zone == Zone.SAFEZONE) {
+	//				bullet.setDead(); // Remove the bullet
+	//			}
+	//		}
+
+			}
+		}
+	}
+
+	@SubscribeEvent
+	public void onExplosionDetonate(ExplosionEvent.Detonate event) {
+		World world = event.world;
+		Explosion explosion = event.explosion;
+		Vec3 explosionPos = Vec3.createVectorHelper(explosion.explosionX, explosion.explosionY, explosion.explosionZ);
+
+		// Convert the explosion position to integer coordinates for safezone checking
+		int x = MathHelper.floor_double(explosionPos.xCoord);
+		int z = MathHelper.floor_double(explosionPos.zCoord);
+
+		// Check if the explosion is within a safezone
+		Ownership owner = ClowderTerritory.getOwner(x, z);
+		if (owner != null && owner.zone == Zone.SAFEZONE) {
+			// Clear the affected block list to prevent block damage
+			event.getAffectedBlocks().clear();
+			event.setCanceled(true);
+
+			// Clear the affected entities list to prevent entity damage
+			//event.getAffectedEntities().clear();
+		}
+	}
+
+	@SubscribeEvent
+	public void onBlockBreak(BlockEvent.BreakEvent event) {
+		World world = event.world;
+		int x = event.x;
+		int y = event.y;
+		int z = event.z;
+
+		// Check if the block is in a safezone
+		Ownership owner = ClowderTerritory.getOwner(x, z);
+		if (owner != null && owner.zone == Zone.SAFEZONE) {
+			event.setCanceled(true); // Prevent block from being broken
+		}
+	}
+
+
+
+
 
 
 
