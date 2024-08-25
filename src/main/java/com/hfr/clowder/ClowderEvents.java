@@ -3,6 +3,13 @@ package com.hfr.clowder;
 import java.util.ArrayList;
 import java.util.List;
 
+import cpw.mods.fml.common.eventhandler.EventPriority;
+import mcheli.MCH_Config;
+import mcheli.weapon.MCH_EntityBullet;
+import mcheli.aircraft.MCH_EntityAircraft;
+import mcheli.weapon.MCH_EntityBaseBullet;
+import mcheli.aircraft.MCH_EntityAircraft;
+
 import com.hfr.blocks.BlockDummyable;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder.ScheduledTeleport;
@@ -30,6 +37,7 @@ import cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.Phase;
 import cpw.mods.fml.common.gameevent.TickEvent.WorldTickEvent;
+import mcheli.weapon.MCH_EntityRocket;
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
@@ -138,7 +146,9 @@ public class ClowderEvents {
 	 */
 	@SubscribeEvent
 	public void clowderBlockEvent(BlockEvent event) {
-		
+
+
+
 		if(event instanceof BreakEvent || event instanceof PlaceEvent) {
 			int x = event.x;
 			int y = event.y;
@@ -147,6 +157,7 @@ public class ClowderEvents {
 			Block b = event.world.getBlock(x, y, z);
 			
 			Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
+			//handleCollisionInZone(owner);
 			
 			if(event instanceof BreakEvent) {
 				
@@ -215,6 +226,8 @@ public class ClowderEvents {
 			}
 		}
 	}
+
+
 	
 	private boolean canBreak(EntityPlayer player, Clowder clowder, Ownership owner, Block b, int x, int y, int z) {
 		
@@ -223,7 +236,8 @@ public class ClowderEvents {
 
 		if(owner.zone == Zone.SAFEZONE || owner.zone == Zone.WARZONE)
 			return false;
-		
+
+
 		if(owner.zone == Zone.FACTION) {
 			
 			if(clowder != owner.owner) {
@@ -295,6 +309,16 @@ public class ClowderEvents {
 		
 		return true;
 	}
+
+//	private void handleCollisionInZone(Ownership owner) {
+//		// Disable collision destruction in safezones and warzones
+//		if(owner.zone == Zone.SAFEZONE || owner.zone == Zone.WARZONE) {
+//			MCH_Config.Collision_DestroyBlock.prmBool = false;
+//		} else {
+//			// Enable collision destruction in other zones
+//			MCH_Config.Collision_DestroyBlock.prmBool = true;
+//		}
+//	}
 	
 	/**
 	 * Prevents explosive damage on clowder territory under certain conditions.
@@ -526,6 +550,28 @@ public class ClowderEvents {
 			}
 		}
 	}
+
+
+
+
+	@SubscribeEvent(priority = EventPriority.HIGHEST)
+	public void entityInit(EntityJoinWorldEvent event) {
+		// Early exit if the entity is not relevant
+		Entity entity = event.entity;
+		if (!(entity instanceof MCH_EntityBaseBullet || entity instanceof MCH_EntityBullet || entity instanceof MCH_EntityRocket)) {
+			return;
+		}
+
+		// Directly check the ownership and zone
+		Ownership owner = ClowderTerritory.getOwner((int) entity.posX, (int) entity.posZ);
+		if (owner.zone == Zone.SAFEZONE) {
+			// Cancel the event and remove the entity as fast as possible
+			entity.setDead();
+			event.setCanceled(true);
+		}
+	}
+
+
 	
 	/**
 	 * Compares two ownership instances.
@@ -552,6 +598,25 @@ public class ClowderEvents {
 		
 		return false;
 	}
+
+	@SubscribeEvent(priority = EventPriority.HIGHEST)
+	public void onEntityJoinWorld(EntityJoinWorldEvent event) {
+		Entity entity = event.entity;
+
+		// Check if it's a projectile and located in a safezone
+		if (entity instanceof EntityArrow || entity instanceof EntityThrowable || entity instanceof EntityFireball ||
+				entity instanceof MCH_EntityBullet || entity instanceof MCH_EntityBaseBullet || entity instanceof MCH_EntityRocket) {
+
+			// Immediately check if the entity is in a safezone
+			Ownership owner = ClowderTerritory.getOwnerFromInts((int) entity.posX, (int) entity.posZ);
+			if (owner != null && owner.zone == Zone.SAFEZONE) {
+				// Cancel the event and kill the entity before it interacts with anything
+				event.setCanceled(true);
+				entity.setDead();
+				return;  // Exit immediately to prevent any further processing
+			}
+		}
+	}
 	
 	@SubscribeEvent
 	public void onEntityHurt(LivingAttackEvent event) {
@@ -566,38 +631,31 @@ public class ClowderEvents {
 	}
 	//todo: test that this works and does not fuck up
 	private void checkAndDeleteProjectile(Entity entity) {
-		if (entity instanceof EntityArrow || entity instanceof EntityThrowable || entity instanceof EntityFireball) { //try to test for MCH bullets
-			int x = (int) entity.posX;
-			int y = (int) entity.posY;
-			int z = (int) entity.posZ;
+		// Check if the entity is one of the projectiles we care about
+		if (entity instanceof EntityArrow || entity instanceof EntityThrowable || entity instanceof EntityFireball ||
+				entity instanceof MCH_EntityBullet || entity instanceof MCH_EntityBaseBullet || entity instanceof MCH_EntityRocket) {
 
-			Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
+			// Get the owner based on the entity's position
+			Ownership owner = ClowderTerritory.getOwnerFromInts((int) entity.posX, (int) entity.posZ);
 
-			if (owner != null && (owner.zone == Zone.SAFEZONE)) {
-				entity.setDead(); // Deletes the projectile
+			// If the owner exists and it's a safezone, proceed to disable the projectile
+			if (owner != null && owner.zone == Zone.SAFEZONE) {
+				if (entity instanceof MCH_EntityBullet || entity instanceof MCH_EntityBaseBullet) {
+					MCH_EntityBaseBullet bullet = (MCH_EntityBaseBullet) entity;
+					bullet.explosionPower = 0;
+					bullet.explosionPowerInWater = 0;
+					bullet.piercing = 0;
+					bullet.setPower(0);
+				}
+				entity.setDead(); // Immediately kill the entity
 			}
 		}
-
-	//	try {
-	//		Class<?> bulletClass = Class.forName("mcheli.weapon.MCH_EntityBaseBullet");
-//
-	//		if (bulletClass.isInstance(entity)) {
-	//			int x = (int) entity.posX;
-	//			int y = (int) entity.posY;
-	//			int z = (int) entity.posZ;
-//
-	//			Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
-//
-	//			if (owner != null && (owner.zone == Zone.SAFEZONE)) {
-	//				entity.setDead(); // Deletes the MCH_EntityBaseBullet
-	//			}
-	//		}
-	//	} catch (ClassNotFoundException e) {
-	//		// Class not found, meaning the mod isn't installed. No action needed.
-	//	}
-		//this errors because mcheli hates reflections or something
-
 	}
+
+
+
+
+
 
 
 	@SubscribeEvent
@@ -690,6 +748,11 @@ public class ClowderEvents {
 		// Check if the block is in a safezone
 		Ownership owner = ClowderTerritory.getOwner(x, z);
 		if (owner != null && owner.zone == Zone.SAFEZONE) {
+			Entity entity = event.getPlayer();
+			if (entity instanceof MCH_EntityAircraft) {
+				// Cancel the block break event if the entity is from MCH
+				event.setCanceled(true);
+			}
 			event.setCanceled(true); // Prevent block from being broken
 		}
 	}
@@ -807,6 +870,8 @@ public class ClowderEvents {
 	@SubscribeEvent
 	public void onWorldTick(WorldTickEvent event) {
 
+
+		//new check here for safezone
 		if (event.phase == Phase.END) { // After all entities have moved
 			List<Entity> entities = event.world.loadedEntityList;
 
