@@ -127,12 +127,15 @@
     </task>
     <servers />
   </component>
+  <component name="UnknownFeatures">
+    <option featureType="com.intellij.facetType" implementationName="minecraft" />
+  </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/com/hfr/clowder/ClowderEvents.java</url>
-          <line>873</line>
+          <line>877</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
       </breakpoints>

@@ -3,12 +3,14 @@ package com.hfr.clowder;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.hbm.extprop.HbmLivingProps;
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import mcheli.MCH_Config;
 import mcheli.weapon.MCH_EntityBullet;
 import mcheli.aircraft.MCH_EntityAircraft;
 import mcheli.weapon.MCH_EntityBaseBullet;
 import mcheli.aircraft.MCH_EntityAircraft;
+import com.hbm.potion.*;
 
 import com.hfr.blocks.BlockDummyable;
 import com.hfr.blocks.ModBlocks;
@@ -40,6 +42,8 @@ import cpw.mods.fml.common.gameevent.TickEvent.WorldTickEvent;
 import mcheli.weapon.MCH_EntityRocket;
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.SharedMonsterAttributes;
+import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.projectile.*;
@@ -552,7 +556,7 @@ public class ClowderEvents {
 	}
 
 
-
+//first check
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public void entityInit(EntityJoinWorldEvent event) {
@@ -598,7 +602,7 @@ public class ClowderEvents {
 		
 		return false;
 	}
-
+//second check
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 		Entity entity = event.entity;
@@ -630,6 +634,7 @@ public class ClowderEvents {
 			event.setCanceled(true);
 	}
 	//todo: test that this works and does not fuck up
+	//third check
 	private void checkAndDeleteProjectile(Entity entity) {
 		// Check if the entity is one of the projectiles we care about
 		if (entity instanceof EntityArrow || entity instanceof EntityThrowable || entity instanceof EntityFireball ||
@@ -693,25 +698,24 @@ public class ClowderEvents {
 				e.addPotionEffect(new PotionEffect(Potion.resistance.id, 40));
 				e.heal(5.0F);
 				//todo: radaway given or just set player's rad to 0 without reflections
-				//try {
-				//	e.
-				//} catch (Exception ex) {
-				//	return;
-				//}
+				//fuck it we're importing NTM too
+				e.addPotionEffect(new PotionEffect(HbmPotion.radaway.id, 50));
+				e.addPotionEffect(new PotionEffect(HbmPotion.radx.id, 1));
+				HbmLivingProps.incrementRadiation(e, -HbmLivingProps.getRadiation(e));
+				e.removePotionEffect(HbmPotion.radiation.id);
 
-	//		if (event.entity instanceof MCH_EntityBaseBullet) {
-	//			MCH_EntityBaseBullet bullet = (MCH_EntityBaseBullet) event.entity;
-	//			World world = bullet.worldObj;
-	//			int x = MathHelper.floor_double(bullet.posX);
-	//			int z = MathHelper.floor_double(bullet.posZ);
 
-	//			// Check if the bullet is in a safezone
-	//			Ownership owner = ClowderTerritory.getOwner(x, z);
-	//			if (owner != null && owner.zone == Zone.SAFEZONE) {
-	//				bullet.setDead(); // Remove the bullet
-	//			}
-	//		}
 
+				IAttributeInstance knockbackResistance = e.getEntityAttribute(SharedMonsterAttributes.knockbackResistance);
+				if (knockbackResistance != null) {
+					knockbackResistance.setBaseValue(1.0D); // 1.0D for full resistance
+				}
+			} else {
+				// Reset knockback resistance when not in safezone
+				IAttributeInstance knockbackResistance = e.getEntityAttribute(SharedMonsterAttributes.knockbackResistance);
+				if (knockbackResistance != null) {
+					knockbackResistance.setBaseValue(0.0D); // Reset to default
+				}
 			}
 		}
 	}
