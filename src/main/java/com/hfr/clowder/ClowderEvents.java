@@ -700,7 +700,7 @@ public class ClowderEvents {
 				//todo: radaway given or just set player's rad to 0 without reflections
 				//fuck it we're importing NTM too
 				e.addPotionEffect(new PotionEffect(HbmPotion.radaway.id, 50));
-				e.addPotionEffect(new PotionEffect(HbmPotion.radx.id, 1));
+				e.addPotionEffect(new PotionEffect(HbmPotion.radx.id, 110));
 				HbmLivingProps.incrementRadiation(e, -HbmLivingProps.getRadiation(e));
 				e.removePotionEffect(HbmPotion.radiation.id);
 
