@@ -84,10 +84,10 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 		
-		/*if(cmd.equals("create") && args.length > 1) {
-			cmdCreate(sender, args[1]);
-			return;
-		}*/
+		//if(cmd.equals("create") && args.length > 1) {
+		//	cmdCreate(sender, args[1]);
+		//	return;
+		//}
 		
 		/*if(cmd.equals("disband") && args.length > 1) {
 			cmdDisband(sender, args[1]);
@@ -114,10 +114,10 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 		
-		/*if(cmd.equals("rename") && args.length > 1) {
+		if(cmd.equals("rename") && args.length > 1) {
 			cmdRename(sender, args[1]);
 			return;
-		}*/
+		}
 		
 		if(cmd.equals("list")) {
 			cmdList(sender);
