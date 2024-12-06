@@ -472,7 +472,12 @@ public class MainRegistry
 			e.printStackTrace();
 		}
 	}
-	
+
+	@EventHandler
+	public void serverStarting(FMLServerStartingEvent event) {
+		event.registerServerCommand(new CommandClowder());
+	}
+
 	@EventHandler
 	public void ServerLoad(FMLServerStartingEvent event)
 	{

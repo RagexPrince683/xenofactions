@@ -11,6 +11,8 @@ import com.hfr.data.ClowderData;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.effect.ClowderFlagPacket;
 
+import cpw.mods.fml.common.Mod;
+import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
@@ -36,7 +38,8 @@ public class CommandClowderAdmin extends CommandBase {
 	public String getCommandUsage(ICommandSender sender) {
 		return "/xclowder help";
 	}
-	
+
+	@Override
     public int getRequiredPermissionLevel()
     {
         return 3;
