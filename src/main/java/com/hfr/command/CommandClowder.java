@@ -648,7 +648,7 @@ public class CommandClowder extends CommandBase {
 				if(clowder.applications.contains(name)) {
 
 					if(Clowder.getClowderFromName(name) == null) {
-						sender.addChatMessage(new ChatComponentText(INFO + "Denied player " + sender.getCommandSenderName() + "'s application!")); //dumbass alert
+						sender.addChatMessage(new ChatComponentText(INFO + "Denied player " + name + "'s application!")); //dumbass alert
 					} else {
 						sender.addChatMessage(new ChatComponentText(ERROR + "This player is already in another faction!"));
 					}
