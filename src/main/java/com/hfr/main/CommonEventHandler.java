@@ -671,16 +671,37 @@ public class CommonEventHandler {
 
 		// Custom drop logic
 		// Make sure there's actually a custom item configured
-		if (MainRegistry.customDropStack != null && MainRegistry.customDropChance > 0.0) {
-			if (world.rand.nextDouble() < MainRegistry.customDropChance) {
-				// Spawn the stored custom item
-				ItemStack toDrop = MainRegistry.customDropStack.copy();
-				EntityItem entityItem = new EntityItem(world,
-						event.x + 0.5, event.y + 0.5, event.z + 0.5,
-						toDrop);
-				world.spawnEntityInWorld(entityItem);
+		if (!MainRegistry.customDrops.isEmpty() && !MainRegistry.customDropChances.isEmpty()) {
+			// Assign the first entry in the list to the old variables for compatibility
+			MainRegistry.customDropStack = MainRegistry.customDrops.get(0);
+			MainRegistry.customDropChance = MainRegistry.customDropChances.get(0);
+
+			// Process the list for all custom drops
+			for (int i = 0; i < MainRegistry.customDrops.size(); i++) {
+				ItemStack drop = MainRegistry.customDrops.get(i);
+				double chance = MainRegistry.customDropChances.get(i);
+
+				if (world.rand.nextDouble() < chance) {
+					// Spawn the item from the list
+					ItemStack toDrop = drop.copy();
+					EntityItem entityItem = new EntityItem(world,
+							event.x + 0.5, event.y + 0.5, event.z + 0.5,
+							toDrop);
+					world.spawnEntityInWorld(entityItem);
+				}
 			}
 		}
+		//stupid dumb idiot code
+		//else if (MainRegistry.customDropStack != null && MainRegistry.customDropChance > 0.0) {
+		//	// Retain old logic for backward compatibility when the list is empty
+		//	if (world.rand.nextDouble() < MainRegistry.customDropChance) {
+		//		ItemStack toDrop = MainRegistry.customDropStack.copy();
+		//		EntityItem entityItem = new EntityItem(world,
+		//				event.x + 0.5, event.y + 0.5, event.z + 0.5,
+		//				toDrop);
+		//		world.spawnEntityInWorld(entityItem);
+		//	}
+		//}
 
 		/*ResourceData data = ResourceData.getData(world);
 		

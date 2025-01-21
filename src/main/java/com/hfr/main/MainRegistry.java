@@ -1,5 +1,7 @@
 package com.hfr.main;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import net.minecraft.block.Block;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
@@ -25,6 +27,9 @@ import cpw.mods.fml.common.ModMetadata;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -239,7 +244,51 @@ public class MainRegistry
 	public static boolean hfr_powerlog = false;
 	
 	public static HashMap<String, String> sub = new HashMap();
-	
+
+	private static final Gson GSON = new Gson();
+	private static final File SAVE_FILE = new File("config/stonedrops.json");
+
+	public static void saveCustomDrops() {
+		try (FileWriter writer = new FileWriter(SAVE_FILE)) {
+			List<DropEntry> entries = new ArrayList<>();
+			for (int i = 0; i < customDrops.size(); i++) {
+				entries.add(new DropEntry(customDrops.get(i), customDropChances.get(i)));
+			}
+			GSON.toJson(entries, writer);
+		} catch (Exception e) {
+			System.err.println("Failed to save stone drops: " + e.getMessage());
+		}
+	}
+
+	public static void loadCustomDrops() {
+		if (!SAVE_FILE.exists()) {
+			return; // Nothing to load.
+		}
+
+		try (FileReader reader = new FileReader(SAVE_FILE)) {
+			Type listType = new TypeToken<List<DropEntry>>() {}.getType();
+			List<DropEntry> entries = GSON.fromJson(reader, listType);
+			customDrops.clear();
+			customDropChances.clear();
+			for (DropEntry entry : entries) {
+				customDrops.add(entry.itemStack);
+				customDropChances.add(entry.chance);
+			}
+		} catch (Exception e) {
+			System.err.println("Failed to load stone drops: " + e.getMessage());
+		}
+	}
+
+	private static class DropEntry {
+		ItemStack itemStack;
+		double chance;
+
+		DropEntry(ItemStack itemStack, double chance) {
+			this.itemStack = itemStack;
+			this.chance = chance;
+		}
+	}
+
 	@EventHandler
 	public void PreLoad(FMLPreInitializationEvent PreEvent)
 	{

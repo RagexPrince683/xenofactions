@@ -6,7 +6,6 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
 import com.hfr.main.MainRegistry;
-
 import java.util.List;
 
 public class CommandStoneDrop extends CommandBase {
@@ -106,14 +105,16 @@ public class CommandStoneDrop extends CommandBase {
         }
 
         // Add the custom drop to the registry.
-        MainRegistry.customDropStack = heldItem.copy();
-        MainRegistry.customDropChance = rarity;
+        MainRegistry.customDrops.add(heldItem.copy());
+        MainRegistry.customDropChances.add(rarity);
+
+        //MainRegistry.customDropStack = customDrops;
+        //MainRegistry.customDropChance = rarity;
+
 
         // Send feedback to player
         sender.addChatMessage(new ChatComponentText("Stone drop added! "
                 + " Item: " + heldItem.getDisplayName()
                 + " | Rarity (chance): " + rarity));
     }
-
-
 }
