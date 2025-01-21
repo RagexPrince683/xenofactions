@@ -86,6 +86,8 @@ public class MainRegistry
 	public static Logger logger;
 	public static double customDropChance = 0.0; // default off
 	public static ItemStack customDropStack = null;
+	public static final List<ItemStack> customDrops = new ArrayList<ItemStack>();
+	public static final List<Double> customDropChances = new ArrayList<Double>();
 	
 	public static WorldGeneratorMoon worldGenMoon = new WorldGeneratorMoon();
 	

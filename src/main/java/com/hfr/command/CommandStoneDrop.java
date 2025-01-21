@@ -7,6 +7,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
 import com.hfr.main.MainRegistry;
 
+import java.util.List;
+
 public class CommandStoneDrop extends CommandBase {
 
     @Override
@@ -27,8 +29,58 @@ public class CommandStoneDrop extends CommandBase {
             return;
         }
 
+        String subCommand = args[0];
 
+        if (subCommand.toLowerCase().equals("list")) {
+            handleListCommand(sender);
+        } else if (subCommand.toLowerCase().equals("remove")) {
+            handleRemoveCommand(sender, args);
+        } else {
+            handleAddCommand(sender, args);
+        }
+    }
 
+    private void handleListCommand(ICommandSender sender) {
+        List<ItemStack> drops = MainRegistry.customDrops;
+
+        if (drops.isEmpty()) {
+            sender.addChatMessage(new ChatComponentText("No custom stone drops set."));
+            return;
+        }
+
+        sender.addChatMessage(new ChatComponentText("Custom Stone Drops:"));
+        for (int i = 0; i < drops.size(); i++) {
+            ItemStack stack = drops.get(i);
+            sender.addChatMessage(new ChatComponentText(i + 1 + ". " + stack.getDisplayName() + " (Chance: " + MainRegistry.customDropChances.get(i) + ")"));
+        }
+    }
+
+    private void handleRemoveCommand(ICommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.addChatMessage(new ChatComponentText("Usage: /stonedrop remove [index]"));
+            return;
+        }
+
+        int index;
+        try {
+            index = Integer.parseInt(args[1]) - 1;
+        } catch (NumberFormatException e) {
+            sender.addChatMessage(new ChatComponentText("Invalid index. Must be a number."));
+            return;
+        }
+
+        if (index < 0 || index >= MainRegistry.customDrops.size()) {
+            sender.addChatMessage(new ChatComponentText("Invalid index. Out of range."));
+            return;
+        }
+
+        ItemStack removed = MainRegistry.customDrops.remove(index);
+        double removedChance = MainRegistry.customDropChances.remove(index);
+
+        sender.addChatMessage(new ChatComponentText("Removed custom drop: " + removed.getDisplayName() + " (Chance: " + removedChance + ")"));
+    }
+
+    private void handleAddCommand(ICommandSender sender, String[] args) {
         // Attempt to parse rarity (drop chance).
         double rarity;
         try {
@@ -53,14 +105,15 @@ public class CommandStoneDrop extends CommandBase {
             return;
         }
 
-        // Now store these in MainRegistry, or wherever you keep config data.
-        // If you only want one custom drop at a time:
+        // Add the custom drop to the registry.
+        MainRegistry.customDropStack = heldItem.copy();
         MainRegistry.customDropChance = rarity;
-        MainRegistry.customDropStack  = heldItem.copy();
 
         // Send feedback to player
-        sender.addChatMessage(new ChatComponentText("Stone drop set! "
+        sender.addChatMessage(new ChatComponentText("Stone drop added! "
                 + " Item: " + heldItem.getDisplayName()
                 + " | Rarity (chance): " + rarity));
     }
+
+
 }
