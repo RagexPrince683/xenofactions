@@ -1,6 +1,7 @@
 package com.hfr.main;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.minecraft.block.Block;
 import net.minecraft.creativetab.CreativeTabs;
@@ -17,6 +18,7 @@ import net.minecraftforge.common.ForgeChunkManager.Ticket;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
+import net.minecraft.item.Item;
 import net.minecraftforge.common.util.EnumHelper;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
@@ -245,7 +247,7 @@ public class MainRegistry
 	
 	public static HashMap<String, String> sub = new HashMap();
 
-	private static final Gson GSON = new Gson();
+	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final File SAVE_FILE = new File("config/stonedrops.json");
 
 	public static void saveCustomDrops() {
@@ -253,8 +255,13 @@ public class MainRegistry
 		try {
 			writer = new FileWriter(SAVE_FILE);
 			List<DropEntry> entries = new ArrayList<DropEntry>();
-			for (int i = 0; i < customDrops.size(); i++) {
-				entries.add(new DropEntry(customDrops.get(i), customDropChances.get(i)));
+			for (int i = 0; i < MainRegistry.customDrops.size(); i++) {
+				ItemStack stack = MainRegistry.customDrops.get(i);
+				String itemName = Item.itemRegistry.getNameForObject(stack.getItem()); // Get item registry name
+				int count = stack.stackSize; // Replace getCount with stackSize
+				double chance = MainRegistry.customDropChances.get(i);
+
+				entries.add(new DropEntry(itemName, count, chance));
 			}
 			GSON.toJson(entries, writer);
 		} catch (Exception e) {
@@ -272,7 +279,7 @@ public class MainRegistry
 
 	public static void loadCustomDrops() {
 		if (!SAVE_FILE.exists()) {
-			return; // Nothing to load.
+			return; // Nothing to load
 		}
 
 		FileReader reader = null;
@@ -280,12 +287,37 @@ public class MainRegistry
 			reader = new FileReader(SAVE_FILE);
 			Type listType = new TypeToken<List<DropEntry>>() {}.getType();
 			List<DropEntry> entries = GSON.fromJson(reader, listType);
-			customDrops.clear();
-			customDropChances.clear();
+
+			MainRegistry.customDrops.clear();
+			MainRegistry.customDropChances.clear();
+
+			//for (DropEntry entry : entries) {
+			//	// Deserialize using the older ItemStack constructor
+			//	ItemStack stack = new ItemStack(Item.getByNameOrId(entry.itemName), entry.count); // Adjust as needed for older APIs
+			//	MainRegistry.customDrops.add(stack);
+			//	MainRegistry.customDropChances.add(entry.chance);
+			//}
+			//istfg
 			for (DropEntry entry : entries) {
-				customDrops.add(entry.itemStack);
-				customDropChances.add(entry.chance);
+				// Use GameRegistry to find the item by mod ID and item name
+				String[] split = entry.itemName.split(":"); // Expecting "modid:itemname"
+				if (split.length != 2) {
+					System.err.println("Invalid item name format: " + entry.itemName);
+					continue;
+				}
+				String modId = split[0];
+				String itemName = split[1];
+
+				Item item = GameRegistry.findItem(modId, itemName);
+				if (item != null) {
+					ItemStack stack = new ItemStack(item, entry.count);
+					MainRegistry.customDrops.add(stack);
+					MainRegistry.customDropChances.add(entry.chance);
+				} else {
+					System.err.println("Could not find item: " + entry.itemName);
+				}
 			}
+
 		} catch (Exception e) {
 			System.err.println("Failed to load stone drops: " + e.getMessage());
 		} finally {
@@ -300,11 +332,13 @@ public class MainRegistry
 	}
 
 	private static class DropEntry {
-		ItemStack itemStack;
+		String itemName;
+		int count;
 		double chance;
 
-		DropEntry(ItemStack itemStack, double chance) {
-			this.itemStack = itemStack;
+		DropEntry(String itemName, int count, double chance) {
+			this.itemName = itemName;
+			this.count = count;
 			this.chance = chance;
 		}
 	}
