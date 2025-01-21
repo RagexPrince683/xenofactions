@@ -249,14 +249,24 @@ public class MainRegistry
 	private static final File SAVE_FILE = new File("config/stonedrops.json");
 
 	public static void saveCustomDrops() {
-		try (FileWriter writer = new FileWriter(SAVE_FILE)) {
-			List<DropEntry> entries = new ArrayList<>();
+		FileWriter writer = null;
+		try {
+			writer = new FileWriter(SAVE_FILE);
+			List<DropEntry> entries = new ArrayList<DropEntry>();
 			for (int i = 0; i < customDrops.size(); i++) {
 				entries.add(new DropEntry(customDrops.get(i), customDropChances.get(i)));
 			}
 			GSON.toJson(entries, writer);
 		} catch (Exception e) {
 			System.err.println("Failed to save stone drops: " + e.getMessage());
+		} finally {
+			if (writer != null) {
+				try {
+					writer.close();
+				} catch (Exception e) {
+					System.err.println("Failed to close FileWriter: " + e.getMessage());
+				}
+			}
 		}
 	}
 
@@ -265,7 +275,9 @@ public class MainRegistry
 			return; // Nothing to load.
 		}
 
-		try (FileReader reader = new FileReader(SAVE_FILE)) {
+		FileReader reader = null;
+		try {
+			reader = new FileReader(SAVE_FILE);
 			Type listType = new TypeToken<List<DropEntry>>() {}.getType();
 			List<DropEntry> entries = GSON.fromJson(reader, listType);
 			customDrops.clear();
@@ -276,6 +288,14 @@ public class MainRegistry
 			}
 		} catch (Exception e) {
 			System.err.println("Failed to load stone drops: " + e.getMessage());
+		} finally {
+			if (reader != null) {
+				try {
+					reader.close();
+				} catch (Exception e) {
+					System.err.println("Failed to close FileReader: " + e.getMessage());
+				}
+			}
 		}
 	}
 
