@@ -668,7 +668,20 @@ public class CommonEventHandler {
 			world.spawnEntityInWorld(new EntityItem(world, event.x + 0.5, event.y + 0.5, event.z + 0.5, new ItemStack(Blocks.iron_ore)));
 		if(world.rand.nextDouble() < MainRegistry.goldChance)
 			world.spawnEntityInWorld(new EntityItem(world, event.x + 0.5, event.y + 0.5, event.z + 0.5, new ItemStack(Blocks.gold_ore)));
-		
+
+		// Custom drop logic
+		// Make sure there's actually a custom item configured
+		if (MainRegistry.customDropStack != null && MainRegistry.customDropChance > 0.0) {
+			if (world.rand.nextDouble() < MainRegistry.customDropChance) {
+				// Spawn the stored custom item
+				ItemStack toDrop = MainRegistry.customDropStack.copy();
+				EntityItem entityItem = new EntityItem(world,
+						event.x + 0.5, event.y + 0.5, event.z + 0.5,
+						toDrop);
+				world.spawnEntityInWorld(entityItem);
+			}
+		}
+
 		/*ResourceData data = ResourceData.getData(world);
 		
 		if(world.rand.nextFloat() < 0.05F && data.isInArea(event.x, event.z, data.iron))
@@ -676,6 +689,6 @@ public class CommonEventHandler {
 		
 		if(world.rand.nextFloat() < 0.1F && data.isInArea(event.x, event.z, data.coal))
 			world.spawnEntityInWorld(new EntityItem(world, event.x + 0.5, event.y + 0.5, event.z + 0.5, new ItemStack(Items.coal)));*/
-		
+
 	}
 }

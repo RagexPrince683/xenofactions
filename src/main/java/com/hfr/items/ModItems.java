@@ -182,6 +182,7 @@ public class ModItems {
 	public static Item wand;
 	public static Item wand_iron;
 	public static Item wand_coal;
+	public static Item wand_custom;
 	public static Item battery;
 	public static Item oil_detector;
 	public static Item gas_mask;

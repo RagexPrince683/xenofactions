@@ -5,6 +5,7 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.init.Blocks;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.DamageSource;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
@@ -83,6 +84,8 @@ public class MainRegistry
 	public static ModMetadata meta;
 	
 	public static Logger logger;
+	public static double customDropChance = 0.0; // default off
+	public static ItemStack customDropStack = null;
 	
 	public static WorldGeneratorMoon worldGenMoon = new WorldGeneratorMoon();
 	
@@ -473,9 +476,23 @@ public class MainRegistry
 		}
 	}
 
+	public class CustomDrop {
+		public ItemStack stack;
+		public double chance;
+
+		public CustomDrop(ItemStack stack, double chance) {
+			this.stack = stack;
+			this.chance = chance;
+		}
+	}
+
 	@EventHandler
 	public void serverStarting(FMLServerStartingEvent event) {
 		event.registerServerCommand(new CommandClowder());
+		//command ore wand
+		//event.registerServerCommand(new CommandOrewand());
+		//custom stone drops
+		event.registerServerCommand(new CommandStoneDrop());
 	}
 
 	@EventHandler

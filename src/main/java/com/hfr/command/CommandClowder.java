@@ -96,10 +96,10 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 
-		//if(cmd.equals("create") && args.length > 1) {
-		//	cmdCreate(sender, args[1]);
-		//	return;
-		//}
+		if(cmd.equals("create") && args.length > 1) {
+			cmdCreate(sender, args[1]);
+			return;
+		}
 
 		/*if(cmd.equals("disband") && args.length > 1) {
 			cmdDisband(sender, args[1]);
@@ -249,10 +249,10 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 
-		/*if(cmd.equals("claim")) {
+		if(cmd.equals("claim")) {
 			cmdClaim(sender);
 			return;
-		}*/
+		}
 
 		if(cmd.equals("promote") && args.length > 1) {
 			cmdPromote(sender, args[1]);
@@ -285,7 +285,7 @@ public class CommandClowder extends CommandBase {
 
 		if(p == 1) {
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-help {page}" + TITLE + " - The thing you just used"));
-			//sender.addChatMessage(new ChatComponentText(COMMAND + "-create <name>" + TITLE + " - Creates a faction"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-create <name>" + TITLE + " - Creates a faction"));
 			//sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-disband <name>" + TITLE + " - Disbands a faction, name parameter for confirmation"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-owner <player>" + TITLE + " - Transfers faction ownership"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-comrades" + TITLE + " - Shows all members of your faction"));
@@ -1094,6 +1094,20 @@ public class CommandClowder extends CommandBase {
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
 
+		// Retrieve a unique identifier for the player
+		String playerName = player.getDisplayName();
+
+		// Load the Clowder data
+		ClowderData clowderData = ClowderData.getData(player.getEntityWorld());
+
+		// Check if the player has already claimed a flag
+		if (clowderData.hasPlayerClaimedFlag(playerName)) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You have already claimed a flag!"));
+			return;
+		}
+
+
+
 		if(clowder != null) {
 
 			if(player.inventory.hasItem(Item.getItemFromBlock(ModBlocks.clowder_flag))) {
@@ -1104,6 +1118,8 @@ public class CommandClowder extends CommandBase {
 			player.inventory.addItemStackToInventory(new ItemStack(ModBlocks.clowder_flag));
 			player.inventoryContainer.detectAndSendChanges();
 			sender.addChatMessage(new ChatComponentText(INFO + "Place the flag to claim new territory!"));
+
+			clowderData.markPlayerClaimedFlag(playerName);
 
 		} else {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));

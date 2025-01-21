@@ -47,7 +47,8 @@ public class CommandClowderAdmin extends CommandBase {
 
 	@Override
 	public void processCommand(ICommandSender sender, String[] args) {
-		
+
+		//but like i want to colonize mars or something... but that might break or something hmm...
 		if(sender.getEntityWorld().provider.dimensionId != 0) {
 			sender.addChatMessage(new ChatComponentText(CRITICAL + "Critical error: CatFac only works in overworld!!"));
 		}
@@ -107,10 +108,10 @@ public class CommandClowderAdmin extends CommandBase {
 			return;
 		}
 		
-		if(cmd.equals("create") && args.length > 1) {
-			cmdCreate(sender, args[1]);
-			return;
-		}
+		//if(cmd.equals("create") && args.length > 1) {
+		//	cmdCreate(sender, args[1]);
+		//	return;
+		//}
 		
 		if(cmd.equals("disband") && args.length > 1) {
 			cmdDisband(sender, args[1]);
@@ -148,7 +149,7 @@ public class CommandClowderAdmin extends CommandBase {
 		}
 
 		if(p == 2) {
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-create <name>" + TITLE + " - Creates a faction"));
+			//sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-create <name>" + TITLE + " - Creates a faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-disband <name>" + TITLE + " - Disbands a faction, name parameter for confirmation"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-rename <name>" + TITLE + " - Renames your faction"));
 			//sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-info" + TITLE + " - Shows info on your faction"));
@@ -316,24 +317,24 @@ public class CommandClowderAdmin extends CommandBase {
 		}
 	}
 	
-	private void cmdCreate(ICommandSender sender, String name) {
-
-		EntityPlayer player = getCommandSenderAsPlayer(sender);
-		
-		if(Clowder.getClowderFromPlayer(player) == null) {
-			
-			if(Clowder.getClowderFromName(name) == null) {
-				Clowder.createClowder(player, name);
-				sender.addChatMessage(new ChatComponentText(TITLE + "Created faction " + name + "!"));
-				sender.addChatMessage(new ChatComponentText(INFO + "Use /c claim to get started!"));
-			} else {
-				sender.addChatMessage(new ChatComponentText(ERROR + "This name is already taken!"));
-			}
-			
-		} else {
-			sender.addChatMessage(new ChatComponentText(ERROR + "You can not create a new faction while already being in one!"));
-		}
-	}
+	//private void cmdCreate(ICommandSender sender, String name) {
+//
+	//	EntityPlayer player = getCommandSenderAsPlayer(sender);
+	//
+	//	if(Clowder.getClowderFromPlayer(player) == null) {
+	//
+	//		if(Clowder.getClowderFromName(name) == null) {
+	//			Clowder.createClowder(player, name);
+	//			sender.addChatMessage(new ChatComponentText(TITLE + "Created faction " + name + "!"));
+	//			sender.addChatMessage(new ChatComponentText(INFO + "Use /c claim to get started!"));
+	//		} else {
+	//			sender.addChatMessage(new ChatComponentText(ERROR + "This name is already taken!"));
+	//		}
+	//
+	//	} else {
+	//		sender.addChatMessage(new ChatComponentText(ERROR + "You can not create a new faction while already being in one!"));
+	//	}
+	//} ur a fuckin idiot
 	
 	private void cmdDisband(ICommandSender sender, String name) {
 
