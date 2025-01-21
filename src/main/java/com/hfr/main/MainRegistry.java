@@ -291,33 +291,17 @@ public class MainRegistry
 			MainRegistry.customDrops.clear();
 			MainRegistry.customDropChances.clear();
 
-			//for (DropEntry entry : entries) {
-			//	// Deserialize using the older ItemStack constructor
-			//	ItemStack stack = new ItemStack(Item.getByNameOrId(entry.itemName), entry.count); // Adjust as needed for older APIs
-			//	MainRegistry.customDrops.add(stack);
-			//	MainRegistry.customDropChances.add(entry.chance);
-			//}
-			//istfg
 			for (DropEntry entry : entries) {
-				// Use GameRegistry to find the item by mod ID and item name
-				String[] split = entry.itemName.split(":"); // Expecting "modid:itemname"
-				if (split.length != 2) {
-					System.err.println("Invalid item name format: " + entry.itemName);
-					continue;
-				}
-				String modId = split[0];
-				String itemName = split[1];
-
-				Item item = GameRegistry.findItem(modId, itemName);
+				// Get item from registry using the saved name
+				Item item = (Item) Item.itemRegistry.getObject(entry.itemName);
 				if (item != null) {
-					ItemStack stack = new ItemStack(item, entry.count);
+					ItemStack stack = new ItemStack(item, entry.count); // Create ItemStack
 					MainRegistry.customDrops.add(stack);
 					MainRegistry.customDropChances.add(entry.chance);
 				} else {
-					System.err.println("Could not find item: " + entry.itemName);
+					System.err.println("Item not found for name: " + entry.itemName);
 				}
 			}
-
 		} catch (Exception e) {
 			System.err.println("Failed to load stone drops: " + e.getMessage());
 		} finally {
