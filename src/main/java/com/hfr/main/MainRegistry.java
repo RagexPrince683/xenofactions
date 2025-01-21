@@ -302,6 +302,7 @@ public class MainRegistry
 		proxy.registerRenderInfo();
 		FluidHandler.init();
 		HFRPotion.init();
+		MainRegistry.loadCustomDrops();
 
 		sub.put(regexify("sex mod"), "funnies");
 		sub.put(regexify("fuck"), "frick");

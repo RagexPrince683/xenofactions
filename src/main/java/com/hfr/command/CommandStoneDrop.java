@@ -76,11 +76,12 @@ public class CommandStoneDrop extends CommandBase {
         ItemStack removed = MainRegistry.customDrops.remove(index);
         double removedChance = MainRegistry.customDropChances.remove(index);
 
+        MainRegistry.saveCustomDrops(); // Save after removing
+
         sender.addChatMessage(new ChatComponentText("Removed custom drop: " + removed.getDisplayName() + " (Chance: " + removedChance + ")"));
     }
 
     private void handleAddCommand(ICommandSender sender, String[] args) {
-        // Attempt to parse rarity (drop chance).
         double rarity;
         try {
             rarity = Double.parseDouble(args[0]);
@@ -89,13 +90,11 @@ public class CommandStoneDrop extends CommandBase {
             return;
         }
 
-        // Ensure the command is run by a player (not console, etc.).
         if (!(sender instanceof EntityPlayerMP)) {
             sender.addChatMessage(new ChatComponentText("Only a player can run this command in-game."));
             return;
         }
 
-        // Get the player and the item in their hand.
         EntityPlayerMP player = (EntityPlayerMP) sender;
         ItemStack heldItem = player.getHeldItem();
 
@@ -104,15 +103,11 @@ public class CommandStoneDrop extends CommandBase {
             return;
         }
 
-        // Add the custom drop to the registry.
         MainRegistry.customDrops.add(heldItem.copy());
         MainRegistry.customDropChances.add(rarity);
 
-        //MainRegistry.customDropStack = customDrops;
-        //MainRegistry.customDropChance = rarity;
+        MainRegistry.saveCustomDrops(); // Save after adding
 
-
-        // Send feedback to player
         sender.addChatMessage(new ChatComponentText("Stone drop added! "
                 + " Item: " + heldItem.getDisplayName()
                 + " | Rarity (chance): " + rarity));
