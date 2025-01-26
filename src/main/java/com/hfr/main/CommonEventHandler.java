@@ -367,26 +367,33 @@ public class CommonEventHandler {
 			player.worldObj.theProfiler.endSection();
 		}
 	}
-	
+
 	public void handleBorder(EntityPlayer player) {
-		
-		if(isWithinNotifRange(player.posX, player.posZ) && player.ticksExisted % 200 == 0)
-			player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "You are nearing the world border!"));
-		
-		if(leftBorder(player.posX, player.posZ)) {
-			
-			if(player instanceof EntityPlayerMP) {
-					player.mountEntity(null);
-					((EntityPlayerMP)player).playerNetServerHandler.setPlayerLocation(
-						MathHelper.clamp_double(player.posX, MainRegistry.borderNegX, MainRegistry.borderPosX),
-						player.posY,
-						MathHelper.clamp_double(player.posZ, MainRegistry.borderNegZ, MainRegistry.borderPosZ),
-						player.rotationYaw,
-						player.rotationPitch
+		double posX = player.posX;
+		double posZ = player.posZ;
+
+		// Wraparound logic
+		if (posX < MainRegistry.borderNegX) {
+			posX = MainRegistry.borderPosX - (MainRegistry.borderNegX - posX);
+		} else if (posX > MainRegistry.borderPosX) {
+			posX = MainRegistry.borderNegX + (posX - MainRegistry.borderPosX);
+		}
+
+		if (posZ < MainRegistry.borderNegZ) {
+			posZ = MainRegistry.borderPosZ - (MainRegistry.borderNegZ - posZ);
+		} else if (posZ > MainRegistry.borderPosZ) {
+			posZ = MainRegistry.borderNegZ + (posZ - MainRegistry.borderPosZ);
+		}
+
+		// Update player position if needed
+		if (posX != player.posX || posZ != player.posZ) {
+			if (player instanceof EntityPlayerMP) {
+				((EntityPlayerMP) player).playerNetServerHandler.setPlayerLocation(
+						posX, player.posY, posZ,
+						player.rotationYaw, player.rotationPitch
 				);
 			}
-
-			player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "You have reached the world border!"));
+			player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "You have crossed the world border and wrapped around!"));
 		}
 	}
 	
