@@ -200,6 +200,8 @@ public class CommonEventHandler {
 			/// CAVE SICKNESS ///
 
 			/// MUD CREATION ///
+
+			//todo make this handle grass above grassblocks and pams harvest craft blocks to not delete those for mud
 			
 			if(player.worldObj.isRaining()) {
 				
@@ -368,34 +370,40 @@ public class CommonEventHandler {
 		}
 	}
 
-	public void handleBorder(EntityPlayer player) {
-		double posX = player.posX;
-		double posZ = player.posZ;
+	public void handleBorder(Entity entity) {
+		double posX = entity.posX;
+		double posZ = entity.posZ;
 
-		// Wraparound logic
-		if (posX < MainRegistry.borderNegX) {
-			posX = MainRegistry.borderPosX - (MainRegistry.borderNegX - posX);
-		} else if (posX > MainRegistry.borderPosX) {
-			posX = MainRegistry.borderNegX + (posX - MainRegistry.borderPosX);
-		}
+		// Wraparound logic for non-player entities
+		if (posX < MainRegistry.borderNegX || posX > MainRegistry.borderPosX ||
+				posZ < MainRegistry.borderNegZ || posZ > MainRegistry.borderPosZ) {
 
-		if (posZ < MainRegistry.borderNegZ) {
-			posZ = MainRegistry.borderPosZ - (MainRegistry.borderNegZ - posZ);
-		} else if (posZ > MainRegistry.borderPosZ) {
-			posZ = MainRegistry.borderNegZ + (posZ - MainRegistry.borderPosZ);
-		}
-
-		// Update player position if needed
-		if (posX != player.posX || posZ != player.posZ) {
-			if (player instanceof EntityPlayerMP) {
-				((EntityPlayerMP) player).playerNetServerHandler.setPlayerLocation(
-						posX, player.posY, posZ,
-						player.rotationYaw, player.rotationPitch
-				);
-			}
-			player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "You have crossed the world border and wrapped around!"));
+			entity.setPosition(
+					wrapX(posX),
+					entity.posY,
+					wrapZ(posZ)
+			);
 		}
 	}
+
+	private double wrapX(double x) {
+		if (x < MainRegistry.borderNegX) {
+			return MainRegistry.borderPosX - (MainRegistry.borderNegX - x);
+		} else if (x > MainRegistry.borderPosX) {
+			return MainRegistry.borderNegX + (x - MainRegistry.borderPosX);
+		}
+		return x;
+	}
+
+	private double wrapZ(double z) {
+		if (z < MainRegistry.borderNegZ) {
+			return MainRegistry.borderPosZ - (MainRegistry.borderNegZ - z);
+		} else if (z > MainRegistry.borderPosZ) {
+			return MainRegistry.borderNegZ + (z - MainRegistry.borderPosZ);
+		}
+		return z;
+	}
+
 	
 	public boolean isWithinNotifRange(double x, double z) {
 
@@ -471,8 +479,53 @@ public class CommonEventHandler {
 	int timer = 0;
 	
 	//handles the anti-mob wand
+
+	public void handlePlayerBorder(EntityPlayerMP player) {
+		double posX = player.posX;
+		double posZ = player.posZ;
+
+		// Wraparound logic for players
+		if (posX < MainRegistry.borderNegX || posX > MainRegistry.borderPosX ||
+				posZ < MainRegistry.borderNegZ || posZ > MainRegistry.borderPosZ) {
+
+			//player.mountEntity(null); // Dismount from any vehicle
+			//no dont do that we are going to keep the player on the vehicle hopefully
+			player.playerNetServerHandler.setPlayerLocation(
+					wrapX(posX),
+					player.posY,
+					wrapZ(posZ),
+					player.rotationYaw,
+					player.rotationPitch
+			);
+
+			// Send notification
+			player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "You have crossed the world border and wrapped around!"));
+		}
+	}
+
 	@SubscribeEvent
 	public void onWorldTick(WorldTickEvent event) {
+
+		//if (!event.world.isRemote && event.phase == Phase.START) {
+		//	// Iterate over all entities in the world
+		//	for (Object entity : event.world.loadedEntityList) {
+		//		handleBorder((Entity) entity);
+		//	}
+		//}
+		//unoptimized gpt slop
+
+		if (!event.world.isRemote && event.phase == Phase.START) {
+			for (Object entity : event.world.loadedEntityList) {
+				// Handle players with player-specific logic
+				if (entity instanceof EntityPlayerMP) {
+					handlePlayerBorder((EntityPlayerMP) entity);
+				} else {
+					// Handle all other entities
+					handleBorder((Entity) entity);
+				}
+			}
+		}
+
 		
 		World world = event.world;
 		
@@ -530,7 +583,19 @@ public class CommonEventHandler {
 			ExplosionController.automaton(world);
 		}
 	}
-	
+
+	private boolean isNearBorder(Entity entity) {
+		double borderPadding = 5.0; // Check entities within 5 blocks of the border
+		double posX = entity.posX;
+		double posZ = entity.posZ;
+
+		return posX < MainRegistry.borderNegX + borderPadding ||
+				posX > MainRegistry.borderPosX - borderPadding ||
+				posZ < MainRegistry.borderNegZ + borderPadding ||
+				posZ > MainRegistry.borderPosZ - borderPadding;
+	}
+
+
 	//for manipulating zombert AI and handling spawn control
 	@SubscribeEvent
 	public void onEntityJoinWorld(EntityJoinWorldEvent event) {
