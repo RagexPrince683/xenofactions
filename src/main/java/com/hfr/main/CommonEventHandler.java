@@ -315,38 +315,36 @@ public class CommonEventHandler {
 
 		// Retrieve degraded hardness, defaulting to original hardness
 		Float degradedHardness = degradedHardnessMap.get(posKey);
-
-		// Initialize degradation if it's the first time
 		if (degradedHardness == null) {
 			degradedHardness = originalHardness;
 		}
 
 		// Apply degradation
-		degradedHardness -= 0.35F; // Reduce by 0.05 (or another amount)
+		degradedHardness -= 0.05F; // Reduce by 0.05 (or another amount)
 
-		// Update block metadata to reflect damage visually
-		int damageLevel = Math.min((int) ((1.0F - degradedHardness / originalHardness) * 4), 3);
-		world.setBlockMetadataWithNotify(x, y, z, damageLevel, 2);
-
-		// Play particle effects when the block is degraded
+		// Ensure particles and sounds trigger even for high-resistance blocks
 		for (int i = 0; i < 10; i++) {
+
+			if (block.getExplosionResistance(null) >= 6000.0F) { // Handles obsidian-like blocks
+				degradedHardness -= 100.5F;
+			}
+
+
 			double offsetX = world.rand.nextDouble();
 			double offsetY = world.rand.nextDouble();
 			double offsetZ = world.rand.nextDouble();
 			world.spawnParticle(
-					"blockcrack_" + Block.getIdFromBlock(block) + "_" + damageLevel, // Use metadata for "damage level"
+					"blockcrack_" + Block.getIdFromBlock(block) + "_0", // Replace "_0" if metadata varies
 					x + offsetX, y + offsetY, z + offsetZ,
 					0.0, 0.0, 0.0
 			);
 		}
 
-		// Play sound when degradation occurs
 		world.playSoundEffect(x, y, z, "random.break", 1.0F, 1.0F);
 
-		// Handle block destruction when degraded hardness is zero
+		// Destroy the block if fully degraded
 		if (degradedHardness <= 0) {
-			world.playSoundEffect(x, y, z, "random.explode", 1.0F, 0.8F); // Explosion-like sound
-			world.func_147480_a(x, y, z, true); // Equivalent to destroyBlock with drops
+			world.func_147480_a(x, y, z, true); // Destroy block with drops
 			degradedHardnessMap.remove(posKey); // Remove from the map
 		} else {
 			// Update the degraded hardness in the map
