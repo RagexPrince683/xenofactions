@@ -1,15 +1,12 @@
 package com.hfr.main;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import com.hfr.ai.*;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder;
 import com.hfr.data.AntiMobData;
 import com.hfr.data.CBTData;
-import com.hfr.data.ResourceData;
 import com.hfr.data.CBTData.CBTEntry;
 import com.hfr.data.StockData;
 import com.hfr.data.StockData.Stock;
@@ -25,7 +22,6 @@ import com.hfr.packet.effect.CBTPacket;
 import com.hfr.packet.effect.RVIPacket;
 import com.hfr.packet.effect.SLBMOfferPacket;
 import com.hfr.packet.tile.SRadarPacket;
-import com.hfr.packet.tile.SchemOfferPacket;
 import com.hfr.pon4.ExplosionController;
 import com.hfr.potion.HFRPotion;
 import com.hfr.render.hud.RenderRadarScreen.Blip;
@@ -37,6 +33,7 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.Phase;
 import cpw.mods.fml.common.gameevent.TickEvent.WorldTickEvent;
+import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
@@ -62,16 +59,16 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EntityDamageSourceIndirect;
 import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
+import net.minecraft.world.ChunkPosition;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.event.entity.living.LivingSpawnEvent;
-import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.BlockEvent.BreakEvent;
+import net.minecraftforge.event.world.ExplosionEvent;
 
 public class CommonEventHandler {
 
@@ -188,7 +185,6 @@ public class CommonEventHandler {
 				PacketDispatcher.wrapper.sendTo(new SLBMOfferPacket(0, 0), (EntityPlayerMP) player);
 			}
 			/// SLBM OFFER HANDLER ///
-
 			
 			/// CAVE SICKNESS ///
 			if(player.posY <= MainRegistry.caveCap && !player.isRiding()) {
@@ -283,6 +279,81 @@ public class CommonEventHandler {
 			}
 		}
 	}
+
+
+	//belongs in event bus subscriber class, this is to prevent explosions being OP
+	@SubscribeEvent
+	public void onExplosionDetonate(ExplosionEvent.Detonate event) {
+		World world = event.world;
+		List<ChunkPosition> affectedBlocks = event.getAffectedBlocks();
+
+		// Copy blocks to avoid modifying the original list during iteration
+		List<ChunkPosition> toProcess = new ArrayList<ChunkPosition>(affectedBlocks);
+		for (ChunkPosition pos : toProcess) {
+			Block block = world.getBlock(pos.chunkPosX, pos.chunkPosY, pos.chunkPosZ);
+
+			// Only process blocks that shouldn't be immediately destroyed
+			if (block.getBlockHardness(world, pos.chunkPosX, pos.chunkPosY, pos.chunkPosZ) > 0.0F) {
+				// Handle degradation
+				degradeBlockHardness(world, pos.chunkPosX, pos.chunkPosY, pos.chunkPosZ, block);
+
+				// Remove from explosion's destruction list
+				event.getAffectedBlocks().remove(pos);
+			}
+		}
+	}
+
+	//degrade block hardness
+	private static final Map<ChunkPosition, Float> degradedHardnessMap = new HashMap<ChunkPosition, Float>();
+
+	public void degradeBlockHardness(World world, int x, int y, int z, Block block) {
+		// Use ChunkPosition as the key
+		ChunkPosition posKey = new ChunkPosition(x, y, z);
+
+		// Get the original hardness of the block
+		float originalHardness = block.getBlockHardness(world, x, y, z);
+
+		// Retrieve degraded hardness, defaulting to original hardness
+		Float degradedHardness = degradedHardnessMap.get(posKey);
+
+		// Initialize degradation if it's the first time
+		if (degradedHardness == null) {
+			degradedHardness = originalHardness;
+		}
+
+		// Apply degradation
+		degradedHardness -= 0.35F; // Reduce by 0.05 (or another amount)
+
+		// Update block metadata to reflect damage visually
+		int damageLevel = Math.min((int) ((1.0F - degradedHardness / originalHardness) * 4), 3);
+		world.setBlockMetadataWithNotify(x, y, z, damageLevel, 2);
+
+		// Play particle effects when the block is degraded
+		for (int i = 0; i < 10; i++) {
+			double offsetX = world.rand.nextDouble();
+			double offsetY = world.rand.nextDouble();
+			double offsetZ = world.rand.nextDouble();
+			world.spawnParticle(
+					"blockcrack_" + Block.getIdFromBlock(block) + "_" + damageLevel, // Use metadata for "damage level"
+					x + offsetX, y + offsetY, z + offsetZ,
+					0.0, 0.0, 0.0
+			);
+		}
+
+		// Play sound when degradation occurs
+		world.playSoundEffect(x, y, z, "random.break", 1.0F, 1.0F);
+
+		// Handle block destruction when degraded hardness is zero
+		if (degradedHardness <= 0) {
+			world.playSoundEffect(x, y, z, "random.explode", 1.0F, 0.8F); // Explosion-like sound
+			world.func_147480_a(x, y, z, true); // Equivalent to destroyBlock with drops
+			degradedHardnessMap.remove(posKey); // Remove from the map
+		} else {
+			// Update the degraded hardness in the map
+			degradedHardnessMap.put(posKey, degradedHardness);
+		}
+	}
+
 	
 	public boolean hasDigiOverlay(EntityPlayer player) {
 		
@@ -483,6 +554,7 @@ public class CommonEventHandler {
 	public void handlePlayerBorder(EntityPlayerMP player) {
 		double posX = player.posX;
 		double posZ = player.posZ;
+		double posY = player.posY;
 
 		// Wraparound logic for players
 		if (posX < MainRegistry.borderNegX || posX > MainRegistry.borderPosX ||
@@ -492,7 +564,8 @@ public class CommonEventHandler {
 			//no dont do that we are going to keep the player on the vehicle hopefully
 			player.playerNetServerHandler.setPlayerLocation(
 					wrapX(posX),
-					player.posY,
+					//fixes random stuck in ground issue
+					Math.round(posY),
 					wrapZ(posZ),
 					player.rotationYaw,
 					player.rotationPitch
@@ -500,6 +573,7 @@ public class CommonEventHandler {
 
 			// Send notification
 			player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "You have crossed the world border and wrapped around!"));
+			player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "NOTICE: IF YOU ARE IN A MCHELI VEHICLE RELOG TO AVOID BEING SEAT KICKED"));
 		}
 	}
 
