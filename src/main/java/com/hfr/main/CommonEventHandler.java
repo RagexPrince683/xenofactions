@@ -325,22 +325,6 @@ public class CommonEventHandler {
 		// Apply degradation
 		degradedHardness -= 0.35F; // Reduce by 0.35, 0.05 is too low, nothing happens
 
-		// OLD LOGIC
-		//for (int i = 0; i < 10; i++) {
-//
-		//
-//
-//
-		//	double offsetX = world.rand.nextDouble();
-		//	double offsetY = world.rand.nextDouble();
-		//	double offsetZ = world.rand.nextDouble();
-		//	world.spawnParticle(
-		//			"blockcrack_" + Block.getIdFromBlock(block) + "_0", // Replace "_0" if metadata varies
-		//			x + offsetX, y + offsetY, z + offsetZ,
-		//			0.0, 0.0, 0.0
-		//	);
-		//}
-
 		// Spawn block break particles (like zombie breaking doors)
 		for (int i = 0; i < 10; i++) {
 
