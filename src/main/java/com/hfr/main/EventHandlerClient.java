@@ -95,31 +95,56 @@ public class EventHandlerClient {
 
 			if (breakStage <= 0 || breakStage > 9) continue; // Skip invalid states
 
+			// Calculate relative position for rendering
 			double x = pos.posX - mc.renderViewEntity.lastTickPosX - (mc.renderViewEntity.posX - mc.renderViewEntity.lastTickPosX) * event.partialTicks;
 			double y = pos.posY - mc.renderViewEntity.lastTickPosY - (mc.renderViewEntity.posY - mc.renderViewEntity.lastTickPosY) * event.partialTicks;
 			double z = pos.posZ - mc.renderViewEntity.lastTickPosZ - (mc.renderViewEntity.posZ - mc.renderViewEntity.lastTickPosZ) * event.partialTicks;
 
 			// Bind breaking texture
-			mc.getTextureManager().bindTexture(TextureMap.locationBlocksTexture);
+			//mc.getTextureManager().bindTexture(TextureMap.locationBlocksTexture);
+			//IIcon crackIcon = mc.renderGlobal.destroyBlockIcons[breakStage];
+
+			ResourceLocation breakTexture = new ResourceLocation("textures/blocks/destroy_stage_" + breakStage + ".png");
+			IIcon crackIcon = mc.getTextureManager().bindTexture(breakTexture);
 
 			// Start rendering block breaking overlay
 			tessellator.startDrawingQuads();
 			tessellator.setTranslation(x, y, z);
 			tessellator.setColorRGBA(255, 255, 255, 127); // Semi-transparent white
 
-			IIcon icon = Blocks.stone.getIcon(0, 0); // Replace with your block's texture
-			float minU = icon.getMinU();
-			float maxU = icon.getMaxU();
-			float minV = icon.getMinV();
-			float maxV = icon.getMaxV();
+			float minU = crackIcon.getMinU();
+			float maxU = crackIcon.getMaxU();
+			float minV = crackIcon.getMinV();
+			float maxV = crackIcon.getMaxV();
 
-			tessellator.addVertexWithUV(0, 0, 0, minU, minV);
-			tessellator.addVertexWithUV(1, 0, 0, maxU, minV);
-			tessellator.addVertexWithUV(1, 1, 0, maxU, maxV);
-			tessellator.addVertexWithUV(0, 1, 0, minU, maxV);
+			// Render all six sides of the block (adjust as needed for performance)
+			renderFace(tessellator, minU, maxU, minV, maxV, EnumFacing.UP);
+			renderFace(tessellator, minU, maxU, minV, maxV, EnumFacing.DOWN);
+			renderFace(tessellator, minU, maxU, minV, maxV, EnumFacing.NORTH);
+			renderFace(tessellator, minU, maxU, minV, maxV, EnumFacing.SOUTH);
+			renderFace(tessellator, minU, maxU, minV, maxV, EnumFacing.EAST);
+			renderFace(tessellator, minU, maxU, minV, maxV, EnumFacing.WEST);
 
 			tessellator.draw();
 			tessellator.setTranslation(0, 0, 0);
+		}
+	}
+
+	private void renderFace(Tessellator tessellator, float minU, float maxU, float minV, float maxV, EnumFacing face) {
+		switch (face) {
+			case UP:
+				tessellator.addVertexWithUV(0, 1, 0, minU, minV);
+				tessellator.addVertexWithUV(1, 1, 0, maxU, minV);
+				tessellator.addVertexWithUV(1, 1, 1, maxU, maxV);
+				tessellator.addVertexWithUV(0, 1, 1, minU, maxV);
+				break;
+			case DOWN:
+				tessellator.addVertexWithUV(0, 0, 1, minU, maxV);
+				tessellator.addVertexWithUV(1, 0, 1, maxU, maxV);
+				tessellator.addVertexWithUV(1, 0, 0, maxU, minV);
+				tessellator.addVertexWithUV(0, 0, 0, minU, minV);
+				break;
+			// Add cases for NORTH, SOUTH, EAST, WEST similarly
 		}
 	}
 	
