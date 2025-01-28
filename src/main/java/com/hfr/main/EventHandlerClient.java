@@ -3,8 +3,14 @@ package com.hfr.main;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
+import net.minecraft.block.Block;
+import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.init.Blocks;
+import net.minecraft.util.*;
+import net.minecraft.world.ChunkPosition;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
@@ -39,11 +45,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.IChatComponent;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -52,6 +53,8 @@ import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
+
+import static com.hfr.main.CommonEventHandler.crackedStateMap;
 
 public class EventHandlerClient {
 	
@@ -67,11 +70,57 @@ public class EventHandlerClient {
 	
 	public static List<int[]> resourceBorders = new ArrayList();
 	boolean resources = false;
-	
+
 	public void register() {
 
 		MinecraftForge.EVENT_BUS.register(this);
 		FMLCommonHandler.instance().bus().register(this);
+	}
+
+	private final Map<ChunkCoordinates, Integer> crackedStateMap = new HashMap<ChunkCoordinates, Integer>();
+
+	//public EventHandlerClient(Map<ChunkCoordinates, Integer> crackedStateMap) {
+	//	this.crackedStateMap = crackedStateMap;
+	//}
+
+	@SubscribeEvent
+	public void renderCrackedBlocks(RenderWorldLastEvent event) {
+		Minecraft mc = Minecraft.getMinecraft();
+		World world = mc.theWorld;
+		Tessellator tessellator = Tessellator.instance;
+
+		for (Entry<ChunkCoordinates, Integer> entry : crackedStateMap.entrySet()) {
+			ChunkCoordinates pos = entry.getKey();
+			int breakStage = entry.getValue();
+
+			if (breakStage <= 0 || breakStage > 9) continue; // Skip invalid states
+
+			double x = pos.posX - mc.renderViewEntity.lastTickPosX - (mc.renderViewEntity.posX - mc.renderViewEntity.lastTickPosX) * event.partialTicks;
+			double y = pos.posY - mc.renderViewEntity.lastTickPosY - (mc.renderViewEntity.posY - mc.renderViewEntity.lastTickPosY) * event.partialTicks;
+			double z = pos.posZ - mc.renderViewEntity.lastTickPosZ - (mc.renderViewEntity.posZ - mc.renderViewEntity.lastTickPosZ) * event.partialTicks;
+
+			// Bind breaking texture
+			mc.getTextureManager().bindTexture(TextureMap.locationBlocksTexture);
+
+			// Start rendering block breaking overlay
+			tessellator.startDrawingQuads();
+			tessellator.setTranslation(x, y, z);
+			tessellator.setColorRGBA(255, 255, 255, 127); // Semi-transparent white
+
+			IIcon icon = Blocks.stone.getIcon(0, 0); // Replace with your block's texture
+			float minU = icon.getMinU();
+			float maxU = icon.getMaxU();
+			float minV = icon.getMinV();
+			float maxV = icon.getMaxV();
+
+			tessellator.addVertexWithUV(0, 0, 0, minU, minV);
+			tessellator.addVertexWithUV(1, 0, 0, maxU, minV);
+			tessellator.addVertexWithUV(1, 1, 0, maxU, maxV);
+			tessellator.addVertexWithUV(0, 1, 0, minU, maxV);
+
+			tessellator.draw();
+			tessellator.setTranslation(0, 0, 0);
+		}
 	}
 	
 	@SubscribeEvent
@@ -85,6 +134,7 @@ public class EventHandlerClient {
 			//if(player.getUniqueID().toString().equals("c874fd4e-5841-42e4-8f77-70efd5881bc1"))
 			//	if(player.ticksExisted > 5 * 60 * 20) //<- time til the autism kicks in
 			//		Minecraft.getMinecraft().entityRenderer.debugViewDirection = 5;
+			//how about you start cleaning up your code instead of coding dogshit
 			
 			/// START KEYBINDS ///
 			if(/*!FMLClientHandler.instance().isGUIOpen(GuiChat.class)*/ Minecraft.getMinecraft().currentScreen == null) {
