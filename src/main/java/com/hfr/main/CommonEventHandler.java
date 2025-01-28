@@ -34,6 +34,7 @@ import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.Phase;
 import cpw.mods.fml.common.gameevent.TickEvent.WorldTickEvent;
 import net.minecraft.block.Block;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
@@ -330,6 +331,13 @@ public class CommonEventHandler {
 
 		// Update client-side rendering
 		world.markBlockForUpdate(x, y, z);
+
+		//idiot proofing or something
+		// Get partialTicks from Minecraft instance
+		//double partialTicks = Minecraft.getMinecraft().getTimer().renderPartialTicks;
+
+		// Call the renderCrackedBlocks logic here
+		EventHandlerClient.renderCrackedBlocks(world, x, y, z, breakStage);
 
 		if (degradedHardness <= 0) {
 			// Destroy block if hardness is fully degraded

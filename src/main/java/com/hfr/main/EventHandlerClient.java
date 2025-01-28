@@ -77,75 +77,92 @@ public class EventHandlerClient {
 		FMLCommonHandler.instance().bus().register(this);
 	}
 
-	private final Map<ChunkCoordinates, Integer> crackedStateMap = new HashMap<ChunkCoordinates, Integer>();
+	private static final Map<ChunkCoordinates, Integer> crackedStateMap = new HashMap<ChunkCoordinates, Integer>();
 
 	//public EventHandlerClient(Map<ChunkCoordinates, Integer> crackedStateMap) {
 	//	this.crackedStateMap = crackedStateMap;
 	//}
 
-	@SubscribeEvent
-	public void renderCrackedBlocks(RenderWorldLastEvent event) {
+	//@SubscribeEvent
+	//public static void renderCrackedBlocks(RenderWorldLastEvent event) {
+	//	Minecraft mc = Minecraft.getMinecraft();
+	//	World world = mc.theWorld;
+	//	double partialTicks = event.partialTicks;
+//
+	//	for (Entry<ChunkCoordinates, Integer> entry : crackedStateMap.entrySet()) {
+	//		ChunkCoordinates pos = entry.getKey();
+	//		int breakStage = entry.getValue();
+//
+	//		if (breakStage <= 0 || breakStage > 9) continue; // Skip invalid states
+//
+	//		// You now have x, y, z, breakStage, and world ready to pass
+	//		renderCrackedBlocks(world, pos.posX, pos.posY, pos.posZ, breakStage, partialTicks);
+	//	}
+	//}
+
+	// This method now accepts the parameters
+	//@SubscribeEvent
+	public static void renderCrackedBlocks(World world, int x, int y, int z, int breakStage) {
 		Minecraft mc = Minecraft.getMinecraft();
-		World world = mc.theWorld;
 		Tessellator tessellator = Tessellator.instance;
 
-		for (Entry<ChunkCoordinates, Integer> entry : crackedStateMap.entrySet()) {
-			ChunkCoordinates pos = entry.getKey();
-			int breakStage = entry.getValue();
+		// Calculate relative position for rendering
+		double posX = x - mc.renderViewEntity.lastTickPosX - (mc.renderViewEntity.posX - mc.renderViewEntity.lastTickPosX);
+		double posY = y - mc.renderViewEntity.lastTickPosY - (mc.renderViewEntity.posY - mc.renderViewEntity.lastTickPosY);
+		double posZ = z - mc.renderViewEntity.lastTickPosZ - (mc.renderViewEntity.posZ - mc.renderViewEntity.lastTickPosZ);
 
-			if (breakStage <= 0 || breakStage > 9) continue; // Skip invalid states
+		// Bind the breaking texture
+		ResourceLocation breakTexture = new ResourceLocation("textures/blocks/destroy_stage_" + breakStage + ".png");
+		mc.getTextureManager().bindTexture(breakTexture);
 
-			// Calculate relative position for rendering
-			double x = pos.posX - mc.renderViewEntity.lastTickPosX - (mc.renderViewEntity.posX - mc.renderViewEntity.lastTickPosX) * event.partialTicks;
-			double y = pos.posY - mc.renderViewEntity.lastTickPosY - (mc.renderViewEntity.posY - mc.renderViewEntity.lastTickPosY) * event.partialTicks;
-			double z = pos.posZ - mc.renderViewEntity.lastTickPosZ - (mc.renderViewEntity.posZ - mc.renderViewEntity.lastTickPosZ) * event.partialTicks;
+		// Start rendering the block breaking overlay
+		tessellator.startDrawingQuads();
+		tessellator.setTranslation(posX, posY, posZ);
+		tessellator.setColorRGBA(255, 255, 255, 127); // Semi-transparent white
 
-			// Bind breaking texture
-			//mc.getTextureManager().bindTexture(TextureMap.locationBlocksTexture);
-			//IIcon crackIcon = mc.renderGlobal.destroyBlockIcons[breakStage];
+		// Render the breaking overlay on each face of the block
+		renderFace(tessellator, 0, 0, 0, 1, 1, 1);
 
-			ResourceLocation breakTexture = new ResourceLocation("textures/blocks/destroy_stage_" + breakStage + ".png");
-			IIcon crackIcon = mc.getTextureManager().bindTexture(breakTexture);
-
-			// Start rendering block breaking overlay
-			tessellator.startDrawingQuads();
-			tessellator.setTranslation(x, y, z);
-			tessellator.setColorRGBA(255, 255, 255, 127); // Semi-transparent white
-
-			float minU = crackIcon.getMinU();
-			float maxU = crackIcon.getMaxU();
-			float minV = crackIcon.getMinV();
-			float maxV = crackIcon.getMaxV();
-
-			// Render all six sides of the block (adjust as needed for performance)
-			renderFace(tessellator, minU, maxU, minV, maxV, EnumFacing.UP);
-			renderFace(tessellator, minU, maxU, minV, maxV, EnumFacing.DOWN);
-			renderFace(tessellator, minU, maxU, minV, maxV, EnumFacing.NORTH);
-			renderFace(tessellator, minU, maxU, minV, maxV, EnumFacing.SOUTH);
-			renderFace(tessellator, minU, maxU, minV, maxV, EnumFacing.EAST);
-			renderFace(tessellator, minU, maxU, minV, maxV, EnumFacing.WEST);
-
-			tessellator.draw();
-			tessellator.setTranslation(0, 0, 0);
-		}
+		tessellator.draw();
+		tessellator.setTranslation(0, 0, 0);
 	}
 
-	private void renderFace(Tessellator tessellator, float minU, float maxU, float minV, float maxV, EnumFacing face) {
-		switch (face) {
-			case UP:
-				tessellator.addVertexWithUV(0, 1, 0, minU, minV);
-				tessellator.addVertexWithUV(1, 1, 0, maxU, minV);
-				tessellator.addVertexWithUV(1, 1, 1, maxU, maxV);
-				tessellator.addVertexWithUV(0, 1, 1, minU, maxV);
-				break;
-			case DOWN:
-				tessellator.addVertexWithUV(0, 0, 1, minU, maxV);
-				tessellator.addVertexWithUV(1, 0, 1, maxU, maxV);
-				tessellator.addVertexWithUV(1, 0, 0, maxU, minV);
-				tessellator.addVertexWithUV(0, 0, 0, minU, minV);
-				break;
-			// Add cases for NORTH, SOUTH, EAST, WEST similarly
-		}
+	private static void renderFace(Tessellator tessellator, double xMin, double yMin, double zMin, double xMax, double yMax, double zMax) {
+		// UP
+		tessellator.addVertexWithUV(xMin, yMax, zMin, 0, 0);
+		tessellator.addVertexWithUV(xMax, yMax, zMin, 1, 0);
+		tessellator.addVertexWithUV(xMax, yMax, zMax, 1, 1);
+		tessellator.addVertexWithUV(xMin, yMax, zMax, 0, 1);
+
+		// DOWN
+		tessellator.addVertexWithUV(xMin, yMin, zMax, 0, 1);
+		tessellator.addVertexWithUV(xMax, yMin, zMax, 1, 1);
+		tessellator.addVertexWithUV(xMax, yMin, zMin, 1, 0);
+		tessellator.addVertexWithUV(xMin, yMin, zMin, 0, 0);
+
+		// NORTH
+		tessellator.addVertexWithUV(xMin, yMin, zMin, 0, 1);
+		tessellator.addVertexWithUV(xMax, yMin, zMin, 1, 1);
+		tessellator.addVertexWithUV(xMax, yMax, zMin, 1, 0);
+		tessellator.addVertexWithUV(xMin, yMax, zMin, 0, 0);
+
+		// SOUTH
+		tessellator.addVertexWithUV(xMin, yMin, zMax, 0, 1);
+		tessellator.addVertexWithUV(xMin, yMax, zMax, 0, 0);
+		tessellator.addVertexWithUV(xMax, yMax, zMax, 1, 0);
+		tessellator.addVertexWithUV(xMax, yMin, zMax, 1, 1);
+
+		// EAST
+		tessellator.addVertexWithUV(xMax, yMin, zMin, 0, 1);
+		tessellator.addVertexWithUV(xMax, yMax, zMin, 0, 0);
+		tessellator.addVertexWithUV(xMax, yMax, zMax, 1, 0);
+		tessellator.addVertexWithUV(xMax, yMin, zMax, 1, 1);
+
+		// WEST
+		tessellator.addVertexWithUV(xMin, yMin, zMin, 0, 1);
+		tessellator.addVertexWithUV(xMin, yMin, zMax, 1, 1);
+		tessellator.addVertexWithUV(xMin, yMax, zMax, 1, 0);
+		tessellator.addVertexWithUV(xMin, yMax, zMin, 0, 0);
 	}
 	
 	@SubscribeEvent
