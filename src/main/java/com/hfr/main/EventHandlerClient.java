@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import net.minecraft.client.Minecraft;
+
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.init.Blocks;
@@ -102,29 +104,35 @@ public class EventHandlerClient {
 
 	// This method now accepts the parameters
 	//@SubscribeEvent
-	public static void renderCrackedBlocks(World world, int x, int y, int z, int breakStage) {
-		Minecraft mc = Minecraft.getMinecraft();
-		Tessellator tessellator = Tessellator.instance;
+	public static void renderCrackedBlocks(World world, final int x, final int y, final int z, final int breakStage) {
+		final Minecraft mc = Minecraft.getMinecraft();
 
-		// Calculate relative position for rendering
-		double posX = x - mc.renderViewEntity.lastTickPosX - (mc.renderViewEntity.posX - mc.renderViewEntity.lastTickPosX);
-		double posY = y - mc.renderViewEntity.lastTickPosY - (mc.renderViewEntity.posY - mc.renderViewEntity.lastTickPosY);
-		double posZ = z - mc.renderViewEntity.lastTickPosZ - (mc.renderViewEntity.posZ - mc.renderViewEntity.lastTickPosZ);
+		mc.addScheduledEvent(new Runnable() {
+			@Override
+			public void run() {
+				Tessellator tessellator = Tessellator.instance;
 
-		// Bind the breaking texture
-		ResourceLocation breakTexture = new ResourceLocation("textures/blocks/destroy_stage_" + breakStage + ".png");
-		mc.getTextureManager().bindTexture(breakTexture);
+				// Calculate relative position for rendering
+				double posX = x - mc.renderViewEntity.lastTickPosX - (mc.renderViewEntity.posX - mc.renderViewEntity.lastTickPosX);
+				double posY = y - mc.renderViewEntity.lastTickPosY - (mc.renderViewEntity.posY - mc.renderViewEntity.lastTickPosY);
+				double posZ = z - mc.renderViewEntity.lastTickPosZ - (mc.renderViewEntity.posZ - mc.renderViewEntity.lastTickPosZ);
 
-		// Start rendering the block breaking overlay
-		tessellator.startDrawingQuads();
-		tessellator.setTranslation(posX, posY, posZ);
-		tessellator.setColorRGBA(255, 255, 255, 127); // Semi-transparent white
+				// Bind the breaking texture
+				ResourceLocation breakTexture = new ResourceLocation("textures/blocks/destroy_stage_" + breakStage + ".png");
+				mc.getTextureManager().bindTexture(breakTexture);
 
-		// Render the breaking overlay on each face of the block
-		renderFace(tessellator, 0, 0, 0, 1, 1, 1);
+				// Start rendering the block breaking overlay
+				tessellator.startDrawingQuads();
+				tessellator.setTranslation(posX, posY, posZ);
+				tessellator.setColorRGBA(255, 255, 255, 127); // Semi-transparent white
 
-		tessellator.draw();
-		tessellator.setTranslation(0, 0, 0);
+				// Render the breaking overlay on each face of the block
+				renderFace(tessellator, 0, 0, 0, 1, 1, 1);
+
+				tessellator.draw();
+				tessellator.setTranslation(0, 0, 0);
+			}
+		});
 	}
 
 	private static void renderFace(Tessellator tessellator, double xMin, double yMin, double zMin, double xMax, double yMax, double zMax) {
@@ -164,7 +172,9 @@ public class EventHandlerClient {
 		tessellator.addVertexWithUV(xMin, yMax, zMax, 1, 0);
 		tessellator.addVertexWithUV(xMin, yMax, zMin, 0, 0);
 	}
-	
+
+
+
 	@SubscribeEvent
 	public void drawHUD(RenderGameOverlayEvent event) {
 		
