@@ -308,9 +308,8 @@ public class CommonEventHandler {
 
 	//degrade block hardness
 	private static final Map<ChunkPosition, Float> degradedHardnessMap = new HashMap<ChunkPosition, Float>();
-	public static final Map<ChunkPosition, Integer> crackedStateMap = new HashMap<ChunkPosition, Integer>();
-	//already defined
-	//private static final Map<ChunkPosition, Float> degradedHardnessMap = new HashMap<ChunkPosition, Float>();
+	private static final Map<ChunkPosition, Integer> crackedStateMap = new HashMap<ChunkPosition, Integer>();
+	private static final Map<ChunkPosition, Float> degradedHardnessMap = new HashMap<ChunkPosition, Float>();
 
 	private void degradeBlockHardness(World world, int x, int y, int z, Block block, float attenuation) {
 		ChunkPosition posKey = new ChunkPosition(x, y, z);
@@ -319,23 +318,30 @@ public class CommonEventHandler {
 				? degradedHardnessMap.get(posKey)
 				: originalHardness;
 
-		// Apply damage based on attenuation
 		float degradationRate = Math.max(0.35F, originalHardness * 0.1F) * attenuation;
 		degradedHardness -= degradationRate;
 
-		// Calculate breaking stage (0-9)
-		int breakStage = Math.min(9, (int) ((1.0F - degradedHardness / originalHardness) * 10));
-		crackedStateMap.put(posKey, breakStage);
-		degradedHardnessMap.put(posKey, degradedHardness);
+		// Spawn particles
+		int meta = world.getBlockMetadata(x, y, z);
+		for (int i = 0; i < 10; i++) {
+			double offsetX = world.rand.nextDouble();
+			double offsetY = world.rand.nextDouble();
+			double offsetZ = world.rand.nextDouble();
+			world.spawnParticle(
+					"blockcrack_" + Block.getIdFromBlock(block) + "_" + meta,
+					x + offsetX, y + offsetY, z + offsetZ,
+					0.0, 0.0, 0.0
+			);
+		}
 
-		// Update client-side rendering
-		world.markBlockForUpdate(x, y, z);
+		world.playSoundEffect(x, y, z, "random.break", 1.0F, 1.0F);
 
 		if (degradedHardness <= 0) {
-			// Destroy block if hardness is fully degraded
-			world.func_147480_a(x, y, z, true); // Break block
-			crackedStateMap.remove(posKey);
+			world.func_147480_a(x, y, z, true);
 			degradedHardnessMap.remove(posKey);
+			world.markBlockForUpdate(x, y, z);
+		} else {
+			degradedHardnessMap.put(posKey, degradedHardness);
 		}
 	}
 
