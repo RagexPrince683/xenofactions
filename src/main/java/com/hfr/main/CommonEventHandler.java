@@ -287,20 +287,17 @@ public class CommonEventHandler {
 		World world = event.world;
 		List<ChunkPosition> affectedBlocks = event.getAffectedBlocks();
 
-		// Create a copy of affected blocks to safely iterate
+		// Copy blocks to avoid modifying the original list during iteration
 		List<ChunkPosition> toProcess = new ArrayList<ChunkPosition>(affectedBlocks);
-		//chatgpt stop removing diamond types for fucks sakes this lang level is 6 no wonder you cant figure out how many rs are in strawberry holyshit
-		//yeah ill be the first one removed in the robot uprising but like fucking hell
-		//and stop deleting my fucking comments
-
 		for (ChunkPosition pos : toProcess) {
 			Block block = world.getBlock(pos.chunkPosX, pos.chunkPosY, pos.chunkPosZ);
 
-			// Only process blocks with hardness greater than 0
+			// Only process blocks that shouldn't be immediately destroyed
 			if (block.getBlockHardness(world, pos.chunkPosX, pos.chunkPosY, pos.chunkPosZ) > 0.0F) {
+				// Handle degradation
 				degradeBlockHardness(world, pos.chunkPosX, pos.chunkPosY, pos.chunkPosZ, block);
 
-				// Prevent immediate destruction by removing the block from the explosion list
+				// Remove from explosion's destruction list
 				event.getAffectedBlocks().remove(pos);
 			}
 		}
@@ -323,41 +320,25 @@ public class CommonEventHandler {
 		}
 
 		// Apply degradation
-		degradedHardness -= 0.35F; // Reduce by 0.35, 0.05 is too low, nothing happens
+		degradedHardness -= 0.05F; // Reduce by 0.05 (or another amount)
 
-		// OLD LOGIC
-		//for (int i = 0; i < 10; i++) {
-//
-		//
-//
-//
-		//	double offsetX = world.rand.nextDouble();
-		//	double offsetY = world.rand.nextDouble();
-		//	double offsetZ = world.rand.nextDouble();
-		//	world.spawnParticle(
-		//			"blockcrack_" + Block.getIdFromBlock(block) + "_0", // Replace "_0" if metadata varies
-		//			x + offsetX, y + offsetY, z + offsetZ,
-		//			0.0, 0.0, 0.0
-		//	);
-		//}
-
-		// Spawn block break particles (like zombie breaking doors)
+		// Ensure particles and sounds trigger even for high-resistance blocks
 		for (int i = 0; i < 10; i++) {
 
 			if (block.getExplosionResistance(null) >= 6000.0F) { // Handles obsidian-like blocks
 				degradedHardness -= 100.5F;
 			}
 
+
 			double offsetX = world.rand.nextDouble();
 			double offsetY = world.rand.nextDouble();
 			double offsetZ = world.rand.nextDouble();
 			world.spawnParticle(
-					"blockcrack_" + Block.getIdFromBlock(block) + "_0",
+					"blockcrack_" + Block.getIdFromBlock(block) + "_0", // Replace "_0" if metadata varies
 					x + offsetX, y + offsetY, z + offsetZ,
 					0.0, 0.0, 0.0
 			);
 		}
-
 
 		world.playSoundEffect(x, y, z, "random.break", 1.0F, 1.0F);
 
@@ -371,7 +352,7 @@ public class CommonEventHandler {
 		}
 	}
 
-
+	
 	public boolean hasDigiOverlay(EntityPlayer player) {
 		
 		Object vehicle = ReflectionEngine.getVehicleFromSeat(player.ridingEntity);
