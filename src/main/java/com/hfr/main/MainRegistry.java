@@ -1271,7 +1271,6 @@ public class MainRegistry
         /////////////////////////////////////////////////////////////////////////
         
         mlpf = createConfigInt(config, "ENTITYCONTROL", "MLPF", "How far the multi-layered pathfinder for zombs and creeps reaches", 100);
-		//this is a really stupid feature
         caveCap = createConfigInt(config, "ENTITYCONTROL", "caveCap_New", "Sets the maximum Y-coord where cave sickness kick in", -10);
 
         zombAI = createConfigBool(config, "ENTITYCONTROL", "zombAI", "Enables advanced zombert AI", false);
