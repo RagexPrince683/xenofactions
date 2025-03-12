@@ -285,22 +285,22 @@ public class CommonEventHandler {
 	@SubscribeEvent
 	public void onExplosionDetonate(ExplosionEvent.Detonate event) {
 		World world = event.world;
-		//do not modify this the diamond type is fine
-		List<ChunkPosition> affectedBlocks = new ArrayList<ChunkPosition>(event.getAffectedBlocks());
-		//do not modify this the diamond type is fine
-		Vec3 explosionCenter = Vec3.createVectorHelper(event.explosion.explosionX, event.explosion.explosionY, event.explosion.explosionZ);
+		List<ChunkPosition> affectedBlocks = event.getAffectedBlocks();
 
-		for (ChunkPosition pos : affectedBlocks) {
+		// Create a copy of affected blocks to safely iterate
+		List<ChunkPosition> toProcess = new ArrayList<ChunkPosition>(affectedBlocks);
+		//chatgpt stop removing diamond types for fucks sakes this lang level is 6 no wonder you cant figure out how many rs are in strawberry holyshit
+		//yeah ill be the first one removed in the robot uprising but like fucking hell
+		//and stop deleting my fucking comments
+
+		for (ChunkPosition pos : toProcess) {
 			Block block = world.getBlock(pos.chunkPosX, pos.chunkPosY, pos.chunkPosZ);
-			float hardness = block.getBlockHardness(world, pos.chunkPosX, pos.chunkPosY, pos.chunkPosZ);
 
-			if (hardness > 0.0F) {
-				// Calculate distance attenuation
-				double distance = explosionCenter.distanceTo(Vec3.createVectorHelper(pos.chunkPosX + 0.5, pos.chunkPosY + 0.5, pos.chunkPosZ + 0.5));
-				double maxDistance = 10.0; // TODO: get explosion power either from mcheli or other methods
-				float attenuation = (float) Math.max(0.1, 1.0 - (distance / maxDistance));
+			// Only process blocks with hardness greater than 0
+			if (block.getBlockHardness(world, pos.chunkPosX, pos.chunkPosY, pos.chunkPosZ) > 0.0F) {
+				degradeBlockHardness(world, pos.chunkPosX, pos.chunkPosY, pos.chunkPosZ, block);
 
-				degradeBlockHardness(world, pos.chunkPosX, pos.chunkPosY, pos.chunkPosZ, block, attenuation);
+				// Prevent immediate destruction by removing the block from the explosion list
 				event.getAffectedBlocks().remove(pos);
 			}
 		}
@@ -308,39 +308,49 @@ public class CommonEventHandler {
 
 	//degrade block hardness
 	private static final Map<ChunkPosition, Float> degradedHardnessMap = new HashMap<ChunkPosition, Float>();
-	private static final Map<ChunkPosition, Integer> crackedStateMap = new HashMap<ChunkPosition, Integer>();
-	private static final Map<ChunkPosition, Float> degradedHardnessMap = new HashMap<ChunkPosition, Float>();
 
-	private void degradeBlockHardness(World world, int x, int y, int z, Block block, float attenuation) {
+	public void degradeBlockHardness(World world, int x, int y, int z, Block block) {
+		// Use ChunkPosition as the key
 		ChunkPosition posKey = new ChunkPosition(x, y, z);
+
+		// Get the original hardness of the block
 		float originalHardness = block.getBlockHardness(world, x, y, z);
-		Float degradedHardness = degradedHardnessMap.containsKey(posKey)
-				? degradedHardnessMap.get(posKey)
-				: originalHardness;
 
-		float degradationRate = Math.max(0.35F, originalHardness * 0.1F) * attenuation;
-		degradedHardness -= degradationRate;
+		// Retrieve degraded hardness, defaulting to original hardness
+		Float degradedHardness = degradedHardnessMap.get(posKey);
+		if (degradedHardness == null) {
+			degradedHardness = originalHardness;
+		}
 
-		// Spawn particles
-		int meta = world.getBlockMetadata(x, y, z);
+		// Apply degradation
+		degradedHardness -= 0.35F; // Reduce by 0.35, 0.05 is too low, nothing happens
+
+		// Spawn block break particles (like zombie breaking doors)
 		for (int i = 0; i < 10; i++) {
+
+			if (block.getExplosionResistance(null) >= 6000.0F) { // Handles obsidian-like blocks
+				degradedHardness -= 100.5F;
+			}
+
 			double offsetX = world.rand.nextDouble();
 			double offsetY = world.rand.nextDouble();
 			double offsetZ = world.rand.nextDouble();
 			world.spawnParticle(
-					"blockcrack_" + Block.getIdFromBlock(block) + "_" + meta,
+					"blockcrack_" + Block.getIdFromBlock(block) + "_0",
 					x + offsetX, y + offsetY, z + offsetZ,
 					0.0, 0.0, 0.0
 			);
 		}
 
+
 		world.playSoundEffect(x, y, z, "random.break", 1.0F, 1.0F);
 
+		// Destroy the block if fully degraded
 		if (degradedHardness <= 0) {
-			world.func_147480_a(x, y, z, true);
-			degradedHardnessMap.remove(posKey);
-			world.markBlockForUpdate(x, y, z);
+			world.func_147480_a(x, y, z, true); // Destroy block with drops
+			degradedHardnessMap.remove(posKey); // Remove from the map
 		} else {
+			// Update the degraded hardness in the map
 			degradedHardnessMap.put(posKey, degradedHardness);
 		}
 	}
