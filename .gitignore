@@ -1,4 +1,56 @@
+# Gradle files
 .gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IntelliJ IDEA files
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse files
+.classpath
+.project
 .settings/
+
+# Logs and temp files
+*.log
+*.tmp
+*.bak
+*.swp
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Forge development environment
+run/
+logs/
 bin/
-eclipse/
+crash-reports/
+
+# Minecraft generated files
+eula.txt
+server.properties
+usercache.json
+usernamecache.json
+
+# Configs and saves (optional, if you don’t want to track local changes)
+config/
+saves/
+
+# Gradle dependencies
+/.gradle
+/gradlew
+/gradlew.bat
+/.gradle/
+
+# Compiled output
+*.class
+*.jar
+*.json
+*.png
+*.ogg
