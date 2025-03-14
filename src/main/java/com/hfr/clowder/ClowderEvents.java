@@ -3,6 +3,11 @@ package com.hfr.clowder;
 import java.util.ArrayList;
 import java.util.List;
 
+<<<<<<< Updated upstream
+=======
+import com.hbm.extprop.HbmLivingProps;
+import com.hbm.potion.HbmPotion;
+>>>>>>> Stashed changes
 import com.hfr.blocks.BlockDummyable;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder.ScheduledTeleport;
@@ -30,6 +35,13 @@ import cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.Phase;
 import cpw.mods.fml.common.gameevent.TickEvent.WorldTickEvent;
+<<<<<<< Updated upstream
+=======
+import cpw.mods.fml.common.eventhandler.EventPriority;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.eventhandler.Event;
+
+>>>>>>> Stashed changes
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
@@ -58,23 +70,55 @@ import net.minecraftforge.event.world.BlockEvent.BreakEvent;
 import net.minecraftforge.event.world.BlockEvent.PlaceEvent;
 import net.minecraftforge.event.world.ExplosionEvent.Detonate;
 
+
 public class ClowderEvents {
 
+	// Load MCHeli classes dynamically via ReflectionUtils
+	public static final Class<?> MCH_CONFIG = ReflectionUtils.getClass("mcheli.MCH_Config");
+	public static final Class<?> MCH_ENTITY_BULLET = ReflectionUtils.getClass("mcheli.weapon.MCH_EntityBullet");
+	public static final Class<?> MCH_ENTITY_AIRCRAFT = ReflectionUtils.getClass("mcheli.aircraft.MCH_EntityAircraft");
+	public static final Class<?> MCH_ENTITY_BASE_BULLET = ReflectionUtils.getClass("mcheli.weapon.MCH_EntityBaseBullet");
+	public static final Class<?> MCH_ENTITY_ROCKET = ReflectionUtils.getClass("mcheli.weapon.MCH_EntityRocket");
+
+	// Static block to check if the MCHeli classes are loaded successfully
+	static {
+		if (MCH_CONFIG == null || MCH_ENTITY_BULLET == null || MCH_ENTITY_AIRCRAFT == null ||
+				MCH_ENTITY_BASE_BULLET == null || MCH_ENTITY_ROCKET == null) {
+			System.out.println("[Clowder] Warning: One or more MCHeli classes could not be found. Ensure MCHeli is installed.");
+		} else {
+			System.out.println("[Clowder] Successfully loaded MCHeli classes via reflection.");
+		}
+	}
+
+	// Event handlers for world load/unload
 	@SubscribeEvent
 	public void clowderLoadEvent(WorldEvent.Load event) {
-		
-		if(event.world.provider.dimensionId == 0) {
+		if (event.world.provider.dimensionId == 0) {
+			// Ensure the MCHeli classes are available before proceeding with further logic
+			if (MCH_ENTITY_AIRCRAFT != null) {
+				// Example of using the MCH_EntityAircraft class via reflection (check or interact with the class as needed)
+				// For example, to instantiate or interact with the MCH_EntityAircraft class,
+				// you can use reflection to invoke methods or get fields
+				System.out.println("[Clowder] MCH_EntityAircraft class is available.");
+			}
+
 			ClowderData.getData(event.world);
 		}
 	}
 
 	@SubscribeEvent
 	public void clowderLoadEvent(WorldEvent.Unload event) {
-		
-		if(event.world.provider.dimensionId == 0) {
+		if (event.world.provider.dimensionId == 0) {
+			// Ensure MCHeli classes are available for unloading event
+			if (MCH_ENTITY_AIRCRAFT != null) {
+				// Example of reflection interaction with the MCH_EntityAircraft class
+				System.out.println("[Clowder] MCH_EntityAircraft is still available during world unload.");
+			}
+
 			ClowderData.getData(event.world).markDirty();
 		}
 	}
+
 	
 	/**
 	 * Handles chat events related to clowders, mainly adding the clowder name to a chat message.
@@ -128,6 +172,7 @@ public class ClowderEvents {
 	 * Prevents breaking/placing blocks on foreign clowder territory.
 	 * @param event
 	 */
+
 	@SubscribeEvent
 	public void clowderBlockEvent(BlockEvent event) {
 		
@@ -517,6 +562,35 @@ public class ClowderEvents {
 			}
 		}
 	}
+<<<<<<< Updated upstream
+=======
+
+
+//first check
+
+	@SubscribeEvent(priority = EventPriority.HIGHEST)
+	public void entityInit(EntityJoinWorldEvent event) {
+		Entity entity = event.entity;
+
+		// Check if the entity is relevant using reflection to get classes
+		Class<?> MCH_EntityBaseBullet = ReflectionUtils.getClass("mcheli.weapon.MCH_EntityBaseBullet");
+		Class<?> MCH_EntityBullet = ReflectionUtils.getClass("mcheli.weapon.MCH_EntityBullet");
+		Class<?> MCH_EntityRocket = ReflectionUtils.getClass("mcheli.weapon.MCH_EntityRocket");
+
+		if (!(MCH_EntityBaseBullet.isInstance(entity) || MCH_EntityBullet.isInstance(entity) || MCH_EntityRocket.isInstance(entity))) {
+			return; // Early exit if not relevant
+		}
+
+		// Check ownership and zone using the existing logic
+		Ownership owner = ClowderTerritory.getOwner((int) entity.posX, (int) entity.posZ);
+		if (owner.zone == Zone.SAFEZONE) {
+			entity.setDead(); // Kill the entity if it's in a safezone
+			event.setCanceled(true);
+		}
+	}
+
+
+>>>>>>> Stashed changes
 	
 	/**
 	 * Compares two ownership instances.
@@ -543,6 +617,47 @@ public class ClowderEvents {
 		
 		return false;
 	}
+<<<<<<< Updated upstream
+=======
+//second check
+
+@SubscribeEvent(priority = EventPriority.HIGHEST)
+public void onEntityJoinWorld(EntityJoinWorldEvent event) {
+	Entity entity = event.entity;
+
+	// Check if the entity is any of the relevant types (Minecraft base entities)
+	if (entity instanceof EntityArrow || entity instanceof EntityThrowable || entity instanceof EntityFireball) {
+		// Check if the entity is in a safezone
+		Ownership owner = ClowderTerritory.getOwnerFromInts((int) entity.posX, (int) entity.posZ);
+		if (owner != null && owner.zone == Zone.SAFEZONE) {
+			event.setCanceled(true);  // Cancel the event
+			entity.setDead(); // Kill the entity
+			return;  // Exit immediately to prevent further processing
+		}
+	}
+	// Check if the entity is an MCHeli projectile (using reflection for MCHeli classes)
+	else {
+		// Dynamically load the relevant classes for MCHeli projectiles
+		Class<?> MCH_EntityBullet = ReflectionUtils.getClass("mcheli.weapon.MCH_EntityBullet");
+		Class<?> MCH_EntityBaseBullet = ReflectionUtils.getClass("mcheli.weapon.MCH_EntityBaseBullet");
+		Class<?> MCH_EntityRocket = ReflectionUtils.getClass("mcheli.weapon.MCH_EntityRocket");
+
+		// Check if the entity is one of the MCHeli projectiles
+		if ((MCH_EntityBullet != null && MCH_EntityBullet.isInstance(entity)) ||
+				(MCH_EntityBaseBullet != null && MCH_EntityBaseBullet.isInstance(entity)) ||
+				(MCH_EntityRocket != null && MCH_EntityRocket.isInstance(entity))) {
+
+			// Check if the entity is in a safezone
+			Ownership owner = ClowderTerritory.getOwnerFromInts((int) entity.posX, (int) entity.posZ);
+			if (owner != null && owner.zone == Zone.SAFEZONE) {
+				event.setCanceled(true);  // Cancel the event
+				entity.setDead(); // Kill the entity
+				return;  // Exit immediately to prevent further processing
+			}
+		}
+	}
+}
+>>>>>>> Stashed changes
 	
 	@SubscribeEvent
 	public void onEntityHurt(LivingAttackEvent event) {
@@ -555,6 +670,176 @@ public class ClowderEvents {
 		if(e instanceof EntityPlayer && owner != null && owner.zone == Zone.SAFEZONE)
 			event.setCanceled(true);
 	}
+<<<<<<< Updated upstream
+=======
+	//todo: test that this works and does not fuck up
+	//third check
+	private void checkAndDeleteProjectile(Entity entity) {
+		// Check if the entity is one of the projectiles we care about (Minecraft base or MCHeli)
+		if (entity instanceof EntityArrow || entity instanceof EntityThrowable || entity instanceof EntityFireball) {
+			// Get the owner based on the entity's position
+			Ownership owner = ClowderTerritory.getOwnerFromInts((int) entity.posX, (int) entity.posZ);
+
+			// If the owner exists and it's a safezone, proceed to delete the projectile
+			if (owner != null && owner.zone == Zone.SAFEZONE) {
+				entity.setDead(); // Kill the entity immediately
+			}
+		}
+		// Check if the entity is an MCHeli projectile (dynamically loaded MCHeli classes)
+		else {
+			// Dynamically load the relevant classes for MCHeli projectiles
+			Class<?> MCH_EntityBullet = ReflectionUtils.getClass("mcheli.weapon.MCH_EntityBullet");
+			Class<?> MCH_EntityBaseBullet = ReflectionUtils.getClass("mcheli.weapon.MCH_EntityBaseBullet");
+			Class<?> MCH_EntityRocket = ReflectionUtils.getClass("mcheli.weapon.MCH_EntityRocket");
+
+			// Check if the entity is one of the MCHeli projectiles
+			if ((MCH_EntityBullet != null && MCH_EntityBullet.isInstance(entity)) ||
+					(MCH_EntityBaseBullet != null && MCH_EntityBaseBullet.isInstance(entity)) ||
+					(MCH_EntityRocket != null && MCH_EntityRocket.isInstance(entity))) {
+
+				// Get the owner based on the entity's position
+				Ownership owner = ClowderTerritory.getOwnerFromInts((int) entity.posX, (int) entity.posZ);
+
+				// If the owner exists and it's a safezone, proceed to disable the projectile
+				if (owner != null && owner.zone == Zone.SAFEZONE) {
+					try {
+						// Modify the properties of MCHeli projectiles to neutralize them
+						if (MCH_EntityBullet.isInstance(entity) || MCH_EntityBaseBullet.isInstance(entity)) {
+							// Set explosion power and piercing to 0 using ReflectionUtils
+							ReflectionUtils.setFieldValue(entity, "explosionPower", 0);
+							ReflectionUtils.setFieldValue(entity, "explosionPowerInWater", 0);
+							ReflectionUtils.setFieldValue(entity, "piercing", 0);
+
+							// If a setter for power exists, set it to 0 as well
+							ReflectionUtils.invokeMethod(entity, "setPower", new Class<?>[]{int.class}, 0);
+						}
+					} catch (Exception e) {
+						e.printStackTrace(); // Handle any reflection issues gracefully
+					}
+					entity.setDead(); // Kill the entity immediately
+				}
+			}
+		}
+	}
+
+
+
+
+
+
+
+	@SubscribeEvent
+	public void onEntityDamage(LivingHurtEvent event) {
+
+		EntityLivingBase e = event.entityLiving;
+		DamageSource dmg = event.source;
+
+		// Check if the entity is a player and inside the safezone
+		if (e instanceof EntityPlayer) {
+			int x = (int) e.posX;
+			int y = (int) e.posY;
+			int z = (int) e.posZ;
+			Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
+			if (owner != null && owner.zone == Zone.SAFEZONE) {
+				// Cancel the event to prevent any damage
+				event.setCanceled(true);
+			}
+		}
+	}
+
+	@SubscribeEvent
+	public void onEntityUpdate(LivingEvent.LivingUpdateEvent event) {
+		EntityLivingBase e = event.entityLiving;
+
+		// Check if the entity is a player and inside the safezone
+		if (e instanceof EntityPlayer) {
+			int x = (int) e.posX;
+			int y = (int) e.posY;
+			int z = (int) e.posZ;
+			Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
+			if (owner != null && owner.zone == Zone.SAFEZONE) {
+				// Apply a regeneration effect
+				e.addPotionEffect(new PotionEffect(Potion.regeneration.id, 40));
+				e.addPotionEffect(new PotionEffect(Potion.resistance.id, 40));
+				e.heal(5.0F);
+				//todo: radaway given or just set player's rad to 0 without reflections
+				//fuck it we're importing NTM too
+				e.addPotionEffect(new PotionEffect(HbmPotion.radaway.id, 50));
+				e.addPotionEffect(new PotionEffect(HbmPotion.radx.id, 110));
+				HbmLivingProps.incrementRadiation(e, -HbmLivingProps.getRadiation(e));
+				e.removePotionEffect(HbmPotion.radiation.id);
+
+
+
+				IAttributeInstance knockbackResistance = e.getEntityAttribute(SharedMonsterAttributes.knockbackResistance);
+				if (knockbackResistance != null) {
+					knockbackResistance.setBaseValue(1.0D); // 1.0D for full resistance
+				}
+			} else {
+				// Reset knockback resistance when not in safezone
+				IAttributeInstance knockbackResistance = e.getEntityAttribute(SharedMonsterAttributes.knockbackResistance);
+				if (knockbackResistance != null) {
+					knockbackResistance.setBaseValue(0.0D); // Reset to default
+				}
+			}
+		}
+	}
+
+	@SubscribeEvent
+	public void onExplosionDetonate(ExplosionEvent.Detonate event) {
+		World world = event.world;
+		Explosion explosion = event.explosion;
+		Vec3 explosionPos = Vec3.createVectorHelper(explosion.explosionX, explosion.explosionY, explosion.explosionZ);
+
+		// Convert the explosion position to integer coordinates for safezone checking
+		int x = MathHelper.floor_double(explosionPos.xCoord);
+		int z = MathHelper.floor_double(explosionPos.zCoord);
+
+		// Check if the explosion is within a safezone
+		Ownership owner = ClowderTerritory.getOwner(x, z);
+		if (owner != null && owner.zone == Zone.SAFEZONE) {
+			// Clear the affected block list to prevent block damage
+			event.getAffectedBlocks().clear();
+			event.setCanceled(true);
+
+			// Clear the affected entities list to prevent entity damage
+			//event.getAffectedEntities().clear();
+		}
+	}
+
+	@SubscribeEvent
+	public void onBlockBreak(BlockEvent.BreakEvent event) {
+		World world = event.world;
+		int x = event.x;
+		int y = event.y;
+		int z = event.z;
+
+		// Check if the block is in a safezone
+		Ownership owner = ClowderTerritory.getOwner(x, z);
+		if (owner != null && owner.zone == Zone.SAFEZONE) {
+			Entity entity = event.getPlayer();
+
+			// Dynamically load the MCH_EntityAircraft class from MCHeli mod
+			Class<?> MCH_EntityAircraft = ReflectionUtils.getClass("mcheli.MCH_EntityAircraft");
+
+			// If the entity is an instance of MCH_EntityAircraft, cancel the event
+			if (MCH_EntityAircraft != null && MCH_EntityAircraft.isInstance(entity)) {
+				event.setCanceled(true); // Prevent block break if it's an MCH entity
+			}
+
+			// Always cancel block break if in a safezone
+			event.setCanceled(true);
+		}
+	}
+
+
+
+
+
+
+
+
+>>>>>>> Stashed changes
 	
 	/**
 	 * Handles player ticks for clowders, mainly the flag popup and online times (with retreat kick)

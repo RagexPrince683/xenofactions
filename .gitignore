@@ -1,4 +1,32 @@
 .gradle/
 .settings/
 bin/
+<<<<<<< Updated upstream
 eclipse/
+=======
+crash-reports/
+
+# Minecraft generated files
+eula.txt
+server.properties
+usercache.json
+usernamecache.json
+
+# Configs and saves (optional, if you don’t want to track local changes)
+config/
+saves/
+
+# Gradle dependencies
+/.gradle
+/gradlew
+/gradlew.bat
+/.gradle/
+
+# Compiled output
+*.class
+*.jar
+*.json
+*.png
+*.ogg
+*.xml
+>>>>>>> Stashed changes
