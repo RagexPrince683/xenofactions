@@ -9,6 +9,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.JsonToNBT;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.DamageSource;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
@@ -255,14 +257,20 @@ public class MainRegistry
 		try {
 			writer = new FileWriter(SAVE_FILE);
 			List<DropEntry> entries = new ArrayList<DropEntry>();
+
 			for (int i = 0; i < MainRegistry.customDrops.size(); i++) {
 				ItemStack stack = MainRegistry.customDrops.get(i);
 				String itemName = Item.itemRegistry.getNameForObject(stack.getItem()); // Get item registry name
-				int count = stack.stackSize; // Replace getCount with stackSize
+				int metadata = stack.getItemDamage(); // Store metadata (subtype)
+				int count = stack.stackSize; // Store count
 				double chance = MainRegistry.customDropChances.get(i);
 
-				entries.add(new DropEntry(itemName, count, chance));
+				// Convert NBT to a string format for saving
+				String nbtData = stack.hasTagCompound() ? stack.getTagCompound().toString() : null;
+
+				entries.add(new DropEntry(itemName, metadata, count, chance, nbtData));
 			}
+
 			GSON.toJson(entries, writer);
 		} catch (Exception e) {
 			System.err.println("Failed to save stone drops: " + e.getMessage());
@@ -277,9 +285,10 @@ public class MainRegistry
 		}
 	}
 
+
 	public static void loadCustomDrops() {
 		if (!SAVE_FILE.exists()) {
-			return; // Nothing to load
+			return;
 		}
 
 		FileReader reader = null;
@@ -292,14 +301,24 @@ public class MainRegistry
 			MainRegistry.customDropChances.clear();
 
 			for (DropEntry entry : entries) {
-				// Get item from registry using the saved name
 				Item item = (Item) Item.itemRegistry.getObject(entry.itemName);
 				if (item != null) {
-					ItemStack stack = new ItemStack(item, entry.count); // Create ItemStack
+					ItemStack stack = new ItemStack(item, entry.count, entry.metadata); // Create stack with metadata
+
+					// Restore NBT if present
+					if (entry.nbtData != null) {
+						try {
+							NBTTagCompound nbt = (NBTTagCompound) JsonToNBT.func_150315_a(entry.nbtData); // 1.7.10 NBT parsing method sar you did not fuacking cast it
+							stack.setTagCompound(nbt);
+						} catch (Exception e) {
+							System.err.println("Failed to parse NBT for item: " + entry.itemName);
+						}
+					}
+
 					MainRegistry.customDrops.add(stack);
 					MainRegistry.customDropChances.add(entry.chance);
 				} else {
-					System.err.println("Item not found for name: " + entry.itemName);
+					System.err.println("Item not found: " + entry.itemName);
 				}
 			}
 		} catch (Exception e) {
@@ -315,17 +334,23 @@ public class MainRegistry
 		}
 	}
 
+
 	private static class DropEntry {
 		String itemName;
+		int metadata;
 		int count;
 		double chance;
+		String nbtData; // Store NBT as a string
 
-		DropEntry(String itemName, int count, double chance) {
+		DropEntry(String itemName, int metadata, int count, double chance, String nbtData) {
 			this.itemName = itemName;
+			this.metadata = metadata;
 			this.count = count;
 			this.chance = chance;
+			this.nbtData = nbtData;
 		}
 	}
+
 
 	@EventHandler
 	public void PreLoad(FMLPreInitializationEvent PreEvent)
