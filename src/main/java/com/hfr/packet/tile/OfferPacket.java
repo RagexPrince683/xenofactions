@@ -69,47 +69,25 @@ public class OfferPacket implements IMessage {
 		@Override
 		@SideOnly(Side.CLIENT)
 		public IMessage onMessage(OfferPacket m, MessageContext ctx) {
-			
 			try {
-				
-				MarketData data = MarketData.getData(Minecraft.getMinecraft().theWorld);
-				
-				NBTTagCompound nbt = m.buffer.readNBTTagCompoundFromBuffer();
-				data.offers.clear();
-				data.readMarketFromPacket(nbt);
-				MachineMarket.name = m.name;
-				List<ItemStack[]> offers = data.offers.get(m.name);
-				
-				if(offers == null)
-					offers = new ArrayList();
-				
-				GUIMachineMarket.offers = offers;
-				
-				/*System.out.println("Offers: " + data.offers.size());
-				
-				for(Entry<String, List<ItemStack[]>> entry : data.offers.entrySet()) {
-					
-					System.out.println(entry.getKey() + ": " + entry.getValue().size());
-					
-					for(ItemStack[] offer : entry.getValue()) {
-						
-						System.out.println(" Offer:");
-						
-						for(ItemStack stack : offer) {
-							
-							if(stack == null)
-								System.out.println("  NULL");
-							else
-								System.out.println("  " + stack.getDisplayName());
-						}
-					}
-				}*/
-				
-			} catch (IOException e) {
+				// Load the latest market data from JSON
+				MarketData.loadMarketData();
 
+				// Get market offers
+				List<ItemStack[]> offers = MarketData.getOffers(m.name);
+
+				if (offers == null) {
+					offers = new ArrayList<ItemStack[]>();
+				}
+
+				// Update the machine and GUI with the loaded market offers
+				MachineMarket.name = m.name;
+				GUIMachineMarket.offers = offers;
+
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			
+
 			return null;
 		}
 	}

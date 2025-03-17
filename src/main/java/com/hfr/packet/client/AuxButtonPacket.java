@@ -36,6 +36,8 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.Vec3;
 
+import java.util.List;
+
 public class AuxButtonPacket implements IMessage {
 
 	int x;
@@ -266,71 +268,68 @@ public class AuxButtonPacket implements IMessage {
 					else if(m.id == 1)
 						foundry.increment();
 				}
-				
-				if(te instanceof TileEntityMarket) {
 
-					MarketData data = MarketData.getData(p.worldObj);
-					
-					TileEntityMarket market = (TileEntityMarket)te;
-					
-					if(data.offers.get(market.name) == null) {
-						System.out.println("There's no market with the name");
-						System.out.println(market.name);
+				if (te instanceof TileEntityMarket) {
+					TileEntityMarket market = (TileEntityMarket) te;
+
+					// Get the market's offers from JSON
+					List<ItemStack[]> offers = MarketData.getOffers(market.name);
+
+					if (offers.isEmpty()) {
+						System.out.println("There's no market with the name: " + market.name);
 						return null;
 					}
-					
-					if(m.value < 0 || m.value >= data.offers.get(market.name).size()) {
-						System.out.println("The selected offer is out of bounds");
-						System.out.println(market.name);
-						System.out.println(m.value);
+
+					if (m.value < 0 || m.value >= offers.size()) {
+						System.out.println("The selected offer is out of bounds for market: " + market.name);
+						System.out.println("Offer index: " + m.value);
 						return null;
 					}
-					
-					ItemStack[] offer = data.offers.get(market.name).get(m.value);
-					
-					if(offer != null) {
-						
-						ItemStack item = offer[0];
-						
-						boolean flag = true;
-						
-						for(int i = 1; i < 4; i++) {
-							
-							if(offer[i] != null) {
-								
+
+					ItemStack[] offer = offers.get(m.value);
+
+					if (offer != null) {
+						ItemStack item = offer[0]; // First item is the one being purchased
+						boolean hasRequiredItems = true;
+
+						// Check if player has required currency items
+						for (int i = 1; i < 4; i++) {
+							if (offer[i] != null) {
 								int count = countItems(p, offer[i].getItem(), offer[i].getItemDamage());
-								
-								if(count < offer[i].stackSize)
-									flag = false;
+								if (count < offer[i].stackSize) {
+									hasRequiredItems = false;
+								}
 							}
 						}
-						
-						if(flag) {
-							
+
+						if (hasRequiredItems) {
+							// Success: Process transaction
 							p.worldObj.playSoundAtEntity(p, "hfr:block.buttonYes", 1.0F, 1.0F);
-							
-							for(int i = 1; i < 4; i++) {
-								
-								if(offer[i] != null) {
-									
+
+							// Remove currency items
+							for (int i = 1; i < 4; i++) {
+								if (offer[i] != null) {
 									removeItems(p, offer[i].getItem(), offer[i].getItemDamage(), offer[i].stackSize);
 								}
 							}
-							
-							if(!p.inventory.addItemStackToInventory(item.copy()))
+
+							// Give purchased item
+							if (!p.inventory.addItemStackToInventory(item.copy())) {
 								p.dropPlayerItemWithRandomChoice(item.copy(), true);
-							
+							}
+
 							p.inventoryContainer.detectAndSendChanges();
 						} else {
-							
+							// Failure: Not enough currency
 							p.worldObj.playSoundAtEntity(p, "hfr:block.buttonNo", 1.0F, 1.0F);
 							p.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "You lack required items."));
 						}
 					} else {
-						System.out.println("The selected offer is apparently null");
+						System.out.println("The selected offer is null for market: " + market.name);
 					}
 				}
-				
+
+
 			} catch (Exception x) { }
 			
 			return null;
