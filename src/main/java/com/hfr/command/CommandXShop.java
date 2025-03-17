@@ -80,7 +80,7 @@ public class CommandXShop extends CommandBase {
 					}
 				}
 
-				// Add offer to JSON-based MarketData
+				// Add offer to JSON-based MarketData (converted to ItemEntry)
 				MarketData.addOffer(shopName, offer);
 
 				sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Offer has been added to shop " + shopName + "!"));
@@ -105,7 +105,7 @@ public class CommandXShop extends CommandBase {
 
 				List<ItemStack[]> offers = MarketData.getOffers(shopName);
 
-				if (offers.isEmpty()) {
+				if (offers == null || offers.isEmpty()) {
 					sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Shop " + shopName + " has no offers!"));
 					return;
 				}
@@ -117,7 +117,7 @@ public class CommandXShop extends CommandBase {
 
 				// Remove the selected offer
 				offers.remove(offerIndex);
-				MarketData.offers.put(shopName, offers);
+				MarketData.offers.put(shopName, MarketData.convertToItemEntryList(offers));
 				MarketData.saveMarketData();
 
 				sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Offer has been removed from shop " + shopName + "!"));
@@ -127,6 +127,7 @@ public class CommandXShop extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + getCommandUsage(sender)));
 		}
 	}
+
 
 
 	public int getRequiredPermissionLevel()

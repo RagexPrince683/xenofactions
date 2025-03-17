@@ -60,13 +60,12 @@ public class MarketData {
 	}
 
 	public static void addOffer(String market, ItemStack[] items) {
-		List<ItemEntry[]> marketOffers;
-		if (offers.containsKey(market)) {
-			marketOffers = offers.get(market);
-		} else {
+		List<ItemEntry[]> marketOffers = offers.get(market);
+
+		if (marketOffers == null) {
 			marketOffers = new ArrayList<ItemEntry[]>();
-			offers.put(market, marketOffers);
 		}
+
 		ItemEntry[] entries = new ItemEntry[items.length];
 
 		for (int i = 0; i < items.length; i++) {
@@ -82,10 +81,13 @@ public class MarketData {
 
 	public static List<ItemStack[]> getOffers(String market) {
 		List<ItemStack[]> result = new ArrayList<ItemStack[]>();
+		List<ItemEntry[]> entryList = offers.get(market);
 
-		if (!offers.containsKey(market)) return result;
+		if (entryList == null) {
+			return result;
+		}
 
-		for (ItemEntry[] entryArray : offers.get(market)) {
+		for (ItemEntry[] entryArray : entryList) {
 			ItemStack[] stackArray = new ItemStack[entryArray.length];
 			for (int i = 0; i < entryArray.length; i++) {
 				if (entryArray[i] != null) {
@@ -96,6 +98,25 @@ public class MarketData {
 		}
 		return result;
 	}
+
+	public static List<ItemEntry[]> convertToItemEntryList(List<ItemStack[]> stackOffers) {
+		List<ItemEntry[]> convertedOffers = new ArrayList<ItemEntry[]>();
+
+		for (ItemStack[] stackArray : stackOffers) {
+			ItemEntry[] entryArray = new ItemEntry[stackArray.length];
+			for (int i = 0; i < stackArray.length; i++) {
+				if (stackArray[i] != null) {
+					entryArray[i] = new ItemEntry(stackArray[i]);
+				}
+			}
+			convertedOffers.add(entryArray);
+		}
+
+		return convertedOffers;
+	}
+
+
+
 
 	private static class ItemEntry {
 		String itemName;
