@@ -6,7 +6,6 @@ import com.hfr.entity.logic.EntityNuclearBlast;
 import com.hfr.entity.missile.EntityMissileMartin;
 import com.hfr.entity.missile.EntityMissilePegasus;
 import com.hfr.entity.missile.EntityMissileShell;
-import com.hfr.entity.missile.EntityMissileSpear;
 import com.hfr.items.ModItems;
 import com.hfr.main.MainRegistry;
 import com.hfr.main.ReflectionEngine;
@@ -41,40 +40,7 @@ public class SLBMHandler {
 				
 				double dist = Math.sqrt(Math.pow(player.posX - xCoord, 2) + Math.pow(player.posZ - zCoord, 2));
 				
-				if(dist <= range) {
-					
-					switch(type) {
-					//Martin-2
-					case 1:
-						EntityMissileMartin martin = new EntityMissileMartin(world, posX, posY, posZ, xCoord, zCoord, strength, warhead);
-						world.spawnEntityInWorld(martin);
-						world.playSoundEffect(posX, posY, posZ, "hfr:weapon.missileTakeOff", 2.0F, 1.0F);
-						break;
-					//Tempest
-					case 2:
-						EntityMissilePegasus tempest = new EntityMissilePegasus(world, posX, posY, posZ, xCoord, zCoord, strength, warhead);
-						world.spawnEntityInWorld(tempest);
-						world.playSoundEffect(posX, posY, posZ, "hfr:weapon.missileTakeOff", 2.0F, 1.0F);
-						break;
-					//Spear
-					case 3:
-						EntityMissileSpear spear = new EntityMissileSpear(world, posX, posY, posZ, xCoord, zCoord, strength, warhead);
-						world.spawnEntityInWorld(spear);
-						world.playSoundEffect(posX, posY, posZ, "hfr:weapon.missileTakeOff", 2.0F, 1.0F);
-						break;
-					//Pepper
-					case 4:
-						EntityMissileShell pepper = new EntityMissileShell(world, posX, posY, posZ, xCoord, zCoord, strength, warhead);
-						world.spawnEntityInWorld(pepper);
-						world.playSoundEffect(posX, posY, posZ, "hfr:block.navalFire", 2.0F, 1.0F);
-						break;
-					}
-					
-					player.inventory.consumeInventoryItem(missile);
-					//world.playSoundEffect(posX, posY, posZ, "hfr:block.buttonYes", 1.0F, 1.0F);
-					entVehicle.getEntityData().setLong("slbmLastShot", System.currentTimeMillis());
-					return;
-				}
+
 			}
 
 			world.playSoundEffect(posX, posY, posZ, "hfr:block.buttonNo", 1.0F, 1.0F);

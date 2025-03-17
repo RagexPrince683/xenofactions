@@ -152,13 +152,10 @@ public class ClientProxy extends ServerProxy
 
 		RenderingRegistry.registerEntityRenderingHandler(EntityMissileMartin.class, new RenderMissileMartin());
 		RenderingRegistry.registerEntityRenderingHandler(EntityMissilePegasus.class, new RenderMissilePegasus());
-		RenderingRegistry.registerEntityRenderingHandler(EntityMissileSpear.class, new RenderMissileSpear());
+
 		RenderingRegistry.registerEntityRenderingHandler(EntityMissileShell.class, new RenderTom());
 
-		RenderingRegistry.registerEntityRenderingHandler(EntityMissileDevon1.class, new RenderMissileSpear());
-		RenderingRegistry.registerEntityRenderingHandler(EntityMissileDevon2.class, new RenderMissileSpear());
-		RenderingRegistry.registerEntityRenderingHandler(EntityMissileDevon3.class, new RenderMissileSpear());
-		RenderingRegistry.registerEntityRenderingHandler(EntityMissileCruise1.class, new RenderMissileSpear());
+		
 
 		RenderingRegistry.registerEntityRenderingHandler(EntityEMP.class, new RenderEmpty());
 		RenderingRegistry.registerEntityRenderingHandler(EntityBlast.class, new RenderEmpty());
