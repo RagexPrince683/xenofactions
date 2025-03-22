@@ -6,18 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="7e885066-d568-4144-b5ab-e44ceb1a4b6a" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/hfr/blocks/weapon/LaunchPad.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/hfr/blocks/weapon/LaunchPad.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/hfr/entity/missile/EntityMissileBaseCruise.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/hfr/entity/missile/EntityMissileCruise1.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/hfr/entity/missile/EntityMissileDevon1.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/hfr/entity/missile/EntityMissileDevon2.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/hfr/entity/missile/EntityMissileDevon3.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/hfr/entity/missile/EntityMissileSpear.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/hfr/handler/SLBMHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/hfr/handler/SLBMHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/hfr/main/ClientProxy.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/hfr/main/ClientProxy.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/hfr/main/MainRegistry.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/hfr/main/MainRegistry.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/hfr/render/entity/RenderMissileSpear.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/hfr/render/entity/RenderMissileSpear.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/hfr/tileentity/machine/TileEntityMachineRadar.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/hfr/tileentity/machine/TileEntityMachineRadar.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
