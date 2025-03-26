@@ -798,18 +798,22 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 						Object radiation = ReflectionUtils.getStaticFieldValue(HbmPotion, "radiation");
 
 						if (radaway != null && radx != null && radiation != null) {
-							int radawayId = ((Number) ReflectionUtils.getFieldValue(radaway, "id")).intValue();
-							int radxId = ((Number) ReflectionUtils.getFieldValue(radx, "id")).intValue();
-							int radiationId = ((Number) ReflectionUtils.getFieldValue(radiation, "id")).intValue();
+							Integer radawayId = (Integer) ReflectionUtils.getFieldValue(radaway, "id");
+							Integer radxId = (Integer) ReflectionUtils.getFieldValue(radx, "id");
+							Integer radiationId = (Integer) ReflectionUtils.getFieldValue(radiation, "id");
 
-							e.addPotionEffect(new PotionEffect(radawayId, 50));
-							e.addPotionEffect(new PotionEffect(radxId, 110));
+							if (radawayId != null && radxId != null && radiationId != null) {
+								e.addPotionEffect(new PotionEffect(radawayId, 50));
+								e.addPotionEffect(new PotionEffect(radxId, 110));
 
-							Object result = ReflectionUtils.invokeStaticMethod(HbmLivingProps, "getRadiation", new Class<?>[]{EntityLivingBase.class}, e);
-							double currentRadiation = result instanceof Number ? ((Number) result).doubleValue() : 0.0;
+								Object result = ReflectionUtils.invokeStaticMethod(HbmLivingProps, "getRadiation", new Class<?>[]{EntityLivingBase.class}, e);
+								float currentRadiation = result instanceof Number ? ((Number) result).floatValue() : 0.0f;
 
-							ReflectionUtils.invokeStaticMethod(HbmLivingProps, "incrementRadiation", new Class<?>[]{EntityLivingBase.class, float.class}, e, (float) -currentRadiation);
-							ReflectionUtils.invokeMethod(e, "removePotionEffect", new Class<?>[]{int.class}, radiationId);
+								ReflectionUtils.invokeStaticMethod(HbmLivingProps, "incrementRadiation", new Class<?>[]{EntityLivingBase.class, float.class}, e, -currentRadiation);
+								ReflectionUtils.invokeMethod(e, "removePotionEffect", new Class<?>[]{int.class}, radiationId);
+							} else {
+								System.out.println("Failed to retrieve potion IDs.");
+							}
 						} else {
 							System.out.println("Failed to get HBM potion effects. One or more fields are null.");
 						}
