@@ -54,3 +54,5 @@ saves/
 *.json
 *.png
 *.ogg
+.idea/gradle.xml
+.idea/workspace.xml
