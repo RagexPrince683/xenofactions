@@ -793,28 +793,27 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 					if (HbmPotion != null && HbmLivingProps != null) {
 						System.out.println("Successfully loaded HBM classes.");
 
-						// Get static fields from HbmPotion: radaway, radx, and radiation
+						// Get static fields
 						Object radaway = ReflectionUtils.getStaticFieldValue(HbmPotion, "radaway");
 						Object radx = ReflectionUtils.getStaticFieldValue(HbmPotion, "radx");
 						Object radiation = ReflectionUtils.getStaticFieldValue(HbmPotion, "radiation");
 
 						if (radaway != null && radx != null && radiation != null) {
-							// Get the potion IDs using reflection and convert them to int
+							// Get the potion IDs
 							int radawayId = ((Number) ReflectionUtils.getFieldValue(radaway, "id")).intValue();
 							int radxId = ((Number) ReflectionUtils.getFieldValue(radx, "id")).intValue();
 							int radiationId = ((Number) ReflectionUtils.getFieldValue(radiation, "id")).intValue();
 
 							// Apply Radaway and RadX effects
-							e.addPotionEffect(new PotionEffect(radawayId, 50));  // Radaway for 50 ticks
-							e.addPotionEffect(new PotionEffect(radxId, 110));   // RadX for 110 ticks
+							e.addPotionEffect(new PotionEffect(radawayId, 50));  // Radaway
+							e.addPotionEffect(new PotionEffect(radxId, 110));   // RadX
 
-							// Reset radiation using reflection
+							// Reset radiation
 							Object result = ReflectionUtils.invokeStaticMethod(HbmLivingProps, "getRadiation", new Class<?>[]{EntityLivingBase.class}, e);
 							double currentRadiation = result instanceof Number ? ((Number) result).doubleValue() : 0.0;
 
-							// Decrease the radiation by the current amount (reset to 0)
-							ReflectionUtils.invokeStaticMethod(HbmLivingProps, "incrementRadiation", new Class<?>[]{EntityLivingBase.class, float.class}, e, (float) -currentRadiation);
-							// Remove the radiation effect from the entity
+							// Reset radiation level
+							ReflectionUtils.invokeStaticMethod(HbmLivingProps, "incrementRadiation", new Class<?>[]{EntityLivingBase.class, double.class}, e, -currentRadiation);
 							ReflectionUtils.invokeMethod(e, "removePotionEffect", new Class<?>[]{int.class}, radiationId);
 						} else {
 							System.out.println("Failed to get HBM potion effects. One or more fields are null.");
@@ -827,10 +826,10 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 					ex.printStackTrace();
 				}
 
-				// Set knockback resistance to full
+				// Set knockback resistance
 				IAttributeInstance knockbackResistance = e.getEntityAttribute(SharedMonsterAttributes.knockbackResistance);
 				if (knockbackResistance != null) {
-					knockbackResistance.setBaseValue(1.0D);
+					knockbackResistance.setBaseValue(1.0D);  // Full resistance
 				} else {
 					System.out.println("Knockback resistance attribute is null.");
 				}
@@ -838,14 +837,13 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 				// Reset knockback resistance when not in safezone
 				IAttributeInstance knockbackResistance = e.getEntityAttribute(SharedMonsterAttributes.knockbackResistance);
 				if (knockbackResistance != null) {
-					knockbackResistance.setBaseValue(0.0D);
+					knockbackResistance.setBaseValue(0.0D);  // Default
 				} else {
 					System.out.println("Knockback resistance attribute is null.");
 				}
 			}
 		}
 	}
-
 
 
 	@SubscribeEvent
