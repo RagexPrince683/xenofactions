@@ -91,90 +91,7 @@ public class CommonEventHandler {
 			Object vehicle = ReflectionEngine.getVehicleFromSeat(player.ridingEntity);
 
 			// if the player is sitting in a vehicle with radar support
-			if (vehicle != null
-					&& (ReflectionEngine.hasValue(vehicle, Boolean.class, "hasRadar", false)
-							|| ReflectionEngine.hasValue(vehicle, Boolean.class, "hasPlaneRadar", false))
-					&& !player.isPotionActive(HFRPotion.emp)) {
-
-				int delay = ReflectionEngine.hasValue(vehicle, Integer.class, "radarRefreshDelay", 4);
-
-				// stop radar operation if the delay isn't ready
-				if (player.ticksExisted % delay != 0)
-					return;
-
-				float range = ReflectionEngine.hasValue(vehicle, Float.class, "radarRange", 1.0F);
-				int offset = ReflectionEngine.hasValue(vehicle, Integer.class, "radarPositionOffset", 0);
-				boolean isPlaneRadar = ReflectionEngine.hasValue(vehicle, Boolean.class, "hasPlaneRadar", false);
-				float altitude = isPlaneRadar ? MainRegistry.fPlaneAltitude : MainRegistry.fTankAltitude;
-				double des = isPlaneRadar ? altitude : player.posY - MainRegistry.fOffset;
-
-				boolean sufficient = altitude <= player.posY;
-				List<Blip> blips = new ArrayList();
-
-				if (sufficient) {
-					List<EntityPlayer> entities = getPlayersInAABB(player.worldObj, player.posX, player.posY,
-							player.posZ, range);
-
-					for (EntityPlayer entity : entities) {
-
-						// player does not detect himself
-						if (entity == player)
-							continue;
-
-						// only detect other players that are in a flans
-						// vehicle, players and targets must not be covered by
-						// blocks
-						if (player.worldObj.getHeightValue((int) player.posX, (int) player.posZ) <= player.posY + 2
-								&& player.worldObj.getHeightValue((int) entity.posX, (int) entity.posZ) <= entity.posY
-										+ 2) {
-
-							Object bogey = ReflectionEngine.getVehicleFromSeat(entity.ridingEntity);
-
-							if (bogey == vehicle || bogey == null)
-								continue;
-
-							// only detect if visible on radar or the radar is
-							// on a ground vehicle
-							if (ReflectionEngine.hasValue(bogey, Boolean.class, "radarVisible", false)) {
-
-								// Vec3 vec =
-								// Vec3.createVectorHelper(entity.posX -
-								// player.posX, entity.posY, entity.posZ -
-								// player.posZ);
-
-								Entity entBogey = (Entity) bogey;
-
-								Vec3 vec = Vec3.createVectorHelper(entBogey.posX - player.posX, entBogey.posY,
-										entBogey.posZ - player.posZ);
-
-								// default: 5 (questionmark)
-								// plane: 1 (circled blip)
-								// tank: 3 (red blip)
-								int type = 5;
-								if ("EntityPlane".equals(bogey.getClass().getSimpleName()))
-									type = 1;
-								if ("EntityVehicle".equals(bogey.getClass().getSimpleName()))
-									type = 3;
-
-								blips.add(new Blip((float) -vec.xCoord, (float) vec.yCoord, (float) -vec.zCoord,
-										(float) entBogey.posX, (float) entBogey.posZ, type));
-
-							}
-						}
-					}
-				}
-
-				// directed traffic to avoid spammy broadcast
-				PacketDispatcher.wrapper.sendTo(
-						new SRadarPacket(blips.toArray(new Blip[0]), sufficient, true, offset, (int) range),
-						(EntityPlayerMP) player);
-
-			} else {
-				// if the player does not have a radar up, he will only receive
-				// destructor packets that remove all blips and deny radar
-				// screens
-				PacketDispatcher.wrapper.sendTo(new SRadarPacket(null, false, false, 0, 0), (EntityPlayerMP) player);
-			}
+			//gfys retard
 
 			player.worldObj.theProfiler.endSection();
 			/// RADAR SHIT ///
@@ -288,12 +205,7 @@ public class CommonEventHandler {
 		
 		Object vehicle = ReflectionEngine.getVehicleFromSeat(player.ridingEntity);
 
-		if(vehicle != null && (ReflectionEngine.hasValue(vehicle, Boolean.class, "hasRadar", false) || ReflectionEngine.hasValue(vehicle, Boolean.class, "hasPlaneRadar", false)) && !player.isPotionActive(HFRPotion.emp)) {
-			
-			boolean digitalRadar = ReflectionEngine.hasValue(vehicle, Boolean.class, "digitalRadar", false);
-			
-			return digitalRadar;
-		}
+
 		
 		return false;
 	}

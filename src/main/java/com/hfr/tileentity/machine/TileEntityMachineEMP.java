@@ -76,9 +76,7 @@ public class TileEntityMachineEMP extends TileEntityMachineBase implements IEner
 						
 						if(vec.lengthVector() <= range) {
 							
-							if(e instanceof EntityPlayer) {
-								((EntityPlayer)e).addPotionEffect(new PotionEffect(HFRPotion.emp.id, 5 * 20, 0, true));
-							}
+
 							
 							if(e instanceof IEmpable) {
 								((IEmpable)e).pulse();

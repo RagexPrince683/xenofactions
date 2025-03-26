@@ -775,6 +775,8 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 				e.heal(5.0F);
 				//todo: radaway given or just set player's rad to 0 without reflections
 				//fuck it we're importing NTM too
+				//FUCK NTM FUCK EVERYTHING ABOUT NTM WHY ARE YOU USING REFLECTIONS FOR FUCKING POTIONS YOU STUPID ASS FUCKING RETARD
+				//FUCK YOUR ENTIRE EBT CARD ASS MOD ITS COMPLETE PONY BRONIE HORSE SHIT AND YOU SHOULD DIE IN A FIRE
 				e.addPotionEffect(new PotionEffect(HbmPotion.radaway.id, 50));
 				e.addPotionEffect(new PotionEffect(HbmPotion.radx.id, 110));
 				HbmLivingProps.incrementRadiation(e, -HbmLivingProps.getRadiation(e));

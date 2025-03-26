@@ -14,14 +14,15 @@ import net.minecraft.util.ResourceLocation;
 
 public class HFRPotion extends Potion {
 
-	public static HFRPotion emp;
+	//public static HFRPotion emp;
+	//fuck all of your retarded ass mods
 	
 	public HFRPotion(int id, boolean isBad, int color) {
 		super(id, isBad, color);
 	}
 
 	public static void init() {
-		emp = registerPotion(MainRegistry.empID, true, 0x0000FF, "potion.hfr_emp", 0, 0);
+		//emp = registerPotion(MainRegistry.empID, true, 0x0000FF, "potion.hfr_emp", 0, 0);
 	}
 
 	public static HFRPotion registerPotion(int id, boolean isBad, int color, String name, int x, int y) {
@@ -63,8 +64,8 @@ public class HFRPotion extends Potion {
 
 	public void performEffect(EntityLivingBase entity, int level) {
 
-		if(this == emp) {
-		}
+		//if(this == emp) {
+		//}
 	}
 
 	public boolean isReady(int par1, int par2) {

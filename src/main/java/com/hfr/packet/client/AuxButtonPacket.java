@@ -103,15 +103,7 @@ public class AuxButtonPacket implements IMessage {
 				if (te instanceof TileEntityRailgun) {
 					TileEntityRailgun gun = (TileEntityRailgun)te;
 					
-					if(m.id == 0) {
-						if(gun.setAngles(p.isPotionActive(HFRPotion.emp))) {
-							p.worldObj.playSoundEffect(m.x, m.y, m.z, "hfr:block.buttonYes", 1.0F, 1.0F);
-							p.worldObj.playSoundEffect(m.x, m.y, m.z, "hfr:block.railgunOrientation", 1.0F, 1.0F);
-							PacketDispatcher.wrapper.sendToAll(new RailgunCallbackPacket(m.x, m.y, m.z, gun.pitch, gun.yaw));
-						} else {
-							p.worldObj.playSoundEffect(m.x, m.y, m.z, "hfr:block.buttonNo", 1.0F, 1.0F);
-						}
-					}
+
 					
 					if(m.id == 1) {
 						if(gun.canFire()) {
@@ -128,15 +120,7 @@ public class AuxButtonPacket implements IMessage {
 				if (te instanceof TileEntityNaval) {
 					TileEntityNaval gun = (TileEntityNaval)te;
 					
-					if(m.id == 0) {
-						if(gun.setAngles(p.isPotionActive(HFRPotion.emp))) {
-							p.worldObj.playSoundEffect(m.x, m.y, m.z, "hfr:block.buttonYes", 1.0F, 1.0F);
-							p.worldObj.playSoundEffect(m.x, m.y, m.z, "hfr:block.railgunOrientation", 1.0F, 1.0F);
-							PacketDispatcher.wrapper.sendToAll(new RailgunCallbackPacket(m.x, m.y, m.z, gun.pitch, gun.yaw));
-						} else {
-							p.worldObj.playSoundEffect(m.x, m.y, m.z, "hfr:block.buttonNo", 1.0F, 1.0F);
-						}
-					}
+
 					
 					if(m.id == 1) {
 						if(gun.canFire()) {
