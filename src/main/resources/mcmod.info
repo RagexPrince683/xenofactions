@@ -1,16 +1,17 @@
 [
-{
-  "modid": "hfr",
-  "name": "XenoFactions",
-  "description": "xradar skibidi toilet edition",
-  "version": "1.5.x",
-  "mcversion": "1.7.10",
-  "url": "discord.gg/EfrnP8WJtj",
-  "updateUrl": "",
-  "authorList": ["Ragex", "TheBobcat"],
-  "credits": "CrusaderFire for testing this hot garbage and Ragex for actually debugging it",
-  "logoFile": "assets/hfr/textures/logo.png",
-  "screenshots": [],
-  "dependencies": []
-}
+  {
+    "modid": "hfr",
+    "name": "XenoFactions",
+    "description": "xradar skibidi toilet edition",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "discord.gg/EfrnP8WJtj",
+    "updateUrl": "",
+    "authorList": ["Ragex", "TheBobcat"],
+    "credits": "CrusaderFire for testing this hot garbage and Ragex for actually debugging it",
+    "logoFile": "assets/hfr/textures/logo.png",
+    "screenshots": [],
+    "dependencies": []
+  }
 ]
+
