@@ -773,6 +773,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 	public void onEntityUpdate(LivingEvent.LivingUpdateEvent event) {
 		EntityLivingBase e = event.entityLiving;
 
+		// Check if the entity is a player and inside the safezone
 		if (e instanceof EntityPlayer) {
 			int x = (int) e.posX;
 			int y = (int) e.posY;
@@ -780,66 +781,57 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 			Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
 
 			if (owner != null && owner.zone == Zone.SAFEZONE) {
-				// Apply standard Minecraft effects
-				e.addPotionEffect(new PotionEffect(Potion.regeneration.id, 40));  // Regeneration
-				e.addPotionEffect(new PotionEffect(Potion.resistance.id, 40));    // Resistance
-				e.heal(5.0F);  // Heal
+				// Apply Minecraft effects using standard methods
+				e.addPotionEffect(new PotionEffect(Potion.regeneration.id, 40));  // 40 ticks regeneration
+				e.addPotionEffect(new PotionEffect(Potion.resistance.id, 40));    // 40 ticks resistance
+				e.heal(5.0F);  // Heal the player by 5 hearts
 
 				// Handle HBM potion effects and radiation management using reflection
 				try {
+					// Dynamically load HBM classes via reflection
 					Class<?> HbmPotion = ReflectionUtils.getClass("com.hbm.potion.HbmPotion");
 					Class<?> HbmLivingProps = ReflectionUtils.getClass("com.hbm.extprop.HbmLivingProps");
 
 					if (HbmPotion != null && HbmLivingProps != null) {
-						System.out.println("Successfully loaded HBM classes.");
-
-						// Get static fields
+						// Get the static fields for radaway, radx, and radiation
 						Object radaway = ReflectionUtils.getStaticFieldValue(HbmPotion, "radaway");
 						Object radx = ReflectionUtils.getStaticFieldValue(HbmPotion, "radx");
 						Object radiation = ReflectionUtils.getStaticFieldValue(HbmPotion, "radiation");
 
 						if (radaway != null && radx != null && radiation != null) {
-							// Get the potion IDs
+							// Get the potion IDs using reflection and ensure correct casting
 							int radawayId = ((Number) ReflectionUtils.getFieldValue(radaway, "id")).intValue();
 							int radxId = ((Number) ReflectionUtils.getFieldValue(radx, "id")).intValue();
 							int radiationId = ((Number) ReflectionUtils.getFieldValue(radiation, "id")).intValue();
 
-							// Apply Radaway and RadX effects
-							e.addPotionEffect(new PotionEffect(radawayId, 50));  // Radaway
-							e.addPotionEffect(new PotionEffect(radxId, 110));   // RadX
+							// Apply Radaway and RadX potion effects
+							e.addPotionEffect(new PotionEffect(radawayId, 50));  // Radaway for 50 ticks
+							e.addPotionEffect(new PotionEffect(radxId, 110));   // RadX for 110 ticks
 
-							// Reset radiation
+							// Handle radiation reset using reflection
 							Object result = ReflectionUtils.invokeStaticMethod(HbmLivingProps, "getRadiation", new Class<?>[]{EntityLivingBase.class}, e);
 							double currentRadiation = result instanceof Number ? ((Number) result).doubleValue() : 0.0;
 
-							// Reset radiation level
+							// Reset radiation
 							ReflectionUtils.invokeStaticMethod(HbmLivingProps, "incrementRadiation", new Class<?>[]{EntityLivingBase.class, double.class}, e, -currentRadiation);
 							ReflectionUtils.invokeMethod(e, "removePotionEffect", new Class<?>[]{int.class}, radiationId);
-						} else {
-							System.out.println("Failed to get HBM potion effects. One or more fields are null.");
 						}
-					} else {
-						System.out.println("Failed to load HBM classes.");
 					}
 				} catch (Exception ex) {
-					System.out.println("Reflection error: " + ex.getMessage());
+					// Print stack trace for any exceptions thrown during reflection
 					ex.printStackTrace();
 				}
 
-				// Set knockback resistance
+				// Set knockback resistance to maximum using standard methods
 				IAttributeInstance knockbackResistance = e.getEntityAttribute(SharedMonsterAttributes.knockbackResistance);
 				if (knockbackResistance != null) {
-					knockbackResistance.setBaseValue(1.0D);  // Full resistance
-				} else {
-					System.out.println("Knockback resistance attribute is null.");
+					knockbackResistance.setBaseValue(1.0D);  // 1.0D for full resistance
 				}
 			} else {
 				// Reset knockback resistance when not in safezone
 				IAttributeInstance knockbackResistance = e.getEntityAttribute(SharedMonsterAttributes.knockbackResistance);
 				if (knockbackResistance != null) {
-					knockbackResistance.setBaseValue(0.0D);  // Default
-				} else {
-					System.out.println("Knockback resistance attribute is null.");
+					knockbackResistance.setBaseValue(0.0D);  // Reset to default
 				}
 			}
 		}
