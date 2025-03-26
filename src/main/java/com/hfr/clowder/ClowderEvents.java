@@ -3,8 +3,6 @@ package com.hfr.clowder;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.hbm.extprop.HbmLivingProps;
-import com.hbm.potion.HbmPotion;
 import com.hfr.blocks.BlockDummyable;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder.ScheduledTeleport;
@@ -82,7 +80,11 @@ public class ClowderEvents {
 	public static final Class<?> MCH_ENTITY_BASE_BULLET = ReflectionUtils.getClass("mcheli.weapon.MCH_EntityBaseBullet");
 	public static final Class<?> MCH_ENTITY_ROCKET = ReflectionUtils.getClass("mcheli.weapon.MCH_EntityRocket");
 
-	// Static block to check if the MCHeli classes are loaded successfully
+	// Load HBM classes dynamically via ReflectionUtils
+	public static final Class<?> HBM_POTION = ReflectionUtils.getClass("com.hbm.potion.HbmPotion");
+	public static final Class<?> HBM_LIVING_PROPS = ReflectionUtils.getClass("com.hbm.extprop.HbmLivingProps");
+
+	// Static block to check if the MCHeli and HBM classes are loaded successfully
 	static {
 		if (MCH_CONFIG == null || MCH_ENTITY_BULLET == null || MCH_ENTITY_AIRCRAFT == null ||
 				MCH_ENTITY_BASE_BULLET == null || MCH_ENTITY_ROCKET == null) {
@@ -90,18 +92,24 @@ public class ClowderEvents {
 		} else {
 			System.out.println("[Clowder] Successfully loaded MCHeli classes via reflection.");
 		}
+
+		if (HBM_POTION == null || HBM_LIVING_PROPS == null) {
+			System.out.println("[Clowder] Warning: One or more HBM classes could not be found. Ensure HBM is installed.");
+		} else {
+			System.out.println("[Clowder] Successfully loaded HBM classes via reflection.");
+		}
 	}
 
 	// Event handlers for world load/unload
 	@SubscribeEvent
 	public void clowderLoadEvent(WorldEvent.Load event) {
 		if (event.world.provider.dimensionId == 0) {
-			// Ensure the MCHeli classes are available before proceeding with further logic
 			if (MCH_ENTITY_AIRCRAFT != null) {
-				// Example of using the MCH_EntityAircraft class via reflection (check or interact with the class as needed)
-				// For example, to instantiate or interact with the MCH_EntityAircraft class,
-				// you can use reflection to invoke methods or get fields
 				System.out.println("[Clowder] MCH_EntityAircraft class is available.");
+			}
+
+			if (HBM_POTION != null) {
+				System.out.println("[Clowder] HBM_Potion class is available.");
 			}
 
 			ClowderData.getData(event.world);
@@ -111,15 +119,18 @@ public class ClowderEvents {
 	@SubscribeEvent
 	public void clowderLoadEvent(WorldEvent.Unload event) {
 		if (event.world.provider.dimensionId == 0) {
-			// Ensure MCHeli classes are available for unloading event
 			if (MCH_ENTITY_AIRCRAFT != null) {
-				// Example of reflection interaction with the MCH_EntityAircraft class
 				System.out.println("[Clowder] MCH_EntityAircraft is still available during world unload.");
+			}
+
+			if (HBM_POTION != null) {
+				System.out.println("[Clowder] HBM_Potion is still available during world unload.");
 			}
 
 			ClowderData.getData(event.world).markDirty();
 		}
 	}
+
 
 
 
@@ -765,32 +776,53 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 		// Check if the entity is a player and inside the safezone
 		if (e instanceof EntityPlayer) {
 			int x = (int) e.posX;
-			int y = (int) e.posY;
 			int z = (int) e.posZ;
 			Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
+
 			if (owner != null && owner.zone == Zone.SAFEZONE) {
-				// Apply a regeneration effect
+				// Apply Minecraft effects using normal imports
 				e.addPotionEffect(new PotionEffect(Potion.regeneration.id, 40));
 				e.addPotionEffect(new PotionEffect(Potion.resistance.id, 40));
 				e.heal(5.0F);
-				//todo: radaway given or just set player's rad to 0 without reflections
-				//fuck it we're importing NTM too
-				e.addPotionEffect(new PotionEffect(HbmPotion.radaway.id, 50));
-				e.addPotionEffect(new PotionEffect(HbmPotion.radx.id, 110));
-				HbmLivingProps.incrementRadiation(e, -HbmLivingProps.getRadiation(e));
-				e.removePotionEffect(HbmPotion.radiation.id);
 
+				// Handle HBM potion effects and radiation management using reflection
+				try {
+					Class<?> HbmPotion = ReflectionUtils.getClass("com.hbm.potion.HbmPotion");
+					Class<?> HbmLivingProps = ReflectionUtils.getClass("com.hbm.extprop.HbmLivingProps");
 
+					if (HbmPotion != null && HbmLivingProps != null) {
+						Object radaway = ReflectionUtils.getStaticFieldValue(HbmPotion, "radaway");
+						Object radx = ReflectionUtils.getStaticFieldValue(HbmPotion, "radx");
+						Object radiation = ReflectionUtils.getStaticFieldValue(HbmPotion, "radiation");
 
+						if (radaway != null && radx != null && radiation != null) {
+							int radawayId = ((Number) ReflectionUtils.getFieldValue(radaway, "id")).intValue();
+							int radxId = ((Number) ReflectionUtils.getFieldValue(radx, "id")).intValue();
+							int radiationId = ((Number) ReflectionUtils.getFieldValue(radiation, "id")).intValue();
+
+							e.addPotionEffect(new PotionEffect(radawayId, 50));
+							e.addPotionEffect(new PotionEffect(radxId, 110));
+
+							Object result = ReflectionUtils.invokeStaticMethod(HbmLivingProps, "getRadiation", new Class<?>[]{EntityLivingBase.class}, e);
+							double currentRadiation = result instanceof Number ? ((Number) result).doubleValue() : 0.0;
+							ReflectionUtils.invokeStaticMethod(HbmLivingProps, "incrementRadiation", new Class<?>[]{EntityLivingBase.class, double.class}, e, -currentRadiation);
+							ReflectionUtils.invokeMethod(e, "removePotionEffect", new Class<?>[]{int.class}, radiationId);
+						}
+					}
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+
+				// Set knockback resistance to maximum using standard methods
 				IAttributeInstance knockbackResistance = e.getEntityAttribute(SharedMonsterAttributes.knockbackResistance);
 				if (knockbackResistance != null) {
-					knockbackResistance.setBaseValue(1.0D); // 1.0D for full resistance
+					knockbackResistance.setBaseValue(1.0D);
 				}
 			} else {
-				// Reset knockback resistance when not in safezone
+				// Reset knockback resistance when not in a safezone
 				IAttributeInstance knockbackResistance = e.getEntityAttribute(SharedMonsterAttributes.knockbackResistance);
 				if (knockbackResistance != null) {
-					knockbackResistance.setBaseValue(0.0D); // Reset to default
+					knockbackResistance.setBaseValue(0.0D);
 				}
 			}
 		}
