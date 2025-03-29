@@ -17,6 +17,7 @@ public class MarketData {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final File SAVE_FILE = new File("config/marketdata.json");
 
+	//so this is null on the serverside
 	public static HashMap<String, List<ItemEntry[]>> offers = new HashMap<String, List<ItemEntry[]>>();
 
 	public static void saveMarketData() {
@@ -50,7 +51,7 @@ public class MarketData {
 			reader = new FileReader(SAVE_FILE);
 			Type type = new TypeToken<HashMap<String, List<ItemEntry[]>>>() {}.getType();
 			offers = GSON.fromJson(reader, type);
-			System.out.println("Market data loaded successfully.");
+			System.out.println("Market data loaded successfully. Offers: " + offers);
 		} catch (Exception e) {
 			System.err.println("Failed to load market data: " + e.getMessage());
 		} finally {
@@ -85,20 +86,25 @@ public class MarketData {
 
 		marketOffers.add(entries);
 		offers.put(market, marketOffers);
-		System.out.println("Offer added to market: " + market);
+		System.out.println("Offer added to market: " + market + ". Current offers: " + marketOffers);
 		saveMarketData();
 	}
 
 	public static List<ItemStack[]> getOffers(String market) {
+
+
+
 		System.out.println("Fetching offers for market: " + market);
 		List<ItemStack[]> result = new ArrayList<ItemStack[]>();
 		List<ItemEntry[]> entryList = offers.get(market);
 
+		//entryList is null on servers
 		if (entryList == null) {
 			System.out.println("No offers found for market: " + market);
 			return result;
 		}
 
+		//so somehow this is not running on the server side
 		for (ItemEntry[] entryArray : entryList) {
 			ItemStack[] stackArray = new ItemStack[entryArray.length];
 			for (int i = 0; i < entryArray.length; i++) {
@@ -110,6 +116,9 @@ public class MarketData {
 			result.add(stackArray);
 		}
 		return result;
+
+
+
 	}
 
 	public static List<ItemEntry[]> convertToItemEntryList(List<ItemStack[]> stackOffers) {

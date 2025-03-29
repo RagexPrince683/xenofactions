@@ -649,6 +649,8 @@ public class MainRegistry
 		//event.registerServerCommand(new CommandOrewand());
 		//custom stone drops
 		event.registerServerCommand(new CommandStoneDrop());
+		MarketData.loadMarketData();
+		event.registerServerCommand(new CommandXShop());
 	}
 
 	@EventHandler
@@ -660,7 +662,7 @@ public class MainRegistry
 		event.registerServerCommand(new CommandClowder());
 		event.registerServerCommand(new CommandClowderChat());
 		event.registerServerCommand(new CommandClowderAdmin());
-		event.registerServerCommand(new CommandXShop());
+		//event.registerServerCommand(new CommandXShop());
 		//event.loadMarketData()
 		//MarketData.loadMarketData();
 		//OfferPacket
