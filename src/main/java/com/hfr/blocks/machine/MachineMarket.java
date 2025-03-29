@@ -88,7 +88,7 @@ public class MachineMarket extends BlockContainer {
 			}
 
 			// Send updated market offers to client
-			System.out.println("Sending market data to client");
+			System.out.println("Sending market data to client for: " + market.name);
 			PacketDispatcher.wrapper.sendTo(new OfferPacket(market.name, nbt), (EntityPlayerMP) player);
 			//NO DUMBASS SEND TO SERVER AS WELL OR SOME SHIT FUCK GODDAMN BULLSHIT MAN I HATE THIS FUCKING MOD
 			//PacketDispatcher.wrapper.sendToServer(new OfferPacket(market.name, nbt));
@@ -134,5 +134,15 @@ public class MachineMarket extends BlockContainer {
 	    	super.writeToNBT(nbt);
 	    	nbt.setString("name", name);
 	    }
+
+		@Override
+		public void updateEntity() {
+			if (!worldObj.isRemote) {
+				markDirty(); // Forces a save
+			}
+		}
+
 	}
+
+
 }
