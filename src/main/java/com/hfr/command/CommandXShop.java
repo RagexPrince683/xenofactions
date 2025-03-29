@@ -117,7 +117,7 @@ public class CommandXShop extends CommandBase {
 
 				// Remove the selected offer
 				offers.remove(offerIndex);
-				MarketData.offers.put(shopName, offers);
+				MarketData.offers.put(shopName, MarketData.convertToItemEntryList(offers));
 				MarketData.saveMarketData();
 
 				sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Offer has been removed from shop " + shopName + "!"));
