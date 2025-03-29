@@ -19,18 +19,19 @@ public class MarketData {
 
 	public static HashMap<String, List<ItemEntry[]>> offers = new HashMap<String, List<ItemEntry[]>>();
 
-
 	public static void saveMarketData() {
 		FileWriter writer = null;
 		try {
 			writer = new FileWriter(SAVE_FILE);
 			GSON.toJson(offers, writer);
+			System.out.println("Market data saved successfully.");
 		} catch (Exception e) {
 			System.err.println("Failed to save market data: " + e.getMessage());
 		} finally {
 			if (writer != null) {
 				try {
 					writer.close();
+					System.out.println("FileWriter closed successfully after saving market data.");
 				} catch (Exception e) {
 					System.err.println("Failed to close FileWriter: " + e.getMessage());
 				}
@@ -40,6 +41,7 @@ public class MarketData {
 
 	public static void loadMarketData() {
 		if (!SAVE_FILE.exists()) {
+			System.out.println("MarketData file does not exist. Skipping load.");
 			return; // No file to load
 		}
 
@@ -48,12 +50,14 @@ public class MarketData {
 			reader = new FileReader(SAVE_FILE);
 			Type type = new TypeToken<HashMap<String, List<ItemEntry[]>>>() {}.getType();
 			offers = GSON.fromJson(reader, type);
+			System.out.println("Market data loaded successfully.");
 		} catch (Exception e) {
 			System.err.println("Failed to load market data: " + e.getMessage());
 		} finally {
 			if (reader != null) {
 				try {
 					reader.close();
+					System.out.println("FileReader closed successfully after loading market data.");
 				} catch (Exception e) {
 					System.err.println("Failed to close FileReader: " + e.getMessage());
 				}
@@ -67,6 +71,7 @@ public class MarketData {
 
 		if (marketOffers == null) {
 			marketOffers = new ArrayList<ItemEntry[]>();
+			System.out.println("Created new offer list for market: " + market);
 		}
 
 		ItemEntry[] entries = new ItemEntry[items.length];
@@ -74,22 +79,23 @@ public class MarketData {
 		for (int i = 0; i < items.length; i++) {
 			if (items[i] != null) {
 				entries[i] = new ItemEntry(items[i]);
+				System.out.println("Added item to offer: " + items[i].getDisplayName());
 			}
 		}
 
 		marketOffers.add(entries);
 		offers.put(market, marketOffers);
+		System.out.println("Offer added to market: " + market);
 		saveMarketData();
 	}
 
 	public static List<ItemStack[]> getOffers(String market) {
-
-		//todo ensure getoffers logic is all firing for serverside
-
+		System.out.println("Fetching offers for market: " + market);
 		List<ItemStack[]> result = new ArrayList<ItemStack[]>();
 		List<ItemEntry[]> entryList = offers.get(market);
 
 		if (entryList == null) {
+			System.out.println("No offers found for market: " + market);
 			return result;
 		}
 
@@ -98,6 +104,7 @@ public class MarketData {
 			for (int i = 0; i < entryArray.length; i++) {
 				if (entryArray[i] != null) {
 					stackArray[i] = entryArray[i].toItemStack();
+					System.out.println("Converted ItemEntry to ItemStack: " + stackArray[i].getDisplayName());
 				}
 			}
 			result.add(stackArray);
@@ -153,4 +160,6 @@ public class MarketData {
 			return stack;
 		}
 	}
+
+
 }
