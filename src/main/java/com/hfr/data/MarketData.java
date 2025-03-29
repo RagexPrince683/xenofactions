@@ -6,7 +6,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTUtil;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -16,24 +15,27 @@ public class MarketData {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final File SAVE_FILE = new File("config/marketdata.json");
 
-	public static HashMap<String, List<ItemEntry[]>> offers = new HashMap<String, List<ItemEntry[]>>();
+	public static final Map<String, List<ItemStack[]>> offers = new HashMap<String, List<ItemStack[]>>();
 
 	public static void saveMarketData() {
 		FileWriter writer = null;
 		try {
+			//BufferedWriter writer = new BufferedWriter(new FileWriter(SAVE_FILE));
 			writer = new FileWriter(SAVE_FILE);
 			GSON.toJson(offers, writer);
+			writer.close();
 		} catch (Exception e) {
 			System.err.println("Failed to save market data: " + e.getMessage());
-		} finally {
-			if (writer != null) {
-				try {
-					writer.close();
-				} catch (Exception e) {
-					System.err.println("Failed to close FileWriter: " + e.getMessage());
-				}
-			}
 		}
+		//finally {
+		//	if (writer != null) {
+		//		try {
+		//			writer.close();
+		//		} catch (Exception e) {
+		//			System.err.println("Failed to close FileWriter: " + e.getMessage());
+		//		}
+		//	}
+		//}
 	}
 
 	public static void loadMarketData() {
@@ -41,78 +43,68 @@ public class MarketData {
 			return; // No file to load
 		}
 
-		FileReader reader = null;
+		//FileReader reader = null;
 		try {
-			reader = new FileReader(SAVE_FILE);
-			Type type = new TypeToken<HashMap<String, List<ItemEntry[]>>>() {}.getType();
-			offers = GSON.fromJson(reader, type);
-		} catch (Exception e) {
-			System.err.println("Failed to load market data: " + e.getMessage());
-		} finally {
-			if (reader != null) {
-				try {
-					reader.close();
-				} catch (Exception e) {
-					System.err.println("Failed to close FileReader: " + e.getMessage());
-				}
+			BufferedReader reader = new BufferedReader(new FileReader(SAVE_FILE));
+			Type type = new TypeToken<Map<String, List<ItemStack[]>>>() {}.getType();
+			Map<String, List<ItemStack[]>> data = GSON.fromJson(reader, type);
+			if (data != null) {
+				offers.clear();
+				offers.putAll(data);
 			}
+			reader.close();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
+		//finally {
+		//	if (reader != null) {
+		//		try {
+		//			reader.close();
+		//		} catch (Exception e) {
+		//			System.err.println("Failed to close FileReader: " + e.getMessage());
+		//		}
+		//	}
+		//}
 	}
 
-	public static void addOffer(String market, ItemStack[] items) {
-		List<ItemEntry[]> marketOffers = offers.get(market);
 
-		if (marketOffers == null) {
-			marketOffers = new ArrayList<ItemEntry[]>();
+
+	public static void addOffer(String shopName, ItemStack[] offer) {
+		List<ItemStack[]> shopOffers = offers.get(shopName);
+
+		if (shopOffers == null) {
+			shopOffers = new ArrayList<ItemStack[]>();
+			offers.put(shopName, shopOffers);
 		}
-
-		ItemEntry[] entries = new ItemEntry[items.length];
-
-		for (int i = 0; i < items.length; i++) {
-			if (items[i] != null) {
-				entries[i] = new ItemEntry(items[i]);
-			}
-		}
-
-		marketOffers.add(entries);
-		offers.put(market, marketOffers);
+		shopOffers.add(offer);
 		saveMarketData();
 	}
 
-	public static List<ItemStack[]> getOffers(String market) {
-		List<ItemStack[]> result = new ArrayList<ItemStack[]>();
-		List<ItemEntry[]> entryList = offers.get(market);
-
-		if (entryList == null) {
-			return result;
-		}
-
-		for (ItemEntry[] entryArray : entryList) {
-			ItemStack[] stackArray = new ItemStack[entryArray.length];
-			for (int i = 0; i < entryArray.length; i++) {
-				if (entryArray[i] != null) {
-					stackArray[i] = entryArray[i].toItemStack();
-				}
-			}
-			result.add(stackArray);
-		}
-		return result;
+	public static List<ItemStack[]> getOffers(String shopName) {
+		List<ItemStack[]> shopOffers = offers.get(shopName);
+		return (shopOffers != null) ? shopOffers : new ArrayList<ItemStack[]>();
 	}
 
-	public static List<ItemEntry[]> convertToItemEntryList(List<ItemStack[]> stackOffers) {
-		List<ItemEntry[]> convertedOffers = new ArrayList<ItemEntry[]>();
+	public static void removeOffer(String shopName, int index) {
+		List<ItemStack[]> shopOffers = offers.get(shopName);
+		if (shopOffers != null && index >= 0 && index < shopOffers.size()) {
+			shopOffers.remove(index);
+			saveMarketData();
+		}
+	}
 
-		for (ItemStack[] stackArray : stackOffers) {
+	public static List<ItemEntry[]> convertToItemEntryList(List<ItemStack[]> itemStacksList) {
+		List<ItemEntry[]> convertedList = new ArrayList<ItemEntry[]>();
+
+		for (ItemStack[] stackArray : itemStacksList) {
 			ItemEntry[] entryArray = new ItemEntry[stackArray.length];
 			for (int i = 0; i < stackArray.length; i++) {
-				if (stackArray[i] != null) {
-					entryArray[i] = new ItemEntry(stackArray[i]);
-				}
+				entryArray[i] = new ItemEntry(stackArray[i]); // Assuming ItemEntry has a constructor that takes an ItemStack
 			}
-			convertedOffers.add(entryArray);
+			convertedList.add(entryArray);
 		}
 
-		return convertedOffers;
+		return convertedList;
 	}
 
 
