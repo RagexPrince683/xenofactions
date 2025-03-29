@@ -17,7 +17,6 @@ public class MarketData {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final File SAVE_FILE = new File("config/marketdata.json");
 
-	//so this is null on the serverside
 	public static HashMap<String, List<ItemEntry[]>> offers = new HashMap<String, List<ItemEntry[]>>();
 
 	public static void saveMarketData() {
@@ -91,20 +90,16 @@ public class MarketData {
 	}
 
 	public static List<ItemStack[]> getOffers(String market) {
-
-
-
 		System.out.println("Fetching offers for market: " + market);
+		loadMarketData(); // Ensure data is loaded each time offers are fetched
 		List<ItemStack[]> result = new ArrayList<ItemStack[]>();
 		List<ItemEntry[]> entryList = offers.get(market);
 
-		//entryList is null on servers
 		if (entryList == null) {
 			System.out.println("No offers found for market: " + market);
 			return result;
 		}
 
-		//so somehow this is not running on the server side
 		for (ItemEntry[] entryArray : entryList) {
 			ItemStack[] stackArray = new ItemStack[entryArray.length];
 			for (int i = 0; i < entryArray.length; i++) {
@@ -116,9 +111,6 @@ public class MarketData {
 			result.add(stackArray);
 		}
 		return result;
-
-
-
 	}
 
 	public static List<ItemEntry[]> convertToItemEntryList(List<ItemStack[]> stackOffers) {
@@ -135,10 +127,8 @@ public class MarketData {
 		}
 
 		return convertedOffers;
+
 	}
-
-
-
 
 	private static class ItemEntry {
 		String itemName;
