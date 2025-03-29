@@ -65,9 +65,11 @@ public class OfferPacket implements IMessage {
 	}
 
 	public static class Handler implements IMessageHandler<OfferPacket, IMessage> {
-
+		@SideOnly (Side.CLIENT)
+		//causes a crash clientside if SIDEONLYCLIENT is not here
+		//going to assume this is not the issue, but rather the items actually being fucking assigned
+		//to the list just not working on the fucking server for some fucking retarded reason
 		@Override
-		@SideOnly(Side.CLIENT)
 		public IMessage onMessage(OfferPacket m, MessageContext ctx) {
 			try {
 

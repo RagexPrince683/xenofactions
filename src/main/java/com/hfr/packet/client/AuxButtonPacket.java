@@ -254,6 +254,7 @@ public class AuxButtonPacket implements IMessage {
 				}
 
 				if (te instanceof TileEntityMarket) {
+					System.out.println("Market packet received");
 					TileEntityMarket market = (TileEntityMarket) te;
 
 					// Get the market's offers from JSON
@@ -273,6 +274,7 @@ public class AuxButtonPacket implements IMessage {
 					ItemStack[] offer = offers.get(m.value);
 
 					if (offer != null) {
+						System.out.println("offer is not null for market");
 						ItemStack item = offer[0]; // First item is the one being purchased
 						boolean hasRequiredItems = true;
 

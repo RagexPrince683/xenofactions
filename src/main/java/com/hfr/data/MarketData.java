@@ -6,6 +6,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTUtil;
 
 import java.io.*;
@@ -17,6 +18,7 @@ public class MarketData {
 	private static final File SAVE_FILE = new File("config/marketdata.json");
 
 	public static HashMap<String, List<ItemEntry[]>> offers = new HashMap<String, List<ItemEntry[]>>();
+
 
 	public static void saveMarketData() {
 		FileWriter writer = null;
@@ -60,6 +62,7 @@ public class MarketData {
 	}
 
 	public static void addOffer(String market, ItemStack[] items) {
+		System.out.println("Adding offer to market: " + market);
 		List<ItemEntry[]> marketOffers = offers.get(market);
 
 		if (marketOffers == null) {
@@ -80,6 +83,9 @@ public class MarketData {
 	}
 
 	public static List<ItemStack[]> getOffers(String market) {
+
+		//todo ensure getoffers logic is all firing for serverside
+
 		List<ItemStack[]> result = new ArrayList<ItemStack[]>();
 		List<ItemEntry[]> entryList = offers.get(market);
 
@@ -133,6 +139,7 @@ public class MarketData {
 
 		ItemStack toItemStack() {
 			Item item = (Item) Item.itemRegistry.getObject(itemName);
+			//this crashed clientside somehow
 			if (item == null) return null;
 
 			ItemStack stack = new ItemStack(item, count, metadata);

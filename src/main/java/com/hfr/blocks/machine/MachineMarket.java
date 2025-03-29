@@ -28,6 +28,8 @@ import net.minecraft.world.World;
 
 public class MachineMarket extends BlockContainer {
 
+	//todo: figure out why markets work clientside, but not serverside
+
 	@SideOnly(Side.CLIENT)
 	private IIcon iconTop;
 	@SideOnly(Side.CLIENT)
@@ -57,6 +59,7 @@ public class MachineMarket extends BlockContainer {
 	@Override
 	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
 		if (!world.isRemote) {
+			System.out.println("should be server side");
 			TileEntityMarket market = (TileEntityMarket) world.getTileEntity(x, y, z);
 			if (market == null) return false;
 
@@ -67,6 +70,8 @@ public class MachineMarket extends BlockContainer {
 			NBTTagCompound nbt = new NBTTagCompound();
 			nbt.setString("market", market.name);
 			nbt.setInteger("offercount", offers.size());
+
+			//offers do not work serverside, but do work clientside
 
 			for (int i = 0; i < offers.size(); i++) {
 				NBTTagList list = new NBTTagList();
@@ -89,6 +94,9 @@ public class MachineMarket extends BlockContainer {
 			if (player.getHeldItem() != null && player.getHeldItem().getItem() == Items.name_tag && player.getHeldItem().hasDisplayName()) {
 				market.name = player.getHeldItem().getDisplayName();
 				market.markDirty();
+
+				System.out.println("Market renamed to: " + market.name);
+
 				return true;
 			}
 
@@ -109,6 +117,7 @@ public class MachineMarket extends BlockContainer {
 	}
 	
 	public static class TileEntityMarket extends TileEntity {
+		//name is working as a market identifier, nothing needs to be changed here?
 		
 		public String name = "";
 

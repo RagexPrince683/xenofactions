@@ -85,6 +85,8 @@ public class EventHandlerClient {
 			//if(player.getUniqueID().toString().equals("c874fd4e-5841-42e4-8f77-70efd5881bc1"))
 			//	if(player.ticksExisted > 5 * 60 * 20) //<- time til the autism kicks in
 			//		Minecraft.getMinecraft().entityRenderer.debugViewDirection = 5;
+
+			//cope artistry led to this, now we must cope with the consequences.
 			
 			/// START KEYBINDS ///
 			if(/*!FMLClientHandler.instance().isGUIOpen(GuiChat.class)*/ Minecraft.getMinecraft().currentScreen == null) {
@@ -538,6 +540,8 @@ public class EventHandlerClient {
 		
 		if(!MainRegistry.chatfilter)
 			return;
+
+		//chat filter logic
 		
 		for(Entry<String, String> pair : MainRegistry.sub.entrySet()) {
 			
