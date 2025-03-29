@@ -662,7 +662,9 @@ public class MainRegistry
 		event.registerServerCommand(new CommandClowderAdmin());
 		event.registerServerCommand(new CommandXShop());
 		//event.loadMarketData()
-		MarketData.loadMarketData();
+		//MarketData.loadMarketData();
+		//OfferPacket
+		//OfferPacket
 	}
 
 	public static List<Block> blastShields = new ArrayList();

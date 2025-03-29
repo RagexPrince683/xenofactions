@@ -88,6 +88,7 @@ public class MachineMarket extends BlockContainer {
 			}
 
 			// Send updated market offers to client
+			System.out.println("Sending market data to client");
 			PacketDispatcher.wrapper.sendTo(new OfferPacket(market.name, nbt), (EntityPlayerMP) player);
 
 			// Handle renaming the market with a Name Tag
