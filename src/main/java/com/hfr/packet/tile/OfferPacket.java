@@ -18,83 +18,52 @@ import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.server.MinecraftServer;
 
 public class OfferPacket implements IMessage {
+	private String marketName;
+	private NBTTagCompound nbt;
 
-	String name;
-	PacketBuffer buffer;
+	// Default constructor (needed for packet handling)
+	public OfferPacket() {}
 
-	public OfferPacket() { }
-
-	public OfferPacket(String name, NBTTagCompound nbt) {
-		
-		this.name = name;
-		this.buffer = new PacketBuffer(Unpooled.buffer());
-		
-		try {
-			buffer.writeNBTTagCompoundToBuffer(nbt);
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	// Constructor for sending data
+	public OfferPacket(String marketName, NBTTagCompound nbt) {
+		this.marketName = marketName;
+		this.nbt = nbt;
 	}
 
 	@Override
 	public void fromBytes(ByteBuf buf) {
-		
-		this.name = ByteBufUtils.readUTF8String(buf);
-		
-		if (buffer == null) {
-			buffer = new PacketBuffer(Unpooled.buffer());
-		}
-		buffer.writeBytes(buf);
+		this.marketName = ByteBufUtils.readUTF8String(buf);
+		this.nbt = ByteBufUtils.readTag(buf);
 	}
 
 	@Override
 	public void toBytes(ByteBuf buf) {
-		
-		ByteBufUtils.writeUTF8String(buf, name);
-
-		if (buffer == null) {
-			buffer = new PacketBuffer(Unpooled.buffer());
-		}
-		buf.writeBytes(buffer);
+		ByteBufUtils.writeUTF8String(buf, marketName);
+		ByteBufUtils.writeTag(buf, nbt);
 	}
 
 	public static class Handler implements IMessageHandler<OfferPacket, IMessage> {
-		@SideOnly (Side.CLIENT)
-		//causes a crash clientside if SIDEONLYCLIENT is not here
-		//going to assume this is not the issue, but rather the items actually being fucking assigned
-		//to the list just not working on the fucking server for some fucking retarded reason
 		@Override
-		public IMessage onMessage(OfferPacket m, MessageContext ctx) {
-			try {
+		public IMessage onMessage(OfferPacket message, MessageContext ctx) {
+			if (ctx.side.isServer()) {
+				// Process data on the SERVER
+				EntityPlayerMP player = ctx.getServerHandler().playerEntity;
 
-				//TODO THIS SHOULD BE ON THE FUCKING SERVER NOT THE FUCKING CLIENT YOU DUMB SHIT
-				// OR IT SHOULD SEND A PACKET TO THE SERVER TO REQUEST THIS INFORMATION THEN THIS LOGIC
-				// EITHER WAY THIS IS FUCKING RETARD CODE
-
-				// Load the latest market data from JSON
-				MarketData.loadMarketData();
-
-				// Get market offers
-				List<ItemStack[]> offers = MarketData.getOffers(m.name);
-
-				if (offers == null) {
-					offers = new ArrayList<ItemStack[]>();
-				}
-
-				// Update the machine and GUI with the loaded market offers
-				MachineMarket.name = m.name;
-				GUIMachineMarket.offers = offers;
-
-			} catch (Exception e) {
-				e.printStackTrace();
+				MinecraftServer server = MinecraftServer.getServer();
+				server.getConfigurationManager().addScheduledTask(new Runnable() {
+					@Override
+					public void run() {
+						// Handle the packet on the server
+					}
+				});
 			}
-
 			return null;
 		}
 	}
