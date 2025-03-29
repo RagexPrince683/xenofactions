@@ -70,6 +70,11 @@ public class OfferPacket implements IMessage {
 		@SideOnly(Side.CLIENT)
 		public IMessage onMessage(OfferPacket m, MessageContext ctx) {
 			try {
+
+				//TODO THIS SHOULD BE ON THE FUCKING SERVER NOT THE FUCKING CLIENT YOU DUMB SHIT
+				// OR IT SHOULD SEND A PACKET TO THE SERVER TO REQUEST THIS INFORMATION THEN THIS LOGIC
+				// EITHER WAY THIS IS FUCKING RETARD CODE
+
 				// Load the latest market data from JSON
 				MarketData.loadMarketData();
 

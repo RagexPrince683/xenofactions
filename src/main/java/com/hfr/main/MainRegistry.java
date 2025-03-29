@@ -661,6 +661,8 @@ public class MainRegistry
 		event.registerServerCommand(new CommandClowderChat());
 		event.registerServerCommand(new CommandClowderAdmin());
 		event.registerServerCommand(new CommandXShop());
+		//event.loadMarketData()
+		MarketData.loadMarketData();
 	}
 
 	public static List<Block> blastShields = new ArrayList();
