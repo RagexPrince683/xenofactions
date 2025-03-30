@@ -13,7 +13,7 @@ import com.hfr.data.ResourceData;
 import com.hfr.data.CBTData.CBTEntry;
 import com.hfr.data.StockData;
 import com.hfr.data.StockData.Stock;
-import com.hfr.dim.WorldProviderMoon;
+//import com.hfr.dim.WorldProviderMoon;
 import com.hfr.handler.SLBMHandler;
 import com.hfr.items.ModItems;
 import com.hfr.main.MainRegistry.ControlEntry;
@@ -179,26 +179,26 @@ public class CommonEventHandler {
 			MainRegistry.proxy.howDoIUseTheZOMG(player.worldObj, player.posX + vec.xCoord, player.posY + 1.5, player.posZ + vec.zCoord, 3);
 		}
 		
-		if(player.worldObj.provider instanceof WorldProviderMoon) {
-			
-			if(!player.capabilities.isFlying) {
-
-				if(player.getCurrentArmor(0) != null && player.getCurrentArmor(0).getItem() == ModItems.lead_boots) {
-					player.motionY += 0.02D;
-				} else {
-					player.motionY += 0.035D;
-				}
-				player.fallDistance = 0;
-			}
-		} else {
-
-			if(!player.capabilities.isFlying) {
-				if(player.getCurrentArmor(0) != null && player.getCurrentArmor(0).getItem() == ModItems.lead_boots) {
-					player.motionY -= 0.04D;
-					player.addPotionEffect(new PotionEffect(Potion.moveSlowdown.id, 20, 2));
-				}
-			}
-		}
+		//if(player.worldObj.provider instanceof WorldProviderMoon) {
+		//
+		//	if(!player.capabilities.isFlying) {
+//
+		//		if(player.getCurrentArmor(0) != null && player.getCurrentArmor(0).getItem() == ModItems.lead_boots) {
+		//			player.motionY += 0.02D;
+		//		} else {
+		//			player.motionY += 0.035D;
+		//		}
+		//		player.fallDistance = 0;
+		//	}
+		//} else {
+//
+		//	if(!player.capabilities.isFlying) {
+		//		if(player.getCurrentArmor(0) != null && player.getCurrentArmor(0).getItem() == ModItems.lead_boots) {
+		//			player.motionY -= 0.04D;
+		//			player.addPotionEffect(new PotionEffect(Potion.moveSlowdown.id, 20, 2));
+		//		}
+		//	}
+		//}
 	}
 	
 	public boolean hasDigiOverlay(EntityPlayer player) {

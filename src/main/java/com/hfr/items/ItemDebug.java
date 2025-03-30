@@ -1,7 +1,7 @@
 package com.hfr.items;
 
 import com.hfr.blocks.ModBlocks;
-import com.hfr.dim.MoonTeleporter;
+//import com.hfr.dim.MoonTeleporter;
 import com.hfr.tileentity.clowder.TileEntityFlag;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -20,9 +20,9 @@ public class ItemDebug extends Item {
 			
 			EntityPlayerMP thePlayer = (EntityPlayerMP) player;
 			
-			if(!player.isSneaking())
-				thePlayer.mcServer.getConfigurationManager().transferPlayerToDimension(thePlayer, 15, new MoonTeleporter(thePlayer.getServerForPlayer()));
-			else
+			//if(!player.isSneaking())
+			//	//thePlayer.mcServer.getConfigurationManager().transferPlayerToDimension(thePlayer, 15, new MoonTeleporter(thePlayer.getServerForPlayer()));
+			//else
 				System.out.println(player.dimension);
 		}
 		

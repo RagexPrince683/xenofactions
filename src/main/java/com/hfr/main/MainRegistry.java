@@ -51,8 +51,8 @@ import com.hfr.clowder.*;
 import com.hfr.command.*;
 import com.hfr.data.*;
 import com.hfr.data.StockData.Stock;
-import com.hfr.dim.WorldGeneratorMoon;
-import com.hfr.dim.WorldProviderMoon;
+//import com.hfr.dim.WorldGeneratorMoon;
+//import com.hfr.dim.WorldProviderMoon;
 import com.hfr.entity.*;
 import com.hfr.entity.grenade.*;
 import com.hfr.entity.logic.*;
@@ -98,7 +98,7 @@ public class MainRegistry
 	public static final List<ItemStack> customDrops = new ArrayList<ItemStack>();
 	public static final List<Double> customDropChances = new ArrayList<Double>();
 	
-	public static WorldGeneratorMoon worldGenMoon = new WorldGeneratorMoon();
+	//public static WorldGeneratorMoon worldGenMoon = new WorldGeneratorMoon();
 	
 	public static int radarRange = 1000;
 	public static int radarBuffer = 30;
@@ -564,9 +564,9 @@ public class MainRegistry
 		MinecraftForge.EVENT_BUS.register(clowder);
 		//MinecraftForge.EVENT_BUS.register(pon4);
 		
-		GameRegistry.registerWorldGenerator(worldGenMoon, 0);
-		DimensionManager.registerProviderType(15, WorldProviderMoon.class, false);
-	    DimensionManager.registerDimension(15, 15);
+		//GameRegistry.registerWorldGenerator(worldGenMoon, 0);
+		//DimensionManager.registerProviderType(15, WorldProviderMoon.class, false);
+	    //DimensionManager.registerDimension(15, 15);
 	}
 	
 	private String regexify(String string) {
