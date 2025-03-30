@@ -62,6 +62,16 @@ public class MachineMarket extends BlockContainer {
 			TileEntityMarket market = (TileEntityMarket) world.getTileEntity(x, y, z);
 			if (market == null) return false;
 
+			// Handle renaming the market with a name tag
+			if (player.getHeldItem() != null && player.getHeldItem().getItem() == Items.name_tag && player.getHeldItem().hasDisplayName()) {
+				market.name = player.getHeldItem().getDisplayName();
+				market.markDirty();
+
+				System.out.println("Market renamed to: " + market.name);
+
+				return true;
+			}
+
 			// Get offers from JSON-based MarketData
 			List<ItemStack[]> offers = MarketData.getOffers(market.name);
 
@@ -86,8 +96,15 @@ public class MachineMarket extends BlockContainer {
 
 			// Send updated market offers to client
 			PacketDispatcher.wrapper.sendTo(new OfferPacket(nbt), (EntityPlayerMP) player);
+
+			return true;
+		} else if (!player.isSneaking()) {
+			// Open GUI for Market
+			FMLNetworkHandler.openGui(player, MainRegistry.instance, ModBlocks.guiID_market, world, x, y, z);
+			return true;
+		} else {
+			return false;
 		}
-		return true;
 	}
 
 
