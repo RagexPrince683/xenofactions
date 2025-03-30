@@ -32,6 +32,8 @@ public class OfferPacket implements IMessage {
 
 	//public OfferPacket() {}
 
+	public OfferPacket() {}
+
 	public OfferPacket(NBTTagCompound data) {
 		this.data = data;
 	}
