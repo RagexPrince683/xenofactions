@@ -2,16 +2,11 @@ package com.hfr.data;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.network.NetworkRegistry;
-import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTUtil;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.world.WorldEvent;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -19,68 +14,89 @@ import java.util.*;
 
 public class MarketData {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-	private static File saveFile;
-	private static final SimpleNetworkWrapper NETWORK = NetworkRegistry.INSTANCE.newSimpleChannel("market_data");
+	private static final File SAVE_FILE = new File("config/marketdata.json");
 
 	public static HashMap<String, List<ItemEntry[]>> offers = new HashMap<String, List<ItemEntry[]>>();
 
-	public static void init(File worldDir) {
-		saveFile = new File(worldDir, "marketdata.json");
-		MinecraftForge.EVENT_BUS.register(new MarketData());
-		loadMarketData();
-	}
-
 	public static void saveMarketData() {
-		try (FileWriter writer = new FileWriter(saveFile)) {
+		FileWriter writer = null;
+		try {
+			writer = new FileWriter(SAVE_FILE);
 			GSON.toJson(offers, writer);
 		} catch (Exception e) {
 			System.err.println("Failed to save market data: " + e.getMessage());
+		} finally {
+			if (writer != null) {
+				try {
+					writer.close();
+				} catch (Exception e) {
+					System.err.println("Failed to close FileWriter: " + e.getMessage());
+				}
+			}
 		}
 	}
 
 	public static void loadMarketData() {
-		if (!saveFile.exists()) return;
-		try (FileReader reader = new FileReader(saveFile)) {
+		if (!SAVE_FILE.exists()) {
+			return; // No file to load
+		}
+
+		FileReader reader = null;
+		try {
+			reader = new FileReader(SAVE_FILE);
 			Type type = new TypeToken<HashMap<String, List<ItemEntry[]>>>() {}.getType();
-			HashMap<String, List<ItemEntry[]>> loadedData = GSON.fromJson(reader, type);
-			if (loadedData != null) {
-				offers.clear();
-				offers.putAll(loadedData);
-			}
+			offers = GSON.fromJson(reader, type);
 		} catch (Exception e) {
 			System.err.println("Failed to load market data: " + e.getMessage());
+		} finally {
+			if (reader != null) {
+				try {
+					reader.close();
+				} catch (Exception e) {
+					System.err.println("Failed to close FileReader: " + e.getMessage());
+				}
+			}
 		}
 	}
 
 	public static void addOffer(String market, ItemStack[] items) {
-		offers.computeIfAbsent(market, k -> new ArrayList<>());
+		List<ItemEntry[]> marketOffers = offers.get(market);
 
-		ItemEntry[] entries = Arrays.stream(items)
-				.filter(Objects::nonNull)
-				.map(ItemEntry::new)
-				.toArray(ItemEntry[]::new);
+		if (marketOffers == null) {
+			marketOffers = new ArrayList<ItemEntry[]>();
+		}
 
-		offers.get(market).add(entries);
+		ItemEntry[] entries = new ItemEntry[items.length];
+
+		for (int i = 0; i < items.length; i++) {
+			if (items[i] != null) {
+				entries[i] = new ItemEntry(items[i]);
+			}
+		}
+
+		marketOffers.add(entries);
+		offers.put(market, marketOffers);
 		saveMarketData();
-		syncToClients();
 	}
 
 	public static List<ItemStack[]> getOffers(String market) {
-		List<ItemStack[]> result = new ArrayList<>();
+		List<ItemStack[]> result = new ArrayList<ItemStack[]>();
 		List<ItemEntry[]> entryList = offers.get(market);
-		if (entryList == null) return result;
+
+		if (entryList == null) {
+			return result;
+		}
 
 		for (ItemEntry[] entryArray : entryList) {
-			ItemStack[] stackArray = Arrays.stream(entryArray)
-					.map(ItemEntry::toItemStack)
-					.toArray(ItemStack[]::new);
+			ItemStack[] stackArray = new ItemStack[entryArray.length];
+			for (int i = 0; i < entryArray.length; i++) {
+				if (entryArray[i] != null) {
+					stackArray[i] = entryArray[i].toItemStack();
+				}
+			}
 			result.add(stackArray);
 		}
 		return result;
-	}
-
-	private static void syncToClients() {
-		NETWORK.sendToAll(new PacketMarketData(offers));
 	}
 
 	public static List<ItemEntry[]> convertToItemEntryList(List<ItemStack[]> stackOffers) {
@@ -97,16 +113,6 @@ public class MarketData {
 		}
 
 		return convertedOffers;
-	}
-
-	@SubscribeEvent
-	public void onWorldSave(WorldEvent.Save event) {
-		saveMarketData();
-	}
-
-	@SubscribeEvent
-	public void onWorldLoad(WorldEvent.Load event) {
-		loadMarketData();
 	}
 
 
@@ -132,7 +138,7 @@ public class MarketData {
 			ItemStack stack = new ItemStack(item, count, metadata);
 			if (nbtData != null) {
 				try {
-					stack.setTagCompound((NBTTagCompound) JsonToNBT.func_150315_a(nbtData));
+					stack.setTagCompound((NBTTagCompound) JsonToNBT.func_150315_a(nbtData)); // 1.7.10 NBT Parsing
 				} catch (Exception e) {
 					System.err.println("Failed to parse NBT for item: " + itemName);
 				}
