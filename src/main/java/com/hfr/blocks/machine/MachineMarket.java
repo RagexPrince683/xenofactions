@@ -60,7 +60,10 @@ public class MachineMarket extends BlockContainer {
 	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
 		if (!world.isRemote) {
 			TileEntityMarket market = (TileEntityMarket) world.getTileEntity(x, y, z);
-			if (market == null) return false;
+			if (market == null) {
+				System.err.println("TileEntityMarket is null at location: " + x + ", " + y + ", " + z);
+				return false;
+			}
 
 			// Handle renaming the market with a name tag
 			if (player.getHeldItem() != null && player.getHeldItem().getItem() == Items.name_tag && player.getHeldItem().hasDisplayName()) {
@@ -101,6 +104,7 @@ public class MachineMarket extends BlockContainer {
 
 			// Send updated market offers to client
 			PacketDispatcher.wrapper.sendTo(new OfferPacket(nbt), (EntityPlayerMP) player);
+			System.out.println("Sent offers to client for market: " + market.name);
 
 			return true;
 		} else if (!player.isSneaking()) {
@@ -125,12 +129,14 @@ public class MachineMarket extends BlockContainer {
 		public void readFromNBT(NBTTagCompound nbt) {
 			super.readFromNBT(nbt);
 			name = nbt.getString("name");
+			System.out.println("Loaded market name from NBT: " + name);
 		}
 
 		@Override
 		public void writeToNBT(NBTTagCompound nbt) {
 			super.writeToNBT(nbt);
 			nbt.setString("name", name);
+			System.out.println("Saved market name to NBT: " + name);
 		}
 
 		@Override
