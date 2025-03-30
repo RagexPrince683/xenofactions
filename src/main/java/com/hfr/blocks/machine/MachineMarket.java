@@ -66,6 +66,7 @@ public class MachineMarket extends BlockContainer {
 			if (player.getHeldItem() != null && player.getHeldItem().getItem() == Items.name_tag && player.getHeldItem().hasDisplayName()) {
 				market.name = player.getHeldItem().getDisplayName();
 				market.markDirty();
+				world.markBlockForUpdate(x, y, z);  // Ensure the block updates in both singleplayer and multiplayer
 
 				System.out.println("Market renamed to: " + market.name);
 
