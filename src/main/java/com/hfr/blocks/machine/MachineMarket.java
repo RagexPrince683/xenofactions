@@ -62,39 +62,21 @@ public class MachineMarket extends BlockContainer {
 	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
 		if (!world.isRemote) {
 			TileEntityMarket market = (TileEntityMarket) world.getTileEntity(x, y, z);
-			if (market == null) {
-				System.err.println("TileEntityMarket is null at location: " + x + ", " + y + ", " + z);
-				return false;
-			}
+			if (market == null) return false;
 
 			// Handle renaming the market with a name tag
 			if (player.getHeldItem() != null && player.getHeldItem().getItem() == Items.name_tag && player.getHeldItem().hasDisplayName()) {
-				market.name = player.getHeldItem().getDisplayName();
-				market.markDirty();
+				market.setName(player.getHeldItem().getDisplayName());
 				world.markBlockForUpdate(x, y, z);  // Ensure the block updates in both singleplayer and multiplayer
-
-				// Send synchronization packet to clients
-				NBTTagCompound nbt = new NBTTagCompound();
-				market.writeToNBT(nbt);
-				PacketDispatcher.wrapper.sendToAllAround(new MarketNameSyncPacket(x, y, z, nbt), new NetworkRegistry.TargetPoint(world.provider.dimensionId, x, y, z, 64));
-
-				System.out.println("Market renamed to: " + market.name);
-
 				return true;
 			}
 
 			// Get offers from JSON-based MarketData
-			List<ItemStack[]> offers = MarketData.getOffers(market.name);
-
-			// Check if offers are properly loaded
-			if (offers == null) {
-				System.err.println("Offers for market " + market.name + " not found!");
-				return true;
-			}
+			List<ItemStack[]> offers = MarketData.getOffers(market.getName());
 
 			// Create NBTTagCompound to send offer data
 			NBTTagCompound nbt = new NBTTagCompound();
-			nbt.setString("market", market.name);
+			nbt.setString("market", market.getName());
 			nbt.setInteger("offercount", offers.size());
 
 			for (int i = 0; i < offers.size(); i++) {
@@ -113,7 +95,6 @@ public class MachineMarket extends BlockContainer {
 
 			// Send updated market offers to client
 			PacketDispatcher.wrapper.sendTo(new OfferPacket(nbt), (EntityPlayerMP) player);
-			System.out.println("Sent offers to client for market: " + market.name);
 
 			return true;
 		} else if (!player.isSneaking()) {
@@ -132,7 +113,25 @@ public class MachineMarket extends BlockContainer {
 	}
 
 	public static class TileEntityMarket extends TileEntity {
-		public String name = "";
+		private String name = "";
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+			markDirty();
+			if (!worldObj.isRemote) {
+				syncName();
+			}
+		}
+
+		private void syncName() {
+			NBTTagCompound nbt = new NBTTagCompound();
+			writeToNBT(nbt);
+			PacketDispatcher.wrapper.sendToAllAround(new MarketNameSyncPacket(xCoord, yCoord, zCoord, nbt), new NetworkRegistry.TargetPoint(worldObj.provider.dimensionId, xCoord, yCoord, zCoord, 64));
+		}
 
 		@Override
 		public void readFromNBT(NBTTagCompound nbt) {
