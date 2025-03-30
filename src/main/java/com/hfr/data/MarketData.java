@@ -20,9 +20,8 @@ import java.util.*;
 public class MarketData {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static File saveFile;
+	public static final HashMap<String, List<ItemEntry[]>> offers = new HashMap<String, List<ItemEntry[]>>();
 	private static final SimpleNetworkWrapper NETWORK = NetworkRegistry.INSTANCE.newSimpleChannel("market_data");
-
-	public static HashMap<String, List<ItemEntry[]>> offers = new HashMap<String, List<ItemEntry[]>>();
 
 	public static void init(File worldDir) {
 		saveFile = new File(worldDir, "marketdata.json");
@@ -31,16 +30,28 @@ public class MarketData {
 	}
 
 	public static void saveMarketData() {
-		try (FileWriter writer = new FileWriter(saveFile)) {
+		FileWriter writer = null;
+		try {
+			writer = new FileWriter(saveFile);
 			GSON.toJson(offers, writer);
 		} catch (Exception e) {
 			System.err.println("Failed to save market data: " + e.getMessage());
+		} finally {
+			if (writer != null) {
+				try {
+					writer.close();
+				} catch (Exception e) {
+					System.err.println("Failed to close FileWriter: " + e.getMessage());
+				}
+			}
 		}
 	}
 
 	public static void loadMarketData() {
 		if (!saveFile.exists()) return;
-		try (FileReader reader = new FileReader(saveFile)) {
+		FileReader reader = null;
+		try {
+			reader = new FileReader(saveFile);
 			Type type = new TypeToken<HashMap<String, List<ItemEntry[]>>>() {}.getType();
 			HashMap<String, List<ItemEntry[]>> loadedData = GSON.fromJson(reader, type);
 			if (loadedData != null) {
@@ -49,16 +60,28 @@ public class MarketData {
 			}
 		} catch (Exception e) {
 			System.err.println("Failed to load market data: " + e.getMessage());
+		} finally {
+			if (reader != null) {
+				try {
+					reader.close();
+				} catch (Exception e) {
+					System.err.println("Failed to close FileReader: " + e.getMessage());
+				}
+			}
 		}
 	}
 
 	public static void addOffer(String market, ItemStack[] items) {
-		offers.computeIfAbsent(market, k -> new ArrayList<>());
+		if (!offers.containsKey(market)) {
+			offers.put(market, new ArrayList<ItemEntry[]>());
+		}
 
-		ItemEntry[] entries = Arrays.stream(items)
-				.filter(Objects::nonNull)
-				.map(ItemEntry::new)
-				.toArray(ItemEntry[]::new);
+		ItemEntry[] entries = new ItemEntry[items.length];
+		for (int i = 0; i < items.length; i++) {
+			if (items[i] != null) {
+				entries[i] = new ItemEntry(items[i]);
+			}
+		}
 
 		offers.get(market).add(entries);
 		saveMarketData();
@@ -66,14 +89,15 @@ public class MarketData {
 	}
 
 	public static List<ItemStack[]> getOffers(String market) {
-		List<ItemStack[]> result = new ArrayList<>();
+		List<ItemStack[]> result = new ArrayList<ItemStack[]>();
 		List<ItemEntry[]> entryList = offers.get(market);
 		if (entryList == null) return result;
 
 		for (ItemEntry[] entryArray : entryList) {
-			ItemStack[] stackArray = Arrays.stream(entryArray)
-					.map(ItemEntry::toItemStack)
-					.toArray(ItemStack[]::new);
+			ItemStack[] stackArray = new ItemStack[entryArray.length];
+			for (int i = 0; i < entryArray.length; i++) {
+				stackArray[i] = entryArray[i] != null ? entryArray[i].toItemStack() : null;
+			}
 			result.add(stackArray);
 		}
 		return result;
@@ -112,7 +136,7 @@ public class MarketData {
 
 
 
-	private static class ItemEntry {
+	static class ItemEntry {
 		String itemName;
 		int count;
 		int metadata;
