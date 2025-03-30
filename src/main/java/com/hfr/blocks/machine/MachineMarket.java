@@ -62,7 +62,10 @@ public class MachineMarket extends BlockContainer {
 	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
 		if (!world.isRemote) {
 			TileEntityMarket market = (TileEntityMarket) world.getTileEntity(x, y, z);
-			if (market == null) return false;
+			if (market == null) {
+				System.err.println("TileEntityMarket is null at location: " + x + ", " + y + ", " + z);
+				return false;
+			}
 
 			// Handle renaming the market with a name tag
 			if (player.getHeldItem() != null && player.getHeldItem().getItem() == Items.name_tag && player.getHeldItem().hasDisplayName()) {
@@ -82,6 +85,12 @@ public class MachineMarket extends BlockContainer {
 
 			// Get offers from JSON-based MarketData
 			List<ItemStack[]> offers = MarketData.getOffers(market.name);
+
+			// Check if offers are properly loaded
+			if (offers == null) {
+				System.err.println("Offers for market " + market.name + " not found!");
+				return true;
+			}
 
 			// Create NBTTagCompound to send offer data
 			NBTTagCompound nbt = new NBTTagCompound();
@@ -104,6 +113,7 @@ public class MachineMarket extends BlockContainer {
 
 			// Send updated market offers to client
 			PacketDispatcher.wrapper.sendTo(new OfferPacket(nbt), (EntityPlayerMP) player);
+			System.out.println("Sent offers to client for market: " + market.name);
 
 			return true;
 		} else if (!player.isSneaking()) {

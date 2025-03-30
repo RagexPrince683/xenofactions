@@ -47,6 +47,7 @@ public class MarketNameSyncPacket implements IMessage {
                 TileEntity tileEntity = world.getTileEntity(message.x, message.y, message.z);
                 if (tileEntity instanceof MachineMarket.TileEntityMarket) {
                     ((MachineMarket.TileEntityMarket) tileEntity).readFromNBT(message.data);
+                    System.out.println("Synchronized market name to client: " + ((MachineMarket.TileEntityMarket) tileEntity).name);
                 }
             }
             return null;
