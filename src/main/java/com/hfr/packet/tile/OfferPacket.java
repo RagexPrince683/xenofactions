@@ -97,9 +97,8 @@ public class OfferPacket implements IMessage {
 			int offerCount = nbt.getInteger("offercount");
 
 			List<ItemStack[]> offers = new ArrayList<ItemStack[]>();
-			//nyet kurwa blyat cyka
 			for (int i = 0; i < offerCount; i++) {
-				NBTTagList list = nbt.getTagList("items" + i, NBTUtil.TAG_COMPOUND);
+				NBTTagList list = nbt.getTagList("items" + i, 10);
 				ItemStack[] offerArray = new ItemStack[list.tagCount()];
 
 				for (int j = 0; j < list.tagCount(); j++) {
