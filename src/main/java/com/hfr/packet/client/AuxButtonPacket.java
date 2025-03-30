@@ -258,7 +258,7 @@ public class AuxButtonPacket implements IMessage {
 					TileEntityMarket market = (TileEntityMarket) te;
 
 					// Get the market's offers from JSON
-					List<ItemStack[]> offers = MarketData.getOffers(market.getName()); // Use the getter method
+					List<ItemStack[]> offers = MarketData.getOffers(market.getName());
 
 					if (offers.isEmpty()) {
 						System.out.println("There's no market with the name: " + market.getName());

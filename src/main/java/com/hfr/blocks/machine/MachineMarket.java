@@ -66,17 +66,21 @@ public class MachineMarket extends BlockContainer {
 
 			// Handle renaming the market with a name tag
 			if (player.getHeldItem() != null && player.getHeldItem().getItem() == Items.name_tag && player.getHeldItem().hasDisplayName()) {
-				market.setName(player.getHeldItem().getDisplayName());
+				market.name = player.getHeldItem().getDisplayName();
+				market.markDirty();
 				world.markBlockForUpdate(x, y, z);  // Ensure the block updates in both singleplayer and multiplayer
+
+				System.out.println("Market renamed to: " + market.name);
+
 				return true;
 			}
 
 			// Get offers from JSON-based MarketData
-			List<ItemStack[]> offers = MarketData.getOffers(market.getName());
+			List<ItemStack[]> offers = MarketData.getOffers(market.name);
 
 			// Create NBTTagCompound to send offer data
 			NBTTagCompound nbt = new NBTTagCompound();
-			nbt.setString("market", market.getName());
+			nbt.setString("market", market.name);
 			nbt.setInteger("offercount", offers.size());
 
 			for (int i = 0; i < offers.size(); i++) {
