@@ -20,14 +20,23 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.PacketBuffer;
+import net.minecraftforge.common.util.Constants;
 
 public class OfferPacket implements IMessage {
 
 	String name;
 	PacketBuffer buffer;
+	private NBTTagCompound data;
 
-	public OfferPacket() { }
+	//public OfferPacket() {}
+
+	public OfferPacket(NBTTagCompound data) {
+		this.data = data;
+	}
+
+
 
 	public OfferPacket(String name, NBTTagCompound nbt) {
 		
@@ -42,59 +51,59 @@ public class OfferPacket implements IMessage {
 		}
 	}
 
+	//@Override
+	//public void fromBytes(ByteBuf buf) {
+	//
+	//	this.name = ByteBufUtils.readUTF8String(buf);
+	//
+	//	if (buffer == null) {
+	//		buffer = new PacketBuffer(Unpooled.buffer());
+	//	}
+	//	buffer.writeBytes(buf);
+	//}
+//
+	//@Override
+	//public void toBytes(ByteBuf buf) {
+	//
+	//	ByteBufUtils.writeUTF8String(buf, name);
+//
+	//	if (buffer == null) {
+	//		buffer = new PacketBuffer(Unpooled.buffer());
+	//	}
+	//	buf.writeBytes(buffer);
+	//}
+
 	@Override
 	public void fromBytes(ByteBuf buf) {
-		
-		this.name = ByteBufUtils.readUTF8String(buf);
-		
-		if (buffer == null) {
-			buffer = new PacketBuffer(Unpooled.buffer());
-		}
-		buffer.writeBytes(buf);
+		this.data = ByteBufUtils.readTag(buf);
 	}
 
 	@Override
 	public void toBytes(ByteBuf buf) {
-		
-		ByteBufUtils.writeUTF8String(buf, name);
-
-		if (buffer == null) {
-			buffer = new PacketBuffer(Unpooled.buffer());
-		}
-		buf.writeBytes(buffer);
+		ByteBufUtils.writeTag(buf, this.data);
 	}
 
 	public static class Handler implements IMessageHandler<OfferPacket, IMessage> {
-		@SideOnly (Side.CLIENT)
-		//causes a crash clientside if SIDEONLYCLIENT is not here
-		//going to assume this is not the issue, but rather the items actually being fucking assigned
-		//to the list just not working on the fucking server for some fucking retarded reason
 		@Override
-		public IMessage onMessage(OfferPacket m, MessageContext ctx) {
-			try {
+		public IMessage onMessage(OfferPacket message, MessageContext ctx) {
+			NBTTagCompound nbt = message.data;
+			String market = nbt.getString("market");
+			int offerCount = nbt.getInteger("offercount");
 
-				//TODO THIS SHOULD BE ON THE FUCKING SERVER NOT THE FUCKING CLIENT YOU DUMB SHIT
-				// OR IT SHOULD SEND A PACKET TO THE SERVER TO REQUEST THIS INFORMATION THEN THIS LOGIC
-				// EITHER WAY THIS IS FUCKING RETARD CODE
+			List<ItemStack[]> offers = MarketData.getOffers(market);
+			for (int i = 0; i < offerCount; i++) {
+				NBTTagList list = nbt.getTagList("items" + i, Constants.NBT.TAG_COMPOUND);
+				ItemStack[] offerArray = new ItemStack[list.tagCount()];
 
-				// Load the latest market data from JSON
-				MarketData.loadMarketData();
-
-				// Get market offers
-				List<ItemStack[]> offers = MarketData.getOffers(m.name);
-
-				if (offers == null) {
-					offers = new ArrayList<ItemStack[]>();
+				for (int j = 0; j < list.tagCount(); j++) {
+					NBTTagCompound itemTag = list.getCompoundTagAt(j);
+					offerArray[j] = ItemStack.loadItemStackFromNBT(itemTag);
 				}
 
-				// Update the machine and GUI with the loaded market offers
-				MachineMarket.name = m.name;
-				GUIMachineMarket.offers = offers;
-
-			} catch (Exception e) {
-				e.printStackTrace();
+				offers.add(offerArray);
 			}
 
+			MarketData.addOffers(market, offers);
 			return null;
 		}
 	}

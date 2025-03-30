@@ -25,14 +25,12 @@ public class MarketData {
 		try {
 			writer = new FileWriter(SAVE_FILE);
 			GSON.toJson(offers, writer);
-			System.out.println("Market data saved successfully.");
 		} catch (Exception e) {
 			System.err.println("Failed to save market data: " + e.getMessage());
 		} finally {
 			if (writer != null) {
 				try {
 					writer.close();
-					System.out.println("FileWriter closed successfully after saving market data.");
 				} catch (Exception e) {
 					System.err.println("Failed to close FileWriter: " + e.getMessage());
 				}
@@ -41,24 +39,19 @@ public class MarketData {
 	}
 
 	public static void loadMarketData() {
-		if (!SAVE_FILE.exists()) {
-			System.out.println("MarketData file does not exist. Skipping load.");
-			return; // No file to load
-		}
+		if (!SAVE_FILE.exists()) return;
 
 		FileReader reader = null;
 		try {
 			reader = new FileReader(SAVE_FILE);
 			Type type = new TypeToken<HashMap<String, List<ItemEntry[]>>>() {}.getType();
 			offers = GSON.fromJson(reader, type);
-			System.out.println("Market data loaded successfully. Offers: " + offers);
 		} catch (Exception e) {
 			System.err.println("Failed to load market data: " + e.getMessage());
 		} finally {
 			if (reader != null) {
 				try {
 					reader.close();
-					System.out.println("FileReader closed successfully after loading market data.");
 				} catch (Exception e) {
 					System.err.println("Failed to close FileReader: " + e.getMessage());
 				}
@@ -66,13 +59,32 @@ public class MarketData {
 		}
 	}
 
+	public static void addOffers(String market, List<ItemStack[]> offers) {
+		List<ItemEntry[]> marketOffers = MarketData.offers.get(market);
+		if (marketOffers == null) {
+			marketOffers = new ArrayList<ItemEntry[]>();
+			//Diamond types are not supported at language level '6' stop doing this stupid shit
+			//you need to put ItemEntry[] in the actual fucking array dumbfuck
+			//does everything need to be a fucking problem? For fucks sake
+		}
+		for (ItemStack[] offerArray : offers) {
+			ItemEntry[] entries = new ItemEntry[offerArray.length];
+			for (int i = 0; i < offerArray.length; i++) {
+				if (offerArray[i] != null) {
+					entries[i] = new ItemEntry(offerArray[i]);
+				}
+			}
+			marketOffers.add(entries);
+		}
+		MarketData.offers.put(market, marketOffers);
+		MarketData.saveMarketData();
+	}
+
 	public static void addOffer(String market, ItemStack[] items) {
-		System.out.println("Adding offer to market: " + market);
 		List<ItemEntry[]> marketOffers = offers.get(market);
 
 		if (marketOffers == null) {
 			marketOffers = new ArrayList<ItemEntry[]>();
-			System.out.println("Created new offer list for market: " + market);
 		}
 
 		ItemEntry[] entries = new ItemEntry[items.length];
@@ -80,33 +92,26 @@ public class MarketData {
 		for (int i = 0; i < items.length; i++) {
 			if (items[i] != null) {
 				entries[i] = new ItemEntry(items[i]);
-				System.out.println("Added item to offer: " + items[i].getDisplayName());
 			}
 		}
 
 		marketOffers.add(entries);
 		offers.put(market, marketOffers);
-		System.out.println("Offer added to market: " + market + ". Current offers: " + marketOffers);
 		saveMarketData();
 	}
 
 	public static List<ItemStack[]> getOffers(String market) {
-		System.out.println("Fetching offers for market: " + market);
-		loadMarketData(); // Ensure data is loaded each time offers are fetched
+		loadMarketData();
 		List<ItemStack[]> result = new ArrayList<ItemStack[]>();
 		List<ItemEntry[]> entryList = offers.get(market);
 
-		if (entryList == null) {
-			System.out.println("No offers found for market: " + market);
-			return result;
-		}
+		if (entryList == null) return result;
 
 		for (ItemEntry[] entryArray : entryList) {
 			ItemStack[] stackArray = new ItemStack[entryArray.length];
 			for (int i = 0; i < entryArray.length; i++) {
 				if (entryArray[i] != null) {
 					stackArray[i] = entryArray[i].toItemStack();
-					System.out.println("Converted ItemEntry to ItemStack: " + stackArray[i].getDisplayName());
 				}
 			}
 			result.add(stackArray);
@@ -146,13 +151,12 @@ public class MarketData {
 
 		ItemStack toItemStack() {
 			Item item = (Item) Item.itemRegistry.getObject(itemName);
-			//this crashed clientside somehow
 			if (item == null) return null;
 
 			ItemStack stack = new ItemStack(item, count, metadata);
 			if (nbtData != null) {
 				try {
-					stack.setTagCompound((NBTTagCompound) JsonToNBT.func_150315_a(nbtData)); // 1.7.10 NBT Parsing
+					stack.setTagCompound((NBTTagCompound) JsonToNBT.func_150315_a(nbtData));
 				} catch (Exception e) {
 					System.err.println("Failed to parse NBT for item: " + itemName);
 				}

@@ -59,7 +59,6 @@ public class MachineMarket extends BlockContainer {
 	@Override
 	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
 		if (!world.isRemote) {
-			System.out.println("should be server side");
 			TileEntityMarket market = (TileEntityMarket) world.getTileEntity(x, y, z);
 			if (market == null) return false;
 
@@ -70,8 +69,6 @@ public class MachineMarket extends BlockContainer {
 			NBTTagCompound nbt = new NBTTagCompound();
 			nbt.setString("market", market.name);
 			nbt.setInteger("offercount", offers.size());
-
-			//offers do not work serverside, but do work clientside
 
 			for (int i = 0; i < offers.size(); i++) {
 				NBTTagList list = new NBTTagList();
@@ -88,30 +85,9 @@ public class MachineMarket extends BlockContainer {
 			}
 
 			// Send updated market offers to client
-			System.out.println("Sending market data to client for: " + market.name);
-			PacketDispatcher.wrapper.sendTo(new OfferPacket(market.name, nbt), (EntityPlayerMP) player);
-			//NO DUMBASS SEND TO SERVER AS WELL OR SOME SHIT FUCK GODDAMN BULLSHIT MAN I HATE THIS FUCKING MOD
-			//PacketDispatcher.wrapper.sendToServer(new OfferPacket(market.name, nbt));
-			//NEVERMIND THAT SHIT GAVE A BUNCH OF FUCKING ERRORS WHAT THE ACTUAL FUCK DO I DO I HATE THIS FUCKING SHIT
-
-			// Handle renaming the market with a Name Tag
-			if (player.getHeldItem() != null && player.getHeldItem().getItem() == Items.name_tag && player.getHeldItem().hasDisplayName()) {
-				market.name = player.getHeldItem().getDisplayName();
-				market.markDirty();
-
-				System.out.println("Market renamed to: " + market.name);
-
-				return true;
-			}
-
-			return true;
-		} else if (!player.isSneaking()) {
-			// Open GUI for Market
-			FMLNetworkHandler.openGui(player, MainRegistry.instance, ModBlocks.guiID_market, world, x, y, z);
-			return true;
-		} else {
-			return false;
+			PacketDispatcher.wrapper.sendTo(new OfferPacket(nbt), (EntityPlayerMP) player);
 		}
+		return true;
 	}
 
 

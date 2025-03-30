@@ -1,15 +1,22 @@
 package com.hfr.packet;
 
 import com.hfr.lib.RefStrings;
+import com.hfr.main.MainRegistry;
 import com.hfr.packet.client.*;
 import com.hfr.packet.effect.*;
 import com.hfr.packet.tile.*;
 
 import cpw.mods.fml.common.network.NetworkRegistry;
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import cpw.mods.fml.relauncher.Side;
+import net.minecraft.entity.player.EntityPlayerMP;
 
 public class PacketDispatcher {
+
+	//public static void sendTo(IMessage message, EntityPlayerMP player) {
+	//	MainRegistry.network.sendTo(message, player);
+	//}
 
 	//Mark 1 Packet Sending Device
 	public static final SimpleNetworkWrapper wrapper = NetworkRegistry.INSTANCE.newSimpleChannel(RefStrings.MODID);
