@@ -23,6 +23,7 @@ public class CommandXPlayer extends CommandBase {
 		aliases = new ArrayList();
 		aliases.add("xplayer");
 	}
+	//retarded admin abuse shit
 	
 	@Override
 	public int compareTo(Object arg0) {
@@ -87,6 +88,8 @@ public class CommandXPlayer extends CommandBase {
 					if(entry.tilt)
 						sender.addChatMessage(new ChatComponentText("Enabled tilt mode for player " + args[1]));
 					else
+						//need restart game to disable tilt mode thanks bobtard
+						//PacketDispatcher.wrapper.sendTo(new CBTPacket(entry.fps, entry.tilt, entry.shader), target);
 						sender.addChatMessage(new ChatComponentText("Disabled tilt mode for player " + args[1]));
 				} else if("vomit".equals(args[0]) || "shader".equals(args[0])) {
 					entry.shader = !entry.shader;

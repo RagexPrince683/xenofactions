@@ -72,6 +72,8 @@ public class TileEntityMachineBuilder extends TileEntityMachineBase {
 	public void construct(Schematic schem) {
 		
 		int i = schem.value;
+		//todo should require actual building materials, and list them in the GUI.
+		// infact I don't even think this shit even works, I couldn't get it to work.
 		
 		if(slots[0] != null && slots[0].getItem() == ModItems.wrench && slots[0].stackSize >= i) {
 
