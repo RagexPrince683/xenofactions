@@ -258,15 +258,15 @@ public class AuxButtonPacket implements IMessage {
 					TileEntityMarket market = (TileEntityMarket) te;
 
 					// Get the market's offers from JSON
-					List<ItemStack[]> offers = MarketData.getOffers(market.name);
+					List<ItemStack[]> offers = MarketData.getOffers(market.getName()); // Use the getter method
 
 					if (offers.isEmpty()) {
-						System.out.println("There's no market with the name: " + market.name);
+						System.out.println("There's no market with the name: " + market.getName());
 						return null;
 					}
 
 					if (m.value < 0 || m.value >= offers.size()) {
-						System.out.println("The selected offer is out of bounds for market: " + market.name);
+						System.out.println("The selected offer is out of bounds for market: " + market.getName());
 						System.out.println("Offer index: " + m.value);
 						return null;
 					}
@@ -311,7 +311,7 @@ public class AuxButtonPacket implements IMessage {
 							p.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "You lack required items."));
 						}
 					} else {
-						System.out.println("The selected offer is null for market: " + market.name);
+						System.out.println("The selected offer is null for market: " + market.getName());
 					}
 				}
 
