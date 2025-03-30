@@ -51,30 +51,6 @@ public class MarketData extends WorldSavedData {
 		loadFromFile();
 	}
 
-	public void readMarketFromPacket(NBTTagCompound nbt) {
-
-		String name = nbt.getString("market");
-		int offerCount = nbt.getInteger("offercount");
-
-		for (int off = 0; off < offerCount; off++)
-			readOffers(nbt, name, off);
-	}
-
-	public void writeMarketFromName(NBTTagCompound nbt, String name) {
-
-		List<ItemStack[]> market = this.offers.get(name);
-
-		if(market == null)
-			return;
-
-		nbt.setString("market", name);
-		nbt.setInteger("offercount", market.size());
-
-		writeOffers(nbt, name, market);
-	}
-
-
-
 	public void readMarkets(NBTTagCompound nbt, int count) {
 		for (int index = 0; index < count; index++) {
 			String name = nbt.getString("market_" + index);
