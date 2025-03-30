@@ -2,13 +2,16 @@ package com.hfr.data;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.network.NetworkRegistry;
+import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTUtil;
-
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.world.WorldEvent;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -16,107 +19,68 @@ import java.util.*;
 
 public class MarketData {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-	private static final File SAVE_FILE = new File("config/marketdata.json");
+	private static File saveFile;
+	private static final SimpleNetworkWrapper NETWORK = NetworkRegistry.INSTANCE.newSimpleChannel("market_data");
 
 	public static HashMap<String, List<ItemEntry[]>> offers = new HashMap<String, List<ItemEntry[]>>();
 
+	public static void init(File worldDir) {
+		saveFile = new File(worldDir, "marketdata.json");
+		MinecraftForge.EVENT_BUS.register(new MarketData());
+		loadMarketData();
+	}
+
 	public static void saveMarketData() {
-		FileWriter writer = null;
-		try {
-			writer = new FileWriter(SAVE_FILE);
+		try (FileWriter writer = new FileWriter(saveFile)) {
 			GSON.toJson(offers, writer);
 		} catch (Exception e) {
 			System.err.println("Failed to save market data: " + e.getMessage());
-		} finally {
-			if (writer != null) {
-				try {
-					writer.close();
-				} catch (Exception e) {
-					System.err.println("Failed to close FileWriter: " + e.getMessage());
-				}
-			}
 		}
 	}
 
 	public static void loadMarketData() {
-		if (!SAVE_FILE.exists()) return;
-
-		FileReader reader = null;
-		try {
-			reader = new FileReader(SAVE_FILE);
+		if (!saveFile.exists()) return;
+		try (FileReader reader = new FileReader(saveFile)) {
 			Type type = new TypeToken<HashMap<String, List<ItemEntry[]>>>() {}.getType();
-			offers = GSON.fromJson(reader, type);
+			HashMap<String, List<ItemEntry[]>> loadedData = GSON.fromJson(reader, type);
+			if (loadedData != null) {
+				offers.clear();
+				offers.putAll(loadedData);
+			}
 		} catch (Exception e) {
 			System.err.println("Failed to load market data: " + e.getMessage());
-		} finally {
-			if (reader != null) {
-				try {
-					reader.close();
-				} catch (Exception e) {
-					System.err.println("Failed to close FileReader: " + e.getMessage());
-				}
-			}
 		}
-	}
-
-	public static void addOffers(String market, List<ItemStack[]> offers) {
-		List<ItemEntry[]> marketOffers = MarketData.offers.get(market);
-		if (marketOffers == null) {
-			marketOffers = new ArrayList<ItemEntry[]>();
-			//Diamond types are not supported at language level '6' stop doing this stupid shit
-			//you need to put ItemEntry[] in the actual fucking array dumbfuck
-			//does everything need to be a fucking problem? For fucks sake
-		}
-		for (ItemStack[] offerArray : offers) {
-			ItemEntry[] entries = new ItemEntry[offerArray.length];
-			for (int i = 0; i < offerArray.length; i++) {
-				if (offerArray[i] != null) {
-					entries[i] = new ItemEntry(offerArray[i]);
-				}
-			}
-			marketOffers.add(entries);
-		}
-		MarketData.offers.put(market, marketOffers);
-		MarketData.saveMarketData();
 	}
 
 	public static void addOffer(String market, ItemStack[] items) {
-		List<ItemEntry[]> marketOffers = offers.get(market);
+		offers.computeIfAbsent(market, k -> new ArrayList<>());
 
-		if (marketOffers == null) {
-			marketOffers = new ArrayList<ItemEntry[]>();
-		}
+		ItemEntry[] entries = Arrays.stream(items)
+				.filter(Objects::nonNull)
+				.map(ItemEntry::new)
+				.toArray(ItemEntry[]::new);
 
-		ItemEntry[] entries = new ItemEntry[items.length];
-
-		for (int i = 0; i < items.length; i++) {
-			if (items[i] != null) {
-				entries[i] = new ItemEntry(items[i]);
-			}
-		}
-
-		marketOffers.add(entries);
-		offers.put(market, marketOffers);
+		offers.get(market).add(entries);
 		saveMarketData();
+		syncToClients();
 	}
 
 	public static List<ItemStack[]> getOffers(String market) {
-		loadMarketData();
-		List<ItemStack[]> result = new ArrayList<ItemStack[]>();
+		List<ItemStack[]> result = new ArrayList<>();
 		List<ItemEntry[]> entryList = offers.get(market);
-
 		if (entryList == null) return result;
 
 		for (ItemEntry[] entryArray : entryList) {
-			ItemStack[] stackArray = new ItemStack[entryArray.length];
-			for (int i = 0; i < entryArray.length; i++) {
-				if (entryArray[i] != null) {
-					stackArray[i] = entryArray[i].toItemStack();
-				}
-			}
+			ItemStack[] stackArray = Arrays.stream(entryArray)
+					.map(ItemEntry::toItemStack)
+					.toArray(ItemStack[]::new);
 			result.add(stackArray);
 		}
 		return result;
+	}
+
+	private static void syncToClients() {
+		NETWORK.sendToAll(new PacketMarketData(offers));
 	}
 
 	public static List<ItemEntry[]> convertToItemEntryList(List<ItemStack[]> stackOffers) {
@@ -133,8 +97,20 @@ public class MarketData {
 		}
 
 		return convertedOffers;
-
 	}
+
+	@SubscribeEvent
+	public void onWorldSave(WorldEvent.Save event) {
+		saveMarketData();
+	}
+
+	@SubscribeEvent
+	public void onWorldLoad(WorldEvent.Load event) {
+		loadMarketData();
+	}
+
+
+
 
 	private static class ItemEntry {
 		String itemName;
@@ -164,6 +140,4 @@ public class MarketData {
 			return stack;
 		}
 	}
-
-
 }
