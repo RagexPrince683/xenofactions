@@ -10,7 +10,6 @@ import com.hfr.blocks.machine.MachineMarket.TileEntityMarket;
 import com.hfr.lib.RefStrings;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.client.AuxButtonPacket;
-import com.hfr.tileentity.machine.TileEntityMachineEMP;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;

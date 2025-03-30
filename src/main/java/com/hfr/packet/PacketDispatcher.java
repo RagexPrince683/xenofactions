@@ -48,6 +48,9 @@ public class PacketDispatcher {
 		wrapper.registerMessage(ClowderFlagPacket.Handler.class, ClowderFlagPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(ClowderBorderPacket.Handler.class, ClowderBorderPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(ExplosionSoundPacket.Handler.class, ExplosionSoundPacket.class, i++, Side.CLIENT);
+		//todo OfferPacket should be serverside
+		// if we want the items to be added to the market and registered on the server right?
+
 		wrapper.registerMessage(OfferPacket.Handler.class, OfferPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(RVIPacket.Handler.class, RVIPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(CumPacket.Handler.class, CumPacket.class, i++, Side.CLIENT);

@@ -27,18 +27,6 @@ import net.minecraft.world.World;
 
 public class MachineMarket extends BlockContainer {
 
-	//fatty
-	//how about you get a real fucking job instead of trying to entrap people who give a shit about your stupid ass mod
-	//it's not like you care about this stupid shit anyways you even said it was dead you fucking plebian.
-	//if it bothers you so much out do me instead of sitting on your ass and crying
-	//fucking loser, and stay away from adding guns too you germans don't know shit about firearms.
-	//two world wars and here I am teaching your ass a lesson using your own stupid fucking project.
-	//I'll change all the textures, because that's all you have.
-	//You want to fight for the cretins, the scum and the villainous
-	//I will destroy you. One dollar, brick, comment, and change at a time.
-	//I already have shit going on. If you want to get involved in my personal life I will give you no end but
-	//hell to pay over this stupid fucking mod. Fuck you.
-
 	@SideOnly(Side.CLIENT)
 	private IIcon iconTop;
 	@SideOnly(Side.CLIENT)
