@@ -67,14 +67,18 @@ public class MachineMarket extends BlockContainer {
 				market.name = player.getHeldItem().getDisplayName();
 				market.markDirty();
 				world.markBlockForUpdate(x, y, z);  // Ensure the block updates in both singleplayer and multiplayer
-
 				System.out.println("Market renamed to: " + market.name);
-
 				return true;
 			}
 
 			// Get offers from JSON-based MarketData
 			List<ItemStack[]> offers = MarketData.getOffers(market.name);
+
+			// Check if offers are properly loaded
+			if (offers == null) {
+				System.err.println("Offers for market " + market.name + " not found!");
+				return true;
+			}
 
 			// Create NBTTagCompound to send offer data
 			NBTTagCompound nbt = new NBTTagCompound();
@@ -110,24 +114,24 @@ public class MachineMarket extends BlockContainer {
 
 
 	@Override
-	public TileEntity createNewTileEntity(World p_149915_1_, int p_149915_2_) {
+	public TileEntity createNewTileEntity(World world, int meta) {
 		return new TileEntityMarket();
 	}
-	
+
 	public static class TileEntityMarket extends TileEntity {
-		//name is working as a market identifier, nothing needs to be changed here?
-		
 		public String name = "";
 
-	    public void readFromNBT(NBTTagCompound nbt) {
-	    	super.readFromNBT(nbt);
-	    	name = nbt.getString("name");
-	    }
+		@Override
+		public void readFromNBT(NBTTagCompound nbt) {
+			super.readFromNBT(nbt);
+			name = nbt.getString("name");
+		}
 
-	    public void writeToNBT(NBTTagCompound nbt) {
-	    	super.writeToNBT(nbt);
-	    	nbt.setString("name", name);
-	    }
+		@Override
+		public void writeToNBT(NBTTagCompound nbt) {
+			super.writeToNBT(nbt);
+			nbt.setString("name", name);
+		}
 
 		@Override
 		public void updateEntity() {
@@ -135,7 +139,6 @@ public class MachineMarket extends BlockContainer {
 				markDirty(); // Forces a save
 			}
 		}
-
 	}
 
 
