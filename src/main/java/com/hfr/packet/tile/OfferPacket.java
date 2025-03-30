@@ -89,12 +89,17 @@ public class OfferPacket implements IMessage {
 		@Override
 		public IMessage onMessage(OfferPacket message, MessageContext ctx) {
 			NBTTagCompound nbt = message.data;
+			if (nbt == null) return null;
+
 			String market = nbt.getString("market");
+			if (market == null || market.isEmpty()) return null;
+
 			int offerCount = nbt.getInteger("offercount");
 
-			List<ItemStack[]> offers = MarketData.getOffers(market);
+			List<ItemStack[]> offers = new ArrayList<ItemStack[]>();
+			//nyet kurwa blyat cyka
 			for (int i = 0; i < offerCount; i++) {
-				NBTTagList list = nbt.getTagList("items" + i, Constants.NBT.TAG_COMPOUND);
+				NBTTagList list = nbt.getTagList("items" + i, NBTUtil.TAG_COMPOUND);
 				ItemStack[] offerArray = new ItemStack[list.tagCount()];
 
 				for (int j = 0; j < list.tagCount(); j++) {
