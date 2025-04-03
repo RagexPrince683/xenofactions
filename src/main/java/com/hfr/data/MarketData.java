@@ -2,9 +2,6 @@ package com.hfr.data;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
-import com.hfr.network.MarketDataSyncPacket;
-import com.hfr.packet.PacketDispatcher;
-import cpw.mods.fml.common.FMLCommonHandler;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
@@ -63,16 +60,14 @@ public class MarketData {
 	}
 
 	public static void addOffer(String market, ItemStack[] items) {
-		if (!FMLCommonHandler.instance().getEffectiveSide().isServer()) {
-			return; // Prevent clients from modifying the data
-		}
-
 		List<ItemEntry[]> marketOffers = offers.get(market);
+
 		if (marketOffers == null) {
-			marketOffers = new ArrayList<>();
+			marketOffers = new ArrayList<ItemEntry[]>();
 		}
 
 		ItemEntry[] entries = new ItemEntry[items.length];
+
 		for (int i = 0; i < items.length; i++) {
 			if (items[i] != null) {
 				entries[i] = new ItemEntry(items[i]);
@@ -82,11 +77,7 @@ public class MarketData {
 		marketOffers.add(entries);
 		offers.put(market, marketOffers);
 		saveMarketData();
-
-		// Send update packet to all clients
-		PacketDispatcher.INSTANCE.sendToAll(new MarketDataSyncPacket(offers));
 	}
-
 
 	public static List<ItemStack[]> getOffers(String market) {
 		List<ItemStack[]> result = new ArrayList<ItemStack[]>();
@@ -127,11 +118,11 @@ public class MarketData {
 
 
 
-	public static class ItemEntry {
-		public String itemName;
-		public int count;
-		public int metadata;
-		public String nbtData;
+	private static class ItemEntry {
+		String itemName;
+		int count;
+		int metadata;
+		String nbtData;
 
 		ItemEntry(ItemStack stack) {
 			this.itemName = Item.itemRegistry.getNameForObject(stack.getItem());
