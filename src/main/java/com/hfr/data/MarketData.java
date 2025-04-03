@@ -18,6 +18,24 @@ public class MarketData {
 
 	public static HashMap<String, List<ItemEntry[]>> offers = new HashMap<String, List<ItemEntry[]>>();
 
+	public static void addOffers(String market, List<ItemStack[]> offers) {
+		List<ItemEntry[]> marketOffers = MarketData.offers.get(market);
+		if (marketOffers == null) {
+			marketOffers = new ArrayList<ItemEntry[]>();
+		}
+		for (ItemStack[] offerArray : offers) {
+			ItemEntry[] entries = new ItemEntry[offerArray.length];
+			for (int i = 0; i < offerArray.length; i++) {
+				if (offerArray[i] != null) {
+					entries[i] = new ItemEntry(offerArray[i]);
+				}
+			}
+			marketOffers.add(entries);
+		}
+		MarketData.offers.put(market, marketOffers);
+		saveMarketData();
+	}
+
 	public static void saveMarketData() {
 		FileWriter writer = null;
 		try {
