@@ -3,7 +3,6 @@ package com.hfr.inventory.gui;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.hfr.data.MarketData;
 import org.lwjgl.opengl.GL11;
 
 import com.hfr.blocks.machine.MachineMarket;
@@ -30,22 +29,23 @@ public class GUIMachineMarket extends GuiScreen {
     protected int guiTop;
     protected int xSize = 176;
     protected int ySize = 194;
-	private List<ItemStack[]> offers = new ArrayList<ItemStack[]>();
+    public static List<ItemStack[]> offers = new ArrayList();
     int page;
     TileEntityMarket market;
-
-	public GUIMachineMarket(EntityPlayer player, TileEntityMarket market) {
-		this.market = market;
-		this.player = player;
-		this.offers = MarketData.getOffers(market.getName());
-	}
-
-	public void initGui() {
-		super.initGui();
-		this.guiLeft = (this.width - this.xSize) / 2;
-		this.guiTop = (this.height - this.ySize) / 2;
-		page = 1;
-	}
+    
+    public GUIMachineMarket(EntityPlayer player, TileEntityMarket market) {
+    	
+    	this.market = market;
+    	this.player = player;
+    }
+    
+    public void initGui()
+    {
+        super.initGui();
+        this.guiLeft = (this.width - this.xSize) / 2;
+        this.guiTop = (this.height - this.ySize) / 2;
+        page = 1;
+    }
 
     protected void mouseClicked(int x, int y, int i) {
 
