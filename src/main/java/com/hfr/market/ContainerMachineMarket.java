@@ -1,5 +1,6 @@
 package com.hfr.market;
 
+import com.hfr.market.block.TileEntityMachineMarket;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;

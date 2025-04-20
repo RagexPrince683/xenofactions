@@ -14,7 +14,7 @@ import java.util.Map;
 public class MarketData {
     private static final String FILE_NAME = "marketdata.json";
     private static final Gson GSON = new Gson();
-    private static Map<String, Integer> marketItems = new HashMap<>();
+    private static Map<String, Integer> marketItems = new HashMap<String, Integer>();
 
     // Load market data from file
     public static void load() {
@@ -44,9 +44,12 @@ public class MarketData {
         }
     }
 
-    // Get item price
+    // Get item price (manual fallback for Java 6 compatibility)
     public static int getItemPrice(String item) {
-        return marketItems.getOrDefault(item, -1); // Return -1 if item not found
+        if (marketItems.containsKey(item)) {
+            return marketItems.get(item);
+        }
+        return -1; // Default if item not found
     }
 
     // Add or update item
