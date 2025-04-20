@@ -99,6 +99,9 @@ public class MainRegistry
 	public static final List<Double> customDropChances = new ArrayList<Double>();
 	
 	//public static WorldGeneratorMoon worldGenMoon = new WorldGeneratorMoon();
+
+	public static final int GUI_MACHINE_MARKET = 1; // Added GUI constant
+	//public static final MainRegistry instance = new MainRegistry(); // Singleton instance
 	
 	public static int radarRange = 1000;
 	public static int radarBuffer = 30;
