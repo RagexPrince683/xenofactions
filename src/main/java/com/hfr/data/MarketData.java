@@ -27,6 +27,8 @@ public class MarketData {
 	// Gson instance for JSON serialization/deserialization
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
+
+
 	public static MarketData getData(World world) {
 		File file = getMarketFile(world);
 
@@ -97,18 +99,13 @@ public class MarketData {
 	}
 
 	public static class Offer {
-		public String[] offer; // Serialized ItemStacks (NBT in JSON format)
+
+
+		public ItemStack[] offer; // Store ItemStack[] directly
 		public int capacity;
 
-		public Offer(ItemStack[] itemStacks, int capacity) {
-			this.offer = new String[itemStacks.length];
-			for (int i = 0; i < itemStacks.length; i++) {
-				if (itemStacks[i] != null) {
-					this.offer[i] = serializeItemStack(itemStacks[i]);
-				} else {
-					this.offer[i] = null;
-				}
-			}
+		public Offer(ItemStack[] offer, int capacity) {
+			this.offer = offer;
 			this.capacity = capacity;
 		}
 
@@ -116,7 +113,7 @@ public class MarketData {
 			ItemStack[] itemStacks = new ItemStack[offer.length];
 			for (int i = 0; i < offer.length; i++) {
 				if (offer[i] != null) {
-					itemStacks[i] = deserializeItemStack(offer[i]);
+					itemStacks[i] = deserializeItemStack(String.valueOf(offer[i]));
 				} else {
 					itemStacks[i] = null;
 				}
@@ -144,6 +141,35 @@ public class MarketData {
 			}
 		}
 	}
+
+	private static String serializeItemStackArray(ItemStack[] items) {
+		NBTTagList nbtList = new NBTTagList();
+		for (ItemStack item : items) {
+			if (item != null) {
+				NBTTagCompound nbt = new NBTTagCompound();
+				item.writeToNBT(nbt);
+				nbtList.appendTag(nbt);
+			}
+		}
+		NBTTagCompound wrapper = new NBTTagCompound();
+		wrapper.setTag("Items", nbtList);
+		return wrapper.toString();
+	}
+	private static ItemStack[] deserializeItemStackArray(String serialized) {
+		try {
+			NBTTagCompound wrapper = CompressedStreamTools.func_152457_a(serialized.getBytes("UTF-8"), new NBTSizeTracker(2097152L));
+			NBTTagList nbtList = wrapper.getTagList("Items", 10);
+			ItemStack[] items = new ItemStack[nbtList.tagCount()];
+			for (int i = 0; i < nbtList.tagCount(); i++) {
+				items[i] = ItemStack.loadItemStackFromNBT(nbtList.getCompoundTagAt(i));
+			}
+			return items;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ItemStack[0];
+		}
+	}
+
 
 	public void writeOffers(NBTTagCompound nbt, String name, List<Offer> offers) {
 		for (int index = 0; index < offers.size(); index++) {
