@@ -397,10 +397,11 @@ public class MainRegistry
 		sub.put(regexify("negro"), "melanine man");
 		sub.put(regexify("negroid"), "african-like");
 		sub.put(regexify("groid"), "OWO :3 haiiiii you like boys don't you :3");
-		sub.put(regexify("coon"), "overweight");
+		//sub.put(regexify("coon"), "overweight");
+		//weirdly just decides to like replace unrelated shit
 		sub.put(regexify("penis"), "junk");
-		sub.put(regexify("twat"), "天安门广场大屠杀");
-		sub.put(regexify("idiot"), "傻子");
+		//sub.put(regexify("twat"), "天安门广场大屠杀");
+		//sub.put(regexify("idiot"), "傻子");
 		sub.put(regexify("whore"), "hussy");
 		sub.put(regexify("pornography"), "naughty pics");
 		sub.put(regexify("porn"), "cartoons");

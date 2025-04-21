@@ -109,7 +109,7 @@ public class OfferPacket implements IMessage {
 				offers.add(offerArray);
 			}
 
-			MarketData.addOffers(market, offers);
+			//MarketData.addOffers(market, offers);
 			return null;
 		}
 	}
