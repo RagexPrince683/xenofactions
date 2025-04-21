@@ -11,6 +11,7 @@ import java.util.UUID;
 import com.hfr.blocks.BlockDummyable;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.data.ClowderData;
+import com.hfr.data.MarketData;
 import com.hfr.main.MainRegistry;
 import com.hfr.tileentity.prop.TileEntityProp;
 
@@ -36,6 +37,8 @@ public class Clowder {
 	public int homeY;
 	public int homeZ;
 	public HashMap<String, int[]> warps = new HashMap();
+
+	public HashMap<MarketData.Offer, Integer> offerHistory = new HashMap();
 	
 	public String leader;
 	public Set<String> officers = new HashSet();
