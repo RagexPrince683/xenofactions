@@ -109,8 +109,7 @@ public class OfferPacket implements IMessage {
 				offers.add(offerArray);
 			}
 
-			//MarketData.addOffers(market, offers);
-			//ts is not real
+			MarketData.addOffers(market, offers);
 			return null;
 		}
 	}
