@@ -5,6 +5,7 @@ import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.client.Minecraft;
 
 public class PacketMarketDataSync implements IMessage {
     private String jsonData;
@@ -29,7 +30,8 @@ public class PacketMarketDataSync implements IMessage {
         @Override
         public IMessage onMessage(PacketMarketDataSync message, MessageContext ctx) {
             if (ctx.side.isClient()) {
-                MarketData.loadFromJson(message.jsonData); // Fixed reference
+                // Directly update client-side market data
+                MarketData.loadFromJson(message.jsonData);
             }
             return null;
         }
