@@ -24,6 +24,7 @@ public class MarketData {
 
 	private static final String FILE_NAME = "marketsavedata.json";
 	public HashMap<String, List<Offer>> offers = new HashMap<String, List<Offer>>();
+	private boolean dirty = false; // A flag to track if data was modified
 
 	// Gson instance for JSON serialization/deserialization
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -63,10 +64,13 @@ public class MarketData {
 	}
 
 	public void saveToFile(File file) {
+		if (!dirty) return; // Only save if the data is marked dirty
+
 		Writer writer = null;
 		try {
 			writer = new FileWriter(file);
 			GSON.toJson(offers, writer);
+			dirty = false; // Reset the dirty flag after saving
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
@@ -80,6 +84,10 @@ public class MarketData {
 		}
 	}
 
+	public void markDirty() {
+		this.dirty = true;
+	}
+
 	public void readMarketFromPacket(NBTTagCompound nbt) {
 		String name = nbt.getString("market");
 		int offerCount = nbt.getInteger("offercount");
@@ -87,6 +95,7 @@ public class MarketData {
 		for (int off = 0; off < offerCount; off++) {
 			readOffers(nbt, name, off);
 		}
+		markDirty(); // Mark data as dirty when modified
 	}
 
 	public void readOffers(NBTTagCompound nbt, String name, int index) {
@@ -111,6 +120,7 @@ public class MarketData {
 
 		offers.add(new Offer(slots, capacity));
 		this.offers.put(name, offers);
+		markDirty(); // Mark data as dirty when modified
 	}
 
 	public void writeMarketFromName(NBTTagCompound nbt, String name) {
@@ -161,7 +171,7 @@ public class MarketData {
 		}
 	}
 
-	private static File getMarketFile(World world) {
+	public static File getMarketFile(World world) {
 		File worldDir = world.getSaveHandler().getWorldDirectory();
 		return new File(worldDir, FILE_NAME);
 	}

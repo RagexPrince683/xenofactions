@@ -49,34 +49,34 @@ public class CommandXShop extends CommandBase {
 		MinecraftServer minecraftserver = MinecraftServer.getServer();
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 
-		if(args.length > 0) {
+		if (args.length > 0) {
 
-			if(args[0].equals("help") || args[0].equals("man")) {
+			if (args[0].equals("help") || args[0].equals("man")) {
 
 				sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "[add]: first item in hotbar is sold item, next three items are the currency"));
 				sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "[add]: optionally, add a number as the parameter to determine the daily stock"));
 				sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "[delete]: deletes the offer at the given index"));
 			}
 
-			if(args[0].equals("add")) {
+			if (args[0].equals("add")) {
 
-				if(args.length < 2) {
+				if (args.length < 2) {
 					sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "This command requires a shop name!"));
 					return;
 				}
 
 				ItemStack[] offer = new ItemStack[4];
 
-				for(int i = 0; i < 4; i++) {
+				for (int i = 0; i < 4; i++) {
 					ItemStack stack = player.inventory.getStackInSlot(i);
 
-					if(stack == null) {
+					if (stack == null) {
 
-						if(i == 0) {
+						if (i == 0) {
 							sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "No offer item found!"));
 							return;
 						}
-						if(i == 1) {
+						if (i == 1) {
 							sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "No currency items found!"));
 							return;
 						}
@@ -88,14 +88,14 @@ public class CommandXShop extends CommandBase {
 					}
 				}
 
-				//if 2 and 3 match, squeeze them together
-				if(offer[3] != null && offer[2].getItem() == offer[3].getItem() && offer[2].getItemDamage() == offer[3].getItemDamage()) {
+				// If 2 and 3 match, merge them
+				if (offer[3] != null && offer[2].getItem() == offer[3].getItem() && offer[2].getItemDamage() == offer[3].getItemDamage()) {
 					offer[2].stackSize += offer[3].stackSize;
 					offer[3] = null;
 				}
 
-				//if 1 and 2 matchm squeeze them together
-				if(offer[2] != null && offer[1].getItem() == offer[2].getItem() && offer[1].getItemDamage() == offer[2].getItemDamage()) {
+				// If 1 and 2 match, merge them
+				if (offer[2] != null && offer[1].getItem() == offer[2].getItem() && offer[1].getItemDamage() == offer[2].getItemDamage()) {
 					offer[1].stackSize += offer[2].stackSize;
 					offer[2] = offer[3];
 					offer[3] = null;
@@ -105,12 +105,13 @@ public class CommandXShop extends CommandBase {
 
 				List<Offer> offers = data.offers.get(args[1]);
 
-				if(offers == null)
+				if (offers == null) {
 					offers = new ArrayList();
+				}
 
 				int capacity = 0;
 
-				if(args.length > 2) {
+				if (args.length > 2) {
 					capacity = this.parseInt(sender, args[2]);
 					sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Offer capacity is set to " + capacity + "!"));
 				} else {
@@ -121,11 +122,12 @@ public class CommandXShop extends CommandBase {
 				data.offers.put(args[1], offers);
 				data.markDirty();
 				sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Offer has been added to shop " + args[1] + " with index " + (offers.size() - 1) + "!"));
+				data.saveToFile(MarketData.getMarketFile(player.worldObj)); // Save to JSON
 			}
 
-			if(args[0].equals("delete")) {
+			if (args[0].equals("delete")) {
 
-				if(args.length < 3) {
+				if (args.length < 3) {
 					sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "This command requires an offer number and a shop!"));
 					return;
 				}
@@ -135,12 +137,12 @@ public class CommandXShop extends CommandBase {
 
 				List<Offer> offers = data.offers.get(args[2]);
 
-				if(offers == null) {
+				if (offers == null) {
 					sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Shop " + args[2] + " has no offers!"));
 					return;
 				}
 
-				if(offer >= offers.size() || offer < 0) {
+				if (offer >= offers.size() || offer < 0) {
 					sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Index must be within the range of the offers!"));
 					return;
 				}
@@ -149,6 +151,7 @@ public class CommandXShop extends CommandBase {
 				data.offers.put(args[2], offers);
 				data.markDirty();
 				sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Offer has been removed!"));
+				data.saveToFile(MarketData.getMarketFile(player.worldObj)); // Save to JSON
 			}
 
 		} else {
@@ -157,13 +160,11 @@ public class CommandXShop extends CommandBase {
 		}
 	}
 
-	public int getRequiredPermissionLevel()
-	{
+	public int getRequiredPermissionLevel() {
 		return 3;
 	}
 
-	public List addTabCompletionOptions(ICommandSender p_71516_1_, String[] p_71516_2_)
-	{
-		return p_71516_2_.length >= 1 ? getListOfStringsMatchingLastWord(p_71516_2_, MinecraftServer.getServer().getAllUsernames()) : null;
+	public List addTabCompletionOptions(ICommandSender sender, String[] args) {
+		return args.length >= 1 ? getListOfStringsMatchingLastWord(args, MinecraftServer.getServer().getAllUsernames()) : null;
 	}
 }
