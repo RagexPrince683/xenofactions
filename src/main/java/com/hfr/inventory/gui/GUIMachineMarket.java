@@ -3,6 +3,7 @@ package com.hfr.inventory.gui;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.hfr.data.MarketData;
 import org.lwjgl.opengl.GL11;
 
 import com.hfr.blocks.machine.MachineMarket;
@@ -29,7 +30,7 @@ public class GUIMachineMarket extends GuiScreen {
     protected int guiTop;
     protected int xSize = 176;
     protected int ySize = 194;
-    public static List<ItemStack[]> offers = new ArrayList();
+    public static List<MarketData.Offer> offers = new ArrayList();
     int page;
     TileEntityMarket market;
     
