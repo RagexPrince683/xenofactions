@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 
 import com.hfr.blocks.machine.MachineMarket;
 import com.hfr.data.MarketData;
+import com.hfr.data.MarketData.Offer;
 import com.hfr.inventory.gui.GUIMachineMarket;
 
 import cpw.mods.fml.common.network.ByteBufUtils;
@@ -20,96 +21,96 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.common.util.Constants;
 
 public class OfferPacket implements IMessage {
 
 	String name;
 	PacketBuffer buffer;
-	private NBTTagCompound data;
 
-	//public OfferPacket() {}
-
-	public OfferPacket() {}
-
-	public OfferPacket(NBTTagCompound data) {
-		this.data = data;
-	}
-
-
+	public OfferPacket() { }
 
 	public OfferPacket(String name, NBTTagCompound nbt) {
-		
+
 		this.name = name;
 		this.buffer = new PacketBuffer(Unpooled.buffer());
-		
+
 		try {
 			buffer.writeNBTTagCompoundToBuffer(nbt);
-			
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	//@Override
-	//public void fromBytes(ByteBuf buf) {
-	//
-	//	this.name = ByteBufUtils.readUTF8String(buf);
-	//
-	//	if (buffer == null) {
-	//		buffer = new PacketBuffer(Unpooled.buffer());
-	//	}
-	//	buffer.writeBytes(buf);
-	//}
-//
-	//@Override
-	//public void toBytes(ByteBuf buf) {
-	//
-	//	ByteBufUtils.writeUTF8String(buf, name);
-//
-	//	if (buffer == null) {
-	//		buffer = new PacketBuffer(Unpooled.buffer());
-	//	}
-	//	buf.writeBytes(buffer);
-	//}
-
 	@Override
 	public void fromBytes(ByteBuf buf) {
-		this.data = ByteBufUtils.readTag(buf);
+
+		this.name = ByteBufUtils.readUTF8String(buf);
+
+		if (buffer == null) {
+			buffer = new PacketBuffer(Unpooled.buffer());
+		}
+		buffer.writeBytes(buf);
 	}
 
 	@Override
 	public void toBytes(ByteBuf buf) {
-		ByteBufUtils.writeTag(buf, this.data);
+
+		ByteBufUtils.writeUTF8String(buf, name);
+
+		if (buffer == null) {
+			buffer = new PacketBuffer(Unpooled.buffer());
+		}
+		buf.writeBytes(buffer);
 	}
 
 	public static class Handler implements IMessageHandler<OfferPacket, IMessage> {
+
 		@Override
-		public IMessage onMessage(OfferPacket message, MessageContext ctx) {
-			NBTTagCompound nbt = message.data;
-			if (nbt == null) return null;
+		@SideOnly(Side.CLIENT)
+		public IMessage onMessage(OfferPacket m, MessageContext ctx) {
 
-			String market = nbt.getString("market");
-			if (market == null || market.isEmpty()) return null;
+			try {
 
-			int offerCount = nbt.getInteger("offercount");
+				MarketData data = MarketData.getData(Minecraft.getMinecraft().theWorld);
 
-			List<ItemStack[]> offers = new ArrayList<ItemStack[]>(offerCount);
-			for (int i = 0; i < offerCount; i++) {
-				NBTTagList list = nbt.getTagList("items" + i, 10);
-				ItemStack[] offerArray = new ItemStack[list.tagCount()];
+				NBTTagCompound nbt = m.buffer.readNBTTagCompoundFromBuffer();
+				data.offers.clear();
+				data.readMarketFromPacket(nbt);
+				MachineMarket.name = m.name;
+				List<Offer> offers = data.offers.get(m.name);
 
-				for (int j = 0; j < list.tagCount(); j++) {
-					NBTTagCompound itemTag = list.getCompoundTagAt(j);
-					offerArray[j] = ItemStack.loadItemStackFromNBT(itemTag);
-				}
+				if(offers == null)
+					offers = new ArrayList();
 
-				offers.add(offerArray);
+				GUIMachineMarket.offers = offers;
+
+				/*System.out.println("Offers: " + data.offers.size());
+
+				for(Entry<String, List<ItemStack[]>> entry : data.offers.entrySet()) {
+
+					System.out.println(entry.getKey() + ": " + entry.getValue().size());
+
+					for(ItemStack[] offer : entry.getValue()) {
+
+						System.out.println(" Offer:");
+
+						for(ItemStack stack : offer) {
+
+							if(stack == null)
+								System.out.println("  NULL");
+							else
+								System.out.println("  " + stack.getDisplayName());
+						}
+					}
+				}*/
+
+			} catch (IOException e) {
+
+				e.printStackTrace();
 			}
 
-			//MarketData.addOffers(market, offers);
 			return null;
 		}
 	}
