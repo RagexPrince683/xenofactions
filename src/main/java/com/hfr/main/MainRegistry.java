@@ -650,7 +650,8 @@ public class MainRegistry
 		//event.registerServerCommand(new CommandOrewand());
 		//custom stone drops
 		event.registerServerCommand(new CommandStoneDrop());
-		MarketData.loadMarketData();
+		//MarketData.loadMarketData();
+		//depricated schizophrenia and unhinged gpt pasting
 		event.registerServerCommand(new CommandXShop());
 	}
 
