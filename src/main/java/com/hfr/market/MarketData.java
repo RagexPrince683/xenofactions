@@ -21,21 +21,17 @@ public class MarketData {
         if (!file.exists()) {
             save(); // Create default data
         }
-        try {
-            FileReader reader = new FileReader(file); // Removed try-with-resources for Java 6 compatibility
+        try (FileReader reader = new FileReader(file)) {
             marketItems = GSON.fromJson(reader, marketItems.getClass());
-            reader.close();
-        } catch (IOException e) {
+        } catch (IOException | JsonSyntaxException e) {
             e.printStackTrace();
         }
     }
 
     public static void save() {
         File file = new File(MinecraftServer.getServer().getFile(FILE_NAME));
-        try {
-            FileWriter writer = new FileWriter(file); // Removed try-with-resources for Java 6 compatibility
+        try (FileWriter writer = new FileWriter(file)) {
             GSON.toJson(marketItems, writer);
-            writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -57,6 +53,7 @@ public class MarketData {
         return marketItems;
     }
 
+    // Implemented loadFromJson
     public static void loadFromJson(String jsonData) {
         try {
             marketItems = GSON.fromJson(jsonData, marketItems.getClass());
