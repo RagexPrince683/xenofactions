@@ -5,8 +5,10 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.NBTSizeTracker;
 import net.minecraft.world.World;
 
 import java.io.*;
@@ -94,6 +96,87 @@ public class MarketData {
 		this.dirty = true;
 	}
 
+	public static class Offer {
+		public String[] offer; // Serialized ItemStacks (NBT in JSON format)
+		public int capacity;
+
+		public Offer(ItemStack[] itemStacks, int capacity) {
+			this.offer = new String[itemStacks.length];
+			for (int i = 0; i < itemStacks.length; i++) {
+				if (itemStacks[i] != null) {
+					this.offer[i] = serializeItemStack(itemStacks[i]);
+				} else {
+					this.offer[i] = null;
+				}
+			}
+			this.capacity = capacity;
+		}
+
+		public ItemStack[] getItemStacks() {
+			ItemStack[] itemStacks = new ItemStack[offer.length];
+			for (int i = 0; i < offer.length; i++) {
+				if (offer[i] != null) {
+					itemStacks[i] = deserializeItemStack(offer[i]);
+				} else {
+					itemStacks[i] = null;
+				}
+			}
+			return itemStacks;
+		}
+
+		private static String serializeItemStack(ItemStack itemStack) {
+			NBTTagCompound nbt = new NBTTagCompound();
+			itemStack.writeToNBT(nbt);
+			return nbt.toString();
+		}
+
+		private static ItemStack deserializeItemStack(String nbtString) {
+			try {
+				// Convert the string back to a byte array
+				byte[] nbtData = nbtString.getBytes("UTF-8");
+
+				// Use an NBTSizeTracker to deserialize the data
+				NBTTagCompound nbt = CompressedStreamTools.func_152457_a(nbtData, new NBTSizeTracker(2097152L)); // 2 MB size limit
+				return ItemStack.loadItemStackFromNBT(nbt);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+	}
+
+	public void writeOffers(NBTTagCompound nbt, String name, List<Offer> offers) {
+		for (int index = 0; index < offers.size(); index++) {
+			NBTTagList list = new NBTTagList();
+			Offer offer = offers.get(index);
+			ItemStack[] items = offer.getItemStacks();
+
+			for (int i = 0; i < items.length; i++) {
+				if (items[i] != null) {
+					NBTTagCompound nbt1 = new NBTTagCompound();
+					nbt1.setByte("slot" + index, (byte) i);
+					items[i].writeToNBT(nbt1);
+					list.appendTag(nbt1);
+				}
+			}
+
+			nbt.setTag("items" + name + index, list);
+			nbt.setInteger("count" + name + index, offer.capacity);
+		}
+	}
+
+	public void writeMarketFromName(NBTTagCompound nbt, String name) {
+		List<Offer> market = this.offers.get(name);
+
+		if (market == null)
+			return;
+
+		nbt.setString("market", name);
+		nbt.setInteger("offercount", market.size());
+
+		writeOffers(nbt, name, market);
+	}
+
 	public void readMarketFromPacket(NBTTagCompound nbt) {
 		String name = nbt.getString("market");
 		int offerCount = nbt.getInteger("offercount");
@@ -101,7 +184,6 @@ public class MarketData {
 		for (int off = 0; off < offerCount; off++) {
 			readOffers(nbt, name, off);
 		}
-		markDirty(); // Mark data as dirty when modified
 	}
 
 	public void readOffers(NBTTagCompound nbt, String name, int index) {
@@ -126,55 +208,6 @@ public class MarketData {
 
 		offers.add(new Offer(slots, capacity));
 		this.offers.put(name, offers);
-		markDirty(); // Mark data as dirty when modified
-	}
-
-	public void writeMarketFromName(NBTTagCompound nbt, String name) {
-		List<Offer> market = this.offers.get(name);
-
-		if (market == null) {
-			return;
-		}
-
-		nbt.setString("market", name);
-		nbt.setInteger("offercount", market.size());
-
-		writeOffers(nbt, name, market);
-	}
-
-	public void writeOffers(NBTTagCompound nbt, String name, List<Offer> offers) {
-		for (int index = 0; index < offers.size(); index++) {
-			NBTTagList list = new NBTTagList();
-			Offer offer = offers.get(index);
-			ItemStack[] items = offer.offer;
-
-			for (int i = 0; i < items.length; i++) {
-				if (items[i] != null) {
-					NBTTagCompound nbt1 = new NBTTagCompound();
-					nbt1.setByte("slot" + index, (byte) i);
-					items[i].writeToNBT(nbt1);
-					list.appendTag(nbt1);
-				}
-			}
-
-			nbt.setTag("items" + name + index, list);
-			nbt.setInteger("count" + name + index, offer.capacity);
-		}
-	}
-
-	public static class Offer {
-		public ItemStack[] offer;
-		public int capacity;
-
-		public Offer(ItemStack[] offer) {
-			this.offer = offer;
-			this.capacity = 0;
-		}
-
-		public Offer(ItemStack[] offer, int capacity) {
-			this.offer = offer;
-			this.capacity = capacity;
-		}
 	}
 
 	public static File getMarketFile(World world) {
