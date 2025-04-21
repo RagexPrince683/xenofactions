@@ -2,23 +2,19 @@ package com.hfr.data;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.world.World;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 
 public class MarketData {
 
@@ -45,11 +41,20 @@ public class MarketData {
 			Type type = new TypeToken<HashMap<String, List<Offer>>>() {}.getType();
 			MarketData data = new MarketData();
 			data.offers = GSON.fromJson(reader, type);
+
 			if (data.offers == null) {
 				data.offers = new HashMap<String, List<Offer>>();
 			}
+
 			return data;
+		} catch (JsonParseException e) {
+			// Handle JSON parsing errors
+			System.err.println("Error parsing MarketData JSON: " + e.getMessage());
+			e.printStackTrace();
+			return new MarketData();
 		} catch (IOException e) {
+			// Handle file I/O errors
+			System.err.println("Error reading MarketData JSON: " + e.getMessage());
 			e.printStackTrace();
 			return new MarketData();
 		} finally {
@@ -72,6 +77,7 @@ public class MarketData {
 			GSON.toJson(offers, writer);
 			dirty = false; // Reset the dirty flag after saving
 		} catch (IOException e) {
+			System.err.println("Error saving MarketData to JSON: " + e.getMessage());
 			e.printStackTrace();
 		} finally {
 			if (writer != null) {
