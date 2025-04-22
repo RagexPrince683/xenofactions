@@ -212,8 +212,7 @@ public class ModBlocks {
 		hard_mesh = new BlockGeneric(Material.rock).setStepSound(soundTypeConcrete).setBlockName("hard_mesh").setHardness(10.0F).setResistance(10000.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":hard_mesh");
 		concrete_hazard = new BlockGeneric(Material.rock).setStepSound(soundTypeConcrete).setBlockName("concrete_hazard").setHardness(10.0F).setResistance(10000.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":concrete_hazard");
 		concrete_rocks = new BlockGeneric(Material.rock).setStepSound(soundTypeConcrete).setBlockName("concrete_rocks").setHardness(10.0F).setResistance(10000.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":concrete_rocks");
-		barricade = new BlockSandbags(Material.rock).setStepSound(soundTypeConcrete).setBlockName("barricade").setHardness(10.0F).setResistance(10000.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":sandbags");
-
+		barricade = new BlockSandbags(Material.rock).setStepSound(soundTypeConcrete).setBlockName("barricade").setHardness(10.0F).setResistance(10.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":sandbags");
 		soil_moon = new BlockGeneric(Material.sand).setStepSound(Block.soundTypeGravel).setBlockName("soil_moon").setHardness(1.0F).setResistance(10.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":soil_moon");
 		soil_mud = new BlockMud(Material.ground).setStepSound(soundTypeMud).setBlockName("soil_mud").setHardness(1.0F).setResistance(10.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":soil_mud");
 
