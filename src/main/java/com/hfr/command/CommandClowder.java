@@ -73,203 +73,265 @@ public class CommandClowder extends CommandBase {
 	@Override
 	public void processCommand(ICommandSender sender, String[] args) {
 
-		if(sender.getEntityWorld().provider.dimensionId != 0) {
+		if (sender.getEntityWorld().provider.dimensionId != 0) {
 			sender.addChatMessage(new ChatComponentText(CRITICAL + "Critical error: CatFac only works in overworld!!"));
 		}
 
-		if(Clowder.clowders.size() == 0)
+		if (Clowder.clowders.size() == 0)
 			ClowderData.getData(sender.getEntityWorld());
 
-		if(args.length < 1) {
+		if (args.length < 1) {
 			sender.addChatMessage(new ChatComponentText(ERROR + getCommandUsage(sender)));
 			return;
 		}
 
 		String cmd = args[0].toLowerCase();
+		switch (cmd) {
 
-		if(cmd.equals("help") || cmd.equals("man")) {
+			//case "supress":{
+			//	if (args.length > 1)
+			//		cmdSuppress(sender, args[1]);
+			//}break;
+			/*  retconned to prevent bitch transfer abuse
+			case "bitchpass":{
+				if (args.length > 1)
+					cmdBitchPass(sender, args[1], args[2]);
+			}break;
+			*/
 
-			if(args.length > 1)
-				cmdHelp(sender, args[1]);
-			else
-				cmdHelp(sender, "1");
-			return;
+			case "help":
+			case "man": {
+				if (args.length > 1)
+					cmdHelp(sender, args[1]);
+				else
+					cmdHelp(sender, "1");
+			}break;
+
+			case "create":{
+				if(args.length > 1)
+					cmdCreate(sender, args[1]);
+			}break;
+
+			case "disembark":{
+				if(args.length > 1)
+					cmdDisembark(sender, args[1]);
+			}break;
+
+			case "disband":{
+				if(args.length > 1)
+					cmdDisband(sender, args[1]);
+			}break;
+
+			case "comrades":{
+				cmdComrades(sender);
+			}break;
+
+			case "alliance":{
+				cmdAlliance(sender);
+			}break;
+
+			case "info":{
+				if (args.length > 1)
+					cmdInfo(sender, args[1]);
+				else
+					cmdInfo(sender, null);
+			}break;
+
+			case "list":{
+				cmdList(sender);
+			}break;
+
+			case "motd":{
+				if (args.length > 1)
+					cmdMOTD(sender, args);
+			}break;
+
+			case "owner":{
+				if (args.length > 1)
+					cmdOwner(sender, args[1]);
+			}break;
+
+			case "apply":{
+				if (args.length > 1)
+					cmdApply(sender, args[1]);
+			}break;
+
+			//case "suckoff":{
+			//	if (args.length > 1)
+			//		cmdSuckoff(sender, args[1]);
+			//}break;
+
+			//case "accepttribute":{
+			//	if (args.length > 1)
+			//		cmdAcceptTribute(sender, args[1]);
+			//}break;
+
+			case "befriend":{
+				if (args.length > 1)
+					cmdBefriend(sender, args[1]);
+			}break;
+
+			case "acceptfriend":{
+				if (args.length > 1)
+					cmdAcceptFriend(sender, args[1]);
+			}break;
+
+			case "leave":{
+				cmdLeave(sender);
+			}break;
+
+			case "accept":{
+				if (args.length > 1)
+					cmdAccept(sender, args[1]);
+			}break;
+
+			case "deny":{
+				if (args.length > 1)
+					cmdDeny(sender, args[1]);
+			}break;
+
+			case "applicants":{
+				cmdApplicants(sender);
+			}break;
+
+			case "kick":{
+				if (args.length > 1)
+					cmdKick(sender, args[1]);
+			}break;
+
+			case "unfriend":{
+				if (args.length > 1)
+					cmdUnfriend(sender, args[1]);
+			}break;
+
+			case "listflags":{
+				if (args.length > 1)
+					cmdListflags(sender, args[1]);
+				else
+					cmdListflags(sender, "1");
+			}break;
+
+			case "flag":{
+				if (args.length > 1)
+					cmdFlag(sender, args[1]);
+			}break;
+
+			case "retreat":{
+				cmdRetreat(sender);
+			}break;
+
+			//case "fabricate":{
+			//	if (args.length > 1)
+			//		cmdFabricate(sender, args[1]);
+			//}break;
+
+			// victims of war fabrications can take the initiative and do a preemptive
+			// strike
+			//case "preemptive":{
+			//	if (args.length > 1)
+			//		cmdPreemptive(sender, args[1]);
+			//}break;
+
+			//case "release":{
+			//	if (args.length > 1)
+			//		cmdRelease(sender, args[1]);
+			//}break;
+
+			//case "suppress":{
+			//	if (args.length > 1)
+			//		cmdSuppress(sender, args[1]);
+			//}break;
+
+			//case "overtime":{
+			//	cmdOverTime(sender);
+			//}break;
+
+			//case "revolt":{
+			//	cmdRevolt(sender);
+			//}break;
+
+			//case "declare":{
+			//	cmdDeclareWar(sender);
+			//}break;
+
+			case "abort":{
+				cmdAbort(sender);
+			}break;
+
+			case "sethome":{
+				cmdSethome(sender);
+			}break;
+			case "setallywarp":{
+				cmdSetAllyWarp(sender);
+			}break;
+
+			case "home":{
+				cmdHome(sender);
+			}break;
+			case "allywarp":{
+				cmdAllyWarp(sender, args[1]);
+			}break;
+
+			case "addwarp":
+			case "setwarp":{
+				if (args.length > 1)
+					cmdAddWarp(sender, args[1]);
+			}break;
+
+			case "delwarp":{
+				if (args.length > 1)
+					cmdDelWarp(sender, args[1]);
+			}break;
+
+			case "warp":{
+				if (args.length > 1)
+					cmdWarp(sender, args[1]);
+			}break;
+
+			case "warps":{
+				cmdWarps(sender);
+			}break;
+
+			case "balance":{
+				cmdBalance(sender);
+			}break;
+
+			case "deposit":{
+				if (args.length > 1)
+					cmdDeposit(sender, args[1]);
+			}break;
+
+			case "withdraw":{
+				sender.addChatMessage(new ChatComponentText(CRITICAL + "This command is currently disabled!"));
+			}break;
+
+			case "claim":{
+				cmdClaim(sender);
+			}break;
+
+			case "unclaim":{
+				cmdUnclaim(sender);
+			}break;
+
+			case "promote":{
+				if (args.length > 1)
+					cmdPromote(sender, args[1]);
+			}break;
+
+			case "demote":{
+				if (args.length > 1)
+					cmdDemote(sender, args[1]);
+			}break;
+
+			default: {
+				sender.addChatMessage(new ChatComponentText(ERROR + getCommandUsage(sender)));
+			}break;
+//			template
+//			case " ":{
+//				if (args.length > 1)
+//
+//			}break;
 		}
-
-		if(cmd.equals("create") && args.length > 1) {
-			cmdCreate(sender, args[1]);
-			return;
-		}
-
-		/*if(cmd.equals("disband") && args.length > 1) {
-			cmdDisband(sender, args[1]);
-			return;
-		}*/
-
-		if(cmd.equals("comrades")) {
-			cmdComrades(sender);
-			return;
-		}
-
-		if(cmd.equals("color") && args.length > 1) {
-			cmdColor(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("info")) {
-
-			if(args.length > 1)
-				cmdInfo(sender, args[1]);
-			else
-				cmdInfo(sender, null);
-
-			return;
-		}
-
-		if(cmd.equals("rename") && args.length > 1) {
-			cmdRename(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("list")) {
-			cmdList(sender);
-			return;
-		}
-
-		if(cmd.equals("motd") && args.length > 1) {
-			cmdMOTD(sender, args);
-			return;
-		}
-
-		if(cmd.equals("owner") && args.length > 1) {
-			cmdOwner(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("apply") && args.length > 1) {
-			cmdApply(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("leave")) {
-			cmdLeave(sender);
-			return;
-		}
-
-		if(cmd.equals("accept") && args.length > 1) {
-			cmdAccept(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("deny") && args.length > 1) {
-			cmdDeny(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("applicants")) {
-			cmdApplicants(sender);
-			return;
-		}
-
-		if(cmd.equals("kick") && args.length > 1) {
-			cmdKick(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("listflags")) {
-
-			if(args.length > 1)
-				cmdListflags(sender, args[1]);
-			else
-				cmdListflags(sender, "1");
-
-			return;
-		}
-
-		if(cmd.equals("flag") && args.length > 1) {
-			cmdFlag(sender, args[1]);
-			return;
-		}
-
-		/*if(cmd.equals("admin")) {
-
-            MinecraftServer server = MinecraftServer.getServer();
-            server.initiateShutdown();
-		}*/
-
-		if(cmd.equals("retreat")) {
-			cmdRetreat(sender);
-			return;
-		}
-
-		if(cmd.equals("sethome")) {
-			cmdSethome(sender);
-			return;
-		}
-
-		if(cmd.equals("home")) {
-			cmdHome(sender);
-			return;
-		}
-
-		if((cmd.equals("addwarp") || cmd.equals("setwarp")) && args.length > 1) {
-			cmdAddWarp(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("delwarp") && args.length > 1) {
-			cmdDelWarp(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("warp") && args.length > 1) {
-			cmdWarp(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("warps")) {
-			cmdWarps(sender);
-			return;
-		}
-
-		if(cmd.equals("balance")) {
-			cmdBalance(sender);
-			return;
-		}
-
-		if(cmd.equals("deposit") && args.length > 1) {
-			//sender.addChatMessage(new ChatComponentText(CRITICAL + "This command is currently disabled!"));
-			cmdDeposit(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("withdraw") && args.length > 1) {
-			sender.addChatMessage(new ChatComponentText(CRITICAL + "This command is currently disabled!"));
-			//cmdWithdraw(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("claim")) {
-			cmdClaim(sender);
-			return;
-		}
-
-		if(cmd.equals("promote") && args.length > 1) {
-			cmdPromote(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("demote") && args.length > 1) {
-			cmdDemote(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("nameclaim") && args.length > 1) {
-			cmdNameClaim(sender, args[1]);
-			return;
-		}
-
-		sender.addChatMessage(new ChatComponentText(ERROR + getCommandUsage(sender)));
 	}
 
 	private void cmdHelp(ICommandSender sender, String page) {
