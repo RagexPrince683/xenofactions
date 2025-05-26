@@ -67,12 +67,12 @@ public class DummyBlockVault extends BlockContainer {
         return null;
     }
 
-    @Override
-	@SideOnly(Side.CLIENT)
-    public Item getItem(World world, int x, int y, int z)
-    {
-        return Item.getItemFromBlock(ModBlocks.vault_door);
-    }
+    //@Override
+	//@SideOnly(Side.CLIENT)
+    //public Item getItem(World world, int x, int y, int z)
+    //{
+    //    return Item.getItemFromBlock(ModBlocks.vault_door);
+    //}
 	
 	@Override
 	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {

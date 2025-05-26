@@ -32,37 +32,38 @@ public class EntityGrenadeGas extends EntityGrenadeBouncyBase {
 	@Override
 	public void explode() {
 
-		if (!this.worldObj.isRemote) {
-			this.setDead();
-			
-			worldObj.playSoundEffect(posX, posY, posZ, "random.fizz", 5.0F, 1.0F);
-			
-			Ownership owner = ClowderTerritory.getOwnerFromInts((int)posX, (int)posZ);
-			
-			if(owner.zone == Zone.SAFEZONE || owner.zone == Zone.WARZONE || (owner.owner != null && !owner.owner.isRaidable()))
-				return;
-			
-			int r = 10;
-			int r2 = r * r;
-			int r22 = r2 / 2;
-			for (int xx = -r; xx < r; xx++) {
-				int X = xx + (int)posX;
-				int XX = xx * xx;
-				for (int yy = -r; yy < r; yy++) {
-					int Y = yy + (int)posY;
-					int YY = XX + yy * yy;
-					for (int zz = -r; zz < r; zz++) {
-						int Z = zz + (int)posZ;
-						int ZZ = YY + zz * zz;
-						
-						if (ZZ < r22 - rand.nextInt(3) && rand.nextInt(3) != 0) {
-							if(worldObj.getBlock(X, Y, Z).getMaterial() == Material.air)
-								worldObj.setBlock(X, Y, Z, ModBlocks.chlorine_gas);
-						}
-					}
-				}
-			}
-		}
+		//if (!this.worldObj.isRemote) {
+		//	this.setDead();
+		//
+		//	worldObj.playSoundEffect(posX, posY, posZ, "random.fizz", 5.0F, 1.0F);
+		//
+		//	Ownership owner = ClowderTerritory.getOwnerFromInts((int)posX, (int)posZ);
+		//
+		//	if(owner.zone == Zone.SAFEZONE || owner.zone == Zone.WARZONE || (owner.owner != null && !owner.owner.isRaidable()))
+		//		return;
+		//
+		//	int r = 10;
+		//	int r2 = r * r;
+		//	int r22 = r2 / 2;
+		//	for (int xx = -r; xx < r; xx++) {
+		//		int X = xx + (int)posX;
+		//		int XX = xx * xx;
+		//		for (int yy = -r; yy < r; yy++) {
+		//			int Y = yy + (int)posY;
+		//			int YY = XX + yy * yy;
+		//			for (int zz = -r; zz < r; zz++) {
+		//				int Z = zz + (int)posZ;
+		//				int ZZ = YY + zz * zz;
+		//
+		//				if (ZZ < r22 - rand.nextInt(3) && rand.nextInt(3) != 0) {
+		//					if(worldObj.getBlock(X, Y, Z).getMaterial() == Material.air)
+		//						worldObj.setBlock(X, Y, Z, ModBlocks.chlorine_gas);
+		//				}
+		//			}
+		//		}
+		//	}
+		//}
+		//whatever
 	}
 
 	@Override

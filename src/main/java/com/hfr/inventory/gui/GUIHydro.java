@@ -32,8 +32,8 @@ public class GUIHydro extends GuiContainer {
 		this.fontRendererObj.drawString(name, this.xSize / 2 - this.fontRendererObj.getStringWidth(name) / 2, 6, 4210752);
 		this.fontRendererObj.drawString(I18n.format("container.inventory"), 8, this.ySize - 96 + 2, 4210752);
 
-		int walls = diFurnace.getWallNr();
-		int turbines = diFurnace.getTurbineNr();
+		int walls = 0;
+		int turbines = 0;
 		this.fontRendererObj.drawString("Size: " + walls, 16, 24, 4210752);
 		this.fontRendererObj.drawString("Turbines: " + turbines, 16, 34, 4210752);
 		this.fontRendererObj.drawString("Output: " + (diFurnace.getRate(walls, turbines) / 500D) + " TE/s", 16, 44, 4210752);

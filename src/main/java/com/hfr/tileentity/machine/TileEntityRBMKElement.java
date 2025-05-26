@@ -93,23 +93,7 @@ public class TileEntityRBMKElement extends TileEntityMachineBase implements IFlu
 			
 			Block b = worldObj.getBlock(x, yCoord, z);
 			
-			if(b == ModBlocks.block_boron)
-				return;
-			
-			if(b == ModBlocks.block_graphite) {
-				adjusted = origin * 2;
-				
-				//one side can release an unadjusted amount of up to 75 at max (exactly 50 would be required to keep the reaction stable)
-				//the surplus 25 reactivity will simulate the chain reaction increasing in magnitude
-				if(adjusted > 100)
-					adjusted = 100;
-			}
-			
-			if(b == ModBlocks.rbmk_element) {
-				TileEntityRBMKElement element = (TileEntityRBMKElement)worldObj.getTileEntity(x, yCoord, z);
-				element.reactivity += adjusted;
-				return;
-			}
+
 		}
 	}
 	

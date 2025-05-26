@@ -18,41 +18,41 @@ public class ItemBlockLore extends ItemBlock {
 	@Override
     public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean bool) {
 
-		if(field_150939_a == ModBlocks.hard_stone) {
-			list.add("[Tier 1 Hard Wall]");
-			list.add("Solid stone block");
-			list.add("Great for castles!");
-		}
-		if(field_150939_a == ModBlocks.concrete) {
-			list.add("[Tier 2 Hard Wall]");
-			list.add("Hardened clay and sand \"concrete\"");
-		}
-		if(field_150939_a == ModBlocks.concrete_bricks) {
-			list.add("[Tier 3 Hard Wall]");
-			list.add("Hollow concrete-based bricks");
-			list.add("Cheap and fancy");
-		}
-		if(field_150939_a == ModBlocks.concrete_flat) {
-			list.add("[Tier 4 Hard Wall]");
-			list.add("20th century concrete");
-			list.add("Soviets love it!");
-		}
-		if(field_150939_a == ModBlocks.concrete_bolted) {
-			list.add("[Tier 5 Hard Wall]");
-			list.add("Concrete with rebar");
-		}
-		if(field_150939_a == ModBlocks.hard_mesh) {
-			list.add("[Tier 6 Hard Wall]");
-			list.add("Ultra-durable alloy mesh");
-		}
-		if(field_150939_a == ModBlocks.concrete_hazard) {
-			list.add("[Bonus Hard Wall]");
-			list.add("Modern concrete with industrial aesthetic");
-		}
-		if(field_150939_a == ModBlocks.concrete_rocks) {
-			list.add("[Bonus Hard Wall]");
-			list.add("Decorative concrete chunks");
-		}
+		//if(field_150939_a == ModBlocks.hard_stone) {
+		//	list.add("[Tier 1 Hard Wall]");
+		//	list.add("Solid stone block");
+		//	list.add("Great for castles!");
+		//}
+		//if(field_150939_a == ModBlocks.concrete) {
+		//	list.add("[Tier 2 Hard Wall]");
+		//	list.add("Hardened clay and sand \"concrete\"");
+		//}
+		//if(field_150939_a == ModBlocks.concrete_bricks) {
+		//	list.add("[Tier 3 Hard Wall]");
+		//	list.add("Hollow concrete-based bricks");
+		//	list.add("Cheap and fancy");
+		//}
+		//if(field_150939_a == ModBlocks.concrete_flat) {
+		//	list.add("[Tier 4 Hard Wall]");
+		//	list.add("20th century concrete");
+		//	list.add("Soviets love it!");
+		//}
+		//if(field_150939_a == ModBlocks.concrete_bolted) {
+		//	list.add("[Tier 5 Hard Wall]");
+		//	list.add("Concrete with rebar");
+		//}
+		//if(field_150939_a == ModBlocks.hard_mesh) {
+		//	list.add("[Tier 6 Hard Wall]");
+		//	list.add("Ultra-durable alloy mesh");
+		//}
+		//if(field_150939_a == ModBlocks.concrete_hazard) {
+		//	list.add("[Bonus Hard Wall]");
+		//	list.add("Modern concrete with industrial aesthetic");
+		//}
+		//if(field_150939_a == ModBlocks.concrete_rocks) {
+		//	list.add("[Bonus Hard Wall]");
+		//	list.add("Decorative concrete chunks");
+		//}
 		if(field_150939_a == ModBlocks.barricade) {
 			list.add("Can be placed in enemy chunks");
 			list.add("if a conquest flag within 8 blocks");
@@ -178,22 +178,22 @@ public class ItemBlockLore extends ItemBlock {
 			list.add("Connectors: all sides, top and bottom");
 		}
 
-		if(field_150939_a == ModBlocks.machine_turbine) {
-			list.add("Converts steam into water and power");
-			list.add("Buffer: 100000000 RF");
-			list.add("Connection speed: 100000 RF/t");
-			list.add("Connectors:");
-			list.add("-Energy: back");
-			list.add("-Steam: front");
-			list.add("-Water: sides");
-		}
+		//if(field_150939_a == ModBlocks.machine_turbine) {
+		//	list.add("Converts steam into water and power");
+		//	list.add("Buffer: 100000000 RF");
+		//	list.add("Connection speed: 100000 RF/t");
+		//	list.add("Connectors:");
+		//	list.add("-Energy: back");
+		//	list.add("-Steam: front");
+		//	list.add("-Water: sides");
+		//}
 
-		if(field_150939_a == ModBlocks.machine_efurnace) {
-			list.add("Smelts items quickly");
-			list.add("Requires: 500 RF/t");
-			list.add("Buffer: 10000 RF");
-			list.add("Connection speed: 1000 RF/t");
-		}
+		//if(field_150939_a == ModBlocks.machine_efurnace) {
+		//	list.add("Smelts items quickly");
+		//	list.add("Requires: 500 RF/t");
+		//	list.add("Buffer: 10000 RF");
+		//	list.add("Connection speed: 1000 RF/t");
+		//}
 	}
 
 }

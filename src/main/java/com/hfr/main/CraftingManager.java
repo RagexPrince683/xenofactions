@@ -49,6 +49,7 @@ public class CraftingManager {
 
 
 		GameRegistry.addRecipe(new ItemStack(ModBlocks.machine_grainmill, 1), new Object[] { "WWW", "BWB", "BMB", 'W', ModItems.components_wood, 'M', ModItems.components_mechanical, 'B', Blocks.cobblestone });
+		GameRegistry.addRecipe(new ItemStack(ModBlocks.machine_blastfurnace, 1), new Object[] { "BSB", "BSB", "BFB", 'S', ModItems.components_scaffold, 'F', Blocks.furnace, 'B', Blocks.stonebrick });
 		GameRegistry.addRecipe(new ItemStack(ModBlocks.machine_coalmine, 1), new Object[] { "SSM", "SMS", "BCB", 'S', ModItems.components_steel, 'M', ModItems.components_mechanical, 'B', Blocks.stone, 'C', Items.minecart });
 		GameRegistry.addRecipe(new ItemStack(ModBlocks.machine_waterwheel, 1), new Object[] { "BSB", "SMS", "BSB", 'B', ModItems.components_wood, 'S', Items.stick, 'M', ModItems.components_mechanical });
 		GameRegistry.addRecipe(new ItemStack(ModBlocks.machine_diesel, 1), new Object[] { "MPM", "MSM", "CFC", 'M', ModItems.components_mechanical, 'P', Blocks.piston, 'S', ModBlocks.machine_coalgen, 'C', ModItems.components_electronics, 'F', ModItems.components_steel });

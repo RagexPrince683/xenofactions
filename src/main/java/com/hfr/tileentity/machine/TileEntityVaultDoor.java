@@ -38,116 +38,7 @@ public class TileEntityVaultDoor extends TileEntity {
 	@Override
     public void updateEntity() {
 		
-		if(!worldObj.isRemote) {
-			
-			if(worldObj.getBlock(xCoord, yCoord + 4, zCoord) != ModBlocks.vault_door_dummy) {
-				worldObj.func_147480_a(xCoord, yCoord, zCoord, false);
-				return;
-			}
-			
-			boolean flagX = false;
-			boolean flagZ = false;
 
-			for(int x = xCoord - 2; x <= xCoord + 2; x++)
-				for(int y = yCoord; y <= yCoord + 5; y++)
-					if(worldObj.isBlockIndirectlyGettingPowered(x, y, zCoord)) {
-						flagX = true;
-						break;
-					}
-			
-			for(int z = zCoord - 2; z <= zCoord + 2; z++)
-				for(int y = yCoord; y <= yCoord + 5; y++)
-					if(worldObj.isBlockIndirectlyGettingPowered(xCoord, y, z)) {
-						flagZ = true;
-						break;
-					}
-
-			if(worldObj.getBlockMetadata(xCoord, yCoord, zCoord) == 2 || worldObj.getBlockMetadata(xCoord, yCoord, zCoord) == 3) {
-				if(flagX) {
-					
-					if(!redstoned) {
-						this.tryToggle();
-					}
-					
-					redstoned = true;
-				} else {
-					
-					redstoned = false;
-				}
-			}
-			if(worldObj.getBlockMetadata(xCoord, yCoord, zCoord) == 4 || worldObj.getBlockMetadata(xCoord, yCoord, zCoord) == 5) {
-				if(flagZ) {
-					
-					if(!redstoned) {
-						this.tryToggle();
-					}
-					
-					redstoned = true;
-				} else {
-					
-					redstoned = false;
-				}
-			}
-
-	    	if(isOpening && state == 1) {
-	    		if(timer == 0)
-					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.vaultScrapeNew", 1.0F, 1.0F);
-	    		if(timer == 45)
-					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.vaultThudNew", 1.0F, 1.0F);
-	    		if(timer == 55)
-					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.vaultThudNew", 1.0F, 1.0F);
-	    		if(timer == 65)
-					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.vaultThudNew", 1.0F, 1.0F);
-	    		if(timer == 75)
-					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.vaultThudNew", 1.0F, 1.0F);
-	    		if(timer == 85)
-					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.vaultThudNew", 1.0F, 1.0F);
-	    		if(timer == 95)
-					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.vaultThudNew", 1.0F, 1.0F);
-	    		if(timer == 105)
-					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.vaultThudNew", 1.0F, 1.0F);
-	    		if(timer == 115)
-					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.vaultThudNew", 1.0F, 1.0F);
-	    	}
-	    	if(!isOpening && state == 1) {
-
-	    		if(timer == 0)
-					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.vaultThudNew", 1.0F, 1.0F);
-	    		if(timer == 10)
-					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.vaultThudNew", 1.0F, 1.0F);
-	    		if(timer == 20)
-					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.vaultThudNew", 1.0F, 1.0F);
-	    		if(timer == 30)
-					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.vaultThudNew", 1.0F, 1.0F);
-	    		if(timer == 40)
-					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.vaultThudNew", 1.0F, 1.0F);
-	    		if(timer == 50)
-					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.vaultThudNew", 1.0F, 1.0F);
-	    		if(timer == 60)
-					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.vaultThudNew", 1.0F, 1.0F);
-	    		if(timer == 70)
-					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.vaultThudNew", 1.0F, 1.0F);
-	    		
-	    		if(timer == 80)
-					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.vaultScrapeNew", 1.0F, 1.0F);
-	    	}	
-	    			
-	    	if(state != 1) {
-	    		timer = 0;
-	    	} else {
-	    		timer++;
-	    		
-	    		if(timer >= 120) {
-	    			
-	    			if(isOpening)
-	    				finishOpen();
-	    			else
-	    				finishClose();
-	    		}
-	    	}
-	    	
-	    	PacketDispatcher.wrapper.sendToAll(new TEVaultPacket(xCoord, yCoord, zCoord, isOpening, state, 0, type));
-		}
     }
 	
 	public void open() {
@@ -199,7 +90,7 @@ public class TileEntityVaultDoor extends TileEntity {
 		if(!worldObj.getBlock(x, y, z).isReplaceable(worldObj, x, y, z))
 			return false;
 		
-		worldObj.setBlock(x, y, z, ModBlocks.vault_door_dummy);
+
 		
 		TileEntity te = worldObj.getTileEntity(x, y, z);
 		
@@ -215,11 +106,7 @@ public class TileEntityVaultDoor extends TileEntity {
 	
 	public void removeDummy(int x, int y, int z) {
 		
-		if(worldObj.getBlock(x, y, z) == ModBlocks.vault_door_dummy) {
-			DummyBlockVault.safeBreak = true;
-			worldObj.setBlock(x, y, z, Blocks.air);
-			DummyBlockVault.safeBreak = false;
-		}
+
 	}
 	
 	private boolean isHatchFree() {

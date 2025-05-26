@@ -889,11 +889,8 @@ public class MainRegistry
         mSpawn = mSpawnP.getInt();
         
         Property drywall = config.get("MISSILE", "blastShields", new String[] {
-        		"" + Block.getIdFromBlock(Blocks.obsidian),
-        		"" + Block.getIdFromBlock(ModBlocks.concrete),
-        		"" + Block.getIdFromBlock(ModBlocks.concrete_bricks),
-        		"" + Block.getIdFromBlock(ModBlocks.vault_door),
-        		"" + Block.getIdFromBlock(ModBlocks.vault_door_dummy)});
+        		"" + Block.getIdFromBlock(Blocks.obsidian)
+        		});
         drywall.comment = "What blocks can block fire blasts (default: obsidian, concrete, concrete bricks, vault door, vault door dummy)";
         String[] vals = drywall.getStringList();
         

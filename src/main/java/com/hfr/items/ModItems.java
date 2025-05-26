@@ -56,8 +56,8 @@ public class ModItems {
 	public static Item designator;
 	public static Item designator_range;
 	public static Item designator_manual;
-	public static Item detonator;
-	public static Item remote;
+	//public static Item detonator;
+	//public static Item remote;
 	public static final int guiID_desingator = 99;
 	public static final int guiID_slbm = 100;
 
@@ -184,7 +184,7 @@ public class ModItems {
 	public static Item wand_coal;
 	public static Item wand_custom;
 	public static Item battery;
-	public static Item oil_detector;
+	//public static Item oil_detector;
 	public static Item gas_mask;
 	public static Item gas_mask_grey;
 	public static Item gas_mask_black;
@@ -327,8 +327,8 @@ public class ModItems {
 		designator = new ItemDesingator().setUnlocalizedName("designator").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":designator");
 		designator_range = new ItemDesingatorRange().setUnlocalizedName("designator_range").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":designator_range");
 		designator_manual = new ItemDesingatorManual().setUnlocalizedName("designator_manual").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":designator_manual");
-		detonator = new ItemDetonator().setUnlocalizedName("detonator").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":detonator");
-		remote = new ItemRemote().setUnlocalizedName("remote").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":remote");
+		//detonator = new ItemDetonator().setUnlocalizedName("detonator").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":detonator");
+		//remote = new ItemRemote().setUnlocalizedName("remote").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":remote");
 		
 		missile_at_1 = new ItemLore().setUnlocalizedName("missile_at_1").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":missile_at_1");
 		missile_he_1 = new ItemLore().setUnlocalizedName("missile_he_1").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":missile_he_1");
@@ -391,7 +391,7 @@ public class ModItems {
 		wand = new ItemWand().setUnlocalizedName("wand").setMaxStackSize(1).setFull3D().setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":wand");
 		wand_iron = new ItemWandOre().setUnlocalizedName("wand_iron").setMaxStackSize(1).setFull3D().setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":wand_iron");
 		wand_coal = new ItemWandOre().setUnlocalizedName("wand_coal").setMaxStackSize(1).setFull3D().setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":wand_coal");
-		oil_detector = new ItemOilDetector().setUnlocalizedName("oil_detector").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":oil_detector");
+		//oil_detector = new ItemOilDetector().setUnlocalizedName("oil_detector").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":oil_detector");
 		gas_mask = new ItemGasMask(matGasMask, 5, 0).setUnlocalizedName("gas_mask").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":gas_mask");
 		gas_mask_grey = new ItemGasMask(matGasMask, 5, 0).setUnlocalizedName("gas_mask_grey").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":gas_mask_grey");
 		gas_mask_black = new ItemGasMask(matGasMask, 5, 0).setUnlocalizedName("gas_mask_black").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":gas_mask_black");
@@ -440,7 +440,7 @@ public class ModItems {
 		GameRegistry.registerItem(wand_iron, wand_iron.getUnlocalizedName());
 		GameRegistry.registerItem(wand_coal, wand_coal.getUnlocalizedName());
 		GameRegistry.registerItem(battery, battery.getUnlocalizedName());
-		GameRegistry.registerItem(oil_detector, oil_detector.getUnlocalizedName());
+		//GameRegistry.registerItem(oil_detector, oil_detector.getUnlocalizedName());
 		GameRegistry.registerItem(gas_mask, gas_mask.getUnlocalizedName());
 		GameRegistry.registerItem(gas_mask_grey, gas_mask_grey.getUnlocalizedName());
 		GameRegistry.registerItem(gas_mask_black, gas_mask_black.getUnlocalizedName());
@@ -594,8 +594,8 @@ public class ModItems {
 		GameRegistry.registerItem(designator, designator.getUnlocalizedName());
 		GameRegistry.registerItem(designator_range, designator_range.getUnlocalizedName());
 		GameRegistry.registerItem(designator_manual, designator_manual.getUnlocalizedName());
-		GameRegistry.registerItem(detonator, detonator.getUnlocalizedName());
-		GameRegistry.registerItem(remote, remote.getUnlocalizedName());
+		//GameRegistry.registerItem(detonator, detonator.getUnlocalizedName());
+		//GameRegistry.registerItem(remote, remote.getUnlocalizedName());
 
 		GameRegistry.registerItem(missile_at_1, missile_at_1.getUnlocalizedName());
 		GameRegistry.registerItem(missile_he_1, missile_he_1.getUnlocalizedName());

@@ -237,154 +237,11 @@ public class TileEntityMachineDerrick extends TileEntity implements ISidedInvent
 		if(age >= timer)
 			age = 0;
 		
-		if(!worldObj.isRemote) {
-			
-			if(age == timer - 1) {
-				PipeUtil.initOil(this, worldObj, xCoord, yCoord, zCoord);
-				PipeUtil.initGas(this, worldObj, xCoord, yCoord, zCoord);
-			}
-			
-			if(slots[0] != null && slots[0].getItem() == ModItems.battery)
-				storage.setEnergyStored(storage.getMaxEnergyStored());
 
-			if (slots[0] != null && slots[0].getItem() instanceof IEnergyContainerItem) {
-				IEnergyContainerItem item = (IEnergyContainerItem) slots[0].getItem();
-				int extract = (int) Math.min(storage.getMaxEnergyStored() - storage.getEnergyStored(),
-						item.getEnergyStored(slots[0]));
-
-				int e = item.extractEnergy(slots[0], extract, false);
-				storage.setEnergyStored(storage.getEnergyStored() + e);
-			}
-			
-			if(slots[1] != null && slots[1].getItem() == ModItems.canister_empty && oil >= 1000) {
-				
-				if(slots[2] != null && slots[2].getItem() == ModItems.canister_oil && slots[2].stackSize < slots[2].getMaxStackSize()) {
-					
-					this.decrStackSize(1, 1);
-					slots[2].stackSize++;
-					oil -= 1000;
-				}
-				
-				if(slots[2] == null) {
-					
-					this.decrStackSize(1, 1);
-					slots[2] = new ItemStack(ModItems.canister_oil);
-					oil -= 1000;
-				}
-			}
-			
-			if(slots[3] != null && slots[3].getItem() == ModItems.gas_empty && gas >= 1000) {
-				
-				if(slots[4] != null && slots[4].getItem() == ModItems.gas_natural && slots[4].stackSize < slots[4].getMaxStackSize()) {
-					
-					this.decrStackSize(3, 1);
-					slots[4].stackSize++;
-					gas -= 1000;
-				}
-				
-				if(slots[4] == null) {
-					
-					this.decrStackSize(3, 1);
-					slots[4] = new ItemStack(ModItems.gas_natural);
-					gas -= 1000;
-				}
-			}
-			
-			pipe(token);
-			token = false;
-			
-			if(storage.getEnergyStored() >= MainRegistry.derrickUse) {
-				
-				//operation start
-				
-				if(age == timer - 1) {
-					warning = 0;
-					
-					//warning 0, green: derrick is operational
-					//warning 1, red: derrick is full, has no power or the drill is jammed
-					//warning 2, yellow: drill has reached max depth
-					
-					for(int i = this.yCoord - 1; i > this.yCoord - 1 - 100; i--) {
-						
-						if(i <= 5) {
-							//Code 2: The drilling ended
-							warning = 2;
-							break;
-						}
-						
-						Block b = worldObj.getBlock(this.xCoord, i, this.zCoord);
-						if(b == ModBlocks.oil_pipe)
-							continue;
-						
-						if((b == ModBlocks.ore_oil || b == ModBlocks.ore_oil_empty) && oil < maxOil && gas < maxGas) {
-							if(succ(this.xCoord, i, this.zCoord)) {
-
-								oil += 500;
-								if(oil > maxOil)
-									oil = maxOil;
-								
-								gas += rand.nextInt(501);
-								if(gas > maxGas)
-									gas = maxGas;
-								
-								//ExplosionLarge.spawnOilSpills(worldObj, xCoord + 0.5F, yCoord + 5.5F, zCoord + 0.5F, 3);
-								worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "game.neutral.swim.splash", 2.0F, 0.5F);
-								
-								break;
-							} else {
-								token = true;
-								break;
-							}
-							
-						} else {
-							//Code 1: Drill jammed
-							warning = 1;
-							break;
-						}
-					}
-				}
-				
-				//operation end
-				
-				storage.extractEnergy(MainRegistry.derrickUse, false);
-				
-			} else {
-				warning = 1;
-			}
-
-			warning2 = 0;
-
-			PacketDispatcher.wrapper.sendToAll(new AuxElectricityPacket(xCoord, yCoord, zCoord, storage.getEnergyStored()));
-			PacketDispatcher.wrapper.sendToAll(new AuxGaugePacket(xCoord, yCoord, zCoord, oil, 0));
-			PacketDispatcher.wrapper.sendToAll(new AuxGaugePacket(xCoord, yCoord, zCoord, gas, 1));
-		}
 		
 	}
 	
-	private void pipe(boolean bool) {
-		
-		for(int i = this.yCoord - 1; i > this.yCoord - 1 - 100; i--) {
-			
-			Block b = worldObj.getBlock(this.xCoord, i, this.zCoord);
-			if(b == ModBlocks.oil_pipe)
-				continue;
-			
-			if(b == Blocks.air || b == Blocks.grass || b == Blocks.dirt || (b == ModBlocks.ore_oil_empty && token) ||
-					b == Blocks.stone || b == Blocks.sand || b == Blocks.sandstone || 
-					b == Blocks.clay || b == Blocks.hardened_clay || b == Blocks.stained_hardened_clay || 
-					b == Blocks.gravel || isOre(b, worldObj.getBlockMetadata(xCoord, i, zCoord)) ||
-					b.isReplaceable(worldObj, xCoord, i, zCoord)) {
-				worldObj.setBlock(xCoord, i, zCoord, ModBlocks.oil_pipe);
-			
-				warning = 0;
-				if(i == this.yCoord - 100)
-					warning = 2;
-				break;
-			} else {
-				break;
-			}
-		}
-	}
+
 	
 	public boolean isOre(Block b, int meta) {
 		
@@ -418,11 +275,7 @@ public class TileEntityMachineDerrick extends TileEntity implements ISidedInvent
 			int b = list.get(i)[1];
 			int c = list.get(i)[2];
 			
-			if(worldObj.getBlock(a, b, c) == ModBlocks.ore_oil) {
-				
-				worldObj.setBlock(a, b, c, ModBlocks.ore_oil_empty);
-				return true;
-			}
+
 		}
 		
 		return false;
@@ -470,11 +323,7 @@ public class TileEntityMachineDerrick extends TileEntity implements ISidedInvent
 		if(steps > MainRegistry.derrickLimiter)
 			return;
 		
-		if(worldObj.getBlock(x, y, z) == ModBlocks.ore_oil_empty && 
-				worldObj.getBlockMetadata(x, y, z) == 0) {
-			worldObj.setBlockMetadataWithNotify(x, y, z, 1, 2);
-			succInit1(x, y, z);
-		}
+
 	}
 	
 	public void succ2(int x, int y, int z) {
@@ -483,13 +332,7 @@ public class TileEntityMachineDerrick extends TileEntity implements ISidedInvent
 		if(steps > MainRegistry.derrickLimiter)
 			return;
 		
-		if(worldObj.getBlock(x, y, z) == ModBlocks.ore_oil_empty && 
-				worldObj.getBlockMetadata(x, y, z) == 1) {
-			worldObj.setBlockMetadataWithNotify(x, y, z, 0, 2);
-			succInit2(x, y, z);
-		} else if(worldObj.getBlock(x, y, z) == ModBlocks.ore_oil) {
-			list.add(new int[] { x, y, z });
-		}
+
 	}
 	
 	@Override

@@ -25,14 +25,15 @@ public class EntityGrenadeNuclear extends EntityGrenadeBouncyBase {
 
 	@Override
 	public void explode() {
-
-		if (!this.worldObj.isRemote) {
-			this.setDead();
-			
-			worldObj.spawnEntityInWorld(EntityNukeCloudSmall.statFac(worldObj, posX, posY, posZ).scaleMulti(0.75F));
-	    	worldObj.spawnEntityInWorld(EntityNuclearBlast.statFac(worldObj, posX, posY, posZ, 35, MainRegistry.nukeStrength, MainRegistry.nukeDist, 70).setSimple(true));
-		}
+//
+	//	if (!this.worldObj.isRemote) {
+	//		this.setDead();
+	//
+	//		worldObj.spawnEntityInWorld(EntityNukeCloudSmall.statFac(worldObj, posX, posY, posZ).scaleMulti(0.75F));
+	//    	worldObj.spawnEntityInWorld(EntityNuclearBlast.statFac(worldObj, posX, posY, posZ, 35, MainRegistry.nukeStrength, MainRegistry.nukeDist, 70).setSimple(true));
+	//	}
 	}
+	//piss off
 
 	@Override
 	protected int getMaxTimer() {

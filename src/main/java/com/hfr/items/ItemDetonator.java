@@ -55,12 +55,13 @@ public class ItemDetonator extends Item {
 			int y = stack.stackTagCompound.getInteger("y");
 			int z = stack.stackTagCompound.getInteger("z");
 
-			if (world.getBlock(x, y, z) == ModBlocks.launch_pad) {
-				world.playSoundAtEntity(player, "hfr:item.techBleep", 1.0F, 1.0F);
-				if (!world.isRemote) {
-					((LaunchPad) world.getBlock(x, y, z)).explode(world, x, y, z);
-				}
-			} else if(world.getBlock(x, y, z) == Blocks.tnt) {
+			//if (world.getBlock(x, y, z) == ModBlocks.launch_pad) {
+			//	world.playSoundAtEntity(player, "hfr:item.techBleep", 1.0F, 1.0F);
+			//	if (!world.isRemote) {
+			//		((LaunchPad) world.getBlock(x, y, z)).explode(world, x, y, z);
+			//	}
+			//} else
+				if(world.getBlock(x, y, z) == Blocks.tnt) {
 
 				world.playSoundAtEntity(player, "hfr:item.techBleep", 1.0F, 1.0F);
 				if (!world.isRemote) {
