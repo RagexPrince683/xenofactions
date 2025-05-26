@@ -361,33 +361,6 @@ public class CommonEventHandler {
 		return list;
 	}
 
-	@SubscribeEvent
-	public void onEntityTick(LivingUpdateEvent event) {
-		
-		Entity e = event.entityLiving;
-		if(e.worldObj.isRemote) return;
-		
-		if(e instanceof EntityZombie || e instanceof EntityCreeper || e instanceof EntitySkeleton) {
-			EntityMob mob = (EntityMob) e;
-
-			if (mob.getEntityToAttack() == null)
-				mob.setTarget(mob.worldObj.getClosestVulnerablePlayerToEntity(mob, MainRegistry.mlpf));
-
-			if (mob.getEntityToAttack() != null && !mob.hasPath()) {
-				mob.setPathToEntity(EntityAI_MLPF.getPathEntityToEntityPartial(mob.worldObj, mob, mob.getEntityToAttack(), 16, true, true, false, true));
-				
-				if(mob.isCollidedVertically && mob.ticksExisted % 50 == 0 && mob.getDistanceToEntity(mob.getEntityToAttack()) > 10)  {
-					Vec3 vec = Vec3.createVectorHelper(mob.getEntityToAttack().posX - mob.posX, 0, mob.getEntityToAttack().posZ - mob.posZ);
-					vec = vec.normalize();
-					mob.motionX += vec.xCoord * 2;
-					mob.motionY += 0.5;
-					mob.motionZ += vec.zCoord * 2;
-					mob.faceEntity(mob.getEntityToAttack(), 90F, 90F);
-				}
-			}
-		}
-	}
-
 	int timer = 0;
 	
 	//handles the anti-mob wand
@@ -522,29 +495,6 @@ public class CommonEventHandler {
 			if(event.isCancelable())
 				event.setCanceled(true);
 			return;
-		}
-		
-		if(event.entity instanceof EntityZombie && MainRegistry.zombAI) {
-			EntityZombie zomb = ((EntityZombie)event.entity);
-			
-			//enables block-breaking behavior for zomberts
-			if(MainRegistry.zombAI)
-				zomb.tasks.addTask(1, new EntityAIBreaking(zomb));
-			//duplicate of player targeting behavior, but ignoring line of sight restrictions (xray!)
-			zomb.targetTasks.addTask(2, new EntityAINearestAttackableTarget(zomb, EntityPlayer.class, 0, false));
-			//zomb.targetTasks.addTask(3, new EntityAI_MLPF(zomb, EntityPlayer.class, MainRegistry.mlpf, 1D, 20));
-		}
-		
-		if(event.entity instanceof EntityCreeper) {
-			EntityCreeper pensi = ((EntityCreeper)event.entity);
-			
-			if(MainRegistry.creepAI)
-				pensi.tasks.addTask(1, new EntityAIAllah(pensi));
-			pensi.targetTasks.addTask(2, new EntityAINearestAttackableTarget(pensi, EntityPlayer.class, 0, false));
-			//pensi.targetTasks.addTask(3, new EntityAI_MLPF(pensi, EntityPlayer.class, MainRegistry.mlpf, 1D, 15));
-			//pensi.targetTasks.addTask(3, new EntityAI_MLPF(pensi, EntityPlayer.class, MainRegistry.mlpf, 1D));
-			//pensi.targetTasks.addTask(2, new EntityAIHFTargeter(pensi, EntityPlayer.class, 0, false));
-			//pensi.targetTasks.addTask(2, new EntityAIHFTargeter(pensi, EntityVillager.class, 0, false));
 		}
 		
 		if(event.entity instanceof EntityLivingBase) {

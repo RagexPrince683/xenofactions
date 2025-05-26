@@ -1135,24 +1135,12 @@ public class Clowder {
 
 	public void addPrestige(float f, World world) {
 
-		if (Loader.isModLoaded("HardcoreQuesting") && CommandClowder.getTeamByName(name) != null) {
+
 			prestige += f;
 
 			if (prestige < 0)
 				prestige = 0F;
 
-			prestige = Math.min(prestige, prestigeCap);
-			CommandClowder.getTeamByName(name).setReputation(0, (int) prestige);
-			if ((CommandClowder.getTeamByName(name).getReputation(0) != 0 || (int) prestige == 0)) {
-				prestige -= (int) prestige;
-				prestige += CommandClowder.getTeamByName(name).getReputation(0);
-			}
-		} else {
-			prestige += f;
-
-			if (prestige < 0)
-				prestige = 0F;
-		}
 		prestige = Math.min(prestige, prestigeCap);
 		this.save(world);
 	}
