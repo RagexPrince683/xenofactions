@@ -23,14 +23,15 @@ public class CraftingManager {
 	{
 		OreDictionary.registerOre("ingotSteel", ModItems.ingot_steel);
 		
-		for(int i = 1; i < TrackType.values().length; i++) {
-			int next = i + 1;
-			
-			if(next >= TrackType.values().length)
-				next = 1;
-			
-			GameRegistry.addShapelessRecipe(new ItemStack(ModItems.cassette, 1, next), new Object[] { new ItemStack(ModItems.cassette, 1, i) });
-		}
+		//for(int i = 1; i < TrackType.values().length; i++) {
+		//	int next = i + 1;
+		//
+		//	if(next >= TrackType.values().length)
+		//		next = 1;
+		//
+		//	GameRegistry.addShapelessRecipe(new ItemStack(ModItems.cassette, 1, next), new Object[] { new ItemStack(ModItems.cassette, 1, i) });
+		//}
+		//todo: add this for RTM
 
 
 		GameRegistry.addShapelessRecipe(new ItemStack(ModBlocks.box, 2), new Object[] { Blocks.chest });
@@ -45,14 +46,14 @@ public class CraftingManager {
 		GameRegistry.addShapelessRecipe(new ItemStack(ModBlocks.barricade, 4), new Object[] { Blocks.sand, ModItems.part_rubber });
 		GameRegistry.addShapelessRecipe(new ItemStack(ModBlocks.barricade, 6), new Object[] { Blocks.sand, ModItems.part_rubber, ModItems.part_sawdust });
 
-		GameRegistry.addRecipe(new ItemStack(ModItems.graphene_vest, 1), new Object[] { "# #", "###", "###", '#', ModItems.ingot_graphene });
+		//GameRegistry.addRecipe(new ItemStack(ModItems.graphene_vest, 1), new Object[] { "# #", "###", "###", '#', ModItems.ingot_graphene });
 
 
 		GameRegistry.addRecipe(new ItemStack(ModBlocks.machine_grainmill, 1), new Object[] { "WWW", "BWB", "BMB", 'W', ModItems.components_wood, 'M', ModItems.components_mechanical, 'B', Blocks.cobblestone });
 		GameRegistry.addRecipe(new ItemStack(ModBlocks.machine_blastfurnace, 1), new Object[] { "BSB", "BSB", "BFB", 'S', ModItems.components_scaffold, 'F', Blocks.furnace, 'B', Blocks.stonebrick });
-		GameRegistry.addRecipe(new ItemStack(ModBlocks.machine_coalmine, 1), new Object[] { "SSM", "SMS", "BCB", 'S', ModItems.components_steel, 'M', ModItems.components_mechanical, 'B', Blocks.stone, 'C', Items.minecart });
-		GameRegistry.addRecipe(new ItemStack(ModBlocks.machine_waterwheel, 1), new Object[] { "BSB", "SMS", "BSB", 'B', ModItems.components_wood, 'S', Items.stick, 'M', ModItems.components_mechanical });
-		GameRegistry.addRecipe(new ItemStack(ModBlocks.machine_diesel, 1), new Object[] { "MPM", "MSM", "CFC", 'M', ModItems.components_mechanical, 'P', Blocks.piston, 'S', ModBlocks.machine_coalgen, 'C', ModItems.components_electronics, 'F', ModItems.components_steel });
+		//GameRegistry.addRecipe(new ItemStack(ModBlocks.machine_coalmine, 1), new Object[] { "SSM", "SMS", "BCB", 'S', ModItems.components_steel, 'M', ModItems.components_mechanical, 'B', Blocks.stone, 'C', Items.minecart });
+		//GameRegistry.addRecipe(new ItemStack(ModBlocks.machine_waterwheel, 1), new Object[] { "BSB", "SMS", "BSB", 'B', ModItems.components_wood, 'S', Items.stick, 'M', ModItems.components_mechanical });
+		//GameRegistry.addRecipe(new ItemStack(ModBlocks.machine_diesel, 1), new Object[] { "MPM", "MSM", "CFC", 'M', ModItems.components_mechanical, 'P', Blocks.piston, 'S', ModBlocks.machine_coalgen, 'C', ModItems.components_electronics, 'F', ModItems.components_steel });
 		GameRegistry.addRecipe(new ItemStack(ModBlocks.machine_foundry, 1), new Object[] { "MBM", "SFS", "SDS", 'M', ModItems.components_mechanical, 'B', Items.bucket, 'S', ModItems.components_steel, 'F', Blocks.furnace, 'D', new ItemStack(Blocks.stone_slab, 1, 0) });
 
 		GameRegistry.addRecipe(new ShapedOreRecipe(new ItemStack(ModItems.components_wood), new Object[] { "WSW", "WSW", "WSW", 'W', "logWood", 'S', Items.stick }));
@@ -62,18 +63,22 @@ public class CraftingManager {
 		GameRegistry.addRecipe(new ShapedOreRecipe(new ItemStack(ModItems.components_electronics), new Object[] { "BRD", "RGR", "DRB", 'R', "dustRedstone", 'G', "ingotGold", 'B', Blocks.stone_button, 'D', Items.repeater }));
 		GameRegistry.addRecipe(new ShapedOreRecipe(new ItemStack(ModItems.components_plating), new Object[] { "GSG", "SBS", "GSG", 'G', Items.gold_nugget, 'S', "ingotSteel", 'B', ModItems.ingot_boron }));
 		
-		GameRegistry.addRecipe(new ShapedOreRecipe(new ItemStack(ModItems.can, 24), new Object[] { "S S", " S ", 'S', "ingotSteel" }));
-		GameRegistry.addShapelessRecipe(new ItemStack(ModItems.canned_spam, 1), new Object[] { Items.fish, ModItems.can });
-		GameRegistry.addShapelessRecipe(new ItemStack(ModItems.canned_jizz, 1), new Object[] { Items.slime_ball, ModItems.can });
+		//GameRegistry.addRecipe(new ShapedOreRecipe(new ItemStack(ModItems.can, 24), new Object[] { "S S", " S ", 'S', "ingotSteel" }));
+		//GameRegistry.addShapelessRecipe(new ItemStack(ModItems.canned_spam, 1), new Object[] { Items.fish, ModItems.can });
+		//GameRegistry.addShapelessRecipe(new ItemStack(ModItems.canned_jizz, 1), new Object[] { Items.slime_ball, ModItems.can });
 		GameRegistry.addShapelessRecipe(new ItemStack(ModItems.miner_supplies, 4), new Object[] { Items.iron_helmet, Items.iron_pickaxe, Items.gunpowder, Items.bread });
 		GameRegistry.addRecipe(new ItemStack(ModItems.canary), new Object[] { "NNN", "NEN", "NNN", 'N', Items.gold_nugget, 'E', Items.egg });
 		GameRegistry.addRecipe(new ItemStack(ModItems.clowder_banner), new Object[] { "SS", "WS", "WS", 'W', Blocks.wool, 'S', Items.stick });
 
-		GameRegistry.addRecipe(new ItemStack(ModBlocks.machine_coalgen, 1), new Object[] { " C ", "MSM", " F ", 'C', ModItems.components_electronics, 'M', ModItems.components_mechanical, 'S', ModItems.components_scaffold, 'F', Blocks.furnace });
-		GameRegistry.addRecipe(new ItemStack(ModBlocks.machine_battery, 1), new Object[] { "RRR", "BCB", "BSB", 'R', Items.redstone, 'B', ModItems.battery_rc, 'C', ModItems.components_electronics, 'S', ModItems.components_steel });
-		GameRegistry.addRecipe(new ItemStack(ModItems.battery_rc, 1), new Object[] { "GI", "CI", "RI", 'G', Items.gold_ingot, 'I', Items.iron_ingot, 'C', Items.coal, 'R', Items.redstone });
-		GameRegistry.addRecipe(new ItemStack(ModItems.battery_rc, 1), new Object[] { "GI", "RI", "CI", 'G', Items.gold_ingot, 'I', Items.iron_ingot, 'C', Items.coal, 'R', Items.redstone });
-		GameRegistry.addRecipe(new ItemStack(ModItems.battery_rc_2, 1), new Object[] { "RCR", "RBR", "RBR", 'R', Items.redstone, 'C', ModItems.components_electronics, 'B', ModBlocks.machine_battery });
+		//GameRegistry.addRecipe(new ItemStack(ModBlocks.machine_coalgen, 1), new Object[] { " C ", "MSM", " F ", 'C', ModItems.components_electronics, 'M', ModItems.components_mechanical, 'S', ModItems.components_scaffold, 'F', Blocks.furnace });
+		//stirling engine
+
+		//GameRegistry.addRecipe(new ItemStack(ModBlocks.machine_battery, 1), new Object[] { "RRR", "BCB", "BSB", 'R', Items.redstone, 'B', ModItems.battery_rc, 'C', ModItems.components_electronics, 'S', ModItems.components_steel });
+		//GameRegistry.addRecipe(new ItemStack(ModItems.battery_rc, 1), new Object[] { "GI", "CI", "RI", 'G', Items.gold_ingot, 'I', Items.iron_ingot, 'C', Items.coal, 'R', Items.redstone });
+		//GameRegistry.addRecipe(new ItemStack(ModItems.battery_rc, 1), new Object[] { "GI", "RI", "CI", 'G', Items.gold_ingot, 'I', Items.iron_ingot, 'C', Items.coal, 'R', Items.redstone });
+		//GameRegistry.addRecipe(new ItemStack(ModItems.battery_rc_2, 1), new Object[] { "RCR", "RBR", "RBR", 'R', Items.redstone, 'C', ModItems.components_electronics, 'B', ModBlocks.machine_battery });
+
+		//todo add airframes, plane things, aluminum shit
 
 
 		GameRegistry.addRecipe(new ItemStack(ModItems.kit_revolver, 1), new Object[] { "BSR", "  W", 'B', ModItems.part_rifled_barrel, 'S', ModItems.part_spring, 'R', ModItems.part_rod, 'W', Items.stick });

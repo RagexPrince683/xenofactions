@@ -66,7 +66,7 @@ public class ItemBlockLore extends ItemBlock {
 			list.add("Increases speed by 25%");
 		}
 		if(field_150939_a == ModBlocks.box) {
-			list.add("Crappy storage block");
+			list.add("Crappy storage block for storing items outside of claims");
 			list.add("Rots after a while");
 		}
 
@@ -123,7 +123,7 @@ public class ItemBlockLore extends ItemBlock {
 		}
 		if(field_150939_a == ModBlocks.tp_tent) {
 			list.add("Requires sky access and foundation");
-			list.add("Allows to create faction TP points nearby");
+			list.add("Allows to create faction teleport/TP/waypoints nearby");
 			list.add("+0.1 prestige gen / hour");
 		}
 		if(field_150939_a == ModBlocks.statue) {
@@ -133,7 +133,7 @@ public class ItemBlockLore extends ItemBlock {
 		}
 
 		if(field_150939_a == ModBlocks.machine_coalgen) {
-			list.add("Basic combusion generator");
+			list.add("Basic combustion generator");
 			list.add("Production: 200 RF/t");
 			list.add("Buffer: 240000 RF");
 			list.add("Connection speed: 2000 RF/t");
@@ -161,6 +161,7 @@ public class ItemBlockLore extends ItemBlock {
 			list.add("Connectors: visible knobs at the bottom");
 			list.add("[plane-shredding functionality pending]");
 		}
+		//sigh DO I HAVE TO CODE WIND TOO???
 
 		if(field_150939_a == ModBlocks.machine_waterwheel) {
 			list.add("Requires sky access and flowing water");
