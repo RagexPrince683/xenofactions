@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.hfr.lib.RefStrings;
 
+import net.minecraft.command.ICommandSender;
 import net.minecraft.util.ResourceLocation;
 
 public enum ClowderFlag {
@@ -35,6 +36,12 @@ public enum ClowderFlag {
 		flag = new ResourceLocation(getLoc() + ".png");
 		overlay = new ResourceLocation(getLoc() + "_overlay.png");
 	}
+
+	//@Override
+	//public boolean canCommandSenderUseCommand(ICommandSender sender) {
+	//	return true; // ← IGNORE ALL PERMISSIONS
+	//}
+	//cant override here bc this mod sucks dick
 	
 	private ClowderFlag(String name, boolean show) {
 		this.name = name;

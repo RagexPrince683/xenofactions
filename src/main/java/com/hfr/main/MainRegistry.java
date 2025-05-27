@@ -643,33 +643,50 @@ public class MainRegistry
 		}
 	}
 
-	@EventHandler
+	@Mod.EventHandler
 	public void serverStarting(FMLServerStartingEvent event) {
-		event.registerServerCommand(new CommandClowder());
-		//command ore wand
-		//event.registerServerCommand(new CommandOrewand());
-		//custom stone drops
-		event.registerServerCommand(new CommandStoneDrop());
-		//MarketData.loadMarketData();
-		//depricated schizophrenia and unhinged gpt pasting
-		event.registerServerCommand(new CommandXShop());
-	}
-
-	@EventHandler
-	public void ServerLoad(FMLServerStartingEvent event)
-	{
-		event.registerServerCommand(new CommandXPlayer());
-		event.registerServerCommand(new CommandXDebug());
-		event.registerServerCommand(new CommandXMarket());
+		// Main faction system commands
 		event.registerServerCommand(new CommandClowder());
 		event.registerServerCommand(new CommandClowderChat());
 		event.registerServerCommand(new CommandClowderAdmin());
-		//event.registerServerCommand(new CommandXShop());
-		//event.loadMarketData()
-		//MarketData.loadMarketData();
-		//OfferPacket
-		//OfferPacket
+
+		// Other utility commands
+		event.registerServerCommand(new CommandXShop());
+		event.registerServerCommand(new CommandXPlayer());
+		event.registerServerCommand(new CommandXDebug());
+		event.registerServerCommand(new CommandXMarket());
+		event.registerServerCommand(new CommandStoneDrop());
 	}
+
+	//only one thing
+
+	//@EventHandler
+	//public void serverStarting(FMLServerStartingEvent event) {
+	//	event.registerServerCommand(new CommandClowder());
+	//	//command ore wand
+	//	//event.registerServerCommand(new CommandOrewand());
+	//	//custom stone drops
+	//	event.registerServerCommand(new CommandStoneDrop());
+	//	//MarketData.loadMarketData();
+	//	//depricated schizophrenia and unhinged gpt pasting
+	//	event.registerServerCommand(new CommandXShop());
+	//}
+
+	//@EventHandler
+	//public void ServerLoad(FMLServerStartingEvent event)
+	//{
+	//	event.registerServerCommand(new CommandXPlayer());
+	//	event.registerServerCommand(new CommandXDebug());
+	//	event.registerServerCommand(new CommandXMarket());
+	//	event.registerServerCommand(new CommandClowder());
+	//	event.registerServerCommand(new CommandClowderChat());
+	//	event.registerServerCommand(new CommandClowderAdmin());
+	//	//event.registerServerCommand(new CommandXShop());
+	//	//event.loadMarketData()
+	//	//MarketData.loadMarketData();
+	//	//OfferPacket
+	//	//OfferPacket
+	//}
 
 	public static List<Block> blastShields = new ArrayList();
 	public static Set<Block> zombBlacklist = new HashSet();
