@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Random;
 
 
+import com.hbm.util.fauxpointtwelve.BlockPos;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder;
 import com.hfr.data.AntiMobData;
@@ -286,15 +287,32 @@ public class CommonEventHandler {
 		double posX = entity.posX;
 		double posZ = entity.posZ;
 
-		// Wraparound logic for non-player entities
 		if (posX < MainRegistry.borderNegX || posX > MainRegistry.borderPosX ||
 				posZ < MainRegistry.borderNegZ || posZ > MainRegistry.borderPosZ) {
 
-			entity.setPosition(
-					wrapX(posX),
-					entity.posY,
-					wrapZ(posZ)
-			);
+			double newX = wrapX(posX);
+			double newZ = wrapZ(posZ);
+			double newY = entity.posY;
+
+			int checkX = MathHelper.floor_double(newX);
+			int checkY = MathHelper.floor_double(newY);
+			int checkZ = MathHelper.floor_double(newZ);
+
+			World world = entity.worldObj;
+
+			// Check if the position is in a solid block
+			if (!world.isAirBlock(checkX, checkY, checkZ)) {
+				// Try moving up to find a non-solid block (limit to 5 blocks)
+				for (int i = 1; i <= 5; i++) {
+					if (world.isAirBlock(checkX, checkY + i, checkZ)) {
+						newY = checkY + i;
+						break;
+					}
+				}
+			}
+			//should hopefully fix the issue of players getting stuck in the ground when wrapping on ground
+
+			entity.setPosition(newX, newY, newZ);
 		}
 	}
 
