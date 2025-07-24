@@ -103,6 +103,16 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 
+		if(cmd.equals("setallywarp")) {
+			cmdSetAllyWarp(sender);
+		}
+
+		if(cmd.equals("allywarp")) {
+			cmdAllyWarp(sender, args[1]);
+		}
+
+
+
 		/*if(cmd.equals("disband") && args.length > 1) {
 			cmdDisband(sender, args[1]);
 			return;
@@ -318,6 +328,7 @@ public class CommandClowder extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-delwarp <name>" + TITLE + " - Removes a warp"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-warp <name>" + TITLE + " - Teleports to a warp point"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-warps" + TITLE + " - Lists all warps"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-list" + TITLE + " - Lists all clowders (page function pending)"));
 			sender.addChatMessage(new ChatComponentText(INFO + "/clowder help 4"));
 		}
 
@@ -331,6 +342,22 @@ public class CommandClowder extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-demote <amount>" + TITLE + " - Demotes an officer to member"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-nameclaim <name>" + TITLE + " - Renames the territory"));
 		}
+
+		if (p == 5) {
+			sender.addChatMessage(new ChatComponentText(
+					COMMAND_LEADER + "-befriend <name>" + TITLE + " - Sends an alliance offer to a clowder"));
+			sender.addChatMessage(new ChatComponentText(
+					COMMAND_LEADER + "-acceptfriend <playername>" + TITLE + " - Accepts a player's alliance offer and signs a treaty"));
+			sender.addChatMessage(new ChatComponentText(
+					COMMAND_LEADER + "-unfriend <name>" + TITLE + " - Cancels an alliance with a clowder"));
+			sender.addChatMessage(
+					new ChatComponentText(COMMAND_LEADER + "-setallywarp" + TITLE + " - Sets the clowder's alliance rally-point"));
+			sender.addChatMessage(
+					new ChatComponentText(COMMAND + "-allywarp <name>" + TITLE + " - Teleports to an ally rally-point"));
+			sender.addChatMessage(
+					new ChatComponentText(COMMAND + "-alliance" + TITLE + " - Shows name of all allied clowders"));
+		}
+
 	}
 
 	private void cmdCreate(ICommandSender sender, String name) {
@@ -351,6 +378,8 @@ public class CommandClowder extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You can not create a new faction while already being in one!"));
 		}
 	}
+
+
 
 	private void cmdDisband(ICommandSender sender, String name) {
 
@@ -390,6 +419,186 @@ public class CommandClowder extends CommandBase {
 
 		} else {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
+		}
+	}
+
+	private void cmdAlliance(ICommandSender sender) {
+
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder clowder = Clowder.getClowderFromPlayer(player);
+
+		if (clowder != null) {
+
+			sender.addChatMessage(new ChatComponentText(TITLE + clowder.getDecoratedName() + " Alliance:"));
+
+
+			for (Clowder s : clowder.allies.keySet())
+				sender.addChatMessage(new ChatComponentText(LIST + s.name));
+
+		} else {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any clowder!"));
+		}
+	}
+
+	private void cmdBefriend(ICommandSender sender, String name) {
+
+		EntityPlayer envoy = getCommandSenderAsPlayer(sender);
+		Clowder diplomat = Clowder.getClowderFromPlayer(envoy);
+
+		if(diplomat != null) {
+
+			if(diplomat.suzerain == null)
+			{
+
+				if(diplomat.getPermLevel(envoy.getDisplayName()) > 1) {
+
+					Clowder toApply = Clowder.getClowderFromName(name);
+
+					if(toApply != null) {
+
+						if(diplomat.allies.get(toApply) == null)
+						{
+
+							diplomat.notifyAll(envoy.worldObj, new ChatComponentText(INFO + sender.getCommandSenderName() + " sent an alliance offer to " + toApply.getDecoratedName() + "!"));
+							toApply.potentialFriends.add(envoy.getDisplayName());
+							toApply.notifyAll(envoy.worldObj, new ChatComponentText(INFO + "Player " + sender.getCommandSenderName() + " of " + diplomat.name + " wishes to form an alliance!"));
+							toApply.notifyAll(envoy.worldObj, new ChatComponentText(INFO + " Use /c acceptfriend " + sender.getCommandSenderName() + " to accept the offer."));
+
+						} else
+							sender.addChatMessage(new ChatComponentText(ERROR + "We are already allies!"));
+
+
+					} else {
+						sender.addChatMessage(new ChatComponentText(ERROR + "There is no clowder with this name!"));
+					}
+				}
+				else
+				{
+					sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions for foreign diplomacy!"));
+				}
+			} else
+			{
+				sender.addChatMessage(new ChatComponentText(ERROR + "Tributaries cannot form alliances!"));
+			}
+		}
+		else {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You need to be in a clowder!"));
+		}
+	}
+
+	private void cmdAcceptFriend(ICommandSender sender, String name) {
+
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder clowder = Clowder.getClowderFromPlayer(player);
+
+		if(clowder != null) {
+
+			if(clowder.suzerain == null) {
+
+
+				if(clowder.getPermLevel(player.getDisplayName()) > 1) {
+
+					if(clowder.potentialFriends.contains(name))
+					{ //checks if the name of the guy you typed in command actually applied to become your slave
+
+						if(Clowder.getClowderFromPlayerName(name) != null)
+						{
+
+							Clowder friend = Clowder.getClowderFromPlayerName(name); //clowder of guy who offered to suck you off
+
+
+							if (friend != clowder) //prevent becoming your own tributary
+							{
+								sender.addChatMessage(new ChatComponentText(INFO + "We accepted " + name + "'s offer to make " + friend.name + " our ally!"));
+								friend.notifyAll(player.worldObj, new ChatComponentText(INFO +  clowder.name + " accepted our offer. We are now their ally."));
+
+
+
+								//allah bookmark - install the actual ally shit here
+								clowder.addAlly(player.worldObj, friend);
+								friend.addAlly(player.worldObj, clowder);
+								//friend.addPeaceTreaty(60, player.worldObj);
+
+								//for cancelling wars against the tributary
+								if(clowder.enemy == friend)
+								{
+									clowder.pussy(player.worldObj);
+									friend.notifyAll(player.worldObj, new ChatComponentText(INFO + "Because " + clowder.name + " accepted our alliance offer, their war goals against us were cancelled."));
+									clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Because " + friend.name + " is now our ally, our war goals against them have been cancelled."));
+
+								}
+
+
+
+
+
+							}
+							else
+								sender.addChatMessage(new ChatComponentText(ERROR + "We cannot become our own ally"));
+						}
+						else {
+							sender.addChatMessage(new ChatComponentText(ERROR + "This player is not in another clowder!"));
+						}
+
+						clowder.potentialFriends.remove(name);
+
+					}
+					else
+						sender.addChatMessage(new ChatComponentText(ERROR + "This player has no active application!"));
+				} else
+					sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions to manage applications!"));
+			}
+			else
+				sender.addChatMessage(new ChatComponentText(ERROR + "Tributaries cannot form alliances!"));
+		} else
+			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any clowder!"));
+	}
+
+	private void cmdUnfriend(ICommandSender sender, String kickee) {
+
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder clowder = Clowder.getClowderFromPlayer(player);
+		Clowder formerFriend = Clowder.getClowderFromName(kickee);
+
+		if (clowder != null) {
+
+			//no escape for bitches
+			//if (!clowder.bitch) {
+			//fuck yo whole bitch system
+
+
+				if (clowder.getPermLevel(player.getDisplayName()) > 1) {
+
+					if (formerFriend != null) {
+
+						if (clowder == formerFriend) {
+
+							sender.addChatMessage(
+									new ChatComponentText(CRITICAL + "You can not unfriend yourself, idiot!"));
+
+						} else {
+							formerFriend.notifyAll(player.worldObj, new ChatComponentText(INFO + clowder.name + " has cancelled our alliance!"));
+							clowder.removeAlly(player.worldObj, kickee);
+							formerFriend.removeAlly(player.worldObj, clowder.name);
+							// modid instead of modname
+
+							clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Friendship with " + kickee + " has ended!"));
+						}
+					} else {
+						sender.addChatMessage(new ChatComponentText(ERROR + "This action does not exist."));
+					}
+
+				} else {
+					sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions to cancel alliances!"));
+				}
+
+
+			//} else
+			//	sender.addChatMessage(new ChatComponentText(
+			//			ERROR + "Bitches cannot perform diplomacy"));
+
+		} else {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any clowder!"));
 		}
 	}
 
@@ -809,22 +1018,77 @@ public class CommandClowder extends CommandBase {
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
 
-		if(clowder != null) {
+		if (clowder != null) {
+			// level 1 member level 2 officer level 3 leader
+			if (clowder.getPermLevel(player.getDisplayName()) > 1) {
 
-			if(clowder.getPermLevel(player.getDisplayName()) > 1) {
+				Ownership owner = ClowderTerritory.getOwnerFromInts((int) player.posX, (int) player.posZ);
 
-				Ownership owner = ClowderTerritory.getOwnerFromInts((int)player.posX, (int)player.posZ);
+				if (owner != null && owner.zone == Zone.FACTION && owner.owner == clowder) {
 
-				if(owner != null && owner.zone == Zone.FACTION && owner.owner == clowder) {
+					if (clowder.sethomeDelay <= 0)
+					{
+						clowder.setHome(player.posX, player.posY, player.posZ, player);
+						clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Home set!"));
+						clowder.addSethomeDelay(10, player.worldObj); //10 minute delay
+					}
+					else {
+						sender.addChatMessage(
+								new ChatComponentText(ERROR + "Please wait " + (int)clowder.sethomeDelay + " minutes to set home again!"));
+					}
 
-					clowder.setHome(player.posX, player.posY, player.posZ, player);
-					clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Home set!"));
+
 				} else {
-					sender.addChatMessage(new ChatComponentText(ERROR + "You can not set the home outside of your claimed land!"));
+					sender.addChatMessage(
+							new ChatComponentText(ERROR + "You can not set the home outside of your claimed land!"));
 				}
 
 			} else {
-				sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions to set this faction's home point!"));
+				sender.addChatMessage(
+						new ChatComponentText(ERROR + "You lack the permissions to set this faction's home point!"));
+			}
+
+		} else {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
+		}
+	}
+
+	private void cmdSetAllyWarp(ICommandSender sender) {
+
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder clowder = Clowder.getClowderFromPlayer(player);
+
+		if (clowder != null) {
+			// level 1 member level 2 officer level 3 leader
+			if (clowder.getPermLevel(player.getDisplayName()) > 1) {
+
+				Ownership owner = ClowderTerritory.getOwnerFromInts((int) player.posX, (int) player.posZ);
+
+				if (owner != null && owner.zone == Zone.FACTION && owner.owner == clowder) {
+
+
+
+					if (clowder.sethomeDelay <= 0)
+					{
+						clowder.setAllyWarp(player.posX, player.posY, player.posZ, player);
+						clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Ally Warp set!"));
+						clowder.addSethomeDelay(10, player.worldObj); //10 minute delay
+					}
+					else {
+						sender.addChatMessage(
+								new ChatComponentText(ERROR + "Please wait " + (int)clowder.sethomeDelay + " minutes to move the alliance rally-point!"));
+					}
+
+
+
+				} else {
+					sender.addChatMessage(
+							new ChatComponentText(ERROR + "You can not set the Ally Warp outside of your claimed land!"));
+				}
+
+			} else {
+				sender.addChatMessage(
+						new ChatComponentText(ERROR + "You lack the permissions to set this faction's Ally Warp point!"));
 			}
 
 		} else {
@@ -841,7 +1105,7 @@ public class CommandClowder extends CommandBase {
 
 			Ownership owner = ClowderTerritory.getOwnerFromInts((int)player.posX, (int)player.posZ);
 
-			if(owner != null && (owner.zone == Zone.WARZONE || (owner.zone == Zone.FACTION && owner.owner != clowder))) {
+			if(owner != null && (owner.zone == Zone.WARZONE || (owner.zone == Zone.FACTION && (owner.owner != clowder && clowder.allies.get(owner.owner) == null) ) ) ) { //allow warp from allied territory
 
 				sender.addChatMessage(new ChatComponentText(ERROR + "You can not teleport home in foreign territory!"));
 
@@ -853,6 +1117,55 @@ public class CommandClowder extends CommandBase {
 			}
 
 		} else {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
+		}
+	}
+
+	private void cmdAllyWarp(ICommandSender sender, String name) {
+
+		EntityPlayerMP player = getCommandSenderAsPlayer(sender);
+		Clowder clowder = Clowder.getClowderFromPlayer(player);
+		Clowder ally = Clowder.getClowderFromName(name);
+
+		if (clowder != null) {
+			if (ally != null) {
+
+				Ownership owner = ClowderTerritory.getOwnerFromInts((int) player.posX, (int) player.posZ);
+
+				if (owner != null
+						&& (owner.zone == Zone.WARZONE || (owner.zone == Zone.FACTION && (owner.owner != clowder && clowder.allies.get(owner.owner) == null) ) ) ) {
+
+					System.out.println("alliesS get owner name: " + clowder.alliesS.get(owner.owner.name) + " owner.owner name: " + owner.owner.name);
+					sender.addChatMessage(new ChatComponentText(ERROR + "You can not teleport to an Ally Warp from unfriendly territory!"));
+
+				} else
+				{
+					//area where ally warp teleportation is executed. put ally restrictions here
+
+					if(ally.allies.get(clowder) != null)
+					{
+
+						if(ally.allyWarpX != 0 && ally.allyWarpY != 0 && ally.allyWarpZ != 0)
+						{
+							sender.addChatMessage(new ChatComponentText(INFO + "Please stand still for 10 seconds!"));
+							clowder.teleports.put(System.currentTimeMillis() + 10000L, new ScheduledTeleport(ally.allyWarpX,
+									ally.allyWarpY, ally.allyWarpZ, player.getDisplayName(), true, true, ally.name));
+						}
+						else
+							sender.addChatMessage(new ChatComponentText(ERROR + name + " did not set an alliance rally-point!"));
+
+					}
+					else
+						sender.addChatMessage(new ChatComponentText(ERROR + name + " is not our ally!"));
+				}
+
+			}
+
+			else {
+				sender.addChatMessage(new ChatComponentText(ERROR + name + " is not a valid faction!"));
+			}
+		}
+		else {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
 		}
 	}
@@ -916,27 +1229,29 @@ public class CommandClowder extends CommandBase {
 		EntityPlayerMP player = getCommandSenderAsPlayer(sender);
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
 
-		if(clowder != null) {
+		if (clowder != null) {
 
-			if(clowder.warps.containsKey(name)) {
+			if (clowder.warps.containsKey(name)) {
 
-				Ownership owner = ClowderTerritory.getOwnerFromInts((int)player.posX, (int)player.posZ);
+				Ownership owner = ClowderTerritory.getOwnerFromInts((int) player.posX, (int) player.posZ);
 
-				if(owner != null && (owner.zone == Zone.WARZONE || (owner.zone == Zone.FACTION && owner.owner != clowder))) {
+				if (owner != null
+						//&& (owner.zone == Zone.WARZONE || (owner.zone == Zone.FACTION && owner.owner != clowder))) {
+						&& (owner.zone == Zone.WARZONE || (owner.zone == Zone.FACTION && (owner.owner != clowder && clowder.allies.get(owner.owner) == null) ) ) ) { //allow warp from allied territory
 
-					sender.addChatMessage(new ChatComponentText(ERROR + "You can not warp in foreign territory!"));
+					sender.addChatMessage(new ChatComponentText(ERROR + "You can not warp in unfriendly territory!"));
 					return;
 				}
 
 				int[] warp = clowder.warps.get(name);
 
-				if(warp == null) {
+				if (warp == null) {
 					return;
 				}
 
 				IChunkProvider provider = player.worldObj.getChunkProvider();
 
-				for(int i = 2; i <= 5; i++) {
+				for (int i = 2; i <= 5; i++) {
 
 					ForgeDirection dir = ForgeDirection.getOrientation(i);
 
@@ -947,19 +1262,23 @@ public class CommandClowder extends CommandBase {
 
 					Block block = player.worldObj.getBlock(tentX, warp[1], tentZ);
 
-					if(block == ModBlocks.tp_tent) {
+					if (block == ModBlocks.tp_tent) {
 
-						int[] pos = ((BlockDummyable)ModBlocks.tp_tent).findCore(player.worldObj, tentX, warp[1], tentZ);
+						int[] pos = ((BlockDummyable) ModBlocks.tp_tent).findCore(player.worldObj, tentX, warp[1],
+								tentZ);
 
-						if(pos != null) {
+						if (pos != null) {
 
 							provider.loadChunk(pos[0] >> 4, pos[2] >> 4);
-							TileEntityProp tent = (TileEntityProp)player.worldObj.getTileEntity(pos[0], pos[1], pos[2]);
+							TileEntityProp tent = (TileEntityProp) player.worldObj.getTileEntity(pos[0], pos[1],
+									pos[2]);
 
-							if(tent.warp.equals(name) && tent.operational()) {
+							if (tent.warp.equals(name) && tent.operational()) {
 
-								sender.addChatMessage(new ChatComponentText(INFO + "Please stand still for 10 seconds!"));
-								clowder.teleports.put(System.currentTimeMillis() + 10000L, new ScheduledTeleport(warp[0], warp[1], warp[2], player.getDisplayName(), name));
+								sender.addChatMessage(
+										new ChatComponentText(INFO + "Please stand still for 10 seconds!"));
+								clowder.teleports.put(System.currentTimeMillis() + 10000L, new ScheduledTeleport(
+										warp[0], warp[1], warp[2], player.getDisplayName(), name));
 
 								return;
 							}
@@ -967,7 +1286,8 @@ public class CommandClowder extends CommandBase {
 					}
 				}
 
-				sender.addChatMessage(new ChatComponentText(ERROR + "Warp tent not found! Make sure it still exists or remove this warp!"));
+				sender.addChatMessage(new ChatComponentText(
+						ERROR + "Warp tent not found! Make sure it still exists or remove this warp!"));
 
 			} else {
 				sender.addChatMessage(new ChatComponentText(ERROR + "This warp does not exist!"));

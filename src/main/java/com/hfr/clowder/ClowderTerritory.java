@@ -10,6 +10,7 @@ import com.hfr.tileentity.clowder.ITerritoryProvider;
 import com.hfr.tileentity.clowder.TileEntityConquerer;
 import com.hfr.tileentity.clowder.TileEntityFlag;
 
+import com.hfr.tileentity.clowder.TileEntityFlagBig;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -26,7 +27,7 @@ public class ClowderTerritory {
 
 	public static final int SAFEZONE_COLOR = 0xFF8000;
 	public static final int WARZONE_COLOR = 0xFF0000;
-	public static final int WILDERNESS_COLOR = 0x008000;
+	public static final int WILDERNESS_COLOR = 0xFFFFFF;
 	
 	public static HashMap<Long, TerritoryMeta> territories = new HashMap();
 	
@@ -50,12 +51,19 @@ public class ClowderTerritory {
 	public static void setOwnerForInts(World world, int x, int z, Clowder owner, int fX, int fY, int fZ, String name) {
 		
 		long code = intsToCode(x, z);
+		TerritoryMeta old = territories.get(code);
 		
 		territories.remove(code);
 		
 		Ownership o = new Ownership(Zone.FACTION, owner);
 		TerritoryMeta metadata = new TerritoryMeta(o, fX, fY, fZ);
-		metadata.name = name;
+		TileEntity flag = world.getTileEntity(fX, fY, fZ);
+		if(flag != null) {
+			if(flag instanceof TileEntityFlagBig)
+				((TileEntityFlagBig)flag).provinceName = name;
+			else if(flag instanceof TileEntityConquerer)
+				((TileEntityConquerer)flag).name = name;
+		}
 		
 		territories.put(code, metadata);
 		ClowderData.getData(world).markDirty();
@@ -322,15 +330,17 @@ public class ClowderTerritory {
 			this.flagX = flagX;
 			this.flagY = flagY;
 			this.flagZ = flagZ;
-			this.name = "";
+			//this.name = "";
 		}
-		
-		public TerritoryMeta(Ownership owner, int flagX, int flagY, int flagZ, String name) {
+
+		public TerritoryMeta(Ownership owner, int flagX, int flagY, int flagZ, World world, String name) {
 			this.owner = owner;
 			this.flagX = flagX;
 			this.flagY = flagY;
 			this.flagZ = flagZ;
-			this.name = name;
+			TileEntityFlagBig flag = (TileEntityFlagBig) world.getTileEntity(flagX, flagY, flagZ);
+			if(flag != null)
+				flag.provinceName = name;
 		}
 		
 		public TerritoryMeta(Ownership owner) {
@@ -340,9 +350,9 @@ public class ClowderTerritory {
 		public void writeToNBT(NBTTagCompound nbt, String code) {
 
 			owner.writeToNBT(nbt, code);
-			nbt.setInteger("terr_" + code + "_flagX", flagX);
-			nbt.setInteger("terr_" + code + "_flagY", flagY);
-			nbt.setInteger("terr_" + code + "_flagZ", flagZ);
+			nbt.setInteger(code + "X",flagX);
+			nbt.setInteger(code + "Y",flagY);
+			nbt.setInteger(code + "Z",flagZ);
 			nbt.setString("name_" + code, name);
 		}
 		
@@ -350,10 +360,9 @@ public class ClowderTerritory {
 			
 			TerritoryMeta meta = new TerritoryMeta(
 					Ownership.readFromNBT(nbt, code),
-					nbt.getInteger("terr_" + code + "_flagX"),
-					nbt.getInteger("terr_" + code + "_flagY"),
-					nbt.getInteger("terr_" + code + "_flagZ"),
-					nbt.getString("name_" + code)
+					nbt.getInteger(code + "X"),
+					nbt.getInteger(code + "Y"),
+					nbt.getInteger(code + "Z")
 			);
 			
 			return meta;
@@ -471,7 +480,7 @@ public class ClowderTerritory {
 			long code = nbt.getLong("code_" + i);
 			TerritoryMeta meta = TerritoryMeta.readFromNBT(nbt, "meta_" + i);
 			
-			if(meta != null && meta.owner.zone != Zone.WILDERNESS)
+			if(meta != null)
 				territories.put(code, meta);
 		}
 	}
@@ -486,10 +495,11 @@ public class ClowderTerritory {
 			TerritoryMeta meta = territories.get(code);
 			
 			//do not save wilderness
-			if(meta.owner.zone != Zone.WILDERNESS) {
+			//todo check that this isnt some bs
+			//if(meta.owner.zone != Zone.WILDERNESS) {
 				nbt.setLong("code_" + index, code);
 				meta.writeToNBT(nbt, "meta_" + index);
-			}
+			//}
 			
 			index++;
 		}
