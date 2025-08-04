@@ -88,7 +88,8 @@ public class CommandClowder extends CommandBase {
 	public void processCommand(ICommandSender sender, String[] args) {
 
 		if(sender.getEntityWorld().provider.dimensionId != 0) {
-			sender.addChatMessage(new ChatComponentText(CRITICAL + "Critical error: CatFac only works in overworld!!"));
+			sender.addChatMessage(new ChatComponentText(CRITICAL + "Critical error: XenoFac only works in overworld!!"));
+			//todo... remove??? why is this the case? does it work outside overworld?
 		}
 
 		if(Clowder.clowders.size() == 0)

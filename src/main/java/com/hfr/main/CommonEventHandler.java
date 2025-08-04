@@ -8,6 +8,7 @@ import java.util.Random;
 import com.hbm.util.fauxpointtwelve.BlockPos;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder;
+import com.hfr.command.MuteManager;
 import com.hfr.data.AntiMobData;
 import com.hfr.data.CBTData;
 import com.hfr.data.ResourceData;
@@ -66,6 +67,7 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
+import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
@@ -200,6 +202,15 @@ public class CommonEventHandler {
 		//		}
 		//	}
 		//}
+	}
+
+	@SubscribeEvent
+	public void onPlayerChat(ServerChatEvent event) {
+		String name = event.player.getCommandSenderName();
+		if (MuteManager.isMuted(name)) {
+			event.setCanceled(true);
+			event.player.addChatMessage(new ChatComponentText("You are muted."));
+		}
 	}
 	
 	public boolean hasDigiOverlay(EntityPlayer player) {
