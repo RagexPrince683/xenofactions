@@ -1,5 +1,6 @@
 package com.hfr.command;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class MuteManager {
