@@ -61,6 +61,7 @@ public class CommandXPlayer extends CommandBase {
 				sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "  -vomit OR shader (rapidly alternaating shaders)"));
 				return;
 			}
+			//shittiest structuring ever.
 			
             EntityPlayerMP target = minecraftserver.getConfigurationManager().func_152612_a(args[1]);
             
