@@ -13,6 +13,7 @@ import com.hfr.clowder.ClowderTerritory.TerritoryMeta;
 import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.command.CommandClowder;
 import com.hfr.command.CommandClowderChat;
+import com.hfr.command.MuteManager;
 import com.hfr.data.ClowderData;
 import com.hfr.handler.BobbyBreaker;
 import com.hfr.handler.ExplosionSound;
@@ -140,6 +141,16 @@ public class ClowderEvents {
 				return;
 			}
 
+			if (event.player.getEntityData().getInteger(CommandClowderChat.CHAT_KEY) == 2) {
+				sendToAlliance(clowder, event.player, event.message);
+				event.setCanceled(true);
+				return;
+			}
+
+			if (!MuteManager.isMuted(event.player.toString())) { //mute check
+
+
+
 			String name = clowder.getDecoratedName();
 			String message = EnumChatFormatting.DARK_GREEN + "[ " + name + " Citizen ]";
 			if(clowder.getPermLevel(event.player.getDisplayName()) > 1) {
@@ -149,6 +160,10 @@ public class ClowderEvents {
 				message = EnumChatFormatting.GOLD + "[ " + name + " Leader ]";
 			}
 			MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(message));
+			} else {
+				event.setCanceled(true);
+			}
+
 		}
 	}
 	
@@ -169,6 +184,32 @@ public class ClowderEvents {
 		clowder.notifyAll(player.worldObj, new ChatComponentText(CommandClowderChat.HELP + name + " " + message));
 		System.out.println(name + " " + message);
 		
+	}
+
+	private void sendToAlliance(Clowder clowder, EntityPlayer player, String message) { //for ally chat
+
+		String name = "";
+
+		if (clowder.getPermLevel(player.getDisplayName()) > 2) {
+			name += "<Leader> ";
+		} else if (clowder.getPermLevel(player.getDisplayName()) > 1) {
+			name += "<Officer> ";
+		} else if (clowder.getPermLevel(player.getDisplayName()) > 0) {
+			name += "<Citizen> ";
+		}
+
+		name += "[" + player.getDisplayName() + "]";
+
+		clowder.notifyAll(player.worldObj, new ChatComponentText(CommandClowderChat.LIST + name + " " + message));
+
+
+		System.out.println(name + " " + message);
+
+		for (Clowder a : clowder.allies.keySet())
+		{
+			a.notifyAll(player.worldObj, new ChatComponentText(CommandClowderChat.LIST + "<Ally> [" + player.getDisplayName() + "] " + message)); //send to all allies
+		}
+
 	}
 	
 	/**

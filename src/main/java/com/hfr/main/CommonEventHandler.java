@@ -207,7 +207,7 @@ public class CommonEventHandler {
 	@SubscribeEvent
 	public void onPlayerChat(ServerChatEvent event) {
 		String name = event.player.getCommandSenderName();
-		if (MuteManager.isMuted(name)) {
+		if (MuteManager.isMuted(name)) { //todo && not in faction chat/ally chat (if I implemented that)
 			event.setCanceled(true);
 			event.player.addChatMessage(new ChatComponentText("You are muted."));
 		}

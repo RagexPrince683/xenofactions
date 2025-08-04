@@ -24,13 +24,13 @@ public class CommandMute extends CommandBase {
         }
 
         String playerName = args[0];
-        String duration = args[1];
+        int durationSeconds = Integer.parseInt(args[1]);
         String reason = args.length > 2 ? args[2] : "No reason provided";
 
         // Here you would implement the logic to mute the player
         // For example, you could store the mute information in a database or a file
-
-        sender.addChatMessage(new ChatComponentText("Player " + playerName + " has been muted for " + duration + " seconds. Reason: " + reason));
+        MuteManager.mute(playerName, durationSeconds);
+        sender.addChatMessage(new ChatComponentText("Player " + playerName + " has been muted for " + durationSeconds + " seconds. Reason: " + reason));
     }
 
 
