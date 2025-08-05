@@ -68,13 +68,24 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 			if(Clowder.clowders.size() == 0)
 				ClowderData.getData(worldObj);
 
-			CoordPair[] coords = new CoordPair[1];
+			CoordPair[] coords = this.claim.toArray(new CoordPair[1]);
 			coords = this.claim.toArray(coords);
 			Random rng = new Random();
-			TerritoryMeta sampleMeta = ClowderTerritory.territories.get(ClowderTerritory.coordsToCode(coords[rng.nextInt(coords.length)]));
+
+			if (claim == null || claim.isEmpty()) return; // Avoid selecting from empty claim set
+
+			//CoordPair[] coords = new CoordPair[0]);
+			//Random rng = new Random();
+
+			long sampleCode = ClowderTerritory.coordsToCode(coords[rng.nextInt(coords.length)]);
+			TerritoryMeta sampleMeta = ClowderTerritory.territories.get(sampleCode);
+
+			if (sampleMeta == null) return; // Prevent crash if territory is missing
+
+			//TerritoryMeta sampleMeta = ClowderTerritory.territories.get(ClowderTerritory.coordsToCode(coords[rng.nextInt(coords.length)])); //god awful method why are we using RNG???
 			
 			//remove disbanded clowders
-			if(owner != null && !Clowder.clowders.contains(owner) || (owner == null && sampleMeta.owner != null && sampleMeta.owner.zone == Zone.FACTION)) {
+			if(owner != null && !Clowder.clowders.contains(owner) || (owner == null && sampleMeta.owner != null && sampleMeta.owner.zone == Zone.FACTION)) { //causing crashing
 
 				owner = null;
 				isCappable = false;

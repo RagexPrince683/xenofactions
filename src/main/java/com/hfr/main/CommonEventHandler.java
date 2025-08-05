@@ -8,6 +8,7 @@ import java.util.Random;
 import com.hbm.util.fauxpointtwelve.BlockPos;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder;
+import com.hfr.command.CommandClowderChat;
 import com.hfr.command.MuteManager;
 import com.hfr.data.AntiMobData;
 import com.hfr.data.CBTData;
@@ -207,7 +208,7 @@ public class CommonEventHandler {
 	@SubscribeEvent
 	public void onPlayerChat(ServerChatEvent event) {
 		String name = event.player.getCommandSenderName();
-		if (MuteManager.isMuted(name)) { //todo && not in faction chat/ally chat (if I implemented that)
+		if (MuteManager.isMuted(name) && event.player.getEntityData().getInteger(CommandClowderChat.CHAT_KEY) == 0) { //todo && not in faction chat/ally chat (if I implemented that)
 			event.setCanceled(true);
 			event.player.addChatMessage(new ChatComponentText("You are muted."));
 		}

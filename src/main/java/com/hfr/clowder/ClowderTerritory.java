@@ -194,8 +194,12 @@ public class ClowderTerritory {
 
 	//converts a CoordPair instance into the UUID long code
 	public static long coordsToCode(CoordPair coord) {
-		
-		return intsToCode(coord.x, coord.z);
+		try {
+			return intsToCode(coord.x, coord.z);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return 0L;
+		}
 	}
 
 	public static long intsToCode(int x, int z) {
@@ -281,6 +285,9 @@ public class ClowderTerritory {
 	
 	//it's just two integers in a wrapper
 	//don't judge me vanilla minecraft does it too since 1.8 just with 3 integers
+
+	//Hey bob, I don't give a shit what vanilla minecraft does
+	// why are you basing all your fucking logic on a 10+ year old fucking game you fucking retard?
 	public static class CoordPair {
 		
 		@Override
