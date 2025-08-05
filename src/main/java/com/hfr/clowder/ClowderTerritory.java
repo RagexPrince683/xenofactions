@@ -51,12 +51,15 @@ public class ClowderTerritory {
 	public static void setOwnerForInts(World world, int x, int z, Clowder owner, int fX, int fY, int fZ, String name) {
 		
 		long code = intsToCode(x, z);
-		TerritoryMeta old = territories.get(code);
+		//TerritoryMeta old = territories.get(code);
 		
 		territories.remove(code);
-		
+
+		//todo check
 		Ownership o = new Ownership(Zone.FACTION, owner);
 		TerritoryMeta metadata = new TerritoryMeta(o, fX, fY, fZ);
+		metadata.name = name;
+		//fuck this goddamn shithole of a mod
 		TileEntity flag = world.getTileEntity(fX, fY, fZ);
 		if(flag != null) {
 			if(flag instanceof TileEntityFlagBig)
@@ -337,7 +340,7 @@ public class ClowderTerritory {
 			this.flagX = flagX;
 			this.flagY = flagY;
 			this.flagZ = flagZ;
-			//this.name = "";
+			this.name = "";
 		}
 
 		public TerritoryMeta(Ownership owner, int flagX, int flagY, int flagZ, World world, String name) {
@@ -356,6 +359,10 @@ public class ClowderTerritory {
 		
 		public void writeToNBT(NBTTagCompound nbt, String code) {
 
+			//nbt.setInteger("terr_" + code + "_flagX", flagX);
+			//nbt.setInteger("terr_" + code + "_flagY", flagY);
+			//nbt.setInteger("terr_" + code + "_flagZ", flagZ);
+
 			owner.writeToNBT(nbt, code);
 			nbt.setInteger(code + "X",flagX);
 			nbt.setInteger(code + "Y",flagY);
@@ -370,7 +377,13 @@ public class ClowderTerritory {
 					nbt.getInteger(code + "X"),
 					nbt.getInteger(code + "Y"),
 					nbt.getInteger(code + "Z")
+					//nbt.getInteger("terr_" + code + "_flagX"),
+					//nbt.getInteger("terr_" + code + "_flagY"),
+					//nbt.getInteger("terr_" + code + "_flagZ"),
+					//nbt.getString("name_" + code)
 			);
+
+
 			
 			return meta;
 		}
@@ -487,7 +500,7 @@ public class ClowderTerritory {
 			long code = nbt.getLong("code_" + i);
 			TerritoryMeta meta = TerritoryMeta.readFromNBT(nbt, "meta_" + i);
 			
-			if(meta != null)
+			if(meta != null && meta.owner.zone != Zone.WILDERNESS) //todo here
 				territories.put(code, meta);
 		}
 	}
@@ -503,10 +516,10 @@ public class ClowderTerritory {
 			
 			//do not save wilderness
 			//todo check that this isnt some bs
-			//if(meta.owner.zone != Zone.WILDERNESS) {
+			if(meta.owner.zone != Zone.WILDERNESS) {
 				nbt.setLong("code_" + index, code);
 				meta.writeToNBT(nbt, "meta_" + index);
-			//}
+			}
 			
 			index++;
 		}

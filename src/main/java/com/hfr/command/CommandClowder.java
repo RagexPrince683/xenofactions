@@ -44,12 +44,12 @@ import net.minecraftforge.common.util.ForgeDirection;
 public class CommandClowder extends CommandBase {
 
 
-	private static final CoordPair wbpospos = new CoordPair(4274, 1335);
-	private static final CoordPair wbnegneg = new CoordPair(2278, 4);
+	//private static final CoordPair wbpospos = new CoordPair(4274, 1335);
+	//private static final CoordPair wbnegneg = new CoordPair(2278, 4);
 
-	private boolean insideBorders(CoordPair flagLoc) {
-		return flagLoc.x >= wbnegneg.x && flagLoc.x <= wbpospos.x && flagLoc.z >= wbnegneg.z && flagLoc.z <= wbpospos.z;
-	}
+	//private boolean insideBorders(CoordPair flagLoc) {
+	//	return flagLoc.x >= wbnegneg.x && flagLoc.x <= wbpospos.x && flagLoc.z >= wbnegneg.z && flagLoc.z <= wbpospos.z;
+	//}
 
 	@Override
 	public String getCommandName() {
@@ -1434,14 +1434,14 @@ public class CommandClowder extends CommandBase {
 				if (clowder.getPermLevel(player.getDisplayName()) > 1) {
 					TerritoryMeta meta = ClowderTerritory.territories
 							.get(ClowderTerritory.coordsToCode(new CoordPair(player.chunkCoordX, player.chunkCoordZ)));
-					if (meta != null) {
+					//if (meta != null) {
 						if (meta.owner.zone == Zone.WILDERNESS
 								|| (meta.owner.zone == Zone.FACTION && meta.owner.owner.getPrestige() <= 0
 								&& meta.owner.owner.getPrestigeGen() - meta.owner.owner.getPrestigeReq() < 0)) {
 							TileEntity te = sender.getEntityWorld().getTileEntity(meta.flagX, meta.flagY, meta.flagZ);
 							if (te != null && te instanceof TileEntityFlagBig) {
 								TileEntityFlagBig flag = (TileEntityFlagBig) te;
-								if (insideBorders(new CoordPair(flag.xCoord / 16, flag.zCoord / 16))) {
+								//if (insideBorders(new CoordPair(flag.xCoord / 16, flag.zCoord / 16))) {
 
 									if (clowder.getPrestige() >= flag.getCost()) {
 										// Handling prestige
@@ -1466,9 +1466,9 @@ public class CommandClowder extends CommandBase {
 										sender.addChatMessage(new ChatComponentText(ERROR
 												+ "You already claimed to your capacity. Get more prestige and make sure you have enough to maintain your claims!"));
 									}
-								} else {
-									sender.addChatMessage(new ChatComponentText(ERROR + "This province is out of bounds."));
-								}
+								//} else {
+								//	sender.addChatMessage(new ChatComponentText(ERROR + "This province is out of bounds."));
+								//}
 							} else {
 								sender.addChatMessage(
 										new ChatComponentText(ERROR + "Wait.. there is no flag! Let an admin know!"));
@@ -1476,10 +1476,10 @@ public class CommandClowder extends CommandBase {
 						} else {
 							sender.addChatMessage(new ChatComponentText(ERROR + "You cannot claim here"));
 						}
-					} else {
-						sender.addChatMessage(new ChatComponentText(ERROR
-								+ "You are not standing in any region (most likely you are in the ocean or out of the map)"));
-					}
+					//} else {
+					//	sender.addChatMessage(new ChatComponentText(ERROR
+					//			+ "You are not standing in any region (most likely you are in the ocean or out of the map)"));
+					//}
 				} else {
 					sender.addChatMessage(
 							new ChatComponentText(ERROR + "Your authority is not high enough to manage territory"));}
