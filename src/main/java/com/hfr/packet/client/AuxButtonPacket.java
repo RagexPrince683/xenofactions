@@ -254,94 +254,64 @@ public class AuxButtonPacket implements IMessage {
 				}
 
 				if (te instanceof TileEntityMarket) {
-
-					MarketData data = MarketData.getData(p.worldObj);
+					System.out.println("Market packet received");
 					TileEntityMarket market = (TileEntityMarket) te;
 
-					// Check if the market exists in the data
-					if (data.offers.get(market.name) == null) {
+					// Get the market's offers from JSON
+					List<ItemStack[]> offers = MarketData.getOffers(market.name);
+
+					if (offers.isEmpty()) {
 						System.out.println("There's no market with the name: " + market.name);
 						return null;
 					}
 
-					// Check if the selected offer index is valid
-					if (m.value < 0 || m.value >= data.offers.get(market.name).size()) {
+					if (m.value < 0 || m.value >= offers.size()) {
 						System.out.println("The selected offer is out of bounds for market: " + market.name);
 						System.out.println("Offer index: " + m.value);
 						return null;
 					}
 
-					MarketData.Offer offer = data.offers.get(market.name).get(m.value);
+					ItemStack[] offer = offers.get(m.value);
 
-					// Ensure the offer is not null
 					if (offer != null) {
-
-						Clowder c = Clowder.getClowderFromPlayer(p);
-
-						// Check if the offer is restricted to factions and the player is not in one
-						if (offer.capacity != 0 && c == null) {
-							p.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "This offer is only available to factions."));
-							return null;
-						}
-
-						// Check stock capacity
-						if (offer.capacity > 0) {
-							Integer history = c != null ? c.offerHistory.get(offer) : null;
-							int purchases = (history != null) ? history : 0;
-
-							purchases++;
-							if (c != null) {
-								c.offerHistory.put(offer, purchases);
-							}
-
-							if (purchases > offer.capacity) {
-								p.worldObj.playSoundAtEntity(p, "hfr:block.buttonNo", 1.0F, 1.0F);
-								p.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "This item is currently out of stock! Come back tomorrow."));
-								return null;
-							}
-						}
-
-						// Validate required items for the trade
-						ItemStack[] items = offer.offer;
-						ItemStack item = items[0]; // The item to give to the player
+						System.out.println("offer is not null for market");
+						ItemStack item = offer[0]; // First item is the one being purchased
 						boolean hasRequiredItems = true;
 
-						// Check if the player has all required items
+						// Check if player has required currency items
 						for (int i = 1; i < 4; i++) {
-							if (items[i] != null) {
-								int count = countItems(p, items[i].getItem(), items[i].getItemDamage());
-
-								if (count < items[i].stackSize) {
+							if (offer[i] != null) {
+								int count = countItems(p, offer[i].getItem(), offer[i].getItemDamage());
+								if (count < offer[i].stackSize) {
 									hasRequiredItems = false;
-									break;
 								}
 							}
 						}
 
-						// If the player has the required items, proceed with the trade
 						if (hasRequiredItems) {
+							// Success: Process transaction
 							p.worldObj.playSoundAtEntity(p, "hfr:block.buttonYes", 1.0F, 1.0F);
 
-							// Remove the required items from the player's inventory
+							// Remove currency items
 							for (int i = 1; i < 4; i++) {
-								if (items[i] != null) {
-									removeItems(p, items[i].getItem(), items[i].getItemDamage(), items[i].stackSize);
+								if (offer[i] != null) {
+									removeItems(p, offer[i].getItem(), offer[i].getItemDamage(), offer[i].stackSize);
 								}
 							}
 
-							// Add the item to the player's inventory or drop it if the inventory is full
+							// Give purchased item
 							if (!p.inventory.addItemStackToInventory(item.copy())) {
 								p.dropPlayerItemWithRandomChoice(item.copy(), true);
 							}
 
 							p.inventoryContainer.detectAndSendChanges();
 						} else {
-							// Notify the player they lack the required items
+							// Failure: Not enough currency
 							p.worldObj.playSoundAtEntity(p, "hfr:block.buttonNo", 1.0F, 1.0F);
 							p.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "You lack required items."));
 						}
 					} else {
-						System.out.println("The selected offer is apparently null for market: " + market.name);
+						System.out.println("The selected offer is null for market: " + market.name);
 					}
 				}
 
