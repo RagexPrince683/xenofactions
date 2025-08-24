@@ -74,7 +74,7 @@ public class Conquerer extends BlockContainer {
 			Clowder clowder = Clowder.getClowderFromPlayer((EntityPlayer)player);
 			flag.owner = clowder;
 			
-			if(clowder != null && flag.checkBorder(x, z) && flag.canSeeSky() && noProximity(world, x, y, z)) {
+			if(clowder != null && flag.checkBorder(x, z) && flag.canSeeSky() && noProximity(world, x, y, z)) { //todo here??? no this is conquerer
 				flag.owner.addPrestigeReq(0.2F, world);
 				flag.markDirty();
 			} else {

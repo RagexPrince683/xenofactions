@@ -1462,73 +1462,112 @@ public class CommandClowder extends CommandBase {
 		}
 	}
 
+	//private void cmdClaim(ICommandSender sender) {
+//
+	//	EntityPlayer player = getCommandSenderAsPlayer(sender);
+	//	Clowder clowder = Clowder.getClowderFromPlayer(player);
+	//	if (clowder != null) {
+	//		//if(!clowder.bitch)
+	//		//{
+	//			if (clowder.getPermLevel(player.getDisplayName()) > 1) {
+	//				TerritoryMeta meta = ClowderTerritory.territories
+	//						.get(ClowderTerritory.coordsToCode(new CoordPair(player.chunkCoordX, player.chunkCoordZ)));
+	//				//if (meta != null) {
+	//					if (meta.owner.zone == Zone.WILDERNESS
+	//							|| (meta.owner.zone == Zone.FACTION && meta.owner.owner.getPrestige() <= 0
+	//							&& meta.owner.owner.getPrestigeGen() - meta.owner.owner.getPrestigeReq() < 0)) {
+	//						TileEntity te = sender.getEntityWorld().getTileEntity(meta.flagX, meta.flagY, meta.flagZ);
+	//						if (te != null && te instanceof TileEntityFlagBig) {
+	//							TileEntityFlagBig flag = (TileEntityFlagBig) te;
+	//							//if (insideBorders(new CoordPair(flag.xCoord / 16, flag.zCoord / 16))) {
+//
+	//								if (clowder.getPrestige() >= flag.getCost()) {
+	//									// Handling prestige
+	//									clowder.addPrestige((float) (-flag.getCost()), sender.getEntityWorld());
+	//									clowder.addPrestigeReq((float) flag.getCost(), sender.getEntityWorld());
+//
+	//									Ownership oldOwner = meta.owner;
+	//									// Setting the owner of the flag and the chunks, making the flag cappable
+	//									flag.owner = clowder;
+	//									flag.markDirty();
+	//									for (CoordPair a : flag.claim)
+	//										//todone e
+	//										ClowderTerritory.setOwnerForCoord(sender.getEntityWorld(), a, clowder,
+	//												flag.xCoord, flag.yCoord, flag.zCoord, flag.provinceName);
+	//									flag.isCappable = true;
+//
+	//									MinecraftForge.EVENT_BUS.post(new RegionOwnershipChangedEvent(oldOwner,meta.owner,flag.provinceName));
+//
+	//									flag.markDirty();
+	//									ClowderData.getData(sender.getEntityWorld()).markDirty();
+	//								} else {
+	//									sender.addChatMessage(new ChatComponentText(ERROR
+	//											+ "You already claimed to your capacity. Get more prestige and make sure you have enough to maintain your claims!"));
+	//								}
+	//							//} else {
+	//							//	sender.addChatMessage(new ChatComponentText(ERROR + "This province is out of bounds."));
+	//							//}
+	//						} else {
+	//							sender.addChatMessage(
+	//									new ChatComponentText(ERROR + "Wait.. there is no flag! Let an admin know!"));
+	//						}
+	//					} else {
+	//						sender.addChatMessage(new ChatComponentText(ERROR + "You cannot claim here"));
+	//					}
+	//				//} else {
+	//				//	sender.addChatMessage(new ChatComponentText(ERROR
+	//				//			+ "You are not standing in any region (most likely you are in the ocean or out of the map)"));
+	//				//}
+	//			} else {
+	//				sender.addChatMessage(
+	//						new ChatComponentText(ERROR + "Your authority is not high enough to manage territory"));}
+	//		//} else {
+	//		//	sender.addChatMessage(
+	//		//			new ChatComponentText(ERROR + "Bitches cannot claim land"));}
+//
+	//	} else {
+	//		sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any clowder"));
+	//	}
+	//}
+
 	private void cmdClaim(ICommandSender sender) {
 
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
-		if (clowder != null) {
-			//if(!clowder.bitch)
-			//{
-				if (clowder.getPermLevel(player.getDisplayName()) > 1) {
-					TerritoryMeta meta = ClowderTerritory.territories
-							.get(ClowderTerritory.coordsToCode(new CoordPair(player.chunkCoordX, player.chunkCoordZ)));
-					//if (meta != null) {
-						if (meta.owner.zone == Zone.WILDERNESS
-								|| (meta.owner.zone == Zone.FACTION && meta.owner.owner.getPrestige() <= 0
-								&& meta.owner.owner.getPrestigeGen() - meta.owner.owner.getPrestigeReq() < 0)) {
-							TileEntity te = sender.getEntityWorld().getTileEntity(meta.flagX, meta.flagY, meta.flagZ);
-							if (te != null && te instanceof TileEntityFlagBig) {
-								TileEntityFlagBig flag = (TileEntityFlagBig) te;
-								//if (insideBorders(new CoordPair(flag.xCoord / 16, flag.zCoord / 16))) {
 
-									if (clowder.getPrestige() >= flag.getCost()) {
-										// Handling prestige
-										clowder.addPrestige((float) (-flag.getCost()), sender.getEntityWorld());
-										clowder.addPrestigeReq((float) flag.getCost(), sender.getEntityWorld());
+		// Retrieve a unique identifier for the player
+		String playerName = player.getDisplayName();
 
-										Ownership oldOwner = meta.owner;
-										// Setting the owner of the flag and the chunks, making the flag cappable
-										flag.owner = clowder;
-										flag.markDirty();
-										for (CoordPair a : flag.claim)
-											//todone e
-											ClowderTerritory.setOwnerForCoord(sender.getEntityWorld(), a, clowder,
-													flag.xCoord, flag.yCoord, flag.zCoord, flag.provinceName);
-										flag.isCappable = true;
+		// Load the Clowder data
+		ClowderData clowderData = ClowderData.getData(player.getEntityWorld());
 
-										MinecraftForge.EVENT_BUS.post(new RegionOwnershipChangedEvent(oldOwner,meta.owner,flag.provinceName));
+		// Check if the player has already claimed a flag
+		if (clowderData.hasPlayerClaimedFlag(playerName)) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You have already claimed a flag!"));
+			return;
+		}
 
-										flag.markDirty();
-										ClowderData.getData(sender.getEntityWorld()).markDirty();
-									} else {
-										sender.addChatMessage(new ChatComponentText(ERROR
-												+ "You already claimed to your capacity. Get more prestige and make sure you have enough to maintain your claims!"));
-									}
-								//} else {
-								//	sender.addChatMessage(new ChatComponentText(ERROR + "This province is out of bounds."));
-								//}
-							} else {
-								sender.addChatMessage(
-										new ChatComponentText(ERROR + "Wait.. there is no flag! Let an admin know!"));
-							}
-						} else {
-							sender.addChatMessage(new ChatComponentText(ERROR + "You cannot claim here"));
-						}
-					//} else {
-					//	sender.addChatMessage(new ChatComponentText(ERROR
-					//			+ "You are not standing in any region (most likely you are in the ocean or out of the map)"));
-					//}
-				} else {
-					sender.addChatMessage(
-							new ChatComponentText(ERROR + "Your authority is not high enough to manage territory"));}
-			//} else {
-			//	sender.addChatMessage(
-			//			new ChatComponentText(ERROR + "Bitches cannot claim land"));}
+
+
+		if(clowder != null) {
+
+			if(player.inventory.hasItem(Item.getItemFromBlock(ModBlocks.clowder_flag))) {
+				sender.addChatMessage(new ChatComponentText(ERROR + "You already have a flag in your inventory!"));
+				return;
+			}
+
+			player.inventory.addItemStackToInventory(new ItemStack(ModBlocks.clowder_flag));
+			player.inventoryContainer.detectAndSendChanges();
+			sender.addChatMessage(new ChatComponentText(INFO + "Place the flag to claim new territory!"));
+
+			clowderData.markPlayerClaimedFlag(playerName);
 
 		} else {
-			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any clowder"));
+			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
 		}
 	}
+	//I have no idea how territories work, but it looks retarded
+
 	//todo here
 
 	private void cmdPromote(ICommandSender sender, String promotee) {

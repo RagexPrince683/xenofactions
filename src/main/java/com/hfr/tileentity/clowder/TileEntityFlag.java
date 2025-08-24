@@ -439,7 +439,7 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 		
 		if(yCoord < 45)
 			return false;
-		if(yCoord > 100)
+		if(yCoord > 200) //upped to 200, 100 was retarded
 			return false;
 		
 		return true;
