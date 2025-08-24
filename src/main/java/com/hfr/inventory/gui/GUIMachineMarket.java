@@ -7,7 +7,6 @@ import org.lwjgl.opengl.GL11;
 
 import com.hfr.blocks.machine.MachineMarket;
 import com.hfr.blocks.machine.MachineMarket.TileEntityMarket;
-import com.hfr.data.MarketData.Offer;
 import com.hfr.lib.RefStrings;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.client.AuxButtonPacket;
@@ -24,15 +23,13 @@ import net.minecraft.util.ResourceLocation;
 
 public class GUIMachineMarket extends GuiScreen {
 
-	//I'm gonna presume GUI means client, and just not fucking touch this with a 10 foot pole.
-
 	public static ResourceLocation texture = new ResourceLocation(RefStrings.MODID + ":textures/gui/gui_shop.png");
 	private final EntityPlayer player;
 	protected int guiLeft;
 	protected int guiTop;
 	protected int xSize = 176;
 	protected int ySize = 194;
-	public static List<Offer> offers = new ArrayList();
+	public static List<ItemStack[]> offers = new ArrayList();
 	int page;
 	TileEntityMarket market;
 
@@ -91,7 +88,7 @@ public class GUIMachineMarket extends GuiScreen {
 
 		if(i < offers.size()) {
 
-			ItemStack[] offer = offers.get(i).offer;
+			ItemStack[] offer = offers.get(i);
 
 			return offer;
 		}
