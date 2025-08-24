@@ -58,6 +58,8 @@ public class PacketDispatcher {
 		wrapper.registerMessage(OfferPacket.Handler.class, OfferPacket.class, i++, Side.CLIENT);
 		//you are now on the server, so fucking WORK
 		//Oh GOD DAMMIT of course this fucking packet only works properly on the FUCKING CLIENT!!!
+		//meaning. THAT WE NEED TO DO SOME BULLSHIT TO GET IT TO THE SERVER. OR PRIORITIZE THE SERVER OR SOMETHING
+		//FUCK I DONT EVEN FUCKING KNOW THIS IS SUCH A FUCKING SHITHOLE CODEBASE
 		wrapper.registerMessage(RVIPacket.Handler.class, RVIPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(CumPacket.Handler.class, CumPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(PlayerDataPacket.Handler.class, PlayerDataPacket.class, i++, Side.CLIENT);
