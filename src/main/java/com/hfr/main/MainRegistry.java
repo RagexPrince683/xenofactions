@@ -700,6 +700,7 @@ public class MainRegistry
 		event.registerServerCommand(new CommandXMarket());
 		event.registerServerCommand(new CommandStoneDrop());
 		event.registerServerCommand(new CommandMute());
+		event.registerServerCommand(new CommandUnmute());
 	}
 
 	//only one thing

@@ -1,18 +1,21 @@
 package com.hfr.command;
 
-public class CommandUnmute {
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.ICommandSender;
+
+public class CommandUnmute extends CommandBase {
 
     public String getCommandName() {
         return "xunmute";
     }
 
-    public String getCommandUsage() {
+    public String getCommandUsage(ICommandSender sender) {
         return "/xunmute <player>";
     }
 
-    public void processCommand(String[] args) {
+    public void processCommand(ICommandSender sender, String[] args) {
         if (args.length < 1) {
-            System.out.println("Usage: " + getCommandUsage());
+            System.out.println("Usage: " + getCommandUsage(sender));
             return;
         }
 
