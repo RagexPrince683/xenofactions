@@ -25,44 +25,26 @@ import net.minecraft.network.PacketBuffer;
 
 public class OfferPacket implements IMessage {
 
-	String name;
-	PacketBuffer buffer;
+	private String name;
+	private NBTTagCompound nbt; // direct, no need for PacketBuffer field
 
-	public OfferPacket() { }
+	public OfferPacket() {}
 
 	public OfferPacket(String name, NBTTagCompound nbt) {
-
 		this.name = name;
-		this.buffer = new PacketBuffer(Unpooled.buffer());
-
-		try {
-			buffer.writeNBTTagCompoundToBuffer(nbt);
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		this.nbt = nbt;
 	}
 
 	@Override
 	public void fromBytes(ByteBuf buf) {
-
 		this.name = ByteBufUtils.readUTF8String(buf);
-
-		if (buffer == null) {
-			buffer = new PacketBuffer(Unpooled.buffer());
-		}
-		buffer.writeBytes(buf);
+		this.nbt = ByteBufUtils.readTag(buf); // handles NBTTagCompound directly
 	}
 
 	@Override
 	public void toBytes(ByteBuf buf) {
-
 		ByteBufUtils.writeUTF8String(buf, name);
-
-		if (buffer == null) {
-			buffer = new PacketBuffer(Unpooled.buffer());
-		}
-		buf.writeBytes(buffer);
+		ByteBufUtils.writeTag(buf, nbt);
 	}
 
 	public static class Handler implements IMessageHandler<OfferPacket, IMessage> {
@@ -70,48 +52,24 @@ public class OfferPacket implements IMessage {
 		@Override
 		@SideOnly(Side.CLIENT)
 		public IMessage onMessage(OfferPacket m, MessageContext ctx) {
-
 			try {
-
-				MarketData data = MarketData.getData(Minecraft.getMinecraft().theWorld);
-
-				NBTTagCompound nbt = m.buffer.readNBTTagCompoundFromBuffer();
+				MarketData data = new MarketData();
 				data.offers.clear();
-				data.readMarketFromPacket(nbt);
+				data.readMarketFromPacket(m.nbt);
+
 				MachineMarket.name = m.name;
 				List<Offer> offers = data.offers.get(m.name);
 
-				if(offers == null)
-					offers = new ArrayList();
+				if (offers == null)
+					offers = new ArrayList<>();
 
 				GUIMachineMarket.offers = offers;
 
-				/*System.out.println("Offers: " + data.offers.size());
-
-				for(Entry<String, List<ItemStack[]>> entry : data.offers.entrySet()) {
-
-					System.out.println(entry.getKey() + ": " + entry.getValue().size());
-
-					for(ItemStack[] offer : entry.getValue()) {
-
-						System.out.println(" Offer:");
-
-						for(ItemStack stack : offer) {
-
-							if(stack == null)
-								System.out.println("  NULL");
-							else
-								System.out.println("  " + stack.getDisplayName());
-						}
-					}
-				}*/
-
-			} catch (IOException e) {
-
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
-
 			return null;
 		}
 	}
 }
+
