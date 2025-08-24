@@ -24,6 +24,8 @@ import net.minecraft.util.ResourceLocation;
 
 public class GUIMachineMarket extends GuiScreen {
 
+	//I'm gonna presume GUI means client, and just not fucking touch this with a 10 foot pole.
+
 	public static ResourceLocation texture = new ResourceLocation(RefStrings.MODID + ":textures/gui/gui_shop.png");
 	private final EntityPlayer player;
 	protected int guiLeft;

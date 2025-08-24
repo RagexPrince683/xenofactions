@@ -55,7 +55,7 @@ public class PacketDispatcher {
 		wrapper.registerMessage(ClowderFlagPacket.Handler.class, ClowderFlagPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(ClowderBorderPacket.Handler.class, ClowderBorderPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(ExplosionSoundPacket.Handler.class, ExplosionSoundPacket.class, i++, Side.CLIENT);
-		wrapper.registerMessage(OfferPacket.Handler.class, OfferPacket.class, i++, Side.CLIENT);
+		wrapper.registerMessage(OfferPacket.Handler.class, OfferPacket.class, i++, Side.SERVER);
 		wrapper.registerMessage(RVIPacket.Handler.class, RVIPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(CumPacket.Handler.class, CumPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(PlayerDataPacket.Handler.class, PlayerDataPacket.class, i++, Side.CLIENT);
