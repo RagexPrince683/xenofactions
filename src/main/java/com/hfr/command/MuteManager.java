@@ -10,6 +10,10 @@ public class MuteManager {
         mutedPlayers.put(name.toLowerCase(), System.currentTimeMillis() + (seconds * 1000L));
     }
 
+    public static void unmute(String name) {
+        mutedPlayers.remove(name.toLowerCase());
+    }
+
     public static boolean isMuted(String name) {
         Long until = mutedPlayers.get(name.toLowerCase());
         return until != null && until > System.currentTimeMillis();
