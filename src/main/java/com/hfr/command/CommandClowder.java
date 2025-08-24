@@ -116,13 +116,14 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 
-		if(cmd.equals("setallywarp")) {
-			cmdSetAllyWarp(sender);
-		}
-
-		if(cmd.equals("allywarp")) {
-			cmdAllyWarp(sender, args[1]);
-		}
+		//if(cmd.equals("setallywarp")) {
+		//	cmdSetAllyWarp(sender);
+		//}
+//
+		//if(cmd.equals("allywarp")) {
+		//	cmdAllyWarp(sender, args[1]);
+		//}
+		//already defined
 
 
 
