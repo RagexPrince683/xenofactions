@@ -34,18 +34,18 @@ public class OfferPacket implements IMessage {
 
 	public OfferPacket() {}
 
-	// client->server request (coords, maybe empty name)
+	// add this new constructor (client->server request already exists)
+	public OfferPacket(int x, int y, int z, String name, NBTTagCompound nbt) {
+		this.x = x; this.y = y; this.z = z;
+		this.name = name == null ? "" : name;
+		this.nbt = nbt;
+	}
+
+	// keep existing request ctor and old reply ctor if you want, but use the new one for server replies.
 	public OfferPacket(int x, int y, int z, String name) {
 		this.x = x; this.y = y; this.z = z;
 		this.name = name == null ? "" : name;
 		this.nbt = null;
-	}
-
-	// server->client reply (name + offers NBT)
-	public OfferPacket(String name, NBTTagCompound nbt) {
-		this.x = 0; this.y = 0; this.z = 0;
-		this.name = name == null ? "" : name;
-		this.nbt = nbt;
 	}
 
 	@Override
@@ -98,7 +98,7 @@ public class OfferPacket implements IMessage {
 
 				// send reply with serialized offers
 				NBTTagCompound response = MarketData.offersToNBT(offers);
-				PacketDispatcher.wrapper.sendTo(new OfferPacket(marketName, response), player);
+				PacketDispatcher.wrapper.sendTo(new OfferPacket(msg.x, msg.y, msg.z, marketName, response), player);
 
 				System.out.println("[OfferPacket.ServerHandler] Sent reply to player "
 						+ (player != null ? player.getCommandSenderName() : "UNKNOWN")
@@ -116,8 +116,21 @@ public class OfferPacket implements IMessage {
 	// Client handler
 	// -------------------------
 	public static class ClientHandler implements IMessageHandler<OfferPacket, IMessage> {
+
+		// at top of ClientHandler class (static)
+		private static long lastReplyTime = 0;
+		private static int lastX = Integer.MIN_VALUE, lastY = Integer.MIN_VALUE, lastZ = Integer.MIN_VALUE;
+		private static String lastName = "";
 		@Override
 		public IMessage onMessage(final OfferPacket msg, final MessageContext ctx) {
+
+			long now = System.currentTimeMillis();
+			if (msg.x == lastX && msg.y == lastY && msg.z == lastZ && msg.name != null && msg.name.equals(lastName) && (now - lastReplyTime) < 250) {
+				System.out.println("[OfferPacket.ClientHandler] Ignoring duplicate quick reply for " + msg.name);
+				return null;
+			}
+			lastReplyTime = now; lastX = msg.x; lastY = msg.y; lastZ = msg.z; lastName = msg.name;
+
 			try {
 				System.out.println("[OfferPacket.ClientHandler] Received packet for shop '" + msg.name + "' on client (coords: "
 						+ msg.x + "," + msg.y + "," + msg.z + ")");
@@ -141,8 +154,12 @@ public class OfferPacket implements IMessage {
 				Minecraft mc = Minecraft.getMinecraft();
 				if (mc.currentScreen instanceof GUIMachineMarket) {
 					((GUIMachineMarket) mc.currentScreen).refreshOffers();
+					GUIMachineMarket gui = (GUIMachineMarket) mc.currentScreen;
+					gui.onOffersReceived(); // clears request flag + refreshOffers()
 					System.out.println("[OfferPacket.ClientHandler] GUIMachineMarket.refreshOffers() called");
 				}
+
+
 
 			} catch (Exception e) {
 				System.err.println("[OfferPacket.ClientHandler] Exception while handling packet:");

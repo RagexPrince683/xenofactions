@@ -89,7 +89,7 @@ public class MachineMarket extends BlockContainer {
 
 			// Send updated market offers to client
 			System.out.println("Sending market data to client for: " + market.name);
-			PacketDispatcher.wrapper.sendTo(new OfferPacket(market.name, nbt), (EntityPlayerMP) player);
+			PacketDispatcher.wrapper.sendTo(new OfferPacket(x, y, z, market.name, nbt), (EntityPlayerMP) player);
 			//NO DUMBASS SEND TO SERVER AS WELL OR SOME SHIT FUCK GODDAMN BULLSHIT MAN I HATE THIS FUCKING MOD
 			//PacketDispatcher.wrapper.sendToServer(new OfferPacket(market.name, nbt));
 			//NEVERMIND THAT SHIT GAVE A BUNCH OF FUCKING ERRORS WHAT THE ACTUAL FUCK DO I DO I HATE THIS FUCKING SHIT

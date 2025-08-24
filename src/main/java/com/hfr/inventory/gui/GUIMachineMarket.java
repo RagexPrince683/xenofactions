@@ -33,6 +33,32 @@ public class GUIMachineMarket extends GuiScreen {
 	int page;
 	TileEntityMarket market;
 
+	// fields
+	private boolean requestSent = false;
+
+
+	// call to request server
+	private void sendRequestIfNeeded() {
+		if (market == null) {
+			System.out.println("[GUIMachineMarket] market is null when trying to request");
+			return;
+		}
+		if (requestSent) {
+			// already requested and waiting for reply
+			return;
+		}
+		requestSent = true;
+		PacketDispatcher.wrapper.sendToServer(new com.hfr.packet.tile.OfferPacket(market.xCoord, market.yCoord, market.zCoord, market.name));
+		System.out.println("[GUIMachineMarket] Sent request OfferPacket for market='" + market.name + "' coords=("
+				+ market.xCoord + "," + market.yCoord + "," + market.zCoord + ")");
+	}
+
+	// called by client handler when a reply arrives
+	public void onOffersReceived() {
+		requestSent = false;
+		refreshOffers();
+	}
+
 	public GUIMachineMarket(EntityPlayer player, TileEntityMarket market) {
 
 		this.market = market;
@@ -87,7 +113,9 @@ public class GUIMachineMarket extends GuiScreen {
 			if (market != null) {
 				try {
 					// send coords + (maybe-empty) name so server can fallback to coords
-					PacketDispatcher.wrapper.sendToServer(new com.hfr.packet.tile.OfferPacket(market.xCoord, market.yCoord, market.zCoord, market.name));
+					// inside initGui(), replace the PacketDispatcher.wrapper.sendToServer(...) block with:
+					sendRequestIfNeeded();
+
 					System.out.println("[GUIMachineMarket] Sent request OfferPacket for market='" + market.name + "' coords=("
 							+ market.xCoord + "," + market.yCoord + "," + market.zCoord + ")");
 				} catch (Exception e) {
