@@ -81,12 +81,11 @@ public class CommandXShop extends CommandBase {
 				}
 
 				// Add offer to JSON-based MarketData (converted to ItemEntry)
-				MarketData.addOffer(shopName, offer);
 
+				MarketData.addOffer(shopName, offer); // add once
 				if (minecraftserver != null && minecraftserver.isDedicatedServer()) {
-					System.out.println("Offer added to shop " + shopName + "!");
-					MarketData.addOffer(shopName, offer);
-					// Now you are guaranteed to be on the server side.
+					System.out.println("Offer added to shop " + shopName + " on dedicated server!");
+					// DON'T call addOffer() again here
 				}
 
 				sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Offer has been added to shop " + shopName + "!"));

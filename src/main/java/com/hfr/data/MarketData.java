@@ -20,7 +20,69 @@ public class MarketData {
 
 	public static HashMap<String, List<ItemEntry[]>> offers = new HashMap<String, List<ItemEntry[]>>();
 
+	/**
+	 * Serialize a list of offers (List<ItemStack[]>) into an NBTTagCompound.
+	 */
+	public static NBTTagCompound offersToNBT(List<ItemStack[]> offersList) {
+		NBTTagCompound root = new NBTTagCompound();
+		NBTTagList offersNBT = new NBTTagList();
+
+		if (offersList != null) {
+			for (ItemStack[] offer : offersList) {
+				NBTTagCompound offerComp = new NBTTagCompound();
+				NBTTagList items = new NBTTagList();
+
+				// We'll preserve the positions (0..n-1). Empty slots => empty compound.
+				for (int i = 0; i < offer.length; i++) {
+					ItemStack s = offer[i];
+					NBTTagCompound itemTag = new NBTTagCompound();
+					if (s != null) {
+						s.writeToNBT(itemTag);
+					}
+					items.appendTag(itemTag);
+				}
+				offerComp.setTag("items", items);
+				offersNBT.appendTag(offerComp);
+			}
+		}
+
+		root.setTag("offers", offersNBT);
+		return root;
+	}
+
+	/**
+	 * Deserialize an NBTTagCompound created by offersToNBT back into List<ItemStack[]>.
+	 */
+	public static List<ItemStack[]> offersFromNBT(NBTTagCompound root) {
+		List<ItemStack[]> out = new ArrayList<ItemStack[]>();
+		if (root == null || !root.hasKey("offers")) return out;
+
+		NBTTagList offersNBT = root.getTagList("offers", 10); // 10 = TAG_COMPOUND
+		for (int i = 0; i < offersNBT.tagCount(); i++) {
+			NBTTagCompound offerComp = offersNBT.getCompoundTagAt(i);
+			NBTTagList items = offerComp.getTagList("items", 10);
+			ItemStack[] arr = new ItemStack[items.tagCount()];
+			for (int j = 0; j < items.tagCount(); j++) {
+				NBTTagCompound itemTag = items.getCompoundTagAt(j);
+				if (itemTag != null && !itemTag.hasNoTags()) {
+					try {
+						ItemStack s = ItemStack.loadItemStackFromNBT(itemTag);
+						arr[j] = s;
+					} catch (Exception e) {
+						System.err.println("Failed to load ItemStack from NBT at offer " + i + " slot " + j);
+						e.printStackTrace();
+					}
+				} else {
+					arr[j] = null;
+				}
+			}
+			out.add(arr);
+		}
+		return out;
+	}
+
 	public static void saveMarketData() {
+		System.out.println("Saving marketdata to: " + SAVE_FILE.getAbsolutePath());
 		FileWriter writer = null;
 		try {
 			writer = new FileWriter(SAVE_FILE);
@@ -41,6 +103,7 @@ public class MarketData {
 	}
 
 	public static void loadMarketData() {
+		System.out.println("Loading marketdata from: " + SAVE_FILE.getAbsolutePath());
 		if (!SAVE_FILE.exists()) {
 			System.out.println("MarketData file does not exist. Skipping load.");
 			return; // No file to load

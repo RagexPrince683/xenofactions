@@ -47,20 +47,20 @@ public class OfferPacket implements IMessage {
 	// -------------------------
 	// Server-side handler
 	// -------------------------
+	// inside OfferPacket class (keep your fromBytes/toBytes as they are using ByteBufUtils.readTag/writeTag)
 	public static class ServerHandler implements IMessageHandler<OfferPacket, IMessage> {
 		@Override
 		public IMessage onMessage(final OfferPacket msg, final MessageContext ctx) {
 			try {
-				// In 1.7.10 this runs on the server main thread already; do server-side work directly.
-				MarketData.loadMarketData();
+				// Server is guaranteed here in 1.7.10 if you registered ServerHandler for Side.SERVER
+				MarketData.loadMarketData(); // optional, if you want to refresh from disk
 				List<ItemStack[]> offers = MarketData.getOffers(msg.name);
 				if (offers == null) offers = new ArrayList<ItemStack[]>();
 
 				MachineMarket.name = msg.name;
 
-				// If you want to reply with data serialized to NBT, build response NBT and send:
-				NBTTagCompound response = new NBTTagCompound();
-				// TODO: serialize offers into 'response' if desired (MarketData.writeOffersToNBT)
+				// Serialize offers into NBT and send back
+				NBTTagCompound response = MarketData.offersToNBT(offers);
 				EntityPlayerMP player = ctx.getServerHandler().playerEntity;
 				PacketDispatcher.wrapper.sendTo(new OfferPacket(msg.name, response), player);
 
@@ -71,22 +71,20 @@ public class OfferPacket implements IMessage {
 		}
 	}
 
-	// -------------------------
-	// Client-side handler
-	// -------------------------
 	public static class ClientHandler implements IMessageHandler<OfferPacket, IMessage> {
 		@Override
 		public IMessage onMessage(final OfferPacket msg, final MessageContext ctx) {
 			try {
-				// In 1.7.10 this runs on the client thread already; run client GUI updates directly.
+				// In 1.7.10 this runs on the client thread already.
+				List<ItemStack[]> offers;
 				if (msg.nbt != null && !msg.nbt.hasNoTags()) {
-					//MarketData
-					// TODO: if server serialized offers into NBT, read them here (MarketData.readOffersFromNBT)
+					offers = MarketData.offersFromNBT(msg.nbt);
 				} else {
-					MarketData.loadMarketData(); // fallback if client keeps a JSON copy
+					// fallback (less reliable)
+					MarketData.loadMarketData();
+					offers = MarketData.getOffers(msg.name);
 				}
 
-				List<ItemStack[]> offers = MarketData.getOffers(msg.name);
 				if (offers == null) offers = new ArrayList<ItemStack[]>();
 
 				MachineMarket.name = msg.name;
@@ -98,4 +96,5 @@ public class OfferPacket implements IMessage {
 			return null;
 		}
 	}
+
 }
