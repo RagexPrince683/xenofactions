@@ -83,7 +83,7 @@ public class ModBlocks {
 	public static final int guiID_hydro = 9;
 	public static Block machine_net;
 	public static final int guiID_net = 10;
-	//public static Block machine_market;
+	public static Block machine_market;
 	public static final int guiID_market = 11;
 	//public static Block rbmk_element;
 	public static final int guiID_rbmk = 12;
@@ -235,6 +235,9 @@ public class ModBlocks {
 		//machine_refinery = new MachineRefinery(Material.iron).setStepSound(soundTypeMetal).setBlockName("machine_refinery").setHardness(5.0F).setResistance(10.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_refinery");
 		//machine_tank = new MachineTank(Material.iron).setStepSound(soundTypeMetal).setBlockName("machine_tank").setHardness(5.0F).setResistance(10.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":tank");
 
+		machine_market = new MachineMarket(Material.iron).setStepSound(soundTypeMetal).setBlockName("machine_market").setHardness(Float.POSITIVE_INFINITY).setResistance(Float.POSITIVE_INFINITY).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":market_side");
+
+
 		box = new Box(Material.cloth).setStepSound(Block.soundTypeCloth).setBlockName("box").setHardness(5.0F).setResistance(10.0F).setCreativeTab(MainRegistry.tab);
 
 
@@ -332,11 +335,11 @@ public class ModBlocks {
 		GameRegistry.registerBlock(machine_diesel, ItemBlockLore.class, machine_diesel.getUnlocalizedName());
 
 
-
 		GameRegistry.registerBlock(machine_foundry, machine_foundry.getUnlocalizedName());
-		
 
-		
+		GameRegistry.registerBlock(machine_market, ItemBlockUnstackable.class, machine_market.getUnlocalizedName());
+
+
 		GameRegistry.registerBlock(machine_radar, ItemBlockUnstackable.class, machine_radar.getUnlocalizedName());
 
 		GameRegistry.registerBlock(box, ItemBlockLore.class, box.getUnlocalizedName());
