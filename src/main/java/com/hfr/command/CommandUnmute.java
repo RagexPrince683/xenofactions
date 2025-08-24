@@ -2,6 +2,7 @@ package com.hfr.command;
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.util.ChatComponentText;
 
 public class CommandUnmute extends CommandBase {
 
@@ -22,6 +23,6 @@ public class CommandUnmute extends CommandBase {
         String playerName = args[0];
         // Logic to unmute the player
         MuteManager.unmute(playerName);
-        System.out.println("Player " + playerName + " has been unmuted.");
+        sender.addChatMessage(new ChatComponentText("Player " + playerName + " has been unmuted."));
     }
 }

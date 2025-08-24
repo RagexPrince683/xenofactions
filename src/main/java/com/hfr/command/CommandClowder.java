@@ -336,7 +336,7 @@ public class CommandClowder extends CommandBase {
 	private void cmdHelp(ICommandSender sender, String page) {
 
 		int p = this.parseInt(sender, page);
-		int pages = 4;
+		int pages = 5;
 
 		if(p < 1 || p > pages)
 			p = 1;
@@ -352,7 +352,7 @@ public class CommandClowder extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-comrades" + TITLE + " - Shows all members of your faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-color <hexadecimal>" + TITLE + " - Sets the faction's color"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-motd <MotD>" + TITLE + " - Sets the faction's MotD"));
-			//sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-rename <name>" + TITLE + " - Renames your faction"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-rename <name>" + TITLE + " - Renames your faction"));
 			sender.addChatMessage(new ChatComponentText(INFO + "/clowder help 2"));
 		}
 
@@ -382,8 +382,9 @@ public class CommandClowder extends CommandBase {
 		}
 
 		if(p == 4) {
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-retreat" + TITLE + " - Reatreats after 10 minutes"));
-			//sender.addChatMessage(new ChatComponentText(COMMAND + "-claim" + TITLE + " - Creates a new flag"));
+			//sender.addChatMessage(new ChatComponentText(COMMAND + "-retreat" + TITLE + " - Reatreats after 10 minutes"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-claim" + TITLE + " - Creates a new flag"));
+			//todo fix
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-balance" + TITLE + " - Displays how much prestige the faction has"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-deposit <amount>" + TITLE + " - Turns prestige items into digiprestige"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-withdraw <amount>" + TITLE + " - Withdraws digiprestige as prestige items"));
