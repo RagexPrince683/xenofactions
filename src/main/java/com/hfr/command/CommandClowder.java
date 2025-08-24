@@ -136,6 +136,11 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 
+		if(cmd.equals("alliance")) {
+			cmdAlliance(sender);
+			return;
+		}
+
 		if(cmd.equals("color") && args.length > 1) {
 			cmdColor(sender, args[1]);
 			return;
@@ -186,6 +191,16 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 
+		if(cmd.equals("befriend") && args.length > 1) {
+			cmdBefriend(sender, args[1]);
+			return;
+		}
+
+		if(cmd.equals("acceptfriend") && args.length > 1) {
+			cmdAcceptFriend(sender, args[1]);
+			return;
+		}
+
 		if(cmd.equals("deny") && args.length > 1) {
 			cmdDeny(sender, args[1]);
 			return;
@@ -198,6 +213,11 @@ public class CommandClowder extends CommandBase {
 
 		if(cmd.equals("kick") && args.length > 1) {
 			cmdKick(sender, args[1]);
+			return;
+		}
+
+		if (cmd.equals("unfriend") && args.length > 1) {
+			cmdUnfriend(sender, args[1]);
 			return;
 		}
 
@@ -232,8 +252,18 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 
+		if(cmd.equals("setallywarp")) {
+			cmdSetAllyWarp(sender);
+			return;
+		}
+
 		if(cmd.equals("home")) {
 			cmdHome(sender);
+			return;
+		}
+
+		if(cmd.equals("allywarp") && args.length > 1) {
+			cmdAllyWarp(sender, args[1]);
 			return;
 		}
 
@@ -278,6 +308,12 @@ public class CommandClowder extends CommandBase {
 			cmdClaim(sender);
 			return;
 		}
+
+		//if(cmd.equals("unclaim")) {
+		//	cmdUnclaim(sender);
+		//	return;
+		//}
+		//todo maybe?
 
 		if(cmd.equals("promote") && args.length > 1) {
 			cmdPromote(sender, args[1]);
