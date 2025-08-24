@@ -11,7 +11,7 @@ import com.hfr.blocks.BlockDummyable;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.command.CommandClowder;
 import com.hfr.data.ClowderData;
-import com.hfr.data.MarketData.Offer;
+//import com.hfr.data.MarketData.Offer;
 import com.hfr.main.MainRegistry;
 import com.hfr.tileentity.prop.TileEntityProp;
 
@@ -48,7 +48,7 @@ public class Clowder {
 
 	//tracks how many times the clowder has bought from this market option
 	//non-persistent so it won't save when the server stops
-	public HashMap<Offer, Integer> offerHistory = new HashMap();
+	//public HashMap<Offer, Integer> offerHistory = new HashMap();
 
 	//for limited only x bonus minutes from capping chunks
 	//Limit is found in the MainRegistry class
@@ -1414,9 +1414,9 @@ public class Clowder {
 		}
 	}
 
-	public void restockMarkets() {
-		this.offerHistory.clear();
-	}
+	//public void restockMarkets() {
+	//	this.offerHistory.clear();
+	//}
 
 	/// GLOBAL METHODS ///
 	public static void recalculateIMap() {
