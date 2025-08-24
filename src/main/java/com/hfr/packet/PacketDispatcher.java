@@ -18,8 +18,33 @@ public class PacketDispatcher {
 	//	MainRegistry.network.sendTo(message, player);
 	//}
 
+	//network doesn't fucking exist in this shithole of a mod. You need to DEFINE it if you're going to USE IT.
+
+	//bobcat when calling something a dispatcher (note: all it does is define packets because this guy's a fucking RETARD)
+
 	//Mark 1 Packet Sending Device
 	public static final SimpleNetworkWrapper wrapper = NetworkRegistry.INSTANCE.newSimpleChannel(RefStrings.MODID);
+
+	// ----- convenience sending methods -----
+	public static final void sendTo(IMessage message, EntityPlayerMP player) {
+		wrapper.sendTo(message, player);
+	}
+
+	public static final void sendToAll(IMessage message) {
+		wrapper.sendToAll(message);
+	}
+
+	public static final void sendToAllAround(IMessage message, NetworkRegistry.TargetPoint point) {
+		wrapper.sendToAllAround(message, point);
+	}
+
+	public static final void sendToDimension(IMessage message, int dimensionId) {
+		wrapper.sendToDimension(message, dimensionId);
+	}
+
+	public static final void sendToServer(IMessage message) {
+		wrapper.sendToServer(message);
+	}
 
 	public static final void registerPackets()
 	{
@@ -55,9 +80,13 @@ public class PacketDispatcher {
 		wrapper.registerMessage(ClowderFlagPacket.Handler.class, ClowderFlagPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(ClowderBorderPacket.Handler.class, ClowderBorderPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(ExplosionSoundPacket.Handler.class, ExplosionSoundPacket.class, i++, Side.CLIENT);
-		wrapper.registerMessage(OfferPacket.Handler.class, OfferPacket.class, i++, Side.CLIENT);
+		//wrapper.registerMessage(OfferPacket.Handler.class, OfferPacket.class, i++, Side.CLIENT);
 		//you are now on the server, so fucking WORK
 		//Oh GOD DAMMIT of course this fucking packet only works properly on the FUCKING CLIENT!!!
+
+		wrapper.registerMessage(OfferPacket.Handler.class, OfferPacket.class, i++, Side.CLIENT);
+		wrapper.registerMessage(OfferPacket.Handler.class, OfferPacket.class, i++, Side.SERVER);
+
 		wrapper.registerMessage(RVIPacket.Handler.class, RVIPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(CumPacket.Handler.class, CumPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(PlayerDataPacket.Handler.class, PlayerDataPacket.class, i++, Side.CLIENT);
