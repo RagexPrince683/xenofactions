@@ -1,32 +1,26 @@
 package com.hfr.packet.tile;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map.Entry;
-
-import com.hfr.blocks.machine.MachineMarket;
 import com.hfr.data.MarketData;
 import com.hfr.data.MarketData.Offer;
 import com.hfr.inventory.gui.GUIMachineMarket;
-
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import net.minecraft.client.Minecraft;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.PacketBuffer;
 
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Simple packet carrying an NBTTagCompound built from MarketData.writeOffersToNBT(...)
+ * and the market name.
+ */
 public class OfferPacket implements IMessage {
 
 	private String name;
-	private NBTTagCompound nbt; // direct, no need for PacketBuffer field
+	private NBTTagCompound nbt;
 
 	public OfferPacket() {}
 
@@ -38,7 +32,7 @@ public class OfferPacket implements IMessage {
 	@Override
 	public void fromBytes(ByteBuf buf) {
 		this.name = ByteBufUtils.readUTF8String(buf);
-		this.nbt = ByteBufUtils.readTag(buf); // handles NBTTagCompound directly
+		this.nbt = ByteBufUtils.readTag(buf);
 	}
 
 	@Override
@@ -50,21 +44,17 @@ public class OfferPacket implements IMessage {
 	public static class Handler implements IMessageHandler<OfferPacket, IMessage> {
 
 		@Override
-		@SideOnly(Side.CLIENT)
-		public IMessage onMessage(OfferPacket m, MessageContext ctx) {
+		public IMessage onMessage(OfferPacket msg, MessageContext ctx) {
 			try {
-				MarketData data = new MarketData();
-				data.offers.clear();
-				data.readMarketFromPacket(m.nbt);
+				// Reconstruct MarketData from the received NBT (client-side copy used only for GUI)
+				MarketData tmp = new MarketData();
+				tmp.readMarketFromPacket(msg.nbt);
 
-				MachineMarket.name = m.name;
-				List<Offer> offers = data.offers.get(m.name);
+				List<Offer> offers = tmp.offers.get(msg.name);
+				if (offers == null) offers = new ArrayList<Offer>();
 
-				if (offers == null)
-					offers = new ArrayList<>();
-
+				// Assign to GUI holder. GUIMachineMarket should read this on opening.
 				GUIMachineMarket.offers = offers;
-
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -72,4 +62,3 @@ public class OfferPacket implements IMessage {
 		}
 	}
 }
-

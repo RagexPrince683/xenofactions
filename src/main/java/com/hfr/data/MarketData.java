@@ -2,95 +2,94 @@ package com.hfr.data;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
+import cpw.mods.fml.common.registry.GameData;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompressedStreamTools;
+import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTSizeTracker;
 import net.minecraft.world.World;
 
 import java.io.*;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MarketData {
 
 	private static final String FILE_NAME = "marketsavedata.json";
-	public HashMap<String, List<Offer>> offers = new HashMap<String, List<Offer>>();
-	private boolean dirty = false; // A flag to track if data was modified
-
-	// Gson instance for JSON serialization/deserialization
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
+	// Cache MarketData per-world to avoid repeated disk reads
+	private static final Map<String, MarketData> CACHE = new ConcurrentHashMap<>();
 
+	// The actual data structure that is JSON-serializable because of SerializableStack
+	public Map<String, List<Offer>> offers = new HashMap<>();
 
+	private volatile boolean dirty = false;
+
+	public MarketData() {}
+
+	/**
+	 * Get (and load) MarketData for the given world. Cached per-world save dir path.
+	 */
 	public static MarketData getData(World world) {
-		File file = getMarketFile(world);
+		String key = getMarketFile(world).getAbsolutePath();
+		MarketData cached = CACHE.get(key);
+		if (cached != null) return cached;
 
-		if (!file.exists()) {
-			// Create a new MarketData instance if the file does not exist
-			MarketData data = new MarketData();
-			data.saveToFile(file);
-			return data;
-		}
+		synchronized (CACHE) {
+			if (CACHE.containsKey(key)) return CACHE.get(key);
 
-		Reader reader = null;
-		try {
-			reader = new FileReader(file);
-			Type type = new TypeToken<HashMap<String, List<Offer>>>() {}.getType();
-			MarketData data = new MarketData();
-			data.offers = GSON.fromJson(reader, type);
-
-			if (data.offers == null) {
-				data.offers = new HashMap<String, List<Offer>>();
-			}
-
-			return data;
-		} catch (JsonParseException e) {
-			// Handle JSON parsing errors
-			System.err.println("Error parsing MarketData JSON: " + e.getMessage());
-			e.printStackTrace();
-			return new MarketData();
-		} catch (IOException e) {
-			// Handle file I/O errors
-			System.err.println("Error reading MarketData JSON: " + e.getMessage());
-			e.printStackTrace();
-			return new MarketData();
-		} finally {
-			if (reader != null) {
-				try {
-					reader.close();
-				} catch (IOException e) {
+			File file = getMarketFile(world);
+			MarketData data;
+			if (!file.exists()) {
+				data = new MarketData();
+				data.markDirty();
+				data.saveToFile(file); // initial save
+			} else {
+				try (Reader r = new BufferedReader(new FileReader(file))) {
+					// MarketData's fields are Gson-friendly (SerializableStack inside Offer)
+					data = GSON.fromJson(r, MarketData.class);
+					if (data == null) data = new MarketData();
+				} catch (Exception e) {
+					System.err.println("Failed to read market file, creating fresh MarketData. Error: " + e.getMessage());
 					e.printStackTrace();
+					data = new MarketData();
 				}
 			}
+			CACHE.put(key, data);
+			return data;
 		}
 	}
 
+	/**
+	 * Save to file if dirty. Uses temp file + rename for atomicity.
+	 */
 	public void saveToFile(File file) {
-		if (!dirty) return; // Only save if the data is marked dirty
+		if (!dirty) return;
 
-		Writer writer = null;
-		try {
-			writer = new FileWriter(file);
-			GSON.toJson(offers, writer);
-			dirty = false; // Reset the dirty flag after saving
-		} catch (IOException e) {
-			System.err.println("Error saving MarketData to JSON: " + e.getMessage());
-			e.printStackTrace();
-		} finally {
-			if (writer != null) {
-				try {
-					writer.close();
-				} catch (IOException e) {
-					e.printStackTrace();
+		File tmp = new File(file.getAbsolutePath() + ".tmp");
+		try (Writer w = new BufferedWriter(new FileWriter(tmp))) {
+			GSON.toJson(this, w);
+			w.flush();
+			if (file.exists()) {
+				if (!file.delete()) {
+					System.err.println("Warning: failed to delete old market file: " + file);
 				}
 			}
+			if (!tmp.renameTo(file)) {
+				// Attempt move copy if rename fails
+				try (InputStream in = new FileInputStream(tmp); OutputStream out = new FileOutputStream(file)) {
+					byte[] buf = new byte[8192];
+					int len;
+					while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
+				}
+				if (!tmp.delete()) tmp.deleteOnExit();
+			}
+			dirty = false;
+		} catch (Exception e) {
+			System.err.println("Error saving MarketData to JSON: " + e.getMessage());
+			e.printStackTrace();
 		}
 	}
 
@@ -98,142 +97,131 @@ public class MarketData {
 		this.dirty = true;
 	}
 
+	// --- Serializable wrapper for ItemStack ---
+	public static class SerializableStack {
+
+		public String itemName;    // registry name e.g. "minecraft:stone"
+		public int meta;
+		public int count;
+		public String snbt;        // optional NBT in SNBT string form, or null
+
+		public SerializableStack() {}
+
+		public static SerializableStack fromItemStack(ItemStack stack) {
+			if (stack == null) return null;
+			SerializableStack s = new SerializableStack();
+			s.count = stack.stackSize;
+			s.meta = stack.getItemDamage();
+			String name = Item.itemRegistry.getNameForObject(stack.getItem());
+			s.itemName = name != null ? name : stack.getItem().getUnlocalizedName();
+			if (stack.hasTagCompound()) s.snbt = stack.getTagCompound().toString();
+			else s.snbt = null;
+			return s;
+		}
+
+
+		public ItemStack toItemStack() {
+			if (itemName == null) return null;
+
+			// Forge 1.7.10: get the item from the registry by its name
+			Item item = GameData.getItemRegistry().getObject(itemName);
+			if (item == null) return null;
+
+			ItemStack stack = new ItemStack(item, Math.max(1, count), meta);
+
+			if (snbt != null) {
+				try {
+					NBTTagCompound tag = (NBTTagCompound) JsonToNBT.func_150315_a(snbt);
+					stack.setTagCompound(tag);
+				} catch (Exception e) {
+					// malformed SNBT -> ignore
+				}
+			}
+
+			return stack;
+		}
+
+	}
+
+	// --- Offer class stored in JSON (uses SerializableStack[]) ---
 	public static class Offer {
-
-
-		public ItemStack[] offer; // Store ItemStack[] directly
+		public SerializableStack[] stacks; // up to 4 entries used by the command/gui
 		public int capacity;
+		public ItemStack[] offer = this.getItemStacks();
 
-		public Offer(ItemStack[] offer, int capacity) {
-			this.offer = offer;
+		// Default no-arg ctor required by Gson
+		public Offer() {}
+
+		public Offer(ItemStack[] itemStacks, int capacity) {
+			if (itemStacks == null) itemStacks = new ItemStack[0];
+			this.stacks = new SerializableStack[itemStacks.length];
+			for (int i = 0; i < itemStacks.length; i++) {
+				this.stacks[i] = SerializableStack.fromItemStack(itemStacks[i]);
+			}
 			this.capacity = capacity;
 		}
 
+		/** Convert back to live ItemStack objects for GUIs or server logic */
 		public ItemStack[] getItemStacks() {
-			ItemStack[] itemStacks = new ItemStack[offer.length];
-			for (int i = 0; i < offer.length; i++) {
-				if (offer[i] != null) {
-					itemStacks[i] = deserializeItemStack(String.valueOf(offer[i]));
-				} else {
-					itemStacks[i] = null;
-				}
+			if (stacks == null) return new ItemStack[0];
+			ItemStack[] out = new ItemStack[stacks.length];
+			for (int i = 0; i < stacks.length; i++) {
+				out[i] = stacks[i] != null ? stacks[i].toItemStack() : null;
 			}
-			return itemStacks;
-		}
-
-		private static String serializeItemStack(ItemStack itemStack) {
-			NBTTagCompound nbt = new NBTTagCompound();
-			itemStack.writeToNBT(nbt);
-			return nbt.toString();
-		}
-
-		private static ItemStack deserializeItemStack(String nbtString) {
-			try {
-				// Convert the string back to a byte array
-				byte[] nbtData = nbtString.getBytes("UTF-8");
-
-				// Use an NBTSizeTracker to deserialize the data
-				NBTTagCompound nbt = CompressedStreamTools.func_152457_a(nbtData, new NBTSizeTracker(2097152L)); // 2 MB size limit
-				return ItemStack.loadItemStackFromNBT(nbt);
-			} catch (Exception e) {
-				e.printStackTrace();
-				return null;
-			}
+			return out;
 		}
 	}
 
-	private static String serializeItemStackArray(ItemStack[] items) {
-		NBTTagList nbtList = new NBTTagList();
-		for (ItemStack item : items) {
-			if (item != null) {
-				NBTTagCompound nbt = new NBTTagCompound();
-				item.writeToNBT(nbt);
-				nbtList.appendTag(nbt);
-			}
-		}
-		NBTTagCompound wrapper = new NBTTagCompound();
-		wrapper.setTag("Items", nbtList);
-		return wrapper.toString();
-	}
-	private static ItemStack[] deserializeItemStackArray(String serialized) {
-		try {
-			NBTTagCompound wrapper = CompressedStreamTools.func_152457_a(serialized.getBytes("UTF-8"), new NBTSizeTracker(2097152L));
-			NBTTagList nbtList = wrapper.getTagList("Items", 10);
-			ItemStack[] items = new ItemStack[nbtList.tagCount()];
-			for (int i = 0; i < nbtList.tagCount(); i++) {
-				items[i] = ItemStack.loadItemStackFromNBT(nbtList.getCompoundTagAt(i));
-			}
-			return items;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return new ItemStack[0];
-		}
-	}
+	// --- NBT-based packet helpers (used when sending offers over network) ---
+	public void writeOffersToNBT(NBTTagCompound nbt, String marketName, List<Offer> offerList) {
+		if (offerList == null) return;
+		nbt.setString("market", marketName);
+		nbt.setInteger("offercount", offerList.size());
 
-
-	public void writeOffers(NBTTagCompound nbt, String name, List<Offer> offers) {
-		for (int index = 0; index < offers.size(); index++) {
+		for (int index = 0; index < offerList.size(); index++) {
+			Offer o = offerList.get(index);
+			ItemStack[] items = o.getItemStacks();
 			NBTTagList list = new NBTTagList();
-			Offer offer = offers.get(index);
-			ItemStack[] items = offer.getItemStacks();
-
 			for (int i = 0; i < items.length; i++) {
-				if (items[i] != null) {
-					NBTTagCompound nbt1 = new NBTTagCompound();
-					nbt1.setByte("slot" + index, (byte) i);
-					items[i].writeToNBT(nbt1);
-					list.appendTag(nbt1);
-				}
+				ItemStack it = items[i];
+				if (it == null) continue;
+				NBTTagCompound itemTag = new NBTTagCompound();
+				itemTag.setByte("slot", (byte) i);
+				it.writeToNBT(itemTag);
+				list.appendTag(itemTag);
 			}
-
-			nbt.setTag("items" + name + index, list);
-			nbt.setInteger("count" + name + index, offer.capacity);
+			nbt.setTag("items" + marketName + index, list);
+			nbt.setInteger("count" + marketName + index, o.capacity);
 		}
-	}
-
-	public void writeMarketFromName(NBTTagCompound nbt, String name) {
-		List<Offer> market = this.offers.get(name);
-
-		if (market == null)
-			return;
-
-		nbt.setString("market", name);
-		nbt.setInteger("offercount", market.size());
-
-		writeOffers(nbt, name, market);
 	}
 
 	public void readMarketFromPacket(NBTTagCompound nbt) {
 		String name = nbt.getString("market");
 		int offerCount = nbt.getInteger("offercount");
+		if (name == null || name.isEmpty()) return;
 
-		for (int off = 0; off < offerCount; off++) {
-			readOffers(nbt, name, off);
+		List<Offer> list = this.offers.get(name);
+		if (list == null) {
+			list = new ArrayList<>();
+		} else {
+			list.clear();
 		}
-	}
 
-	public void readOffers(NBTTagCompound nbt, String name, int index) {
-		ItemStack[] slots = new ItemStack[4];
-		NBTTagList list = nbt.getTagList("items" + name + index, 10);
-
-		for (int j = 0; j < list.tagCount(); j++) {
-			NBTTagCompound nbt1 = list.getCompoundTagAt(j);
-			byte b0 = nbt1.getByte("slot" + index);
-			if (b0 >= 0 && b0 < slots.length) {
-				slots[b0] = ItemStack.loadItemStackFromNBT(nbt1);
+		for (int i = 0; i < offerCount; i++) {
+			ItemStack[] slots = new ItemStack[4];
+			NBTTagList tagList = nbt.getTagList("items" + name + i, 10);
+			for (int j = 0; j < tagList.tagCount(); j++) {
+				NBTTagCompound itemTag = tagList.getCompoundTagAt(j);
+				byte slot = itemTag.getByte("slot");
+				if (slot >= 0 && slot < slots.length) {
+					slots[slot] = ItemStack.loadItemStackFromNBT(itemTag);
+				}
 			}
+			int capacity = nbt.getInteger("count" + name + i);
+			Offer o = new Offer(slots, capacity);
+			list.add(o);
 		}
-
-		int capacity = nbt.getInteger("items" + name + index);
-
-		List<Offer> offers = this.offers.get(name);
-
-		if (offers == null) {
-			offers = new ArrayList<Offer>();
-		}
-
-		offers.add(new Offer(slots, capacity));
-		this.offers.put(name, offers);
+		this.offers.put(name, list);
 	}
 
 	public static File getMarketFile(World world) {
