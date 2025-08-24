@@ -39,13 +39,64 @@ public class GUIMachineMarket extends GuiScreen {
 		this.player = player;
 	}
 
-	public void initGui()
-	{
+	/**
+	 * Keep GUI page bounds valid after offers change.
+	 * Call this after GUIMachineMarket.offers is replaced.
+	 */
+	public void refreshOffers() {
+		if (offers == null) offers = new ArrayList<ItemStack[]>();
+		// clamp page to available pages
+		int maxPage = Math.max(1, (offers.size() + 5) / 6);
+		if (page < 1) page = 1;
+		if (page > maxPage) page = maxPage;
+		// force a simple client redraw next tick by resetting the mouse-over cached value
+		this.last = null;
+	}
+
+
+	// OLD
+	//public void refreshOffers() {
+	//	// Called when offers data changes.
+	//	// Keep page within bounds and reinitialize whatever UI state depends on 'offers'.
+	//	if (offers == null) offers = new ArrayList<ItemStack[]>();
+	//	if (page < 1) page = 1;
+	//	int maxPage = Math.max(1, (int)Math.ceil((double)offers.size() / 6.0));
+	//	if (page > maxPage) page = maxPage;
+//
+	//	// If your GUI builds slot lists or widgets at init, call that here.
+	//	// The quick & dirty approach is to call initGui() which recalculates positions:
+	//	// (safe in 1.7.10 for small GUIs)
+	//	this.initGui();
+	//}
+
+	// modify initGui() to clear offers and request server if needed:
+	public void initGui() {
 		super.initGui();
 		this.guiLeft = (this.width - this.xSize) / 2;
 		this.guiTop = (this.height - this.ySize) / 2;
 		page = 1;
+
+		// keep client side offers empty until server replies
+		// DO NOT overwrite server-sent data if already filled
+		if (offers == null || offers.isEmpty()) {
+			offers = new ArrayList<ItemStack[]>();
+		}
+
+		// Try to request fresh data from server if we have a market tile reference
+		try {
+			if (market != null) {
+				// This uses the OfferPacket request pattern you already have:
+				PacketDispatcher.wrapper.sendToServer(new com.hfr.packet.tile.OfferPacket(market.name, null));
+				System.out.println("[GUIMachineMarket] Sent request OfferPacket for market='" + market.name + "'");
+			} else {
+				System.out.println("[GUIMachineMarket] market is null on client when initGui()");
+			}
+		} catch (Exception e) {
+			System.err.println("[GUIMachineMarket] Exception while sending OfferPacket request:");
+			e.printStackTrace();
+		}
 	}
+
 
 	protected void mouseClicked(int x, int y, int i) {
 
