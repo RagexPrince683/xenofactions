@@ -1,63 +1,100 @@
 package com.hfr.packet.tile;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
+
+import com.hfr.blocks.machine.MachineMarket;
 import com.hfr.data.MarketData;
-import com.hfr.data.MarketData.Offer;
 import com.hfr.inventory.gui.GUIMachineMarket;
+
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import net.minecraft.client.Minecraft;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.PacketBuffer;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * Simple packet carrying an NBTTagCompound built from MarketData.writeOffersToNBT(...)
- * and the market name.
- */
 public class OfferPacket implements IMessage {
 
-	private String name;
-	private NBTTagCompound nbt;
+	String name;
+	PacketBuffer buffer;
 
-	public OfferPacket() {}
+	public OfferPacket() { }
 
 	public OfferPacket(String name, NBTTagCompound nbt) {
+
 		this.name = name;
-		this.nbt = nbt;
+		this.buffer = new PacketBuffer(Unpooled.buffer());
+
+		try {
+			buffer.writeNBTTagCompoundToBuffer(nbt);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
 	public void fromBytes(ByteBuf buf) {
+
 		this.name = ByteBufUtils.readUTF8String(buf);
-		this.nbt = ByteBufUtils.readTag(buf);
+
+		if (buffer == null) {
+			buffer = new PacketBuffer(Unpooled.buffer());
+		}
+		buffer.writeBytes(buf);
 	}
 
 	@Override
 	public void toBytes(ByteBuf buf) {
+
 		ByteBufUtils.writeUTF8String(buf, name);
-		ByteBufUtils.writeTag(buf, nbt);
+
+		if (buffer == null) {
+			buffer = new PacketBuffer(Unpooled.buffer());
+		}
+		buf.writeBytes(buffer);
 	}
 
 	public static class Handler implements IMessageHandler<OfferPacket, IMessage> {
-
+		@SideOnly (Side.CLIENT)
+		//causes a crash clientside if SIDEONLYCLIENT is not here
+		//going to assume this is not the issue, but rather the items actually being fucking assigned
+		//to the list just not working on the fucking server for some fucking retarded reason
 		@Override
-		public IMessage onMessage(OfferPacket msg, MessageContext ctx) {
+		public IMessage onMessage(OfferPacket m, MessageContext ctx) {
 			try {
-				// Reconstruct MarketData from the received NBT (client-side copy used only for GUI)
-				MarketData tmp = new MarketData();
-				tmp.readMarketFromPacket(msg.nbt);
 
-				List<Offer> offers = tmp.offers.get(msg.name);
-				if (offers == null) offers = new ArrayList<Offer>();
+				//TODO THIS SHOULD BE ON THE FUCKING SERVER NOT THE FUCKING CLIENT YOU DUMB SHIT
+				// OR IT SHOULD SEND A PACKET TO THE SERVER TO REQUEST THIS INFORMATION THEN THIS LOGIC
+				// EITHER WAY THIS IS FUCKING RETARD CODE
 
-				// Assign to GUI holder. GUIMachineMarket should read this on opening.
+				// Load the latest market data from JSON
+				MarketData.loadMarketData();
+
+				// Get market offers
+				List<ItemStack[]> offers = MarketData.getOffers(m.name);
+
+				if (offers == null) {
+					offers = new ArrayList<ItemStack[]>();
+				}
+
+				// Update the machine and GUI with the loaded market offers
+				MachineMarket.name = m.name;
 				GUIMachineMarket.offers = offers;
+
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+
 			return null;
 		}
 	}
