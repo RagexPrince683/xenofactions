@@ -13,7 +13,10 @@ import net.minecraft.world.World;
 
 import java.io.*;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MarketData {
 
@@ -27,35 +30,47 @@ public class MarketData {
 
 
 	public static MarketData getData(World world) {
-		if (world.isRemote) {
-			// Never load from client, always defer to server’s copy
-			throw new IllegalStateException("MarketData must be loaded on the server side only.");
-		}
-
 		File file = getMarketFile(world);
 
 		if (!file.exists()) {
+			// Create a new MarketData instance if the file does not exist
 			MarketData data = new MarketData();
 			data.saveToFile(file);
 			return data;
 		}
 
-		try (Reader reader = new FileReader(file)) {
+		Reader reader = null;
+		try {
+			reader = new FileReader(file);
 			Type type = new TypeToken<HashMap<String, List<Offer>>>() {}.getType();
 			MarketData data = new MarketData();
 			data.offers = GSON.fromJson(reader, type);
 
 			if (data.offers == null) {
-				data.offers = new HashMap<>();
+				data.offers = new HashMap<String, List<Offer>>();
 			}
 
 			return data;
-		} catch (Exception e) {
+		} catch (JsonParseException e) {
+			// Handle JSON parsing errors
+			System.err.println("Error parsing MarketData JSON: " + e.getMessage());
 			e.printStackTrace();
 			return new MarketData();
+		} catch (IOException e) {
+			// Handle file I/O errors
+			System.err.println("Error reading MarketData JSON: " + e.getMessage());
+			e.printStackTrace();
+			return new MarketData();
+		} finally {
+			if (reader != null) {
+				try {
+					reader.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
-
 
 	public void saveToFile(File file) {
 		if (!dirty) return; // Only save if the data is marked dirty
@@ -106,34 +121,25 @@ public class MarketData {
 			return itemStacks;
 		}
 
-		private static String serializeItemStack(ItemStack stack) {
-			try {
-				NBTTagCompound nbt = new NBTTagCompound();
-				stack.writeToNBT(nbt);
-
-				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				CompressedStreamTools.writeCompressed(nbt, baos);
-
-				return Base64.getEncoder().encodeToString(baos.toByteArray());
-			} catch (IOException e) {
-				e.printStackTrace();
-				return "";
-			}
+		private static String serializeItemStack(ItemStack itemStack) {
+			NBTTagCompound nbt = new NBTTagCompound();
+			itemStack.writeToNBT(nbt);
+			return nbt.toString();
 		}
 
-		private static ItemStack deserializeItemStack(String data) {
+		private static ItemStack deserializeItemStack(String nbtString) {
 			try {
-				byte[] bytes = Base64.getDecoder().decode(data);
-				ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-				NBTTagCompound nbt = CompressedStreamTools.readCompressed(bais);
+				// Convert the string back to a byte array
+				byte[] nbtData = nbtString.getBytes("UTF-8");
 
+				// Use an NBTSizeTracker to deserialize the data
+				NBTTagCompound nbt = CompressedStreamTools.func_152457_a(nbtData, new NBTSizeTracker(2097152L)); // 2 MB size limit
 				return ItemStack.loadItemStackFromNBT(nbt);
 			} catch (Exception e) {
 				e.printStackTrace();
 				return null;
 			}
 		}
-
 	}
 
 	private static String serializeItemStackArray(ItemStack[] items) {
