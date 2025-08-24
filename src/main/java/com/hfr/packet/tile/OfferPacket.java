@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.hfr.blocks.machine.MachineMarket;
+import com.hfr.blocks.machine.MachineMarket.TileEntityMarket;
 import com.hfr.data.MarketData;
 import com.hfr.inventory.gui.GUIMachineMarket;
 import com.hfr.packet.PacketDispatcher;
@@ -13,69 +14,95 @@ import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.World;
 
 /**
- * OfferPacket - request: name + null NBT
- *               reply: name + NBT containing offers
- *
- * Debug prints included. Remove prints after debugging.
+ * OfferPacket now carries: x,y,z + name + optional NBT payload.
+ * Client sends packet with coords (and name if available). Server will use name if non-empty,
+ * otherwise will lookup tile at coords and use its name.
  */
 public class OfferPacket implements IMessage {
 
-	private String name;
-	private NBTTagCompound nbt;
+	public int x, y, z;
+	public String name;
+	public NBTTagCompound nbt;
 
 	public OfferPacket() {}
 
+	// client->server request (coords, maybe empty name)
+	public OfferPacket(int x, int y, int z, String name) {
+		this.x = x; this.y = y; this.z = z;
+		this.name = name == null ? "" : name;
+		this.nbt = null;
+	}
+
+	// server->client reply (name + offers NBT)
 	public OfferPacket(String name, NBTTagCompound nbt) {
-		this.name = name;
+		this.x = 0; this.y = 0; this.z = 0;
+		this.name = name == null ? "" : name;
 		this.nbt = nbt;
 	}
 
 	@Override
 	public void fromBytes(ByteBuf buf) {
+		this.x = buf.readInt();
+		this.y = buf.readInt();
+		this.z = buf.readInt();
 		this.name = ByteBufUtils.readUTF8String(buf);
-		this.nbt = ByteBufUtils.readTag(buf); // may be null
+		this.nbt = ByteBufUtils.readTag(buf);
 	}
 
 	@Override
 	public void toBytes(ByteBuf buf) {
+		buf.writeInt(x);
+		buf.writeInt(y);
+		buf.writeInt(z);
 		ByteBufUtils.writeUTF8String(buf, name == null ? "" : name);
-		ByteBufUtils.writeTag(buf, nbt); // safely handles null
+		ByteBufUtils.writeTag(buf, nbt);
 	}
 
 	// -------------------------
-	// Server-side handler
+	// Server handler
 	// -------------------------
 	public static class ServerHandler implements IMessageHandler<OfferPacket, IMessage> {
 		@Override
 		public IMessage onMessage(final OfferPacket msg, final MessageContext ctx) {
 			try {
-				// Debug - confirm server received request and who sent it
 				EntityPlayerMP player = ctx.getServerHandler().playerEntity;
-				System.out.println("[OfferPacket.ServerHandler] Received request for shop '" + msg.name + "' from player: "
-						+ (player != null ? player.getCommandSenderName() : "UNKNOWN"));
+				String marketName = msg.name == null ? "" : msg.name;
+				World world = player.worldObj;
 
-				// Load data, build offers list
-				MarketData.loadMarketData(); // safe: refresh from disk
-				List<ItemStack[]> offers = MarketData.getOffers(msg.name);
-				if (offers == null) {
-					offers = new ArrayList<ItemStack[]>();
+				// If name is empty, try to look up tile entity at coords
+				if (marketName.isEmpty()) {
+					try {
+						TileEntity te = world.getTileEntity(msg.x, msg.y, msg.z);
+						if (te instanceof TileEntityMarket) {
+							marketName = ((TileEntityMarket) te).name;
+						}
+					} catch (Exception ex) {
+						// ignore - leave name empty if lookup fails
+					}
 				}
-				System.out.println("[OfferPacket.ServerHandler] Server found " + offers.size() + " offers for '" + msg.name + "'");
 
-				// Optionally mutate server-side machine state
-				MachineMarket.name = msg.name;
+				System.out.println("[OfferPacket.ServerHandler] Received request for shop '" + marketName + "' from player: "
+						+ (player != null ? player.getCommandSenderName() : "UNKNOWN") + " coords=(" + msg.x + "," + msg.y + "," + msg.z + ")");
 
-				// Serialize offers into NBT and send back to the requesting player
+				MarketData.loadMarketData();
+				List<ItemStack[]> offers = MarketData.getOffers(marketName);
+				if (offers == null) offers = new ArrayList<ItemStack[]>();
+
+				// send reply with serialized offers
 				NBTTagCompound response = MarketData.offersToNBT(offers);
-				PacketDispatcher.wrapper.sendTo(new OfferPacket(msg.name, response), player);
+				PacketDispatcher.wrapper.sendTo(new OfferPacket(marketName, response), player);
+
 				System.out.println("[OfferPacket.ServerHandler] Sent reply to player "
 						+ (player != null ? player.getCommandSenderName() : "UNKNOWN")
-						+ " for shop '" + msg.name + "' (nbt tags: " + (response != null ? response.getTagList("offers", 10).tagCount() : "null") + ")");
+						+ " for shop '" + marketName + "' (offers=" + offers.size() + ")");
 
 			} catch (Exception e) {
 				System.err.println("[OfferPacket.ServerHandler] Exception:");
@@ -86,62 +113,35 @@ public class OfferPacket implements IMessage {
 	}
 
 	// -------------------------
-	// Client-side handler
+	// Client handler
 	// -------------------------
 	public static class ClientHandler implements IMessageHandler<OfferPacket, IMessage> {
 		@Override
 		public IMessage onMessage(final OfferPacket msg, final MessageContext ctx) {
 			try {
-				System.out.println("[OfferPacket.ClientHandler] Received packet for shop='" + msg.name + "' on client");
-
-				if (msg.nbt == null) {
-					System.out.println("[OfferPacket.ClientHandler] msg.nbt == null");
-				} else {
-					//System.out.println("[OfferPacket.ClientHandler] NBT keys: " + java.util.Arrays.toString(msg.nbt.getKeySet().toArray()));
-					//getKeySet() is not a real fucking method.
-					if (msg.nbt.hasKey("debugMessage")) {
-						System.out.println("[OfferPacket.ClientHandler] debugMessage -> " + msg.nbt.getString("debugMessage"));
-					}
-					if (msg.nbt.hasKey("offers")) {
-						System.out.println("[OfferPacket.ClientHandler] offers tag count = " + msg.nbt.getTagList("offers", 10).tagCount());
-					}
-				}
+				System.out.println("[OfferPacket.ClientHandler] Received packet for shop '" + msg.name + "' on client (coords: "
+						+ msg.x + "," + msg.y + "," + msg.z + ")");
 
 				List<ItemStack[]> offers;
 				if (msg.nbt != null && msg.nbt.hasKey("offers")) {
 					offers = MarketData.offersFromNBT(msg.nbt);
 					System.out.println("[OfferPacket.ClientHandler] Parsed " + offers.size() + " offers from NBT for '" + msg.name + "'");
 				} else {
+					// Fallback: client JSON (less deterministic)
 					MarketData.loadMarketData();
 					offers = MarketData.getOffers(msg.name);
 					System.out.println("[OfferPacket.ClientHandler] Fallback loaded " + offers.size() + " offers for '" + msg.name + "'");
 				}
 
-				if (offers == null) offers = new java.util.ArrayList<ItemStack[]>();
+				if (offers == null) offers = new ArrayList<ItemStack[]>();
 				MachineMarket.name = msg.name;
 				GUIMachineMarket.offers = offers;
 
-// ADD THESE LINES (paste exactly)
-				net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getMinecraft();
-				if (mc.currentScreen instanceof com.hfr.inventory.gui.GUIMachineMarket) {
-					((com.hfr.inventory.gui.GUIMachineMarket) mc.currentScreen).refreshOffers();
+				// Force GUI refresh if it's open
+				Minecraft mc = Minecraft.getMinecraft();
+				if (mc.currentScreen instanceof GUIMachineMarket) {
+					((GUIMachineMarket) mc.currentScreen).refreshOffers();
 					System.out.println("[OfferPacket.ClientHandler] GUIMachineMarket.refreshOffers() called");
-				}
-
-				// Extra debug: print first few items
-				for (int i = 0; i < Math.min(5, offers.size()); i++) {
-					ItemStack[] arr = offers.get(i);
-					StringBuilder sb = new StringBuilder();
-					sb.append("[OfferPacket.ClientHandler] Offer ").append(i).append(": ");
-					if (arr != null) {
-						for (int j = 0; j < arr.length; j++) {
-							ItemStack s = arr[j];
-							sb.append("(").append(j).append("=" + (s == null ? "null" : s.getDisplayName())).append(") ");
-						}
-					} else {
-						sb.append("null-array");
-					}
-					System.out.println(sb.toString());
 				}
 
 			} catch (Exception e) {
@@ -151,5 +151,4 @@ public class OfferPacket implements IMessage {
 			return null;
 		}
 	}
-
 }

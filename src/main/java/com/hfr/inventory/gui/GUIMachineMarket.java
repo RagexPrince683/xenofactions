@@ -85,9 +85,15 @@ public class GUIMachineMarket extends GuiScreen {
 		// Try to request fresh data from server if we have a market tile reference
 		try {
 			if (market != null) {
-				// This uses the OfferPacket request pattern you already have:
-				PacketDispatcher.wrapper.sendToServer(new com.hfr.packet.tile.OfferPacket(market.name, null));
-				System.out.println("[GUIMachineMarket] Sent request OfferPacket for market='" + market.name + "'");
+				try {
+					// send coords + (maybe-empty) name so server can fallback to coords
+					PacketDispatcher.wrapper.sendToServer(new com.hfr.packet.tile.OfferPacket(market.xCoord, market.yCoord, market.zCoord, market.name));
+					System.out.println("[GUIMachineMarket] Sent request OfferPacket for market='" + market.name + "' coords=("
+							+ market.xCoord + "," + market.yCoord + "," + market.zCoord + ")");
+				} catch (Exception e) {
+					System.err.println("[GUIMachineMarket] Exception while sending OfferPacket request:");
+					e.printStackTrace();
+				}
 			} else {
 				System.out.println("[GUIMachineMarket] market is null on client when initGui()");
 			}
