@@ -96,7 +96,7 @@ public class OfferPacket implements IMessage {
 
 			int offerCount = nbt.getInteger("offercount");
 
-			List<ItemStack[]> offers = new ArrayList<ItemStack[]>(offerCount);
+			ItemStack[] offers = new ItemStack[0];
 			for (int i = 0; i < offerCount; i++) {
 				NBTTagList list = nbt.getTagList("items" + i, 10);
 				ItemStack[] offerArray = new ItemStack[list.tagCount()];
@@ -109,7 +109,7 @@ public class OfferPacket implements IMessage {
 				offers.add(offerArray);
 			}
 
-			MarketData.addOffers(market, offers);
+			MarketData.addOffer(market, offers);
 			return null;
 		}
 	}
