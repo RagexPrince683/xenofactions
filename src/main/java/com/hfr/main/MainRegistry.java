@@ -701,6 +701,8 @@ public class MainRegistry
 		event.registerServerCommand(new CommandStoneDrop());
 		event.registerServerCommand(new CommandMute());
 		event.registerServerCommand(new CommandUnmute());
+		MarketData.loadMarketData();
+		//and now we just pray that the market data does not cope over serverside
 	}
 
 	//only one thing
