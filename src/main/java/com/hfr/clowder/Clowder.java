@@ -72,6 +72,7 @@ public class Clowder {
 	//public boolean paxBritannica = false;
 
 	//debug to force offlines to be online
+	//HOW CAN YOU FORCE A PLAYER TO BE ONLINE WITHOUT GETTING INTO THEIR PC? HUH WEEDER?
 	public static boolean forceOnline = false;
 
 	//for poorly coded treaty system
