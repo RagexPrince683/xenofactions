@@ -258,6 +258,13 @@ public class AuxButtonPacket implements IMessage {
 					TileEntityMarket market = (TileEntityMarket) te;
 
 					// Get the market's offers from JSON
+					//if (this.isRemote) {
+					//	System.out.println("This packet should not be processed on the client side.");
+					//	return null;
+					//}
+					//TODO: REMOTE CHECK HERE so we are ENSURING ALL DATA is processed on the SERVER.
+					// although I'm pretty sure in PacketDispatcher.java we DEFINE this.
+					// side tangent. Why the fuck is it clientside by default. Bobcat moment!
 					List<ItemStack[]> offers = MarketData.getOffers(market.name);
 
 					if (offers.isEmpty()) {
@@ -308,7 +315,7 @@ public class AuxButtonPacket implements IMessage {
 						} else {
 							// Failure: Not enough currency
 							p.worldObj.playSoundAtEntity(p, "hfr:block.buttonNo", 1.0F, 1.0F);
-							p.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "You lack required items."));
+							p.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "You lack the required items."));
 						}
 					} else {
 						System.out.println("The selected offer is null for market: " + market.name);
