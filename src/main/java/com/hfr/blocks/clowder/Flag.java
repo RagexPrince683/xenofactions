@@ -131,7 +131,7 @@ public class Flag extends BlockContainer {
 	
 	@Override
 	public void breakBlock(World world, int x, int y, int z, Block b, int i)
-    {
+	{
 		Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
 		
 		if(owner != null && owner.zone == Zone.FACTION) {
@@ -140,11 +140,10 @@ public class Flag extends BlockContainer {
 			if(flag.owner != null)
 				flag.setOwner(null);
 		} else {
-			if (owner != null ) { //todo check that we're being capped, if so flag is breakable //
-				// && !noProximity
-				//fucking whatever im gonna take a break
-
-			}
+			//if (owner != null ) { //todo check that we're being capped, if so flag is breakable //
+			//	// && !noProximity
+			//	//fucking whatever im gonna take a break
+			//}
 		}
 		
 		super.breakBlock(world, x, y, z, b, i);
