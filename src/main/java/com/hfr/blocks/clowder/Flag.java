@@ -133,16 +133,29 @@ public class Flag extends BlockContainer {
 	public void breakBlock(World world, int x, int y, int z, Block b, int i)
 	{
 		Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
-		
-		if(owner != null && owner.zone == Zone.FACTION) {
-			TileEntityFlag flag = (TileEntityFlag)world.getTileEntity(x, y, z);
-			
-			if(flag.owner != null)
+
+		if (owner != null && owner.zone == Zone.FACTION) {
+			//break
+			TileEntityFlag flag = (TileEntityFlag) world.getTileEntity(x, y, z);
+
+			if (flag != null && flag.owner != null) {
 				flag.setOwner(null);
+			}
 		} else {
-			//if (owner != null ) { //todo check that we're being capped, if so flag is breakable //
-			//	// && !noProximity
-			//	//fucking whatever im gonna take a break
+			if (owner != null && !noProximity(world, x, y, z)) {
+					TileEntityFlag flag = (TileEntityFlag) world.getTileEntity(x, y, z);
+
+					if (flag != null && flag.owner != null) {
+						flag.setOwner(null);
+					}
+					//if this flag is being broken, and it is close to a conquerer, break it
+				flag.height = 0.0F;
+				super.breakBlock(world, x, y, z, b, i);
+			}
+			//do nothing
+			//else {
+			//	//im having a brain fart here
+			//
 			//}
 		}
 		
