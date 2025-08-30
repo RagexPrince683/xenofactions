@@ -101,6 +101,10 @@ public class Clowder {
 	//to prevent sethome abuse
 	public float sethomeDelay = 0;
 
+	//todo: if sethome is exploited by nevrons why wouldn't nevrons want to exploit the FUCKING ALLY WARP SYSTEM?
+	//wait nevermind. it LOOKS like it at least hooks into this. I'm sure weeder/bob shithole code definitely works PROPERLY.
+	//public float setallyDelay = 0;
+
 	//for pussying out system
 	//public boolean targeted = false;
 
@@ -142,11 +146,16 @@ public class Clowder {
 	private float canDeclareTime = 0;
 	private float warTime = 0;
 
-	public static final float tentRate = 0.1F;
+	public static final float tentRate = -0.8F;
+	public static final float BlastRate = 0.3F;
+	public static final float GrainRate = 0.2F;
+	public static final float UniRate = 0.6F;
 	public static final float statueRate = 0.5F;
 	public static final float flagRate = 0.1F;
 	public static final float flagReq = 1.0F;
 
+	//this mod is so fucking retarded I guarantee you theres like 16 different ways this shit can be exploited
+	//or is just SHIT coding. and that's coming from a MCHELI developer.
 
 
 

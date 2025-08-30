@@ -521,6 +521,8 @@ public class ClowderEvents {
 					}
 				}
 			}
+
+			//todo if our fixed shit for reg flags doesn't work, take the code above and apply it to our conquest takeover for normal flag logic.
 			
 			return false;
 			
@@ -540,6 +542,10 @@ public class ClowderEvents {
 	 * @param world
 	 * @param player
 	 */
+
+	//todo: hand made guns gun renders destroy this overlay because
+	// *insert random fucking opengl error or some fucking reason here*
+	// so to fix this, track back this annoying shithole logic and fix that how god intended instead
 	private void flagPopup(World world, EntityPlayer player) {
 
 		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords((int)player.posX, (int)player.posZ - 1);

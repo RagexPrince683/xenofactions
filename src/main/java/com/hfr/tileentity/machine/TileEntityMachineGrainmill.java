@@ -49,14 +49,14 @@ public class TileEntityMachineGrainmill extends TileEntityMachineBase {
 					
 					if(o != null && o.zone == Zone.FACTION) {
 						if(owner != null)
-							owner.addPrestigeGen(-Clowder.tentRate, worldObj);
+							owner.addPrestigeGen(-Clowder.GrainRate, worldObj);
 						owner = o.owner;
-						owner.addPrestigeGen(Clowder.tentRate, worldObj);
+						owner.addPrestigeGen(Clowder.GrainRate, worldObj);
 						
 					} else {
 						
 						if(owner != null)
-							owner.addPrestigeGen(-Clowder.tentRate, worldObj);
+							owner.addPrestigeGen(-Clowder.GrainRate, worldObj);
 						
 						owner = null;
 					}
@@ -83,7 +83,7 @@ public class TileEntityMachineGrainmill extends TileEntityMachineBase {
 				progress = 0;
 				
 				if(owner != null) {
-					owner.addPrestigeGen(-Clowder.tentRate, worldObj);
+					owner.addPrestigeGen(-Clowder.GrainRate, worldObj);
 					owner = null;
 				}
 			}

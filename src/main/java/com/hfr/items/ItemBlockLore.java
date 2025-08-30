@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.hfr.blocks.ModBlocks;
 
+import com.hfr.clowder.Clowder;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
@@ -77,21 +78,22 @@ public class ItemBlockLore extends ItemBlock {
 		if(field_150939_a == ModBlocks.machine_uni) {
 			list.add("Requires sky access and foundation");
 			list.add("Generates research points over time");
-			list.add("+0.1 prestige gen / hour");
+			list.add(Clowder.UniRate +" prestige gen / hour");
 		}
 		if(field_150939_a == ModBlocks.machine_grainmill) {
 			list.add("Requires sky access and foundation");
 			list.add("Grinds wheat into flour");
-			list.add("+0.1 prestige gen / hour");
+			list.add(Clowder.GrainRate + " prestige gen / hour");
 		}
 		if(field_150939_a == ModBlocks.machine_blastfurnace) {
 			list.add("Requires foundation but no sky access");
 			list.add("Smelts iron ingots and ore into steel");
-			list.add("+0.1 prestige gen / hour");
+			list.add(Clowder.BlastRate + " prestige gen / hour");
 		}
 		if(field_150939_a == ModBlocks.machine_coalmine) {
 			list.add("Requires sky access and foundation");
 			list.add("Uses miners and supplies to generate coal");
+			//todo really? NO one uses this, why not give it prest gen?
 		}
 
 		if(field_150939_a == ModBlocks.hesco_block) {
@@ -124,12 +126,13 @@ public class ItemBlockLore extends ItemBlock {
 		if(field_150939_a == ModBlocks.tp_tent) {
 			list.add("Requires sky access and foundation");
 			list.add("Allows to create faction teleport/TP/waypoints nearby");
-			list.add("+0.1 prestige gen / hour");
+			list.add(Clowder.tentRate + " prestige gen / hour");
+			//retard alert!
 		}
 		if(field_150939_a == ModBlocks.statue) {
 			list.add("Requires sky access and foundation");
 			list.add("Low-level prestige generator");
-			list.add("+0.5 prestige gen / hour");
+			list.add(Clowder.statueRate + " prestige gen / hour");
 		}
 
 		if(field_150939_a == ModBlocks.machine_coalgen) {

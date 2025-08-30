@@ -67,14 +67,14 @@ public class TileEntityMachineBlastFurnace extends TileEntityMachineBase {
 					
 					if(o != null && o.zone == Zone.FACTION) {
 						if(owner != null)
-							owner.addPrestigeGen(-Clowder.tentRate, worldObj);
+							owner.addPrestigeGen(-Clowder.BlastRate, worldObj);
 						owner = o.owner;
-						owner.addPrestigeGen(Clowder.tentRate, worldObj);
+						owner.addPrestigeGen(Clowder.BlastRate, worldObj);
 						
 					} else {
 						
 						if(owner != null)
-							owner.addPrestigeGen(-Clowder.tentRate, worldObj);
+							owner.addPrestigeGen(-Clowder.BlastRate, worldObj);
 						
 						owner = null;
 					}
