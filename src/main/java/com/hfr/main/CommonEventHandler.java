@@ -77,17 +77,22 @@ import net.minecraftforge.event.entity.living.LivingSpawnEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.BlockEvent.BreakEvent;
 
+import static com.hfr.main.MainRegistry.border;
+
 public class CommonEventHandler {
 
 	//all the serverside crap for vehicle radars
 	@SubscribeEvent
 	public void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		
+		//todo marker
 		EntityPlayer player = event.player;
 		
 		if(!player.worldObj.isRemote && event.phase == Phase.START) {
-			
-			handleBorder(player);
+
+
+			if (border) {
+				handleBorder(player);
+			}
 			
 			player.worldObj.theProfiler.startSection("xr_radar");
 
@@ -346,34 +351,35 @@ public class CommonEventHandler {
 		return z;
 	}
 
-	
-	public boolean isWithinNotifRange(double x, double z) {
+	//unused
+	//public boolean isWithinNotifRange(double x, double z) {
 
-		if(x > MainRegistry.borderPosX - MainRegistry.borderBuffer)
-			return true;
-		if(x < MainRegistry.borderNegX + MainRegistry.borderBuffer)
-			return true;
-		if(z > MainRegistry.borderPosZ - MainRegistry.borderBuffer)
-			return true;
-		if(z < MainRegistry.borderNegZ + MainRegistry.borderBuffer)
-			return true;
-		
-		return false;
-	}
-	
-	public boolean leftBorder(double x, double z) {
+	//	if(x > MainRegistry.borderPosX - MainRegistry.borderBuffer)
+	//		return true;
+	//	if(x < MainRegistry.borderNegX + MainRegistry.borderBuffer)
+	//		return true;
+	//	if(z > MainRegistry.borderPosZ - MainRegistry.borderBuffer)
+	//		return true;
+	//	if(z < MainRegistry.borderNegZ + MainRegistry.borderBuffer)
+	//		return true;
+	//
+	//	return false;
+	//}
 
-		if(x > MainRegistry.borderPosX)
-			return true;
-		if(x < MainRegistry.borderNegX)
-			return true;
-		if(z > MainRegistry.borderPosZ)
-			return true;
-		if(z < MainRegistry.borderNegZ)
-			return true;
-		
-		return false;
-	}
+	//unused
+	//public boolean leftBorder(double x, double z) {
+
+	//	if(x > MainRegistry.borderPosX)
+	//		return true;
+	//	if(x < MainRegistry.borderNegX)
+	//		return true;
+	//	if(z > MainRegistry.borderPosZ)
+	//		return true;
+	//	if(z < MainRegistry.borderNegZ)
+	//		return true;
+	//
+	//	return false;
+	//}
 	
 	public List<EntityPlayer> getPlayersInAABB(World world, double x, double y, double z, double range) {
 		
@@ -396,25 +402,31 @@ public class CommonEventHandler {
 	//handles the anti-mob wand
 
 	public void handlePlayerBorder(EntityPlayerMP player) {
-		double posX = player.posX;
-		double posZ = player.posZ;
 
-		// Wraparound logic for players
-		if (posX < MainRegistry.borderNegX || posX > MainRegistry.borderPosX ||
-				posZ < MainRegistry.borderNegZ || posZ > MainRegistry.borderPosZ) {
+		if (border) {
 
-			//player.mountEntity(null); // Dismount from any vehicle
-			//no dont do that we are going to keep the player on the vehicle hopefully
-			player.playerNetServerHandler.setPlayerLocation(
-					wrapX(posX),
-					player.posY,
-					wrapZ(posZ),
-					player.rotationYaw,
-					player.rotationPitch
-			);
+			double posX = player.posX;
+			double posZ = player.posZ;
 
-			// Send notification
-			player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "You have crossed the world border and wrapped around!"));
+			//todo marker
+
+			// Wraparound logic for players
+			if (posX < MainRegistry.borderNegX || posX > MainRegistry.borderPosX ||
+					posZ < MainRegistry.borderNegZ || posZ > MainRegistry.borderPosZ) {
+
+				//player.mountEntity(null); // Dismount from any vehicle
+				//no dont do that we are going to keep the player on the vehicle hopefully
+				player.playerNetServerHandler.setPlayerLocation(
+						wrapX(posX),
+						player.posY,
+						wrapZ(posZ),
+						player.rotationYaw,
+						player.rotationPitch
+				);
+
+				// Send notification
+				player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "You have crossed the world border and wrapped around!"));
+			}
 		}
 	}
 
@@ -429,14 +441,19 @@ public class CommonEventHandler {
 		//}
 		//unoptimized gpt slop
 
-		if (!event.world.isRemote && event.phase == Phase.START) {
-			for (Object entity : event.world.loadedEntityList) {
-				// Handle players with player-specific logic
-				if (entity instanceof EntityPlayerMP) {
-					handlePlayerBorder((EntityPlayerMP) entity);
-				} else {
-					// Handle all other entities
-					handleBorder((Entity) entity);
+		//todo marker
+
+		if (border) {
+
+			if (!event.world.isRemote && event.phase == Phase.START) {
+				for (Object entity : event.world.loadedEntityList) {
+					// Handle players with player-specific logic
+					if (entity instanceof EntityPlayerMP) {
+						handlePlayerBorder((EntityPlayerMP) entity);
+					} else {
+						// Handle all other entities
+						handleBorder((Entity) entity);
+					}
 				}
 			}
 		}
@@ -499,16 +516,17 @@ public class CommonEventHandler {
 		}
 	}
 
-	private boolean isNearBorder(Entity entity) {
-		double borderPadding = 5.0; // Check entities within 5 blocks of the border
-		double posX = entity.posX;
-		double posZ = entity.posZ;
+	//unused
+	//private boolean isNearBorder(Entity entity) {
+	//	double borderPadding = 5.0; // Check entities within 5 blocks of the border
+	//	double posX = entity.posX;
+	//	double posZ = entity.posZ;
 
-		return posX < MainRegistry.borderNegX + borderPadding ||
-				posX > MainRegistry.borderPosX - borderPadding ||
-				posZ < MainRegistry.borderNegZ + borderPadding ||
-				posZ > MainRegistry.borderPosZ - borderPadding;
-	}
+	//	return posX < MainRegistry.borderNegX + borderPadding ||
+	//			posX > MainRegistry.borderPosX - borderPadding ||
+	//			posZ < MainRegistry.borderNegZ + borderPadding ||
+	//			posZ > MainRegistry.borderPosZ - borderPadding;
+	//}
 
 
 	//for manipulating zombert AI and handling spawn control
