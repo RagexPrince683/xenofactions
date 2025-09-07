@@ -39,6 +39,9 @@ public class TileEntityWallImage extends TileEntity {
     @SideOnly(Side.CLIENT)
     public static final Map<String, ResourceLocation> clientCache = new HashMap<String, ResourceLocation>();
 
+    private BufferedImage pendingImage;
+
+
     @Override
     public Packet getDescriptionPacket() {
         NBTTagCompound tag = new NBTTagCompound();
@@ -97,47 +100,57 @@ public class TileEntityWallImage extends TileEntity {
 
     @Override
     public void updateEntity() {
-        if (worldObj != null && worldObj.isRemote) {
-            if ((texture == null) && (imageURL != null) && (imageURL.length() > 0) && !downloading) {
-                // compute cache key: prefer textureKey if available so we can force reloads
-                final String cacheKey = (textureKey != null && textureKey.length() > 0) ? textureKey : imageURL;
+        if (worldObj == null || !worldObj.isRemote) return; // only run client-side
 
-                if (clientCache.containsKey(cacheKey)) {
-                    texture = clientCache.get(cacheKey);
-                } else {
+        // 1. If we have a texture ready in cache, use it
+        if (texture == null && imageURL != null && imageURL.length() > 0) {
+            final String cacheKey = (textureKey != null && textureKey.length() > 0) ? textureKey : imageURL;
+
+            if (clientCache.containsKey(cacheKey)) {
+                texture = clientCache.get(cacheKey);
+            } else {
+                // 2. Start download thread if not already downloading
+                if (!downloading) {
                     downloading = true;
                     final String url = imageURL;
-                    final String finalCacheKey = cacheKey;
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                BufferedImage img = ImageIO.read(new URL(url));
-                                if (img == null) throw new IOException("ImageIO returned null for " + url);
 
-                                // resize helper from earlier (keep it if you already added)
-                                //BufferedImage scaled = scaleAndMaybePad(img, 256, false);
-                                BufferedImage scaled = scaleAndPad(img, 256);
+                    new Thread(() -> {
+                        try {
+                            BufferedImage img = ImageIO.read(new URL(url));
+                            if (img == null) throw new IOException("ImageIO returned null for " + url);
 
-                                DynamicTexture dyn = new DynamicTexture(scaled);
+                            // scale and pad
+                            BufferedImage scaled = scaleAndPad(img, 256);
 
-                                // Use the cacheKey as the resource name to allow forced reloads
-                                ResourceLocation rl = new ResourceLocation("yourmodid", finalCacheKey);
-                                Minecraft.getMinecraft().getTextureManager().loadTexture(rl, dyn);
+                            // store pending image to be picked up by main thread
+                            pendingImage = scaled;
 
-                                clientCache.put(finalCacheKey, rl);
-                                texture = rl;
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            } finally {
-                                downloading = false;
-                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } finally {
+                            downloading = false; // allow future retries
                         }
                     }, "WallImageDownloader-" + hashCode()).start();
                 }
             }
         }
+
+        // 3. If the pending image is ready, create DynamicTexture on main thread
+        if (pendingImage != null) {
+            DynamicTexture dyn = new DynamicTexture(pendingImage);
+
+            // unique resource location per image
+            ResourceLocation rl = new ResourceLocation("yourmodid", "wallimage_" + Math.abs((imageURL + "_" + currentIndex).hashCode()));
+
+            Minecraft.getMinecraft().getTextureManager().loadTexture(rl, dyn);
+
+            clientCache.put((textureKey != null && textureKey.length() > 0) ? textureKey : imageURL, rl);
+            texture = rl;
+
+            pendingImage = null; // clear after upload
+        }
     }
+
 
     @SideOnly(Side.CLIENT)
     public ResourceLocation getTexture() {
