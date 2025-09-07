@@ -5,6 +5,9 @@ import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.Packet;
+import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 
@@ -35,6 +38,18 @@ public class TileEntityWallImage extends TileEntity {
     // change client cache to key by textureKey if present else url
     @SideOnly(Side.CLIENT)
     public static final Map<String, ResourceLocation> clientCache = new HashMap<String, ResourceLocation>();
+
+    @Override
+    public Packet getDescriptionPacket() {
+        NBTTagCompound tag = new NBTTagCompound();
+        writeToNBT(tag);
+        return new S35PacketUpdateTileEntity(xCoord, yCoord, zCoord, 1, tag);
+    }
+
+    @Override
+    public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity pkt) {
+        readFromNBT(pkt.func_148857_g());
+    }
 
     @Override
     public void readFromNBT(NBTTagCompound tag) {

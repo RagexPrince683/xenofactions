@@ -10,6 +10,8 @@ import org.lwjgl.opengl.GL11;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
+//no longer used I guess. Thanks schizo, I mean chatgpt.
+
 @SideOnly(Side.CLIENT)
 public class TileEntityWallImageRenderer extends TileEntitySpecialRenderer {
     private static final float THICK = 1.0F / 16.0F; // must match Block thickness

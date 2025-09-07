@@ -37,12 +37,14 @@ public class BlockWallImage extends BlockContainer {
     @Override
     public void onBlockPlacedBy(World world, int x, int y, int z, EntityLivingBase placer, ItemStack stack) {
         int facing = 2; // default north
-        // try to derive facing from player's rotation so that block faces player
         int dir = MathHelper.floor_double((placer.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3;
-        if (dir == 0) facing = 2; // north
-        if (dir == 1) facing = 5; // east
-        if (dir == 2) facing = 3; // south
-        if (dir == 3) facing = 4; // west
+
+        // Flip directions so block faces player instead of facing away
+        if (dir == 0) facing = 3; // player facing south → block faces north
+        if (dir == 1) facing = 4; // player facing west  → block faces east
+        if (dir == 2) facing = 2; // player facing north → block faces south
+        if (dir == 3) facing = 5; // player facing east  → block faces west
+
         world.setBlockMetadataWithNotify(x, y, z, facing, 2);
     }
 
