@@ -71,6 +71,24 @@ public class TileEntityWallImage extends TileEntity {
         tag.setInteger("cindex", currentIndex);
     }
 
+    private static BufferedImage scaleAndPad(BufferedImage input, int targetSize) {
+        int ow = input.getWidth();
+        int oh = input.getHeight();
+
+        // scale proportionally
+        double scale = Math.min((double)targetSize / ow, (double)targetSize / oh);
+        int nw = (int)(ow * scale);
+        int nh = (int)(oh * scale);
+
+        // center on a square canvas
+        BufferedImage out = new BufferedImage(targetSize, targetSize, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = out.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.drawImage(input, (targetSize - nw) / 2, (targetSize - nh) / 2, nw, nh, null);
+        g.dispose();
+        return out;
+    }
+
     @Override
     public void updateEntity() {
         if (worldObj != null && worldObj.isRemote) {
