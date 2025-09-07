@@ -26,10 +26,10 @@ public class RenderWallImage extends TileEntitySpecialRenderer {
         // rotate quad to match block facing
         switch (meta) {
             case 2: // north (-Z)
-                GL11.glRotatef(180F, 0F, 1F, 0F);
+                GL11.glRotatef(0F, 0F, 1F, 0F);
                 break;
             case 3: // south (+Z)
-                GL11.glRotatef(0F, 0F, 1F, 0F);
+                GL11.glRotatef(180F, 0F, 1F, 0F);
                 break;
             case 4: // west (-X)
                 GL11.glRotatef(90F, 0F, 1F, 0F);
