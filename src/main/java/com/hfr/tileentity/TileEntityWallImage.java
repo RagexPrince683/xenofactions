@@ -9,6 +9,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
@@ -16,18 +17,22 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+// inside TileEntityWallImage.java (existing imports kept)
 public class TileEntityWallImage extends TileEntity {
     public String ownerUUID = "";
-    public String imageName = ""; // name in player's catalog
-    public String imageURL = "";  // actual URL
-    public String textureKey = ""; // resource name used with texture manager
+    public String imageName = "";
+    public String imageURL = "";
+    public String textureKey = "";
+
+    // NEW: track which index from owner's list is currently applied (-1 = none)
+    public int currentIndex = -1;
 
     @SideOnly(Side.CLIENT)
-    private ResourceLocation texture; // transient
+    private ResourceLocation texture;
     @SideOnly(Side.CLIENT)
     private boolean downloading = false;
 
-    // simple client-side cache shared by all tile entities (url -> ResourceLocation)
+    // change client cache to key by textureKey if present else url
     @SideOnly(Side.CLIENT)
     public static final Map<String, ResourceLocation> clientCache = new HashMap<String, ResourceLocation>();
 
@@ -38,6 +43,7 @@ public class TileEntityWallImage extends TileEntity {
         imageName = tag.getString("iname");
         imageURL = tag.getString("iurl");
         textureKey = tag.getString("tkey");
+        currentIndex = tag.hasKey("cindex") ? tag.getInteger("cindex") : -1;
     }
 
     @Override
@@ -47,27 +53,39 @@ public class TileEntityWallImage extends TileEntity {
         tag.setString("iname", imageName == null ? "" : imageName);
         tag.setString("iurl", imageURL == null ? "" : imageURL);
         tag.setString("tkey", textureKey == null ? "" : textureKey);
+        tag.setInteger("cindex", currentIndex);
     }
 
     @Override
     public void updateEntity() {
         if (worldObj != null && worldObj.isRemote) {
             if ((texture == null) && (imageURL != null) && (imageURL.length() > 0) && !downloading) {
-                if (clientCache.containsKey(imageURL)) {
-                    texture = clientCache.get(imageURL);
+                // compute cache key: prefer textureKey if available so we can force reloads
+                final String cacheKey = (textureKey != null && textureKey.length() > 0) ? textureKey : imageURL;
+
+                if (clientCache.containsKey(cacheKey)) {
+                    texture = clientCache.get(cacheKey);
                 } else {
                     downloading = true;
                     final String url = imageURL;
+                    final String finalCacheKey = cacheKey;
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
                             try {
                                 BufferedImage img = ImageIO.read(new URL(url));
-                                if (img == null) throw new IOException("ImageIO returned null");
-                                DynamicTexture dyn = new DynamicTexture(img);
-                                ResourceLocation rl = new ResourceLocation("yourmodid", "dynimg_" + Math.abs(url.hashCode()));
+                                if (img == null) throw new IOException("ImageIO returned null for " + url);
+
+                                // resize helper from earlier (keep it if you already added)
+                                BufferedImage scaled = scaleAndMaybePad(img, 256, false);
+
+                                DynamicTexture dyn = new DynamicTexture(scaled);
+
+                                // Use the cacheKey as the resource name to allow forced reloads
+                                ResourceLocation rl = new ResourceLocation("yourmodid", finalCacheKey);
                                 Minecraft.getMinecraft().getTextureManager().loadTexture(rl, dyn);
-                                clientCache.put(url, rl);
+
+                                clientCache.put(finalCacheKey, rl);
                                 texture = rl;
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -83,9 +101,51 @@ public class TileEntityWallImage extends TileEntity {
 
     @SideOnly(Side.CLIENT)
     public ResourceLocation getTexture() {
-        if (texture == null && imageURL != null) {
+        if (texture == null && (textureKey != null && textureKey.length() > 0)) {
+            texture = clientCache.get(textureKey);
+        } else if (texture == null && imageURL != null) {
             texture = clientCache.get(imageURL);
         }
         return texture;
     }
+
+    // add your scaleAndMaybePad helper here (or keep the one you already added)
+    @SideOnly(Side.CLIENT)
+    private static BufferedImage scaleAndMaybePad(BufferedImage src, int maxDim, boolean padSquare) {
+        // same code as previously provided — keep it here
+        int w = src.getWidth();
+        int h = src.getHeight();
+        float scale = 1.0f;
+        if (w > maxDim || h > maxDim) {
+            if (w >= h) scale = (float) maxDim / (float) w;
+            else scale = (float) maxDim / (float) h;
+        }
+        int newW = Math.max(1, Math.round(w * scale));
+        int newH = Math.max(1, Math.round(h * scale));
+
+        BufferedImage tmp = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = tmp.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.drawImage(src, 0, 0, newW, newH, null);
+        g2.dispose();
+
+        if (padSquare) {
+            int side = Math.max(newW, newH);
+            BufferedImage square = new BufferedImage(side, side, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = square.createGraphics();
+            g.setComposite(AlphaComposite.Clear);
+            g.fillRect(0, 0, side, side);
+            g.setComposite(AlphaComposite.SrcOver);
+            int ox = (side - newW) / 2;
+            int oy = (side - newH) / 2;
+            g.drawImage(tmp, ox, oy, null);
+            g.dispose();
+            return square;
+        } else {
+            return tmp;
+        }
+    }
 }
+
