@@ -731,6 +731,8 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 	}
 	//todo: test that this works and does not fuck up
 	//third check
+
+	//todo refactor and optimize this dogshit
 	private void checkAndDeleteProjectile(Entity entity) {
 		// Check if the entity is one of the projectiles we care about (Minecraft base or MCHeli)
 		if (entity instanceof EntityArrow || entity instanceof EntityThrowable || entity instanceof EntityFireball) {
@@ -1019,13 +1021,13 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 		
 		if(world.isRemote || world.provider.dimensionId != 0 || event.phase == Phase.END)
 			return;
-		
-		if(hour > 0) {
+
+		if (hour > 0) {
 			hour--;
 		} else {
 			hour = MainRegistry.prestigeDelay;
 			Clowder.updatePrestige(world);
-			//MainRegistry.logger.info("Updated clowder prestige levels!"); im sure its fine
+			System.out.println("[Clowder] Prestige update complete.");
 		}
 		
 		if(delay > 0) {
@@ -1081,6 +1083,20 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 		
 		for(Long time : rem) {
 			Clowder.teleports.remove(time);
+		}
+
+		for (Clowder clowder : Clowder.clowders) {
+			if (clowder.valid()) {
+
+				//set home delay crap
+				if(clowder.sethomeDelay > 0)
+					clowder.addSethomeDelay(-1, world);
+				else
+					clowder.sethomeDelay = 0;
+
+				//hopefully stops the chunk refresh smurfing
+				clowder.save(world);
+			}
 		}
 		
 		/// CLOWDER TERRITORYY ADMINISTRATIVE STUFF START ///

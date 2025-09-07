@@ -116,14 +116,7 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 
-		//if(cmd.equals("setallywarp")) {
-		//	cmdSetAllyWarp(sender);
-		//}
-//
-		//if(cmd.equals("allywarp")) {
-		//	cmdAllyWarp(sender, args[1]);
-		//}
-		//already defined
+
 
 
 
@@ -192,12 +185,12 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 
-		if(cmd.equals("befriend") && args.length > 1) {
+		if(cmd.equals("befriend") || cmd.equals("ally") && args.length > 1) {
 			cmdBefriend(sender, args[1]);
 			return;
 		}
 
-		if(cmd.equals("acceptfriend") && args.length > 1) {
+		if(cmd.equals("acceptfriend") || cmd.equals("acceptally") && args.length > 1) {
 			cmdAcceptFriend(sender, args[1]);
 			return;
 		}
@@ -217,7 +210,7 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 
-		if (cmd.equals("unfriend") && args.length > 1) {
+		if (cmd.equals("unfriend") || cmd.equals("unally") && args.length > 1) {
 			cmdUnfriend(sender, args[1]);
 			return;
 		}

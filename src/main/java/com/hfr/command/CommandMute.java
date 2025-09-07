@@ -31,6 +31,9 @@ public class CommandMute extends CommandBase {
         // For example, you could store the mute information in a database or a file
         MuteManager.mute(playerName, durationSeconds);
         sender.addChatMessage(new ChatComponentText("Player " + playerName + " has been muted for " + durationSeconds + " seconds. Reason: " + reason));
+        //playerName.addChatMessage(new ChatComponentText("You have been muted for " + durationSeconds + " seconds. Reason: " + reason));
+        //todo tell the player they are muted
+
     }
 
 

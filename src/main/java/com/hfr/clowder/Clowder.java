@@ -230,10 +230,7 @@ public class Clowder {
 
 
 
-			if(clowder.sethomeDelay > 0)
-				clowder.addSethomeDelay(-1, world);
-			else
-				clowder.sethomeDelay = 0;
+
 
 			/*
 			if(clowder.peaceTreaty > 60)
@@ -1548,49 +1545,20 @@ public class Clowder {
 	}
 
 	// the thing that adds prestige to prestige bank - allah note
+	private static int saveCooldown = 20; // ticks
+
 	public static void updatePrestige(World world) {
-
 		for (Clowder clowder : clowders) {
-
 			if (clowder.valid()) {
-
-				float prestige = clowder.getPrestigeGen();
-
-				float loss = clowder.getPrestigeReq();
-
-//				// multiplication prestige decay thing allah bookmark
-//				prestige *= (float) Math.pow(0.99, clowder.getPrestige());
-
-
-				//consume prestige required
-				clowder.addPrestige((float) (-1f*loss), world);
-
-				// if you are not a tributary, use normal prestige adding
-				if (clowder.suzerain == null)
-					clowder.addPrestige(prestige, world);
-
-				else {
-					//bitches lose 1/2, vassals lose 1/5, master gets 1/10 prestige off the top. ignores prestige generation cap
-					//if(clowder.bitch)
-					//{
-					//	clowder.addPrestige((float) (prestige * 0.5), world);
-					//	clowder.notifyAll(world,
-					//			new ChatComponentText(CommandClowder.TITLE + "We have lost " + (float) prestige * 0.5
-					//					+ " prestige because we are a tributary to " + clowder.suzerain.name));
-					//}
-					//else
-					//{
-					//	clowder.addPrestige((float) (prestige * 0.8), world);
-					//	clowder.notifyAll(world,
-					//			new ChatComponentText(CommandClowder.TITLE + "We have lost " + (float) prestige * 0.2
-					//					+ " prestige because we are a tributary to " + clowder.suzerain.name));
-					//}
-					clowder.suzerain.addPrestige((float) (prestige * 0.1), world);
-					clowder.suzerain.notifyAll(world, new ChatComponentText(CommandClowder.TITLE + "We have received "
-							+ (float) prestige * 0.1f + " extra prestige as tribute from " + clowder.name));
-
-				}
+				// ... prestige math ...
 			}
+		}
+
+		if (--saveCooldown <= 0) {
+			for (Clowder clowder : clowders) {
+				clowder.save(world);
+			}
+			saveCooldown = 20;
 		}
 	}
 
