@@ -552,6 +552,10 @@ public class MainRegistry
 		GameRegistry.registerTileEntity(TileEntityMachineSawmill.class, "tileentity_hfr_sawmill");
 		GameRegistry.registerTileEntity(TileEntityMachineEFurnace.class, "tileentity_hfr_efurnace");
 
+		BlockWallImage.instance = new BlockWallImage();
+		GameRegistry.registerBlock(BlockWallImage.instance, "wall_image_block");
+		GameRegistry.registerTileEntity(TileEntityWallImage.class, "tile_wall_image");
+
 		int id = 0;
 	    EntityRegistry.registerModEntity(EntityMissileAT.class, "entity_missile_v2AT", id++, this, 1000, 1, true);
 	    EntityRegistry.registerModEntity(EntityMissileGeneric.class, "entity_missile_v2", id++, this, 1000, 1, true);
@@ -703,6 +707,11 @@ public class MainRegistry
 		event.registerServerCommand(new CommandUnmute());
 		MarketData.loadMarketData();
 		//and now we just pray that the market data does not cope over serverside
+
+		//I'm flying too high
+		//MinecraftServer.getServer().getCommandManager().registerCommand(new CommandXCustomImage());
+		event.registerServerCommand(new CommandXCustomImage());
+
 	}
 
 	//only one thing
