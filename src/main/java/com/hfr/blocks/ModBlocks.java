@@ -232,8 +232,8 @@ public class ModBlocks {
 				// texture name is optional (TESR will render dynamic texture) but keep a fallback
 				.setBlockTextureName(RefStrings.MODID + ":wall_image_fallback");
 
-		GameRegistry.registerBlock(wallImageBlock, "wall_image_block");
-		GameRegistry.registerTileEntity(TileEntityWallImage.class, "tile_wall_image");
+		//GameRegistry.registerBlock(wallImageBlock, "wall_image_block");
+		//GameRegistry.registerTileEntity(TileEntityWallImage.class, "tile_wall_image");
 
 		
 		seal_controller = new BlockSeal(Material.rock).setStepSound(soundTypeMetal).setBlockName("seal_controller").setHardness(5.0F).setResistance(10000.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":concrete");
@@ -307,6 +307,8 @@ public class ModBlocks {
 	}
 
 	private static void registerBlock() {
+
+		GameRegistry.registerBlock(wallImageBlock, "wall_image_block");
 
 
 		GameRegistry.registerBlock(barricade, ItemBlockLore.class, barricade.getUnlocalizedName());
