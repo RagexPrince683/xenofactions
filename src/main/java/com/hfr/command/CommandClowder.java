@@ -1074,11 +1074,11 @@ public class CommandClowder extends CommandBase {
 					{
 						clowder.setHome(player.posX, player.posY, player.posZ, player);
 						clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Home set!"));
-						clowder.addSethomeDelay(10, player.worldObj); //10 minute delay
+						clowder.addSethomeDelay(600, player.worldObj); //10 minute delay
 					}
 					else {
 						sender.addChatMessage(
-								new ChatComponentText(ERROR + "Please wait " + (int)clowder.sethomeDelay + " minutes to set home again!"));
+								new ChatComponentText(ERROR + "Please wait " + (int)clowder.sethomeDelay + " seconds to set home again!"));
 					}
 
 
@@ -1116,11 +1116,11 @@ public class CommandClowder extends CommandBase {
 					{
 						clowder.setAllyWarp(player.posX, player.posY, player.posZ, player);
 						clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Ally Warp set!"));
-						clowder.addSethomeDelay(10, player.worldObj); //10 minute delay
+						clowder.addSethomeDelay(600, player.worldObj); //10 minute delay
 					}
 					else {
 						sender.addChatMessage(
-								new ChatComponentText(ERROR + "Please wait " + (int)clowder.sethomeDelay + " minutes to move the alliance rally-point!"));
+								new ChatComponentText(ERROR + "Please wait " + (int)clowder.sethomeDelay + " seconds to move the alliance rally-point!"));
 					}
 
 
