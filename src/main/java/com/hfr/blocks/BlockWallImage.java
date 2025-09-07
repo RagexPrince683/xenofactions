@@ -118,6 +118,9 @@ public class BlockWallImage extends BlockContainer {
         tie.imageName = chosenName;
         tie.imageURL = chosenURL;
 
+        //tie.texture = null; // force TESR to re-download new image already doing
+        tie.downloading = false; // reset flag so thread can run
+
         // force reload on client
         tie.textureKey = "dynimg_" + Math.abs((chosenURL + "_" + next).hashCode()) + "_" + System.currentTimeMillis();
         tie.texture = null; // <-- critical: allows updateEntity to reload new image

@@ -33,7 +33,7 @@ public class TileEntityWallImage extends TileEntity {
     @SideOnly(Side.CLIENT)
     public ResourceLocation texture;
     @SideOnly(Side.CLIENT)
-    private boolean downloading = false;
+    public boolean downloading = false;
 
     // change client cache to key by textureKey if present else url
     @SideOnly(Side.CLIENT)
