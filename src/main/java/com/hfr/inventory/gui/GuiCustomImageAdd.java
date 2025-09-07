@@ -25,7 +25,7 @@ public class GuiCustomImageAdd extends GuiScreen {
         Keyboard.enableRepeatEvents(true);
         this.urlField = new GuiTextField(this.fontRendererObj, this.width / 2 - 100, this.height / 2 - 10, 200, 20);
         this.urlField.setFocused(true);
-        this.urlField.setMaxStringLength(2048); // allow long URLs
+        this.urlField.setMaxStringLength(8192); // allow long URLs
 
         this.buttonList.add(new GuiButton(0, this.width / 2 - 100, this.height / 2 + 20, 200, 20, "Save"));
     }
