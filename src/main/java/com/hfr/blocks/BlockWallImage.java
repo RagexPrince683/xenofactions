@@ -37,8 +37,8 @@ public class BlockWallImage extends BlockContainer {
     @Override
     public void onBlockPlacedBy(World world, int x, int y, int z, EntityLivingBase placer, ItemStack stack) {
         int facing = 2; // default north
-        // try to derive facing from player's rotation so that block faces player OPPOSITE
-        int dir = MathHelper.floor_double((placer.rotationYaw * 4.0F / -360.0F) + 0.5D) & 3;
+        // try to derive facing from player's rotation so that block faces player
+        int dir = MathHelper.floor_double((placer.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3;
         if (dir == 0) facing = 2; // north
         if (dir == 1) facing = 5; // east
         if (dir == 2) facing = 3; // south
