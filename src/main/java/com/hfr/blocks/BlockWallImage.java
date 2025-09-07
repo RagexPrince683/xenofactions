@@ -125,6 +125,9 @@ public class BlockWallImage extends BlockContainer {
         tie.markDirty();
         world.markBlockForUpdate(x, y, z);
 
+        System.out.println("Old index: " + tie.currentIndex + ", new index: " + next);
+        System.out.println("Chosen name: " + chosenName + ", URL: " + chosenURL);
+
         player.addChatMessage(new ChatComponentText("Image set to [" + next + "] " + chosenName));
         return true;
     }
