@@ -9,10 +9,13 @@ import com.hfr.items.*;
 import com.hfr.lib.RefStrings;
 import com.hfr.main.MainRegistry;
 
+import com.hfr.tileentity.TileEntityWallImage;
 import cpw.mods.fml.common.registry.GameRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.init.Blocks;
+
+import static net.minecraft.block.Block.soundTypeWood;
 
 public class ModBlocks {
 	
@@ -146,6 +149,8 @@ public class ModBlocks {
 
 	public static Block barricade;
 
+	public static Block wallImageBlock;
+
 	//public static Block teleporter;
 
 	public static Block hesco_block;
@@ -217,6 +222,18 @@ public class ModBlocks {
 		uni_foundation = new BlockSpeedy(Material.rock, 0.15D).setStepSound(soundTypeConcrete).setBlockName("uni_foundation").setHardness(5.0F).setResistance(1.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":uni_foundation");
 		asphalt = new BlockSpeedy(Material.rock, 0.25D).setStepSound(soundTypeConcrete).setBlockName("asphalt").setHardness(5.0F).setResistance(30.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":asphalt");
 
+		// new wall image block (thin image-on-wall block)
+		wallImageBlock = new BlockWallImage()
+				.setBlockName("wall_image_block")
+				.setHardness(0.5F)
+				.setResistance(1.0F)
+				.setStepSound(soundTypeWood) // treat like wood; change if you want
+				.setCreativeTab(MainRegistry.tab)
+				// texture name is optional (TESR will render dynamic texture) but keep a fallback
+				.setBlockTextureName(RefStrings.MODID + ":wall_image_fallback");
+
+		GameRegistry.registerBlock(wallImageBlock, "wall_image_block");
+		GameRegistry.registerTileEntity(TileEntityWallImage.class, "tile_wall_image");
 
 		
 		seal_controller = new BlockSeal(Material.rock).setStepSound(soundTypeMetal).setBlockName("seal_controller").setHardness(5.0F).setResistance(10000.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":concrete");
@@ -245,7 +262,7 @@ public class ModBlocks {
 		
 		machine_net = new MachineNet(Material.cloth).setStepSound(Block.soundTypeCloth).setBlockName("machine_net").setHardness(0.0F).setResistance(0.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_net");
 		machine_uni = new MachineUni(Material.rock).setStepSound(Block.soundTypeStone).setBlockName("machine_uni").setHardness(5.0F).setResistance(0.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_uni");
-		machine_grainmill = new MachineGrainmill(Material.wood).setStepSound(Block.soundTypeWood).setBlockName("machine_grainmill").setHardness(5.0F).setResistance(0.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_grainmill");
+		machine_grainmill = new MachineGrainmill(Material.wood).setStepSound(soundTypeWood).setBlockName("machine_grainmill").setHardness(5.0F).setResistance(0.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_grainmill");
 		machine_blastfurnace = new MachineBlastFurnace(Material.rock).setStepSound(soundTypeConcrete).setBlockName("machine_blastfurnace").setHardness(5.0F).setResistance(0.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_blastfurnace");
 
 		machine_coalmine = new MachineCoalMine(Material.rock).setStepSound(soundTypeMetal).setBlockName("machine_coalmine").setHardness(5.0F).setResistance(0.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_coalmine");
@@ -254,7 +271,7 @@ public class ModBlocks {
 		machine_tradeport = new MachineTradeport(Material.iron).setStepSound(soundTypeConcrete).setBlockName("machine_tradeport").setHardness(5.0F).setResistance(0.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_tradeport");
 		machine_battery = new MachineBattery(Material.iron).setStepSound(soundTypeMetal).setBlockName("machine_battery").setHardness(5.0F).setResistance(0.0F).setCreativeTab(MainRegistry.tab);
 		machine_windmill = new MachineWindmill(Material.iron).setStepSound(soundTypeConcrete).setBlockName("machine_windmill").setHardness(5.0F).setResistance(0.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_windmill");
-		machine_waterwheel = new MachineWaterwheel(Material.wood).setStepSound(Block.soundTypeWood).setBlockName("machine_waterwheel").setHardness(5.0F).setResistance(0.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_waterwheel");
+		machine_waterwheel = new MachineWaterwheel(Material.wood).setStepSound(soundTypeWood).setBlockName("machine_waterwheel").setHardness(5.0F).setResistance(0.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_waterwheel");
 		machine_diesel = new MachineDieselGen(Material.iron).setStepSound(soundTypeMetal).setBlockName("machine_diesel").setHardness(5.0F).setResistance(0.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_diesel");
 
 		machine_temple = new MachineTemple(Material.iron).setStepSound(soundTypeConcrete).setBlockName("machine_temple").setHardness(5.0F).setResistance(0.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_temple");
@@ -270,10 +287,10 @@ public class ModBlocks {
 
 		clowder_conquerer = new Conquerer(Material.cloth).setStepSound(soundTypeMetal).setBlockName("clowder_conquerer").setHardness(0.8F).setResistance(4F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":clowder_conquerer");
 
-		officer_chest = new OfficerChest().setStepSound(Block.soundTypeWood).setBlockName("officer_chest").setResistance(10F).setHardness(5.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":officer_chest");
+		officer_chest = new OfficerChest().setStepSound(soundTypeWood).setBlockName("officer_chest").setResistance(10F).setHardness(5.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":officer_chest");
 
 		hesco_block = new PropHesco(Material.rock).setStepSound(Block.soundTypeStone).setBlockName("hesco_block").setHardness(1F).setResistance(200F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":hesco_block");
-		palisade = new PropPalisade(Material.wood).setStepSound(Block.soundTypeWood).setBlockName("palisade").setHardness(2F).setResistance(5F).setCreativeTab(MainRegistry.tab);
+		palisade = new PropPalisade(Material.wood).setStepSound(soundTypeWood).setBlockName("palisade").setHardness(2F).setResistance(5F).setCreativeTab(MainRegistry.tab);
 		stone_wall = new PropWall(Material.rock).setStepSound(Block.soundTypeStone).setBlockName("stone_wall").setHardness(2.5F).setResistance(10F).setCreativeTab(MainRegistry.tab);
 		brick_wall = new PropWall(Material.rock).setStepSound(Block.soundTypeStone).setBlockName("brick_wall").setHardness(2.5F).setResistance(25F).setCreativeTab(MainRegistry.tab);
 		great_wall = new PropWall(Material.rock).setStepSound(Block.soundTypeStone).setBlockName("great_wall").setHardness(2.5F).setResistance(10F).setCreativeTab(MainRegistry.tab);
