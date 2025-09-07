@@ -12,7 +12,6 @@ import java.util.UUID;
 
 public class CustomImageStorage extends WorldSavedData {
     private static final String IDENT = "yourmod_custom_images";
-    // structure: each player keyed by UUID string -> list of compounds {name, url}
     private NBTTagCompound storage = new NBTTagCompound();
 
     public CustomImageStorage() { super(IDENT); }
@@ -20,14 +19,23 @@ public class CustomImageStorage extends WorldSavedData {
 
     @Override
     public void readFromNBT(NBTTagCompound nbt) {
-        storage = nbt.getCompoundTag("storage");
-        if (storage == null) storage = new NBTTagCompound();
+        if (nbt == null) {
+            storage = new NBTTagCompound();
+            return;
+        }
+        if (nbt.hasKey("storage")) {
+            storage = nbt.getCompoundTag("storage");
+            if (storage == null) storage = new NBTTagCompound();
+        } else {
+            storage = new NBTTagCompound();
+        }
     }
 
+    // NOTE: void return type required by 1.7.10 WorldSavedData
     @Override
-    public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
-        nbt.setCompoundTag("storage", storage);
-        return nbt;
+    public void writeToNBT(NBTTagCompound nbt) {
+        // use setTag (takes an NBTBase) in 1.7.10
+        nbt.setTag("storage", storage);
     }
 
     public static CustomImageStorage get(World world) {
@@ -42,7 +50,7 @@ public class CustomImageStorage extends WorldSavedData {
     // add an image for uuid, return true if added, false if limit reached
     public boolean addImage(UUID uuid, String name, String url) {
         String key = uuid.toString();
-        NBTTagList list = storage.getTagList(key, 10); // compound list
+        NBTTagList list = storage.getTagList(key, 10); // 10 = compound
         if (list == null) list = new NBTTagList();
         if (list.tagCount() >= 5) return false;
         NBTTagCompound ent = new NBTTagCompound();
@@ -50,7 +58,7 @@ public class CustomImageStorage extends WorldSavedData {
         ent.setString("url", url);
         list.appendTag(ent);
         storage.setTag(key, list);
-        setDirty(true);
+        markDirty(); // ensure WorldSavedData is marked dirty so it saves
         return true;
     }
 
@@ -60,7 +68,7 @@ public class CustomImageStorage extends WorldSavedData {
         if (list == null || index < 0 || index >= list.tagCount()) return false;
         list.removeTag(index);
         storage.setTag(key, list);
-        setDirty(true);
+        markDirty();
         return true;
     }
 
