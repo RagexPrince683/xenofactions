@@ -77,7 +77,7 @@ public class BlockWallImage extends BlockContainer {
     @Override
     public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
         if (world.isRemote) {
-            // client short-circuit; server handles the change
+            // client short-circuit (server will handle changes)
             return true;
         }
 
@@ -87,7 +87,7 @@ public class BlockWallImage extends BlockContainer {
         }
         TileEntityWallImage tie = (TileEntityWallImage) te;
 
-        // only owner (or op) can change
+        // owner check
         String owner = tie.ownerUUID == null ? "" : tie.ownerUUID;
         String playerUUID = player.getUniqueID().toString();
         boolean isOp = MinecraftServer.getServer().getConfigurationManager().func_152596_g(player.getGameProfile());
@@ -99,7 +99,7 @@ public class BlockWallImage extends BlockContainer {
         // fetch player's stored images
         CustomImageStorage storage = CustomImageStorage.get(world);
         List<NBTTagCompound> list = storage.getList(player.getUniqueID());
-        if (list == null || list.isEmpty()) {
+        if (list == null || list.size() == 0) {
             player.addChatMessage(new ChatComponentText("You have no stored images to cycle."));
             return true;
         }
@@ -113,24 +113,25 @@ public class BlockWallImage extends BlockContainer {
         String chosenName = chosen.getString("name");
         String chosenURL = chosen.getString("url");
 
-        // update tile entity
+        // apply chosen entry
         tie.currentIndex = next;
         tie.imageName = chosenName;
         tie.imageURL = chosenURL;
 
-        // reset texture so TESR reloads
-        tie.texture = null;
+        // force reload on client
         tie.textureKey = "dynimg_" + Math.abs((chosenURL + "_" + next).hashCode()) + "_" + System.currentTimeMillis();
+        tie.texture = null; // <-- critical: allows updateEntity to reload new image
 
         tie.markDirty();
         world.markBlockForUpdate(x, y, z);
 
-        System.out.println("Old index: " + tie.currentIndex + ", new index: " + next);
-        System.out.println("Chosen name: " + chosenName + ", URL: " + chosenURL);
+        // debugging output
+        System.out.println("[WallImage] Cycling index: " + next + " | name: " + chosenName + " | url: " + chosenURL);
+        player.addChatMessage(new ChatComponentText("Image set to [" + next + "] " + chosenName + " (" + chosenURL + ")"));
 
-        player.addChatMessage(new ChatComponentText("Image set to [" + next + "] " + chosenName));
         return true;
     }
+
 
 
     // ensure collision and selection use our bounds
