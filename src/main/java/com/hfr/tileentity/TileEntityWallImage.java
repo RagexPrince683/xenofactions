@@ -31,7 +31,7 @@ public class TileEntityWallImage extends TileEntity {
     public int currentIndex = -1;
 
     @SideOnly(Side.CLIENT)
-    private ResourceLocation texture;
+    public ResourceLocation texture;
     @SideOnly(Side.CLIENT)
     private boolean downloading = false;
 

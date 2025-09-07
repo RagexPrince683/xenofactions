@@ -77,7 +77,7 @@ public class BlockWallImage extends BlockContainer {
     @Override
     public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
         if (world.isRemote) {
-            // client short-circuit (server will handle changes)
+            // client short-circuit; server handles the change
             return true;
         }
 
@@ -87,7 +87,7 @@ public class BlockWallImage extends BlockContainer {
         }
         TileEntityWallImage tie = (TileEntityWallImage) te;
 
-        // owner check: only owner (placer) can change. Allow ops if you want:
+        // only owner (or op) can change
         String owner = tie.ownerUUID == null ? "" : tie.ownerUUID;
         String playerUUID = player.getUniqueID().toString();
         boolean isOp = MinecraftServer.getServer().getConfigurationManager().func_152596_g(player.getGameProfile());
@@ -99,7 +99,7 @@ public class BlockWallImage extends BlockContainer {
         // fetch player's stored images
         CustomImageStorage storage = CustomImageStorage.get(world);
         List<NBTTagCompound> list = storage.getList(player.getUniqueID());
-        if (list == null || list.size() == 0) {
+        if (list == null || list.isEmpty()) {
             player.addChatMessage(new ChatComponentText("You have no stored images to cycle."));
             return true;
         }
@@ -113,12 +113,13 @@ public class BlockWallImage extends BlockContainer {
         String chosenName = chosen.getString("name");
         String chosenURL = chosen.getString("url");
 
-        // apply chosen entry
+        // update tile entity
         tie.currentIndex = next;
         tie.imageName = chosenName;
         tie.imageURL = chosenURL;
 
-        // set a textureKey so clients can uniquely cache this render (optional but helps)
+        // reset texture so TESR reloads
+        tie.texture = null;
         tie.textureKey = "dynimg_" + Math.abs((chosenURL + "_" + next).hashCode()) + "_" + System.currentTimeMillis();
 
         tie.markDirty();
@@ -127,6 +128,7 @@ public class BlockWallImage extends BlockContainer {
         player.addChatMessage(new ChatComponentText("Image set to [" + next + "] " + chosenName));
         return true;
     }
+
 
     // ensure collision and selection use our bounds
     @Override
