@@ -165,43 +165,43 @@ public class TileEntityWallImage extends TileEntity {
     // add your scaleAndMaybePad helper here (or keep the one you already added)
 
     //no longer used:
-    @SideOnly(Side.CLIENT)
-    private static BufferedImage scaleAndMaybePad(BufferedImage src, int maxDim, boolean padSquare) {
-        // same code as previously provided — keep it here
-        int w = src.getWidth();
-        int h = src.getHeight();
-        float scale = 1.0f;
-        if (w > maxDim || h > maxDim) {
-            if (w >= h) scale = (float) maxDim / (float) w;
-            else scale = (float) maxDim / (float) h;
-        }
-        int newW = Math.max(1, Math.round(w * scale));
-        int newH = Math.max(1, Math.round(h * scale));
-
-        BufferedImage tmp = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = tmp.createGraphics();
-        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.drawImage(src, 0, 0, newW, newH, null);
-        g2.dispose();
-
-        if (padSquare) {
-            int side = Math.max(newW, newH);
-            BufferedImage square = new BufferedImage(side, side, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g = square.createGraphics();
-            g.setComposite(AlphaComposite.Clear);
-            g.fillRect(0, 0, side, side);
-            g.setComposite(AlphaComposite.SrcOver);
-            int ox = (side - newW) / 2;
-            int oy = (side - newH) / 2;
-            g.drawImage(tmp, ox, oy, null);
-            g.dispose();
-            return square;
-        } else {
-            return tmp;
-        }
-    }
+   // @SideOnly(Side.CLIENT)
+   // private static BufferedImage scaleAndMaybePad(BufferedImage src, int maxDim, boolean padSquare) {
+   //     // same code as previously provided — keep it here
+   //     int w = src.getWidth();
+   //     int h = src.getHeight();
+   //     float scale = 1.0f;
+   //     if (w > maxDim || h > maxDim) {
+   //         if (w >= h) scale = (float) maxDim / (float) w;
+   //         else scale = (float) maxDim / (float) h;
+   //     }
+   //     int newW = Math.max(1, Math.round(w * scale));
+   //     int newH = Math.max(1, Math.round(h * scale));
+//
+   //     BufferedImage tmp = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
+   //     Graphics2D g2 = tmp.createGraphics();
+   //     g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+   //     g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+   //     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+   //     g2.drawImage(src, 0, 0, newW, newH, null);
+   //     g2.dispose();
+//
+   //     if (padSquare) {
+   //         int side = Math.max(newW, newH);
+   //         BufferedImage square = new BufferedImage(side, side, BufferedImage.TYPE_INT_ARGB);
+   //         Graphics2D g = square.createGraphics();
+   //         g.setComposite(AlphaComposite.Clear);
+   //         g.fillRect(0, 0, side, side);
+   //         g.setComposite(AlphaComposite.SrcOver);
+   //         int ox = (side - newW) / 2;
+   //         int oy = (side - newH) / 2;
+   //         g.drawImage(tmp, ox, oy, null);
+   //         g.dispose();
+   //         return square;
+   //     } else {
+   //         return tmp;
+   //     }
+   // }
 
 
 }

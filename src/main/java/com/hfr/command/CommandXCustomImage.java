@@ -2,7 +2,7 @@ package com.hfr.command;
 
 //import com.yourmod.imageblock.ImagePlacerUtil;
 import com.hfr.inventory.gui.GuiCustomImageAdd;
-import com.hfr.util.ImagePlacerUtil;
+//import com.hfr.util.ImagePlacerUtil;
 //import com.yourmod.imageblock.storage.CustomImageStorage;
 import com.hfr.data.CustomImageStorage;
 import net.minecraft.client.Minecraft;

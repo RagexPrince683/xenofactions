@@ -9,6 +9,8 @@ import net.minecraft.util.MovingObjectPosition.MovingObjectType;
 import net.minecraft.world.World;
 import net.minecraft.tileentity.TileEntity;
 
+//depricated
+
 public class ImagePlacerUtil {
     // Raytrace from player and place block on hit face
     public static boolean placeWallImageAtLook(EntityPlayer player, String url, String ownerUUID, String imageName) {

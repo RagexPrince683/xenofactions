@@ -21,18 +21,23 @@ public class RenderWallImage extends TileEntitySpecialRenderer {
         GL11.glPushMatrix();
         GL11.glTranslated(x + 0.5, y + 0.5, z + 0.5);
 
-        // rotate to face based on metadata
+// flip default facing
+        GL11.glRotatef(180F, 0F, 1F, 0F);
+
+// rotate based on metadata
         int meta = tie.getBlockMetadata();
-        GL11.glRotatef(180F, 0F, 1F, 0F); // flip default facing
         GL11.glRotatef(meta * 90F, 0F, 1F, 0F);
 
-        // bind texture
+// ADDITIONAL 90 DEGREE ROTATION
+        GL11.glRotatef(90F, 0F, 1F, 0F);
+
+// bind texture
         Minecraft.getMinecraft().getTextureManager().bindTexture(tex);
 
+// draw quad
         Tessellator tess = Tessellator.instance;
         tess.startDrawingQuads();
 
-        // flat quad, 1x1 block size, slim like painting
         double depth = 0.0625D; // 1/16th thick
         tess.addVertexWithUV(-0.5, -0.5, -depth, 0, 1);
         tess.addVertexWithUV( 0.5, -0.5, -depth, 1, 1);
@@ -40,7 +45,7 @@ public class RenderWallImage extends TileEntitySpecialRenderer {
         tess.addVertexWithUV(-0.5,  0.5, -depth, 0, 0);
 
         tess.draw();
-
         GL11.glPopMatrix();
+
     }
 }
