@@ -70,6 +70,8 @@ public class PacketDispatcher {
 		wrapper.registerMessage(AuxParticlePacketNT.Handler.class, AuxParticlePacketNT.class, i++, Side.CLIENT);
 		wrapper.registerMessage(ReseatRequestPacket.Handler.class, ReseatRequestPacket.class, i++, Side.SERVER);
 
+		wrapper.registerMessage(PacketAddImage.Handler.class, PacketAddImage.class, i++, Side.SERVER);
+
 	}
 	
 }

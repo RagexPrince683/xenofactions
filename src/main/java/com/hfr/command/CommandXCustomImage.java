@@ -1,9 +1,11 @@
 package com.hfr.command;
 
 //import com.yourmod.imageblock.ImagePlacerUtil;
+import com.hfr.inventory.gui.GuiCustomImageAdd;
 import com.hfr.util.ImagePlacerUtil;
 //import com.yourmod.imageblock.storage.CustomImageStorage;
 import com.hfr.data.CustomImageStorage;
+import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -38,13 +40,14 @@ public class CommandXCustomImage extends CommandBase {
         String sub = args[0];
         if ("add".equalsIgnoreCase(sub)) {
             if (args.length < 3) {
-                player.addChatMessage(new ChatComponentText("Usage: /xcustomimage add <name> <url>"));
+                player.addChatMessage(new ChatComponentText("Usage: /xcustomimage add <name>"));
                 return;
             }
             String name = args[1];
-            String url = args[2];
-            boolean ok = storage.addImage(player.getUniqueID(), name, url);
-            player.addChatMessage(new ChatComponentText(ok ? "Image added." : "Add failed: max 5 images."));
+            if (player instanceof EntityPlayerMP) {
+                // open the GUI client-side
+                Minecraft.getMinecraft().displayGuiScreen(new GuiCustomImageAdd(name));
+            }
         } else if ("delete".equalsIgnoreCase(sub)) {
             if (args.length < 2) {
                 player.addChatMessage(new ChatComponentText("Usage: /xcustomimage delete <index>"));

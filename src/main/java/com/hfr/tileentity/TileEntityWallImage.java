@@ -75,19 +75,25 @@ public class TileEntityWallImage extends TileEntity {
         int ow = input.getWidth();
         int oh = input.getHeight();
 
-        // scale proportionally
-        double scale = Math.min((double)targetSize / ow, (double)targetSize / oh);
-        int nw = (int)(ow * scale);
-        int nh = (int)(oh * scale);
+        // scale proportionally so neither dimension exceeds targetSize
+        double scale = Math.min((double) targetSize / ow, (double) targetSize / oh);
+        int nw = (int) (ow * scale);
+        int nh = (int) (oh * scale);
 
-        // center on a square canvas
+        // create a transparent square canvas
         BufferedImage out = new BufferedImage(targetSize, targetSize, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = out.createGraphics();
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g.drawImage(input, (targetSize - nw) / 2, (targetSize - nh) / 2, nw, nh, null);
+
+        // draw centered
+        int x = (targetSize - nw) / 2;
+        int y = (targetSize - nh) / 2;
+        g.drawImage(input, x, y, nw, nh, null);
         g.dispose();
+
         return out;
     }
+
 
     @Override
     public void updateEntity() {
@@ -110,7 +116,8 @@ public class TileEntityWallImage extends TileEntity {
                                 if (img == null) throw new IOException("ImageIO returned null for " + url);
 
                                 // resize helper from earlier (keep it if you already added)
-                                BufferedImage scaled = scaleAndMaybePad(img, 256, false);
+                                //BufferedImage scaled = scaleAndMaybePad(img, 256, false);
+                                BufferedImage scaled = scaleAndPad(img, 256);
 
                                 DynamicTexture dyn = new DynamicTexture(scaled);
 
@@ -143,6 +150,8 @@ public class TileEntityWallImage extends TileEntity {
     }
 
     // add your scaleAndMaybePad helper here (or keep the one you already added)
+
+    //no longer used:
     @SideOnly(Side.CLIENT)
     private static BufferedImage scaleAndMaybePad(BufferedImage src, int maxDim, boolean padSquare) {
         // same code as previously provided — keep it here
@@ -180,5 +189,7 @@ public class TileEntityWallImage extends TileEntity {
             return tmp;
         }
     }
+
+
 }
 
