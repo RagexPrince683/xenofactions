@@ -8,5 +8,7 @@ Xenofactions is a modification of the mod "Xradar" a factions mod made by Bobcat
 - Updated stone drop logic, allowing for modded ores (can be customized via json or commands)
 - ...and many more to come. 
 - fixed bobs stupid ass shops saving to world file instead of using a JSON like a non schizophrenic developer 
+- added a custom image block so players can do custom graffiti/images
+- adds allying and improvements to fundamental flag logic
 
 All we ask is that you give credit to either "Ragex", "The Swamp", or "Swag Gang" if you use this mod for your own 1.7.10 war server. Enjoy!
