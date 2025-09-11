@@ -99,7 +99,7 @@ public class Flag extends BlockContainer {
 				((EntityPlayer)player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag lacking a solid 5x5 block foundation"));
 				((EntityPlayer)player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag's foundation not having sky access"));
 				((EntityPlayer)player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-You not being in any faction"));
-				((EntityPlayer)player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag being below Y:45 or above Y:100"));
+				((EntityPlayer)player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag being below Y:45 or above Y:200"));
 			}
 			
 			flag.markDirty();
@@ -107,17 +107,56 @@ public class Flag extends BlockContainer {
 
 		super.onBlockPlacedBy(world, x, y, z, player, itemStack);
 	}
+
+	public boolean noProximity(World world, int x, int y, int z) {
+
+		int range = 4;
+
+		for(int ix = x - range; ix <= x + range; ix++) {
+			for(int iy = y - 3; iy <= y + 3; iy++) {
+				for(int iz = z - range; iz <= z + range; iz++) {
+
+					if(ix == x && iy == y && iz == z)
+						continue;
+
+					if(world.getBlock(ix, iy, iz) == ModBlocks.clowder_conquerer) {
+						return false;
+					}
+				}
+			}
+		}
+
+		return true;
+	}
 	
 	@Override
 	public void breakBlock(World world, int x, int y, int z, Block b, int i)
-    {
+	{
 		Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
-		
-		if(owner != null && owner.zone == Zone.FACTION) {
-			TileEntityFlag flag = (TileEntityFlag)world.getTileEntity(x, y, z);
-			
-			if(flag.owner != null)
+
+		if (owner != null && owner.zone == Zone.FACTION) {
+			//break
+			TileEntityFlag flag = (TileEntityFlag) world.getTileEntity(x, y, z);
+
+			if (flag != null && flag.owner != null) {
 				flag.setOwner(null);
+			}
+		} else {
+			if (owner != null && !noProximity(world, x, y, z)) {
+					TileEntityFlag flag = (TileEntityFlag) world.getTileEntity(x, y, z);
+
+					if (flag != null && flag.owner != null) {
+						flag.setOwner(null);
+					}
+					//if this flag is being broken, and it is close to a conquerer, break it
+				flag.height = 0.0F;
+				super.breakBlock(world, x, y, z, b, i);
+			}
+			//do nothing
+			//else {
+			//	//im having a brain fart here
+			//
+			//}
 		}
 		
 		super.breakBlock(world, x, y, z, b, i);

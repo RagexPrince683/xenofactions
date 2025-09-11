@@ -21,37 +21,37 @@ public class TileEntityDuct extends TileEntity {
 	}
 	
 	public void updateConnections() {
-		if(isConnectable(worldObj.getBlock(xCoord, yCoord + 1, zCoord))) connections[0] = ForgeDirection.UP;
-		else connections[0] = null;
-		
-		if(isConnectable(worldObj.getBlock(xCoord, yCoord - 1, zCoord))) connections[1] = ForgeDirection.DOWN;
-		else connections[1] = null;
-		
-		if(isConnectable(worldObj.getBlock(xCoord, yCoord, zCoord - 1))) connections[2] = ForgeDirection.NORTH;
-		else connections[2] = null;
-		
-		if(isConnectable(worldObj.getBlock(xCoord + 1, yCoord, zCoord))) connections[3] = ForgeDirection.EAST;
-		else connections[3] = null;
-		
-		if(isConnectable(worldObj.getBlock(xCoord, yCoord, zCoord + 1))) connections[4] = ForgeDirection.SOUTH;
-		else connections[4] = null;
-		
-		if(isConnectable(worldObj.getBlock(xCoord - 1, yCoord, zCoord))) connections[5] = ForgeDirection.WEST;
-		else connections[5] = null;
+		//if(isConnectable(worldObj.getBlock(xCoord, yCoord + 1, zCoord))) connections[0] = ForgeDirection.UP;
+		//else connections[0] = null;
+		//
+		//if(isConnectable(worldObj.getBlock(xCoord, yCoord - 1, zCoord))) connections[1] = ForgeDirection.DOWN;
+		//else connections[1] = null;
+		//
+		//if(isConnectable(worldObj.getBlock(xCoord, yCoord, zCoord - 1))) connections[2] = ForgeDirection.NORTH;
+		//else connections[2] = null;
+		//
+		//if(isConnectable(worldObj.getBlock(xCoord + 1, yCoord, zCoord))) connections[3] = ForgeDirection.EAST;
+		//else connections[3] = null;
+		//
+		//if(isConnectable(worldObj.getBlock(xCoord, yCoord, zCoord + 1))) connections[4] = ForgeDirection.SOUTH;
+		//else connections[4] = null;
+		//
+		//if(isConnectable(worldObj.getBlock(xCoord - 1, yCoord, zCoord))) connections[5] = ForgeDirection.WEST;
+		//else connections[5] = null;
 	}
 	
-	public boolean isConnectable(Block b) {
-		
-		if(this.getBlockType() == ModBlocks.oil_duct) {
-			
-			return (b == ModBlocks.oil_duct || b == ModBlocks.machine_tank || b == ModBlocks.machine_derrick || b == ModBlocks.machine_refinery);
-			
-		} else {
-
-			return (b == ModBlocks.gas_duct || b == ModBlocks.machine_tank || b == ModBlocks.machine_derrick);
-		}
-		
-	}
+	//public boolean isConnectable(Block b) {
+	//
+	//	//if(this.getBlockType() == ModBlocks.oil_duct) {
+	//	//
+	//	//	return (b == ModBlocks.oil_duct || b == ModBlocks.machine_tank || b == ModBlocks.machine_derrick || b == ModBlocks.machine_refinery);
+	//	//
+	//	//} else {
+////
+	//	//	return (b == ModBlocks.gas_duct || b == ModBlocks.machine_tank || b == ModBlocks.machine_derrick);
+	//	//}
+	//	return void;
+	//}
 	
 	@Override
 	@SideOnly(Side.CLIENT)

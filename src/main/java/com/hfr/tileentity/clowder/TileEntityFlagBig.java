@@ -2,6 +2,7 @@ package com.hfr.tileentity.clowder;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder;
@@ -10,9 +11,11 @@ import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.CoordPair;
 import com.hfr.clowder.ClowderTerritory.TerritoryMeta;
 import com.hfr.clowder.ClowderTerritory.Zone;
+import com.hfr.clowder.events.RegionOwnershipChangedEvent;
 import com.hfr.data.ClowderData;
 import com.hfr.items.ModItems;
 import com.hfr.tileentity.machine.TileEntityMachineBase;
+import com.hfr.clowder.ClowderTerritory.Ownership;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -23,11 +26,13 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
+import net.minecraftforge.common.MinecraftForge;
 
 public class TileEntityFlagBig extends TileEntityMachineBase implements ITerritoryProvider {
 
 	public Clowder owner;
 	public boolean isClaimed = true;
+	public boolean isCappable = true;
 	public HashSet<CoordPair> claim = new HashSet();
 	public String name = "";
 	
@@ -35,10 +40,15 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 	public ClowderFlag flag;
 	@SideOnly(Side.CLIENT)
 	public int color;
+	public String provinceName = "";
 
 	public TileEntityFlagBig() {
 		super(2);
 		isClaimed = false;
+	}
+
+	public int getCost() {
+		return claim.size() / 150 + 1;
 	}
 
 	@Override
@@ -48,18 +58,48 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 
 	@Override
 	public void updateEntity() {
+
+
 		
 		if(!worldObj.isRemote) {
+
+			int claimCost = claim.size() / 150 + 1;
 			
 			if(Clowder.clowders.size() == 0)
 				ClowderData.getData(worldObj);
+
+			CoordPair[] coords = this.claim.toArray(new CoordPair[1]);
+			coords = this.claim.toArray(coords);
+			Random rng = new Random();
+
+			if (claim == null || claim.isEmpty()) return; // Avoid selecting from empty claim set
+
+			//CoordPair[] coords = new CoordPair[0]);
+			//Random rng = new Random();
+
+			long sampleCode = ClowderTerritory.coordsToCode(coords[rng.nextInt(coords.length)]);
+			TerritoryMeta sampleMeta = ClowderTerritory.territories.get(sampleCode);
+
+			if (sampleMeta == null) return; // Prevent crash if territory is missing
+
+			//TerritoryMeta sampleMeta = ClowderTerritory.territories.get(ClowderTerritory.coordsToCode(coords[rng.nextInt(coords.length)])); //god awful method why are we using RNG???
 			
 			//remove disbanded clowders
-			if(!Clowder.clowders.contains(owner))
+			if(owner != null && !Clowder.clowders.contains(owner) || (owner == null && sampleMeta.owner != null && sampleMeta.owner.zone == Zone.FACTION)) { //causing crashing
+
 				owner = null;
+				isCappable = false;
+				for(CoordPair a : claim) {
+					long code = ClowderTerritory.coordsToCode(a);
+					if(ClowderTerritory.territories.get(code) != null && ClowderTerritory.territories.get(code).owner.zone == Zone.FACTION)
+						ClowderTerritory.territories.get(code).owner = new Ownership(Zone.WILDERNESS);
+
+					MinecraftForge.EVENT_BUS.post(new RegionOwnershipChangedEvent(null,new Ownership(Zone.WILDERNESS),provinceName));
+				}
+			}
 			
 			/// CAPTURE START ///
-			if(owner == null) {
+			if(owner == null && this.isCappable) {
 				
 				List<EntityPlayer> entities = worldObj.getEntitiesWithinAABB(EntityPlayer.class, AxisAlignedBB.getBoundingBox(xCoord - 4, yCoord - 1, zCoord - 4, xCoord + 5, yCoord + 2, zCoord + 5));
 				
@@ -75,11 +115,14 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 				}
 				
 				if(capturer != null) {
-					
+
+					Ownership oldOwner = sampleMeta.owner;
 					owner = capturer;
 					this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.flagChange", 3.0F, 1.0F);
 					this.isClaimed = true;
 					this.generateClaim();
+
+					MinecraftForge.EVENT_BUS.post(new RegionOwnershipChangedEvent(oldOwner,sampleMeta.owner,provinceName));
 				}
 			} else {
 				
@@ -182,9 +225,10 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 					worldObj.func_147480_a(x, y, z, false);
 				}
 			}
-			
-			if(this.owner != null)
-				ClowderTerritory.setOwnerForCoord(worldObj, coords, owner, xCoord, yCoord, zCoord, name);
+
+			if(this.owner != null) {
+				ClowderTerritory.setOwnerForCoord(worldObj, coords, owner, xCoord, yCoord, zCoord, provinceName);
+			}
 			else
 				ClowderTerritory.removeZoneForCoord(worldObj, coords);
 		}
@@ -217,6 +261,9 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 					nbt.getInteger("z" + i)
 					));
 		}
+		//setTiers(nbt.getByteArray("tiers"));
+		//this.oilProvince = nbt.getBoolean("O");
+		this.provinceName = nbt.getString("P");
 	}
 	
 	@Override
@@ -239,6 +286,9 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 			
 			i++;
 		}
+		//nbt.setByteArray("tiers", tiers);
+		//nbt.setBoolean("O",oilProvince);
+		nbt.setString("P", provinceName);
 	}
 
 	@Override

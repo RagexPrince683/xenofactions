@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import com.hfr.ai.*;
+
+import com.hbm.util.fauxpointtwelve.BlockPos;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder;
+import com.hfr.command.CommandClowderChat;
+import com.hfr.command.MuteManager;
 import com.hfr.data.AntiMobData;
 import com.hfr.data.CBTData;
 import com.hfr.data.ResourceData;
@@ -65,6 +68,7 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
+import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
@@ -73,17 +77,22 @@ import net.minecraftforge.event.entity.living.LivingSpawnEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.BlockEvent.BreakEvent;
 
+import static com.hfr.main.MainRegistry.border;
+
 public class CommonEventHandler {
 
 	//all the serverside crap for vehicle radars
 	@SubscribeEvent
 	public void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		
+		//todo marker
 		EntityPlayer player = event.player;
 		
 		if(!player.worldObj.isRemote && event.phase == Phase.START) {
-			
-			handleBorder(player);
+
+
+			if (border) {
+				handleBorder(player);
+			}
 			
 			player.worldObj.theProfiler.startSection("xr_radar");
 
@@ -200,6 +209,15 @@ public class CommonEventHandler {
 		//	}
 		//}
 	}
+
+	@SubscribeEvent
+	public void onPlayerChat(ServerChatEvent event) {
+		String name = event.player.getCommandSenderName();
+		if (MuteManager.isMuted(name) && event.player.getEntityData().getInteger(CommandClowderChat.CHAT_KEY) == 0) { //todo && not in faction chat/ally chat (if I implemented that)
+			event.setCanceled(true);
+			event.player.addChatMessage(new ChatComponentText("You are muted."));
+		}
+	}
 	
 	public boolean hasDigiOverlay(EntityPlayer player) {
 		
@@ -286,15 +304,32 @@ public class CommonEventHandler {
 		double posX = entity.posX;
 		double posZ = entity.posZ;
 
-		// Wraparound logic for non-player entities
 		if (posX < MainRegistry.borderNegX || posX > MainRegistry.borderPosX ||
 				posZ < MainRegistry.borderNegZ || posZ > MainRegistry.borderPosZ) {
 
-			entity.setPosition(
-					wrapX(posX),
-					entity.posY,
-					wrapZ(posZ)
-			);
+			double newX = wrapX(posX);
+			double newZ = wrapZ(posZ);
+			double newY = entity.posY;
+
+			int checkX = MathHelper.floor_double(newX);
+			int checkY = MathHelper.floor_double(newY);
+			int checkZ = MathHelper.floor_double(newZ);
+
+			World world = entity.worldObj;
+
+			// Check if the position is in a solid block
+			if (!world.isAirBlock(checkX, checkY, checkZ)) {
+				// Try moving up to find a non-solid block (limit to 5 blocks)
+				for (int i = 1; i <= 5; i++) {
+					if (world.isAirBlock(checkX, checkY + i, checkZ)) {
+						newY = checkY + i;
+						break;
+					}
+				}
+			}
+			//should hopefully fix the issue of players getting stuck in the ground when wrapping on ground
+
+			entity.setPosition(newX, newY, newZ);
 		}
 	}
 
@@ -316,34 +351,35 @@ public class CommonEventHandler {
 		return z;
 	}
 
-	
-	public boolean isWithinNotifRange(double x, double z) {
+	//unused
+	//public boolean isWithinNotifRange(double x, double z) {
 
-		if(x > MainRegistry.borderPosX - MainRegistry.borderBuffer)
-			return true;
-		if(x < MainRegistry.borderNegX + MainRegistry.borderBuffer)
-			return true;
-		if(z > MainRegistry.borderPosZ - MainRegistry.borderBuffer)
-			return true;
-		if(z < MainRegistry.borderNegZ + MainRegistry.borderBuffer)
-			return true;
-		
-		return false;
-	}
-	
-	public boolean leftBorder(double x, double z) {
+	//	if(x > MainRegistry.borderPosX - MainRegistry.borderBuffer)
+	//		return true;
+	//	if(x < MainRegistry.borderNegX + MainRegistry.borderBuffer)
+	//		return true;
+	//	if(z > MainRegistry.borderPosZ - MainRegistry.borderBuffer)
+	//		return true;
+	//	if(z < MainRegistry.borderNegZ + MainRegistry.borderBuffer)
+	//		return true;
+	//
+	//	return false;
+	//}
 
-		if(x > MainRegistry.borderPosX)
-			return true;
-		if(x < MainRegistry.borderNegX)
-			return true;
-		if(z > MainRegistry.borderPosZ)
-			return true;
-		if(z < MainRegistry.borderNegZ)
-			return true;
-		
-		return false;
-	}
+	//unused
+	//public boolean leftBorder(double x, double z) {
+
+	//	if(x > MainRegistry.borderPosX)
+	//		return true;
+	//	if(x < MainRegistry.borderNegX)
+	//		return true;
+	//	if(z > MainRegistry.borderPosZ)
+	//		return true;
+	//	if(z < MainRegistry.borderNegZ)
+	//		return true;
+	//
+	//	return false;
+	//}
 	
 	public List<EntityPlayer> getPlayersInAABB(World world, double x, double y, double z, double range) {
 		
@@ -361,57 +397,36 @@ public class CommonEventHandler {
 		return list;
 	}
 
-	@SubscribeEvent
-	public void onEntityTick(LivingUpdateEvent event) {
-		
-		Entity e = event.entityLiving;
-		if(e.worldObj.isRemote) return;
-		
-		if(e instanceof EntityZombie || e instanceof EntityCreeper || e instanceof EntitySkeleton) {
-			EntityMob mob = (EntityMob) e;
-
-			if (mob.getEntityToAttack() == null)
-				mob.setTarget(mob.worldObj.getClosestVulnerablePlayerToEntity(mob, MainRegistry.mlpf));
-
-			if (mob.getEntityToAttack() != null && !mob.hasPath()) {
-				mob.setPathToEntity(EntityAI_MLPF.getPathEntityToEntityPartial(mob.worldObj, mob, mob.getEntityToAttack(), 16, true, true, false, true));
-				
-				if(mob.isCollidedVertically && mob.ticksExisted % 50 == 0 && mob.getDistanceToEntity(mob.getEntityToAttack()) > 10)  {
-					Vec3 vec = Vec3.createVectorHelper(mob.getEntityToAttack().posX - mob.posX, 0, mob.getEntityToAttack().posZ - mob.posZ);
-					vec = vec.normalize();
-					mob.motionX += vec.xCoord * 2;
-					mob.motionY += 0.5;
-					mob.motionZ += vec.zCoord * 2;
-					mob.faceEntity(mob.getEntityToAttack(), 90F, 90F);
-				}
-			}
-		}
-	}
-
 	int timer = 0;
 	
 	//handles the anti-mob wand
 
 	public void handlePlayerBorder(EntityPlayerMP player) {
-		double posX = player.posX;
-		double posZ = player.posZ;
 
-		// Wraparound logic for players
-		if (posX < MainRegistry.borderNegX || posX > MainRegistry.borderPosX ||
-				posZ < MainRegistry.borderNegZ || posZ > MainRegistry.borderPosZ) {
+		if (border) {
 
-			//player.mountEntity(null); // Dismount from any vehicle
-			//no dont do that we are going to keep the player on the vehicle hopefully
-			player.playerNetServerHandler.setPlayerLocation(
-					wrapX(posX),
-					player.posY,
-					wrapZ(posZ),
-					player.rotationYaw,
-					player.rotationPitch
-			);
+			double posX = player.posX;
+			double posZ = player.posZ;
 
-			// Send notification
-			player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "You have crossed the world border and wrapped around!"));
+			//todo marker
+
+			// Wraparound logic for players
+			if (posX < MainRegistry.borderNegX || posX > MainRegistry.borderPosX ||
+					posZ < MainRegistry.borderNegZ || posZ > MainRegistry.borderPosZ) {
+
+				//player.mountEntity(null); // Dismount from any vehicle
+				//no dont do that we are going to keep the player on the vehicle hopefully
+				player.playerNetServerHandler.setPlayerLocation(
+						wrapX(posX),
+						player.posY,
+						wrapZ(posZ),
+						player.rotationYaw,
+						player.rotationPitch
+				);
+
+				// Send notification
+				player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "You have crossed the world border and wrapped around!"));
+			}
 		}
 	}
 
@@ -426,14 +441,19 @@ public class CommonEventHandler {
 		//}
 		//unoptimized gpt slop
 
-		if (!event.world.isRemote && event.phase == Phase.START) {
-			for (Object entity : event.world.loadedEntityList) {
-				// Handle players with player-specific logic
-				if (entity instanceof EntityPlayerMP) {
-					handlePlayerBorder((EntityPlayerMP) entity);
-				} else {
-					// Handle all other entities
-					handleBorder((Entity) entity);
+		//todo marker
+
+		if (border) {
+
+			if (!event.world.isRemote && event.phase == Phase.START) {
+				for (Object entity : event.world.loadedEntityList) {
+					// Handle players with player-specific logic
+					if (entity instanceof EntityPlayerMP) {
+						handlePlayerBorder((EntityPlayerMP) entity);
+					} else {
+						// Handle all other entities
+						handleBorder((Entity) entity);
+					}
 				}
 			}
 		}
@@ -496,16 +516,17 @@ public class CommonEventHandler {
 		}
 	}
 
-	private boolean isNearBorder(Entity entity) {
-		double borderPadding = 5.0; // Check entities within 5 blocks of the border
-		double posX = entity.posX;
-		double posZ = entity.posZ;
+	//unused
+	//private boolean isNearBorder(Entity entity) {
+	//	double borderPadding = 5.0; // Check entities within 5 blocks of the border
+	//	double posX = entity.posX;
+	//	double posZ = entity.posZ;
 
-		return posX < MainRegistry.borderNegX + borderPadding ||
-				posX > MainRegistry.borderPosX - borderPadding ||
-				posZ < MainRegistry.borderNegZ + borderPadding ||
-				posZ > MainRegistry.borderPosZ - borderPadding;
-	}
+	//	return posX < MainRegistry.borderNegX + borderPadding ||
+	//			posX > MainRegistry.borderPosX - borderPadding ||
+	//			posZ < MainRegistry.borderNegZ + borderPadding ||
+	//			posZ > MainRegistry.borderPosZ - borderPadding;
+	//}
 
 
 	//for manipulating zombert AI and handling spawn control
@@ -522,29 +543,6 @@ public class CommonEventHandler {
 			if(event.isCancelable())
 				event.setCanceled(true);
 			return;
-		}
-		
-		if(event.entity instanceof EntityZombie && MainRegistry.zombAI) {
-			EntityZombie zomb = ((EntityZombie)event.entity);
-			
-			//enables block-breaking behavior for zomberts
-			if(MainRegistry.zombAI)
-				zomb.tasks.addTask(1, new EntityAIBreaking(zomb));
-			//duplicate of player targeting behavior, but ignoring line of sight restrictions (xray!)
-			zomb.targetTasks.addTask(2, new EntityAINearestAttackableTarget(zomb, EntityPlayer.class, 0, false));
-			//zomb.targetTasks.addTask(3, new EntityAI_MLPF(zomb, EntityPlayer.class, MainRegistry.mlpf, 1D, 20));
-		}
-		
-		if(event.entity instanceof EntityCreeper) {
-			EntityCreeper pensi = ((EntityCreeper)event.entity);
-			
-			if(MainRegistry.creepAI)
-				pensi.tasks.addTask(1, new EntityAIAllah(pensi));
-			pensi.targetTasks.addTask(2, new EntityAINearestAttackableTarget(pensi, EntityPlayer.class, 0, false));
-			//pensi.targetTasks.addTask(3, new EntityAI_MLPF(pensi, EntityPlayer.class, MainRegistry.mlpf, 1D, 15));
-			//pensi.targetTasks.addTask(3, new EntityAI_MLPF(pensi, EntityPlayer.class, MainRegistry.mlpf, 1D));
-			//pensi.targetTasks.addTask(2, new EntityAIHFTargeter(pensi, EntityPlayer.class, 0, false));
-			//pensi.targetTasks.addTask(2, new EntityAIHFTargeter(pensi, EntityVillager.class, 0, false));
 		}
 		
 		if(event.entity instanceof EntityLivingBase) {

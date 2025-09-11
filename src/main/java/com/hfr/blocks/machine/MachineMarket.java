@@ -21,11 +21,14 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.IIcon;
 import net.minecraft.world.World;
 
 public class MachineMarket extends BlockContainer {
+
+	//todo: figure out why markets work clientside, but not serverside
 
 	@SideOnly(Side.CLIENT)
 	private IIcon iconTop;
@@ -55,36 +58,62 @@ public class MachineMarket extends BlockContainer {
 
 	@Override
 	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
-		if(!world.isRemote) {
-
+		if (!world.isRemote) {
+			System.out.println("should be server side");
 			TileEntityMarket market = (TileEntityMarket) world.getTileEntity(x, y, z);
+			if (market == null) return false;
 
-			if(market == null)
-				return false;
+			// Get offers from JSON-based MarketData
+			List<ItemStack[]> offers = MarketData.getOffers(market.name);
 
+			// Create NBTTagCompound to send offer data
 			NBTTagCompound nbt = new NBTTagCompound();
-			MarketData data = MarketData.getData(world);
-			data.writeMarketFromName(nbt, market.name);
+			nbt.setString("market", market.name);
+			nbt.setInteger("offercount", offers.size());
 
-			PacketDispatcher.wrapper.sendTo(new OfferPacket(market.name, nbt), (EntityPlayerMP)player);
+			//offers do not work serverside, but do work clientside
 
-			if(player.getHeldItem() != null && player.getHeldItem().getItem() == Items.name_tag && player.getHeldItem().hasDisplayName()) {
+			for (int i = 0; i < offers.size(); i++) {
+				NBTTagList list = new NBTTagList();
+				ItemStack[] offerArray = offers.get(i);
+
+				for (int j = 0; j < offerArray.length; j++) {
+					if (offerArray[j] != null) {
+						NBTTagCompound itemTag = new NBTTagCompound();
+						offerArray[j].writeToNBT(itemTag);
+						list.appendTag(itemTag);
+					}
+				}
+				nbt.setTag("items" + i, list);
+			}
+
+			// Send updated market offers to client
+			System.out.println("Sending market data to client for: " + market.name);
+			PacketDispatcher.wrapper.sendTo(new OfferPacket(x, y, z, market.name, nbt), (EntityPlayerMP) player);
+			//NO DUMBASS SEND TO SERVER AS WELL OR SOME SHIT FUCK GODDAMN BULLSHIT MAN I HATE THIS FUCKING MOD
+			//PacketDispatcher.wrapper.sendToServer(new OfferPacket(market.name, nbt));
+			//NEVERMIND THAT SHIT GAVE A BUNCH OF FUCKING ERRORS WHAT THE ACTUAL FUCK DO I DO I HATE THIS FUCKING SHIT
+
+			// Handle renaming the market with a Name Tag
+			if (player.getHeldItem() != null && player.getHeldItem().getItem() == Items.name_tag && player.getHeldItem().hasDisplayName()) {
 				market.name = player.getHeldItem().getDisplayName();
 				market.markDirty();
+
+				System.out.println("Market renamed to: " + market.name);
+
 				return true;
 			}
 
 			return true;
-
-		} else if(!player.isSneaking()) {
-
+		} else if (!player.isSneaking()) {
+			// Open GUI for Market
 			FMLNetworkHandler.openGui(player, MainRegistry.instance, ModBlocks.guiID_market, world, x, y, z);
 			return true;
-
 		} else {
 			return false;
 		}
 	}
+
 
 	@Override
 	public TileEntity createNewTileEntity(World p_149915_1_, int p_149915_2_) {
@@ -92,6 +121,7 @@ public class MachineMarket extends BlockContainer {
 	}
 
 	public static class TileEntityMarket extends TileEntity {
+		//name is working as a market identifier, nothing needs to be changed here?
 
 		public String name = "";
 
@@ -104,5 +134,15 @@ public class MachineMarket extends BlockContainer {
 			super.writeToNBT(nbt);
 			nbt.setString("name", name);
 		}
+
+		@Override
+		public void updateEntity() {
+			if (!worldObj.isRemote) {
+				markDirty(); // Forces a save
+			}
+		}
+
 	}
+
+
 }

@@ -178,9 +178,9 @@ public class TileEntityHydro extends TileEntity implements ISidedInventory {
 		
 		if(!worldObj.isRemote) {
 			
-			int walls = getWallNr();
-			int turbines = getTurbineNr();
-			
+			int walls = 0;
+			int turbines = 0;
+
 			if(walls > 0 && turbines > 0) {
 				power += getRate(walls, turbines);
 			}
@@ -215,132 +215,9 @@ public class TileEntityHydro extends TileEntity implements ISidedInventory {
 	int maxHeight = 5;
 	int maxWidth = 9;
 	
-	public int getWallNr() {
-		
-		int counter = 0;
-		
-		for(int i = -maxWidth; i <= maxWidth; i++) {
-			for(int j = -maxHeight; j <= maxHeight; j++) {
-				
-				Block b = null;
-				
-				if(this.getBlockMetadata() == 3) {
-					
-					b = worldObj.getBlock(xCoord, yCoord + j, zCoord + i);
-					
-					if(b == ModBlocks.hydro_core && !(i == 0 && j == 0)) {
-						worldObj.func_147480_a(xCoord, yCoord, zCoord, true);
-						return 0;
-						
-					} else if(b == ModBlocks.hydro_wall || b == ModBlocks.hydro_turbine || b == ModBlocks.hydro_core) {
-						
-						if(worldObj.getBlock(xCoord + 1, yCoord + j, zCoord + i).getMaterial() == Material.water && validFront(worldObj.getBlock(xCoord - 1, yCoord + j, zCoord + i), i % 2 == 0))
-							counter++;
-						else if(validFront(worldObj.getBlock(xCoord + 1, yCoord + j, zCoord + i), i % 2 == 0) && worldObj.getBlock(xCoord - 1, yCoord + j, zCoord + i).getMaterial() == Material.water)
-							counter++;
-					}
-					
-				} else if(this.getBlockMetadata() == 2) {
-					
-					b = worldObj.getBlock(xCoord + i, yCoord + j, zCoord);
-					
-					if(b == ModBlocks.hydro_core && !(i == 0 && j == 0)) {
-						worldObj.func_147480_a(xCoord, yCoord, zCoord, true);
-						return 0;
-						
-					} else if(b == ModBlocks.hydro_wall || b == ModBlocks.hydro_turbine || b == ModBlocks.hydro_core) {
-						
-						if(worldObj.getBlock(xCoord + i, yCoord + j, zCoord + 1).getMaterial() == Material.water && validFront(worldObj.getBlock(xCoord + i, yCoord + j, zCoord - 1), i % 2 == 0))
-							counter++;
-						else if(validFront(worldObj.getBlock(xCoord + i, yCoord + j, zCoord + 1), i % 2 == 0) && worldObj.getBlock(xCoord + i, yCoord + j, zCoord - 1).getMaterial() == Material.water)
-							counter++;
-					}
-				}
-			}
-		}
-		
-		return counter;
-	}
+
 	
-	public int getTurbineNr() {
-		
-		int counter = 0;
-		
-		if(this.getBlockMetadata() == 3) {
-			
-			for(int i = 1; i < maxWidth; i++) {
-				
-				Block b = worldObj.getBlock(xCoord, yCoord, zCoord + i);
-				
-				if(b != ModBlocks.hydro_wall && b != ModBlocks.hydro_turbine)
-					break;
-				
-				if(b == ModBlocks.hydro_wall)
-					continue;
-				
-				if(i % 2 == 0 && b == ModBlocks.hydro_turbine) {
-					
-					if(checkTurbineSeg(xCoord, zCoord + i))
-						counter++;
-				}
-			}
-			
-			for(int i = 1; i < maxWidth; i++) {
-				
-				Block b = worldObj.getBlock(xCoord, yCoord, zCoord - i);
-				
-				if(b != ModBlocks.hydro_wall && b != ModBlocks.hydro_turbine)
-					break;
-				
-				if(b == ModBlocks.hydro_wall)
-					continue;
-				
-				if(i % 2 == 0 && b == ModBlocks.hydro_turbine) {
-					
-					if(checkTurbineSeg(xCoord, zCoord - i))
-						counter++;
-				}
-			}
-			
-		} else if(this.getBlockMetadata() == 2) {
-			
-			for(int i = 1; i < maxWidth; i++) {
-				
-				Block b = worldObj.getBlock(xCoord + i, yCoord, zCoord);
-				
-				if(b != ModBlocks.hydro_wall && b != ModBlocks.hydro_turbine)
-					break;
-				
-				if(b == ModBlocks.hydro_wall)
-					continue;
-				
-				if(i % 2 == 0 && b == ModBlocks.hydro_turbine) {
-					
-					if(checkTurbineSeg(xCoord + i, zCoord))
-						counter++;
-				}
-			}
-			
-			for(int i = 1; i < maxWidth; i++) {
-				
-				Block b = worldObj.getBlock(xCoord - i, yCoord, zCoord);
-				
-				if(b != ModBlocks.hydro_wall && b != ModBlocks.hydro_turbine)
-					break;
-				
-				if(b == ModBlocks.hydro_wall)
-					continue;
-				
-				if(i % 2 == 0 && b == ModBlocks.hydro_turbine) {
-					
-					if(checkTurbineSeg(xCoord - i, zCoord))
-						counter++;
-				}
-			}
-		}
-		
-		return counter;
-	}
+
 	
 	private boolean validFront(Block b, boolean seg) {
 		
@@ -353,18 +230,7 @@ public class TileEntityHydro extends TileEntity implements ISidedInventory {
 		return false;
 	}
 	
-	public boolean checkTurbineSeg(int x, int z) {
 
-		Block b0 = worldObj.getBlock(x, yCoord, z);
-		Block b1 = worldObj.getBlock(x, yCoord + 1, z);
-		Block b2 = worldObj.getBlock(x, yCoord + 2, z);
-		
-		if(b0 == ModBlocks.hydro_turbine && b1.getMaterial() == Material.water && b2 == ModBlocks.hydro_wall) {
-			return true;
-		}
-		
-		return false;
-	}
 	
 	public long getPowerScaled(long i) {
 		return (power * i) / maxPower;

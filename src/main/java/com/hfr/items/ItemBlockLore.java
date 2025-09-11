@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.hfr.blocks.ModBlocks;
 
+import com.hfr.clowder.Clowder;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
@@ -18,41 +19,41 @@ public class ItemBlockLore extends ItemBlock {
 	@Override
     public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean bool) {
 
-		if(field_150939_a == ModBlocks.hard_stone) {
-			list.add("[Tier 1 Hard Wall]");
-			list.add("Solid stone block");
-			list.add("Great for castles!");
-		}
-		if(field_150939_a == ModBlocks.concrete) {
-			list.add("[Tier 2 Hard Wall]");
-			list.add("Hardened clay and sand \"concrete\"");
-		}
-		if(field_150939_a == ModBlocks.concrete_bricks) {
-			list.add("[Tier 3 Hard Wall]");
-			list.add("Hollow concrete-based bricks");
-			list.add("Cheap and fancy");
-		}
-		if(field_150939_a == ModBlocks.concrete_flat) {
-			list.add("[Tier 4 Hard Wall]");
-			list.add("20th century concrete");
-			list.add("Soviets love it!");
-		}
-		if(field_150939_a == ModBlocks.concrete_bolted) {
-			list.add("[Tier 5 Hard Wall]");
-			list.add("Concrete with rebar");
-		}
-		if(field_150939_a == ModBlocks.hard_mesh) {
-			list.add("[Tier 6 Hard Wall]");
-			list.add("Ultra-durable alloy mesh");
-		}
-		if(field_150939_a == ModBlocks.concrete_hazard) {
-			list.add("[Bonus Hard Wall]");
-			list.add("Modern concrete with industrial aesthetic");
-		}
-		if(field_150939_a == ModBlocks.concrete_rocks) {
-			list.add("[Bonus Hard Wall]");
-			list.add("Decorative concrete chunks");
-		}
+		//if(field_150939_a == ModBlocks.hard_stone) {
+		//	list.add("[Tier 1 Hard Wall]");
+		//	list.add("Solid stone block");
+		//	list.add("Great for castles!");
+		//}
+		//if(field_150939_a == ModBlocks.concrete) {
+		//	list.add("[Tier 2 Hard Wall]");
+		//	list.add("Hardened clay and sand \"concrete\"");
+		//}
+		//if(field_150939_a == ModBlocks.concrete_bricks) {
+		//	list.add("[Tier 3 Hard Wall]");
+		//	list.add("Hollow concrete-based bricks");
+		//	list.add("Cheap and fancy");
+		//}
+		//if(field_150939_a == ModBlocks.concrete_flat) {
+		//	list.add("[Tier 4 Hard Wall]");
+		//	list.add("20th century concrete");
+		//	list.add("Soviets love it!");
+		//}
+		//if(field_150939_a == ModBlocks.concrete_bolted) {
+		//	list.add("[Tier 5 Hard Wall]");
+		//	list.add("Concrete with rebar");
+		//}
+		//if(field_150939_a == ModBlocks.hard_mesh) {
+		//	list.add("[Tier 6 Hard Wall]");
+		//	list.add("Ultra-durable alloy mesh");
+		//}
+		//if(field_150939_a == ModBlocks.concrete_hazard) {
+		//	list.add("[Bonus Hard Wall]");
+		//	list.add("Modern concrete with industrial aesthetic");
+		//}
+		//if(field_150939_a == ModBlocks.concrete_rocks) {
+		//	list.add("[Bonus Hard Wall]");
+		//	list.add("Decorative concrete chunks");
+		//}
 		if(field_150939_a == ModBlocks.barricade) {
 			list.add("Can be placed in enemy chunks");
 			list.add("if a conquest flag within 8 blocks");
@@ -66,7 +67,7 @@ public class ItemBlockLore extends ItemBlock {
 			list.add("Increases speed by 25%");
 		}
 		if(field_150939_a == ModBlocks.box) {
-			list.add("Crappy storage block");
+			list.add("Crappy storage block for storing items outside of claims");
 			list.add("Rots after a while");
 		}
 
@@ -77,21 +78,22 @@ public class ItemBlockLore extends ItemBlock {
 		if(field_150939_a == ModBlocks.machine_uni) {
 			list.add("Requires sky access and foundation");
 			list.add("Generates research points over time");
-			list.add("+0.1 prestige gen / hour");
+			list.add(Clowder.UniRate +" prestige gen / hour");
 		}
 		if(field_150939_a == ModBlocks.machine_grainmill) {
 			list.add("Requires sky access and foundation");
 			list.add("Grinds wheat into flour");
-			list.add("+0.1 prestige gen / hour");
+			list.add(Clowder.GrainRate + " prestige gen / hour");
 		}
 		if(field_150939_a == ModBlocks.machine_blastfurnace) {
 			list.add("Requires foundation but no sky access");
 			list.add("Smelts iron ingots and ore into steel");
-			list.add("+0.1 prestige gen / hour");
+			list.add(Clowder.BlastRate + " prestige gen / hour");
 		}
 		if(field_150939_a == ModBlocks.machine_coalmine) {
 			list.add("Requires sky access and foundation");
 			list.add("Uses miners and supplies to generate coal");
+			//todo really? NO one uses this, why not give it prest gen?
 		}
 
 		if(field_150939_a == ModBlocks.hesco_block) {
@@ -123,17 +125,18 @@ public class ItemBlockLore extends ItemBlock {
 		}
 		if(field_150939_a == ModBlocks.tp_tent) {
 			list.add("Requires sky access and foundation");
-			list.add("Allows to create faction TP points nearby");
-			list.add("+0.1 prestige gen / hour");
+			list.add("Allows to create faction teleport/TP/waypoints nearby");
+			list.add(Clowder.tentRate + " prestige gen / hour");
+			//retard alert!
 		}
 		if(field_150939_a == ModBlocks.statue) {
 			list.add("Requires sky access and foundation");
 			list.add("Low-level prestige generator");
-			list.add("+0.5 prestige gen / hour");
+			list.add(Clowder.statueRate + " prestige gen / hour");
 		}
 
 		if(field_150939_a == ModBlocks.machine_coalgen) {
-			list.add("Basic combusion generator");
+			list.add("Basic combustion generator");
 			list.add("Production: 200 RF/t");
 			list.add("Buffer: 240000 RF");
 			list.add("Connection speed: 2000 RF/t");
@@ -161,6 +164,7 @@ public class ItemBlockLore extends ItemBlock {
 			list.add("Connectors: visible knobs at the bottom");
 			list.add("[plane-shredding functionality pending]");
 		}
+		//sigh DO I HAVE TO CODE WIND TOO???
 
 		if(field_150939_a == ModBlocks.machine_waterwheel) {
 			list.add("Requires sky access and flowing water");
@@ -178,22 +182,22 @@ public class ItemBlockLore extends ItemBlock {
 			list.add("Connectors: all sides, top and bottom");
 		}
 
-		if(field_150939_a == ModBlocks.machine_turbine) {
-			list.add("Converts steam into water and power");
-			list.add("Buffer: 100000000 RF");
-			list.add("Connection speed: 100000 RF/t");
-			list.add("Connectors:");
-			list.add("-Energy: back");
-			list.add("-Steam: front");
-			list.add("-Water: sides");
-		}
+		//if(field_150939_a == ModBlocks.machine_turbine) {
+		//	list.add("Converts steam into water and power");
+		//	list.add("Buffer: 100000000 RF");
+		//	list.add("Connection speed: 100000 RF/t");
+		//	list.add("Connectors:");
+		//	list.add("-Energy: back");
+		//	list.add("-Steam: front");
+		//	list.add("-Water: sides");
+		//}
 
-		if(field_150939_a == ModBlocks.machine_efurnace) {
-			list.add("Smelts items quickly");
-			list.add("Requires: 500 RF/t");
-			list.add("Buffer: 10000 RF");
-			list.add("Connection speed: 1000 RF/t");
-		}
+		//if(field_150939_a == ModBlocks.machine_efurnace) {
+		//	list.add("Smelts items quickly");
+		//	list.add("Requires: 500 RF/t");
+		//	list.add("Buffer: 10000 RF");
+		//	list.add("Connection speed: 1000 RF/t");
+		//}
 	}
 
 }

@@ -717,6 +717,9 @@ public class GUIHandler implements IGuiHandler {
 						return new GUIFoundry(player.inventory, (TileEntityFoundry) entity);
 					}
 				}
+
+				//case CommandXCustomImage.
+
 			}
 		} else {
 			

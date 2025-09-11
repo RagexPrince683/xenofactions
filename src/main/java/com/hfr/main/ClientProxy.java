@@ -1,5 +1,6 @@
  package com.hfr.main;
 
+import com.hfr.render.RenderWallImage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.EntityBreakingFX;
 import net.minecraft.client.particle.EntityCloudFX;
@@ -88,6 +89,10 @@ public class ClientProxy extends ServerProxy
 		RenderingRegistry.registerBlockHandler(new RenderBarbedWire());
 		RenderingRegistry.registerBlockHandler(new RenderSandbags());
 		RenderingRegistry.registerBlockHandler(new RenderRope());
+
+		//ClientRegistry.bindTileEntitySpecialRenderer(TileEntityWallImage.class, new TileEntityWallImageRenderer());
+		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityWallImage.class, new RenderWallImage());
+
 
 		ClientRegistry.registerKeyBinding(toggleZoom);
 		ClientRegistry.registerKeyBinding(incScale);

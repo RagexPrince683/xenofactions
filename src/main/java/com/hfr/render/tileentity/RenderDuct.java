@@ -24,9 +24,9 @@ public class RenderDuct extends TileEntitySpecialRenderer {
 		GL11.glTranslated(offsetX, offsetY, offsetZ);
 		GL11.glDisable(GL11.GL_LIGHTING);
 		
-		if(tileentity.getBlockType() == ModBlocks.oil_duct)
-			this.bindTexture(oil);
-		else
+		//if(tileentity.getBlockType() == ModBlocks.oil_duct)
+		//	this.bindTexture(oil);
+		//else
 			this.bindTexture(gas);
 		
 		drawCore(tileentity);

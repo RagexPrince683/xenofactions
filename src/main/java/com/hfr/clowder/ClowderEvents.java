@@ -13,6 +13,7 @@ import com.hfr.clowder.ClowderTerritory.TerritoryMeta;
 import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.command.CommandClowder;
 import com.hfr.command.CommandClowderChat;
+import com.hfr.command.MuteManager;
 import com.hfr.data.ClowderData;
 import com.hfr.handler.BobbyBreaker;
 import com.hfr.handler.ExplosionSound;
@@ -140,6 +141,16 @@ public class ClowderEvents {
 				return;
 			}
 
+			if (event.player.getEntityData().getInteger(CommandClowderChat.CHAT_KEY) == 2) {
+				sendToAlliance(clowder, event.player, event.message);
+				event.setCanceled(true);
+				return;
+			}
+
+			if (!MuteManager.isMuted(event.player.toString())) { //mute check
+
+
+
 			String name = clowder.getDecoratedName();
 			String message = EnumChatFormatting.DARK_GREEN + "[ " + name + " Citizen ]";
 			if(clowder.getPermLevel(event.player.getDisplayName()) > 1) {
@@ -149,6 +160,10 @@ public class ClowderEvents {
 				message = EnumChatFormatting.GOLD + "[ " + name + " Leader ]";
 			}
 			MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(message));
+			} else {
+				event.setCanceled(true);
+			}
+
 		}
 	}
 	
@@ -169,6 +184,32 @@ public class ClowderEvents {
 		clowder.notifyAll(player.worldObj, new ChatComponentText(CommandClowderChat.HELP + name + " " + message));
 		System.out.println(name + " " + message);
 		
+	}
+
+	private void sendToAlliance(Clowder clowder, EntityPlayer player, String message) { //for ally chat
+
+		String name = "";
+
+		if (clowder.getPermLevel(player.getDisplayName()) > 2) {
+			name += "<Leader> ";
+		} else if (clowder.getPermLevel(player.getDisplayName()) > 1) {
+			name += "<Officer> ";
+		} else if (clowder.getPermLevel(player.getDisplayName()) > 0) {
+			name += "<Citizen> ";
+		}
+
+		name += "[" + player.getDisplayName() + "]";
+
+		clowder.notifyAll(player.worldObj, new ChatComponentText(CommandClowderChat.LIST + name + " " + message));
+
+
+		System.out.println(name + " " + message);
+
+		for (Clowder a : clowder.allies.keySet())
+		{
+			a.notifyAll(player.worldObj, new ChatComponentText(CommandClowderChat.LIST + "<Ally> [" + player.getDisplayName() + "] " + message)); //send to all allies
+		}
+
 	}
 	
 	/**
@@ -480,6 +521,8 @@ public class ClowderEvents {
 					}
 				}
 			}
+
+			//todo if our fixed shit for reg flags doesn't work, take the code above and apply it to our conquest takeover for normal flag logic.
 			
 			return false;
 			
@@ -499,6 +542,10 @@ public class ClowderEvents {
 	 * @param world
 	 * @param player
 	 */
+
+	//todo: hand made guns gun renders destroy this overlay because
+	// *insert random fucking opengl error or some fucking reason here*
+	// so to fix this, track back this annoying shithole logic and fix that how god intended instead
 	private void flagPopup(World world, EntityPlayer player) {
 
 		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords((int)player.posX, (int)player.posZ - 1);
@@ -684,6 +731,8 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 	}
 	//todo: test that this works and does not fuck up
 	//third check
+
+	//todo refactor and optimize this dogshit
 	private void checkAndDeleteProjectile(Entity entity) {
 		// Check if the entity is one of the projectiles we care about (Minecraft base or MCHeli)
 		if (entity instanceof EntityArrow || entity instanceof EntityThrowable || entity instanceof EntityFireball) {
@@ -972,13 +1021,13 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 		
 		if(world.isRemote || world.provider.dimensionId != 0 || event.phase == Phase.END)
 			return;
-		
-		if(hour > 0) {
+
+		if (hour > 0) {
 			hour--;
 		} else {
 			hour = MainRegistry.prestigeDelay;
 			Clowder.updatePrestige(world);
-			//MainRegistry.logger.info("Updated clowder prestige levels!"); im sure its fine
+			System.out.println("[Clowder] Prestige update complete.");
 		}
 		
 		if(delay > 0) {
@@ -1034,6 +1083,20 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 		
 		for(Long time : rem) {
 			Clowder.teleports.remove(time);
+		}
+
+		for (Clowder clowder : Clowder.clowders) {
+			if (clowder.valid()) {
+
+				//set home delay crap
+				if(clowder.sethomeDelay > 0)
+					clowder.addSethomeDelay(-1, world);
+				else
+					clowder.sethomeDelay = 0;
+
+				//hopefully stops the chunk refresh smurfing
+				clowder.save(world);
+			}
 		}
 		
 		/// CLOWDER TERRITORYY ADMINISTRATIVE STUFF START ///

@@ -83,6 +83,13 @@ public class CommandClowderAdmin extends CommandBase {
 			cmdForcedisband(sender, args[1]);
 			return;
 		}
+
+		if((cmd.equals("forcerename") || cmd.equals("fr")) && args.length > 1) {
+
+			cmdForceRename(sender, args[1]);
+			return;
+		}
+		//todo test
 		
 		if(cmd.equals("hijack") || cmd.equals("hi")) {
 			
@@ -149,6 +156,7 @@ public class CommandClowderAdmin extends CommandBase {
 		}
 
 		if(p == 2) {
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forcerename <name>" + TITLE + " - Forcefully renames a faction"));
 			//sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-create <name>" + TITLE + " - Creates a faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-disband <name>" + TITLE + " - Disbands a faction, name parameter for confirmation"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-rename <name>" + TITLE + " - Renames your faction"));
@@ -213,6 +221,28 @@ public class CommandClowderAdmin extends CommandBase {
 			
 		} else {
 			sender.addChatMessage(new ChatComponentText(ERROR + "There is no faction with this name!"));
+		}
+	}
+
+	private void cmdForceRename(ICommandSender sender, String name) {
+
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder clowder = Clowder.getClowderFromPlayer(player);
+
+		if(clowder != null) {
+
+			if(Clowder.getClowderFromName(name) == null) {
+
+				clowder.rename(name, player);
+				sender.addChatMessage(new ChatComponentText(TITLE + "Renamed faction to " + name + "!"));
+				PacketDispatcher.wrapper.sendTo(new ClowderFlagPacket(clowder, ""), (EntityPlayerMP) player);
+
+			} else {
+				sender.addChatMessage(new ChatComponentText(ERROR + "This name is already taken!"));
+			}
+
+		} else {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
 		}
 	}
 	

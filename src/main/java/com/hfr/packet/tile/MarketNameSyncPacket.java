@@ -11,6 +11,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 
 public class MarketNameSyncPacket implements IMessage {
+    //not used?
     private int x, y, z;
     private NBTTagCompound data;
 

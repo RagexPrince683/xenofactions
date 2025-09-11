@@ -45,14 +45,14 @@ public class TileEntityMachineUni extends TileEntityMachineBase {
 					
 					if(o != null && o.zone == Zone.FACTION) {
 						if(owner != null)
-							owner.addPrestigeGen(-Clowder.tentRate, worldObj);
+							owner.addPrestigeGen(-Clowder.UniRate, worldObj);
 						owner = o.owner;
-						owner.addPrestigeGen(Clowder.tentRate, worldObj);
+						owner.addPrestigeGen(Clowder.UniRate, worldObj);
 						
 					} else {
 						
 						if(owner != null)
-							owner.addPrestigeGen(-Clowder.tentRate, worldObj);
+							owner.addPrestigeGen(-Clowder.UniRate, worldObj);
 						
 						owner = null;
 					}
@@ -89,7 +89,7 @@ public class TileEntityMachineUni extends TileEntityMachineBase {
 			} else {
 				
 				if(owner != null) {
-					owner.addPrestigeGen(-Clowder.tentRate, worldObj);
+					owner.addPrestigeGen(-Clowder.UniRate, worldObj);
 					owner = null;
 				}
 			}

@@ -402,6 +402,7 @@ public class MainRegistry
 		sub.put(regexify("penis"), "junk");
 		//sub.put(regexify("twat"), "天安门广场大屠杀");
 		//sub.put(regexify("idiot"), "傻子");
+		//unicode errors
 		sub.put(regexify("whore"), "hussy");
 		sub.put(regexify("pornography"), "naughty pics");
 		sub.put(regexify("porn"), "cartoons");
@@ -410,7 +411,11 @@ public class MainRegistry
 		sub.put(regexify("woke"), "furry");
 		sub.put(regexify("moon cricket"), "I own a fursuit");
 		sub.put(regexify("50% 13%"), "*wags tail cutely OWO :3");
+		sub.put(regexify("13% 50%"), "*wags tail cutely OWO :3");
+		sub.put(regexify("13 50"), "*wags tail cutely OWO :3");
+		sub.put(regexify("1350"), "*wags tail cutely OWO :3");
 		sub.put(regexify("melon muncher"), "uwu x3");
+		sub.put(regexify("beaner"), "I like beans :3");
 		sub.put(regexify("sigma"), "fur suiter");
 		sub.put(regexify("ragex chan"), "I'm a furry uwu");
 		sub.put(regexify("gator bait"), "my fursona is an alligator :3");
@@ -429,6 +434,7 @@ public class MainRegistry
 		sub.put(regexify("mayonnaise monkey"), "I'm a furry x3");
 		sub.put(regexify("mayo monkey"), "I wear thigh highs to bed :33");
 		sub.put(regexify("niglet"), "UwU x3 haiiiiii");
+		sub.put(regexify("niggerlet"), "UwU x3 haiiiiii");
 		sub.put(regexify("nog"), "I'm a furry x333");
 		sub.put(regexify("shitskin"), "What in the whiskers?! :3");
 		sub.put(regexify("spade"), "What the actual fur?! OWO :3");
@@ -447,11 +453,48 @@ public class MainRegistry
 		sub.put(regexify("tren"), "turkesteron and go2 max");
 		sub.put(regexify("`1989`"), "please respect our chinese partners uwu");
 		sub.put(regexify("tiannamen square massacre"), "never happened");
-		sub.put(regexify("mao"), "mandela");
+		sub.put(regexify("`mao`"), "mandela");
 		sub.put(regexify("hotdog"), "please respect our north korean partners");
 		sub.put(regexify("janny"), "terrorist");
 		sub.put(regexify("jannie"), "terrorist");
 		sub.put(regexify("janitors"), "terrorist");
+		sub.put(regexify("卍"), "furry");
+		sub.put(regexify("卐"), "extreme furry");
+		sub.put(regexify("tranny"), "yiff enjoyer");
+		sub.put(regexify("trannies"), "yiff enjoyers");
+		sub.put(regexify("troon"), "fwen");
+		sub.put(regexify("trannyfag"), "furry");
+		sub.put(regexify("trannyfaggot"), "furry");
+		sub.put(regexify("intcraft"), "bad serb");
+		sub.put(regexify("tap"), "turkish coding");
+		sub.put(regexify("tyrants and plebians"), "turkish coding");
+		sub.put(regexify("monorisu"), "turkish coding");
+		sub.put(regexify("mono"), "turkish coding");
+		sub.put(regexify("labjac"), "turkish coding");
+		sub.put(regexify("bobcat"), "fat german");
+		sub.put(regexify("atom_14_a"), "fat hispanic");
+		sub.put(regexify("dr nostalgia"), "fat bronie");
+		sub.put(regexify("drnostalgia"), "fat bronie");
+		sub.put(regexify("hbm"), "hated by many");
+		sub.put(regexify("duck"), "annoying redditor talk");
+		sub.put(regexify("chungus"), "annoying redditor talk");
+		sub.put(regexify("wholesome"), "annoying redditor talk");
+		sub.put(regexify("job"), "pawj*b");
+		sub.put(regexify("j o b"), "pawj*b");
+		sub.put(regexify("fuck dog"), "I have a bestiality fetish and I can't stop projecting");
+		sub.put(regexify("vic"), "model stealer");
+		sub.put(regexify("vic's modern warfare"), "complete garbage");
+		sub.put(regexify("event"), "iteration");
+		sub.put(regexify("skibidi"), "iq reduction");
+		sub.put(regexify("minors"), "./ban @whoeversaid this :3");
+		sub.put(regexify("'cp'"), "./ban @whoeversaid this :3");
+
+
+
+
+
+		//1984
+
 		
 		NetworkRegistry.INSTANCE.registerGuiHandler(instance, new GUIHandler());
 		
@@ -508,6 +551,15 @@ public class MainRegistry
 		GameRegistry.registerTileEntity(TileEntityFoundry.class, "tileentity_hfr_foundry");
 		GameRegistry.registerTileEntity(TileEntityMachineSawmill.class, "tileentity_hfr_sawmill");
 		GameRegistry.registerTileEntity(TileEntityMachineEFurnace.class, "tileentity_hfr_efurnace");
+
+		BlockWallImage.instance = new BlockWallImage();
+		GameRegistry.registerTileEntity(TileEntityWallImage.class, "tile_wall_image");
+
+
+		//e
+		//GameRegistry.registerBlock(BlockWallImage.instance, "wall_image_block");
+		//done somewhere else
+
 
 		int id = 0;
 	    EntityRegistry.registerModEntity(EntityMissileAT.class, "entity_missile_v2AT", id++, this, 1000, 1, true);
@@ -643,33 +695,59 @@ public class MainRegistry
 		}
 	}
 
-	@EventHandler
+	@Mod.EventHandler
 	public void serverStarting(FMLServerStartingEvent event) {
-		event.registerServerCommand(new CommandClowder());
-		//command ore wand
-		//event.registerServerCommand(new CommandOrewand());
-		//custom stone drops
-		event.registerServerCommand(new CommandStoneDrop());
-		//MarketData.loadMarketData();
-		//depricated schizophrenia and unhinged gpt pasting
-		event.registerServerCommand(new CommandXShop());
-	}
-
-	@EventHandler
-	public void ServerLoad(FMLServerStartingEvent event)
-	{
-		event.registerServerCommand(new CommandXPlayer());
-		event.registerServerCommand(new CommandXDebug());
-		event.registerServerCommand(new CommandXMarket());
+		// Main faction system commands
 		event.registerServerCommand(new CommandClowder());
 		event.registerServerCommand(new CommandClowderChat());
 		event.registerServerCommand(new CommandClowderAdmin());
-		//event.registerServerCommand(new CommandXShop());
-		//event.loadMarketData()
-		//MarketData.loadMarketData();
-		//OfferPacket
-		//OfferPacket
+
+		// Other utility commands
+		event.registerServerCommand(new CommandXShop());
+		event.registerServerCommand(new CommandXPlayer());
+		event.registerServerCommand(new CommandXDebug());
+		event.registerServerCommand(new CommandXMarket());
+		event.registerServerCommand(new CommandStoneDrop());
+		event.registerServerCommand(new CommandMute());
+		event.registerServerCommand(new CommandUnmute());
+		MarketData.loadMarketData();
+		//and now we just pray that the market data does not cope over serverside
+
+		//I'm flying too high
+		//MinecraftServer.getServer().getCommandManager().registerCommand(new CommandXCustomImage());
+		event.registerServerCommand(new CommandXCustomImage());
+
 	}
+
+	//only one thing
+
+	//@EventHandler
+	//public void serverStarting(FMLServerStartingEvent event) {
+	//	event.registerServerCommand(new CommandClowder());
+	//	//command ore wand
+	//	//event.registerServerCommand(new CommandOrewand());
+	//	//custom stone drops
+	//	event.registerServerCommand(new CommandStoneDrop());
+	//	//MarketData.loadMarketData();
+	//	//depricated schizophrenia and unhinged gpt pasting
+	//	event.registerServerCommand(new CommandXShop());
+	//}
+
+	//@EventHandler
+	//public void ServerLoad(FMLServerStartingEvent event)
+	//{
+	//	event.registerServerCommand(new CommandXPlayer());
+	//	event.registerServerCommand(new CommandXDebug());
+	//	event.registerServerCommand(new CommandXMarket());
+	//	event.registerServerCommand(new CommandClowder());
+	//	event.registerServerCommand(new CommandClowderChat());
+	//	event.registerServerCommand(new CommandClowderAdmin());
+	//	//event.registerServerCommand(new CommandXShop());
+	//	//event.loadMarketData()
+	//	//MarketData.loadMarketData();
+	//	//OfferPacket
+	//	//OfferPacket
+	//}
 
 	public static List<Block> blastShields = new ArrayList();
 	public static Set<Block> zombBlacklist = new HashSet();
@@ -889,11 +967,8 @@ public class MainRegistry
         mSpawn = mSpawnP.getInt();
         
         Property drywall = config.get("MISSILE", "blastShields", new String[] {
-        		"" + Block.getIdFromBlock(Blocks.obsidian),
-        		"" + Block.getIdFromBlock(ModBlocks.concrete),
-        		"" + Block.getIdFromBlock(ModBlocks.concrete_bricks),
-        		"" + Block.getIdFromBlock(ModBlocks.vault_door),
-        		"" + Block.getIdFromBlock(ModBlocks.vault_door_dummy)});
+        		"" + Block.getIdFromBlock(Blocks.obsidian)
+        		});
         drywall.comment = "What blocks can block fire blasts (default: obsidian, concrete, concrete bricks, vault door, vault door dummy)";
         String[] vals = drywall.getStringList();
         

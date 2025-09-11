@@ -22,15 +22,10 @@ public class CommandClowderChat extends CommandBase {
 	public String getCommandUsage(ICommandSender sender) {
 		return "/cc <message>";
 	}
-	
-    public int getRequiredPermissionLevel()
-    {
-        return 0;
-    }
 
-	public boolean canCommandSenderUseCommand(ICommandSender p_71519_1_)
+	public int getRequiredPermissionLevel()
 	{
-		return true;
+		return 0;
 	}
 
 	@Override
@@ -38,15 +33,15 @@ public class CommandClowderChat extends CommandBase {
 
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
-		
+
 		if(clowder == null) {
 			player.getEntityData().setInteger(CHAT_KEY, 0);
 			sender.addChatMessage(new ChatComponentText(CRITICAL + "You are not in any faction, chat settings have been reset!"));
 			return;
 		}
-		
+
 		if(args.length > 0) {
-			
+
 			if(args[0].equals("public") || args[0].equals("p")) {
 				player.getEntityData().setInteger(CHAT_KEY, 0);
 				sender.addChatMessage(new ChatComponentText(INFO + "Chat mode set to public!"));
@@ -54,6 +49,10 @@ public class CommandClowderChat extends CommandBase {
 			} else if(args[0].equals("faction") || args[0].equals("f")) {
 				player.getEntityData().setInteger(CHAT_KEY, 1);
 				sender.addChatMessage(new ChatComponentText(INFO + "Chat mode set to faction!"));
+				return;
+			} else if(args[0].equals("alliance") || args[0].equals("a")) {
+				player.getEntityData().setInteger(CHAT_KEY, 2);
+				sender.addChatMessage(new ChatComponentText(INFO + "Chat mode set to alliance!"));
 				return;
 			} else if(args[0].equals("mute") || args[0].equals("m")) {
 				player.getEntityData().setInteger(MUTE_KEY, 1);
@@ -66,20 +65,26 @@ public class CommandClowderChat extends CommandBase {
 				return;
 			} else {
 				sender.addChatMessage(new ChatComponentText(CRITICAL + "Invalid arguments!"));
-				sender.addChatMessage(new ChatComponentText(CRITICAL + "Try: 'public', 'faction' or none"));
+				sender.addChatMessage(new ChatComponentText(CRITICAL + "Try: 'public', 'faction', 'alliance' or none"));
 				return;
 			}
 		}
-		
+
 		int mode = player.getEntityData().getInteger(CHAT_KEY);
-		
+
 		if(mode == 0) {
 			player.getEntityData().setInteger(CHAT_KEY, 1);
 			sender.addChatMessage(new ChatComponentText(INFO + "Chat mode set to faction!"));
 			return;
 		}
-		
+
 		if(mode == 1) {
+			player.getEntityData().setInteger(CHAT_KEY, 2);
+			sender.addChatMessage(new ChatComponentText(INFO + "Chat mode set to alliance!"));
+			return;
+		}
+
+		if(mode == 2) {
 			player.getEntityData().setInteger(CHAT_KEY, 0);
 			sender.addChatMessage(new ChatComponentText(INFO + "Chat mode set to public!"));
 			return;

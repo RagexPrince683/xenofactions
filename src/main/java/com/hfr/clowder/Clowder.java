@@ -11,7 +11,7 @@ import com.hfr.blocks.BlockDummyable;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.command.CommandClowder;
 import com.hfr.data.ClowderData;
-import com.hfr.data.MarketData.Offer;
+//import com.hfr.data.MarketData.Offer;
 import com.hfr.main.MainRegistry;
 import com.hfr.tileentity.prop.TileEntityProp;
 
@@ -48,7 +48,7 @@ public class Clowder {
 
 	//tracks how many times the clowder has bought from this market option
 	//non-persistent so it won't save when the server stops
-	public HashMap<Offer, Integer> offerHistory = new HashMap();
+	//public HashMap<Offer, Integer> offerHistory = new HashMap();
 
 	//for limited only x bonus minutes from capping chunks
 	//Limit is found in the MainRegistry class
@@ -72,6 +72,7 @@ public class Clowder {
 	//public boolean paxBritannica = false;
 
 	//debug to force offlines to be online
+	//HOW CAN YOU FORCE A PLAYER TO BE ONLINE WITHOUT GETTING INTO THEIR PC? HUH WEEDER?
 	public static boolean forceOnline = false;
 
 	//for poorly coded treaty system
@@ -99,6 +100,10 @@ public class Clowder {
 
 	//to prevent sethome abuse
 	public float sethomeDelay = 0;
+
+	//todo: if sethome is exploited by nevrons why wouldn't nevrons want to exploit the FUCKING ALLY WARP SYSTEM?
+	//wait nevermind. it LOOKS like it at least hooks into this. I'm sure weeder/bob shithole code definitely works PROPERLY.
+	//public float setallyDelay = 0;
 
 	//for pussying out system
 	//public boolean targeted = false;
@@ -141,11 +146,16 @@ public class Clowder {
 	private float canDeclareTime = 0;
 	private float warTime = 0;
 
-	public static final float tentRate = 0.1F;
+	public static final float tentRate = -0.8F;
+	public static final float BlastRate = 0.3F;
+	public static final float GrainRate = 0.2F;
+	public static final float UniRate = 0.6F;
 	public static final float statueRate = 0.5F;
 	public static final float flagRate = 0.1F;
 	public static final float flagReq = 1.0F;
 
+	//this mod is so fucking retarded I guarantee you theres like 16 different ways this shit can be exploited
+	//or is just SHIT coding. and that's coming from a MCHELI developer.
 
 
 
@@ -220,10 +230,7 @@ public class Clowder {
 
 
 
-			if(clowder.sethomeDelay > 0)
-				clowder.addSethomeDelay(-1, world);
-			else
-				clowder.sethomeDelay = 0;
+
 
 			/*
 			if(clowder.peaceTreaty > 60)
@@ -1135,24 +1142,12 @@ public class Clowder {
 
 	public void addPrestige(float f, World world) {
 
-		if (Loader.isModLoaded("HardcoreQuesting") && CommandClowder.getTeamByName(name) != null) {
+
 			prestige += f;
 
 			if (prestige < 0)
 				prestige = 0F;
 
-			prestige = Math.min(prestige, prestigeCap);
-			CommandClowder.getTeamByName(name).setReputation(0, (int) prestige);
-			if ((CommandClowder.getTeamByName(name).getReputation(0) != 0 || (int) prestige == 0)) {
-				prestige -= (int) prestige;
-				prestige += CommandClowder.getTeamByName(name).getReputation(0);
-			}
-		} else {
-			prestige += f;
-
-			if (prestige < 0)
-				prestige = 0F;
-		}
 		prestige = Math.min(prestige, prestigeCap);
 		this.save(world);
 	}
@@ -1425,9 +1420,9 @@ public class Clowder {
 		}
 	}
 
-	public void restockMarkets() {
-		this.offerHistory.clear();
-	}
+	//public void restockMarkets() {
+	//	this.offerHistory.clear();
+	//}
 
 	/// GLOBAL METHODS ///
 	public static void recalculateIMap() {
@@ -1550,49 +1545,20 @@ public class Clowder {
 	}
 
 	// the thing that adds prestige to prestige bank - allah note
+	private static int saveCooldown = 20; // ticks
+
 	public static void updatePrestige(World world) {
-
 		for (Clowder clowder : clowders) {
-
 			if (clowder.valid()) {
-
-				float prestige = clowder.getPrestigeGen();
-
-				float loss = clowder.getPrestigeReq();
-
-//				// multiplication prestige decay thing allah bookmark
-//				prestige *= (float) Math.pow(0.99, clowder.getPrestige());
-
-
-				//consume prestige required
-				clowder.addPrestige((float) (-1f*loss), world);
-
-				// if you are not a tributary, use normal prestige adding
-				if (clowder.suzerain == null)
-					clowder.addPrestige(prestige, world);
-
-				else {
-					//bitches lose 1/2, vassals lose 1/5, master gets 1/10 prestige off the top. ignores prestige generation cap
-					//if(clowder.bitch)
-					//{
-					//	clowder.addPrestige((float) (prestige * 0.5), world);
-					//	clowder.notifyAll(world,
-					//			new ChatComponentText(CommandClowder.TITLE + "We have lost " + (float) prestige * 0.5
-					//					+ " prestige because we are a tributary to " + clowder.suzerain.name));
-					//}
-					//else
-					//{
-					//	clowder.addPrestige((float) (prestige * 0.8), world);
-					//	clowder.notifyAll(world,
-					//			new ChatComponentText(CommandClowder.TITLE + "We have lost " + (float) prestige * 0.2
-					//					+ " prestige because we are a tributary to " + clowder.suzerain.name));
-					//}
-					clowder.suzerain.addPrestige((float) (prestige * 0.1), world);
-					clowder.suzerain.notifyAll(world, new ChatComponentText(CommandClowder.TITLE + "We have received "
-							+ (float) prestige * 0.1f + " extra prestige as tribute from " + clowder.name));
-
-				}
+				// ... prestige math ...
 			}
+		}
+
+		if (--saveCooldown <= 0) {
+			for (Clowder clowder : clowders) {
+				clowder.save(world);
+			}
+			saveCooldown = 20;
 		}
 	}
 

@@ -7,7 +7,6 @@ import org.lwjgl.opengl.GL11;
 
 import com.hfr.blocks.machine.MachineMarket;
 import com.hfr.blocks.machine.MachineMarket.TileEntityMarket;
-import com.hfr.data.MarketData.Offer;
 import com.hfr.lib.RefStrings;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.client.AuxButtonPacket;
@@ -30,9 +29,35 @@ public class GUIMachineMarket extends GuiScreen {
 	protected int guiTop;
 	protected int xSize = 176;
 	protected int ySize = 194;
-	public static List<Offer> offers = new ArrayList();
+	public static List<ItemStack[]> offers = new ArrayList();
 	int page;
 	TileEntityMarket market;
+
+	// fields
+	private boolean requestSent = false;
+
+
+	// call to request server
+	private void sendRequestIfNeeded() {
+		if (market == null) {
+			System.out.println("[GUIMachineMarket] market is null when trying to request");
+			return;
+		}
+		if (requestSent) {
+			// already requested and waiting for reply
+			return;
+		}
+		requestSent = true;
+		PacketDispatcher.wrapper.sendToServer(new com.hfr.packet.tile.OfferPacket(market.xCoord, market.yCoord, market.zCoord, market.name));
+		System.out.println("[GUIMachineMarket] Sent request OfferPacket for market='" + market.name + "' coords=("
+				+ market.xCoord + "," + market.yCoord + "," + market.zCoord + ")");
+	}
+
+	// called by client handler when a reply arrives
+	public void onOffersReceived() {
+		requestSent = false;
+		refreshOffers();
+	}
 
 	public GUIMachineMarket(EntityPlayer player, TileEntityMarket market) {
 
@@ -40,13 +65,72 @@ public class GUIMachineMarket extends GuiScreen {
 		this.player = player;
 	}
 
-	public void initGui()
-	{
+	/**
+	 * Keep GUI page bounds valid after offers change.
+	 * Call this after GUIMachineMarket.offers is replaced.
+	 */
+	public void refreshOffers() {
+		if (offers == null) offers = new ArrayList<ItemStack[]>();
+		// clamp page to available pages
+		int maxPage = Math.max(1, (offers.size() + 5) / 6);
+		if (page < 1) page = 1;
+		if (page > maxPage) page = maxPage;
+		// force a simple client redraw next tick by resetting the mouse-over cached value
+		this.last = null;
+	}
+
+
+	// OLD
+	//public void refreshOffers() {
+	//	// Called when offers data changes.
+	//	// Keep page within bounds and reinitialize whatever UI state depends on 'offers'.
+	//	if (offers == null) offers = new ArrayList<ItemStack[]>();
+	//	if (page < 1) page = 1;
+	//	int maxPage = Math.max(1, (int)Math.ceil((double)offers.size() / 6.0));
+	//	if (page > maxPage) page = maxPage;
+//
+	//	// If your GUI builds slot lists or widgets at init, call that here.
+	//	// The quick & dirty approach is to call initGui() which recalculates positions:
+	//	// (safe in 1.7.10 for small GUIs)
+	//	this.initGui();
+	//}
+
+	// modify initGui() to clear offers and request server if needed:
+	public void initGui() {
 		super.initGui();
 		this.guiLeft = (this.width - this.xSize) / 2;
 		this.guiTop = (this.height - this.ySize) / 2;
 		page = 1;
+
+		// keep client side offers empty until server replies
+		// DO NOT overwrite server-sent data if already filled
+		if (offers == null || offers.isEmpty()) {
+			offers = new ArrayList<ItemStack[]>();
+		}
+
+		// Try to request fresh data from server if we have a market tile reference
+		try {
+			if (market != null) {
+				try {
+					// send coords + (maybe-empty) name so server can fallback to coords
+					// inside initGui(), replace the PacketDispatcher.wrapper.sendToServer(...) block with:
+					sendRequestIfNeeded();
+
+					System.out.println("[GUIMachineMarket] Sent request OfferPacket for market='" + market.name + "' coords=("
+							+ market.xCoord + "," + market.yCoord + "," + market.zCoord + ")");
+				} catch (Exception e) {
+					System.err.println("[GUIMachineMarket] Exception while sending OfferPacket request:");
+					e.printStackTrace();
+				}
+			} else {
+				System.out.println("[GUIMachineMarket] market is null on client when initGui()");
+			}
+		} catch (Exception e) {
+			System.err.println("[GUIMachineMarket] Exception while sending OfferPacket request:");
+			e.printStackTrace();
+		}
 	}
+
 
 	protected void mouseClicked(int x, int y, int i) {
 
@@ -89,7 +173,7 @@ public class GUIMachineMarket extends GuiScreen {
 
 		if(i < offers.size()) {
 
-			ItemStack[] offer = offers.get(i).offer;
+			ItemStack[] offer = offers.get(i);
 
 			return offer;
 		}

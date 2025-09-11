@@ -179,6 +179,7 @@ public class EventHandlerClient {
 			}
 			
 			/// CLOWDER TRASH ///
+			//todo fix with HMG
 			RenderFlagOverlay.drawFlag();
 		}
 		

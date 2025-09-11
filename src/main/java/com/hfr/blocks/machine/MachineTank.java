@@ -153,16 +153,16 @@ public class MachineTank extends BlockContainer {
 			
 			TileEntityTank tank = (TileEntityTank)world.getTileEntity(x, y, z);
 			
-			if(tank != null) {
-			
-				ItemStack stack = new ItemStack(ModBlocks.machine_tank);
-				stack.stackTagCompound = new NBTTagCompound();
-				stack.stackTagCompound.setInteger("type", tank.type);
-				stack.stackTagCompound.setInteger("fill", tank.fill);
-	
-				EntityItem entityItem = new EntityItem(world, x + motionX, y + motionY, z + motionZ, stack);
-				world.spawnEntityInWorld(entityItem);
-			}
+			//if(tank != null) {
+			//
+			//	ItemStack stack = new ItemStack(ModBlocks.machine_tank);
+			//	stack.stackTagCompound = new NBTTagCompound();
+			//	stack.stackTagCompound.setInteger("type", tank.type);
+			//	stack.stackTagCompound.setInteger("fill", tank.fill);
+	//
+			//	EntityItem entityItem = new EntityItem(world, x + motionX, y + motionY, z + motionZ, stack);
+			//	world.spawnEntityInWorld(entityItem);
+			//}
 		}
 
 		return world.setBlockToAir(x, y, z);

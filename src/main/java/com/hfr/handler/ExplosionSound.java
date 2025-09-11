@@ -58,3 +58,5 @@ public class ExplosionSound {
 	}
 
 }
+
+//todo mcheli compat for ts but its infnite bullshit

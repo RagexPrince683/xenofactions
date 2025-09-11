@@ -39,16 +39,6 @@ public class PipeUtil {
 				tank.fill += fill;
 				tank.type = 0;
 			}
-		} else if(b == ModBlocks.oil_duct && !tiles.contains(te)) {
-			
-			tiles.add((TileEntityDuct) te);
-
-			distributeOil(source, world, x + 1, y, z);
-			distributeOil(source, world, x - 1, y, z);
-			distributeOil(source, world, x, y + 1, z);
-			distributeOil(source, world, x, y - 1, z);
-			distributeOil(source, world, x, y, z + 1);
-			distributeOil(source, world, x, y, z - 1);
 		}
 	}
 	
@@ -75,16 +65,6 @@ public class PipeUtil {
 				tank.fill += fill;
 				tank.type = 1;
 			}
-		} else if(b == ModBlocks.gas_duct && !tiles.contains(te)) {
-			
-			tiles.add((TileEntityDuct) te);
-
-			distributeGas(source, world, x + 1, y, z);
-			distributeGas(source, world, x - 1, y, z);
-			distributeGas(source, world, x, y + 1, z);
-			distributeGas(source, world, x, y - 1, z);
-			distributeGas(source, world, x, y, z + 1);
-			distributeGas(source, world, x, y, z - 1);
 		}
 	}
 	

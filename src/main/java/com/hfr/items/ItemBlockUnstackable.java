@@ -10,9 +10,10 @@ public class ItemBlockUnstackable extends ItemBlock {
 	public ItemBlockUnstackable(Block block) {
 		super(block);
 		
-		if(block == ModBlocks.machine_derrick)
-			this.setMaxStackSize(16);
-		else
+		//if(block == ModBlocks.machine_derrick)
+		//	this.setMaxStackSize(16);
+		//else
+		//nice code retard
 			this.setMaxStackSize(1);
 	}
 

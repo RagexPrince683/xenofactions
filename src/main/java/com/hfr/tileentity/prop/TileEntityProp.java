@@ -89,6 +89,7 @@ public class TileEntityProp extends TileEntity {
 			}
 
 			/// PRESTIGE GEENERATOR ///
+			//FOR TENTS RETARD
 			if(this.getBlockType() == ModBlocks.tp_tent || this.getBlockType() == ModBlocks.med_tent) {
 				
 				if(this.operational()) {

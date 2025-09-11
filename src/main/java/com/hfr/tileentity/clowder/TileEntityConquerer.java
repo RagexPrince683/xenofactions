@@ -112,6 +112,8 @@ public class TileEntityConquerer extends TileEntityMachineBase implements ITerri
 		
 		switch(id) {
 		case 0: flag = ClowderFlag.values()[val]; break;
+		//TODO does this stupid shit cause the main flag not to be cappable?
+			//what the hell is this? what does it do??? I fucking hate this guy and his fucking code
 		case 1: color = val; break;
 		case 2: height = val * 0.01F; break;
 		}
