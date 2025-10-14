@@ -23,6 +23,11 @@ public class CommandClowderChat extends CommandBase {
 		return "/cc <message>";
 	}
 
+	public boolean canCommandSenderUseCommand(ICommandSender p_71519_1_)
+	{ //2THIS DOES!!! well probably plus that, whatever!
+		return true;
+	}
+
 	public int getRequiredPermissionLevel()
 	{
 		return 0;
