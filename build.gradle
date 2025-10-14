@@ -21,6 +21,38 @@ buildscript {
     }
 }
 
+
+// Define the version increment logic
+def versionFile = file('version.properties')
+def currentVersion = '1.5.2' // Default version
+
+if (versionFile.exists()) {
+    currentVersion = versionFile.text.trim()
+}
+
+def versionParts = currentVersion.tokenize('.')
+def patch = versionParts[2].toInteger() + 1
+def newVersion = "${versionParts[0]}.${versionParts[1]}.${patch}"
+
+// Update the version in the build.gradle file
+version = newVersion
+
+// Write the new version back to the version.txt file
+task updateVersion {
+    doLast {
+        versionFile.text = newVersion
+        println "Version updated to $newVersion"
+    }
+}
+
+// Ensure the version is updated before building
+afterEvaluate {
+    build.dependsOn updateVersion
+}
+
+
+
+
 allprojects {
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
@@ -32,8 +64,8 @@ allprojects {
 apply plugin: 'forge'
 
 
-
-version = "1.5.2"
+//may need a equals here idk its weird
+version newVersion
 group= "com.ragexprince683.xenofactions"
 archivesBaseName = "Xenofactions"
 
@@ -46,6 +78,7 @@ minecraft {
 }
 
 dependencies {
+
     compile fileTree(dir: 'lib', include: ['*.jar'])
 }
 
