@@ -715,7 +715,8 @@ public class MainRegistry
 
 		//I'm flying too high
 		//MinecraftServer.getServer().getCommandManager().registerCommand(new CommandXCustomImage());
-		event.registerServerCommand(new CommandXCustomImage());
+		//todo readd custom images, temp hotfix for server missing perm
+		//event.registerServerCommand(new CommandXCustomImage());
 
 	}
 
