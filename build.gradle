@@ -65,7 +65,8 @@ apply plugin: 'forge'
 
 
 //may need a equals here idk its weird
-version newVersion
+//version
+newVersion
 group= "com.ragexprince683.xenofactions"
 archivesBaseName = "Xenofactions"
 
