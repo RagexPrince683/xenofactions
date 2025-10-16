@@ -35,7 +35,7 @@ def patch = versionParts[2].toInteger() + 1
 def newVersion = "${versionParts[0]}.${versionParts[1]}.${patch}"
 
 // Update the version in the build.gradle file
-version = newVersion
+version newVersion
 
 // Write the new version back to the version.txt file
 task updateVersion {

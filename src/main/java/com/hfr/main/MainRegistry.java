@@ -367,6 +367,7 @@ public class MainRegistry
 		HFRPotion.init();
 		MainRegistry.loadCustomDrops();
 
+		//todo: make chat filter apply to faction names so we don't have edgelords putting swastikas and shit in their fac names
 		sub.put(regexify("sex mod"), "funnies");
 		sub.put(regexify("fuck"), "frick");
 		sub.put(regexify("nigga"), "african american");
@@ -450,7 +451,7 @@ public class MainRegistry
 		sub.put(regexify("raghead"), "Yiff maxxing rn x3 UwU");
 		sub.put(regexify("buck"), "you like boyys dont you x333");
 		sub.put(regexify("cracka"), "Fur-tastic! :3");
-		sub.put(regexify("tren"), "turkesteron and go2 max");
+		sub.put(regexify("trenbolone acetate"), "turkesteron and go2 max");
 		sub.put(regexify("`1989`"), "please respect our chinese partners uwu");
 		sub.put(regexify("tiannamen square massacre"), "never happened");
 		sub.put(regexify("`mao`"), "mandela");
