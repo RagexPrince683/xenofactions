@@ -9,6 +9,7 @@ import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.Ownership;
 import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.main.MainRegistry;
+import com.hfr.tileentity.machine.TileEntityComboProxy;
 import com.hfr.tileentity.machine.TileEntityFoundry;
 
 import cpw.mods.fml.common.network.internal.FMLNetworkHandler;
@@ -29,15 +30,19 @@ public class MachineFoundry extends BlockDummyable {
 		super(mat);
 	}
 
-	@Override
-	public TileEntity createNewTileEntity(World p_149915_1_, int meta) {
-		
-		if(meta >= 12)
-			return new TileEntityFoundry();
-		return null;
-	}
-	
-	@Override
+    @Override
+    public TileEntity createNewTileEntity(World world, int meta) {
+        // Core block uses the actual Foundry TE
+        if (meta >= 12) {
+            return new TileEntityFoundry();
+        }
+        // Dummy parts use a proxy TE
+        return new TileEntityComboProxy();
+        //why would we need a proxy? shouldn't this just work fine?
+        //nvm, minecraft is pain
+    }
+
+    @Override
 	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
 		if(world.isRemote)
 		{
