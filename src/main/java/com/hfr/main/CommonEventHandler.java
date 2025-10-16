@@ -318,8 +318,11 @@ public class CommonEventHandler {
 		return list;
 	}
 
-	//wb logic --
+	// world border logic - fixed
+
 	public void handleBorder(Entity entity) {
+		if (entity == null || entity.isDead) return;
+
 		double posX = entity.posX;
 		double posZ = entity.posZ;
 
@@ -330,16 +333,13 @@ public class CommonEventHandler {
 			double newZ = wrapZ(posZ);
 			double newY = entity.posY;
 
+			World world = entity.worldObj;
 			int checkX = MathHelper.floor_double(newX);
 			int checkY = MathHelper.floor_double(newY);
 			int checkZ = MathHelper.floor_double(newZ);
 
-			World world = entity.worldObj;
-
-			// Check if the position is in a solid block
-			/**
+			// Try to avoid placing entity inside solid blocks (move up up to 5 blocks)
 			if (!world.isAirBlock(checkX, checkY, checkZ)) {
-				// Try moving up to find a non-solid block (limit to 5 blocks)
 				for (int i = 1; i <= 5; i++) {
 					if (world.isAirBlock(checkX, checkY + i, checkZ)) {
 						newY = checkY + i;
@@ -347,12 +347,76 @@ public class CommonEventHandler {
 					}
 				}
 			}
-			**/
-			//should hopefully fix the issue of players getting stuck in the ground when wrapping on ground
-			//does not work at all, oh that's because we're doing this for entities, not players
-			//todo: do this for MCH vehicles only
 
+			// Set position for non-player entities. This is safe for most entities.
 			entity.setPosition(newX, newY, newZ);
+		}
+	}
+
+	public void handlePlayerBorder(EntityPlayerMP player) {
+		if (!border) return;
+		if (player == null || player.isDead) return;
+
+		double posX = player.posX;
+		double posZ = player.posZ;
+
+		if (posX < MainRegistry.borderNegX || posX > MainRegistry.borderPosX ||
+				posZ < MainRegistry.borderNegZ || posZ > MainRegistry.borderPosZ) {
+
+			double newX = wrapX(posX);
+			double newZ = wrapZ(posZ);
+			double newY = player.posY;
+
+			World world = player.worldObj;
+			int checkX = MathHelper.floor_double(newX);
+			int checkY = MathHelper.floor_double(newY);
+			int checkZ = MathHelper.floor_double(newZ);
+
+			// Find a safe Y for the player (up to +5 blocks)
+			if (!world.isAirBlock(checkX, checkY, checkZ)) {
+				for (int i = 1; i <= 5; i++) {
+					if (world.isAirBlock(checkX, checkY + i, checkZ)) {
+						newY = checkY + i;
+						break;
+					}
+				}
+			}
+
+			// If player is riding something, try to teleport the mount first (best-effort).
+			if (player.ridingEntity != null) {
+				Entity mount = player.ridingEntity;
+				if (mount != null && !mount.isDead && mount.worldObj == world) {
+					double mountNewX = wrapX(mount.posX);
+					double mountNewZ = wrapZ(mount.posZ);
+					double mountNewY = mount.posY;
+
+					int mCheckX = MathHelper.floor_double(mountNewX);
+					int mCheckY = MathHelper.floor_double(mountNewY);
+					int mCheckZ = MathHelper.floor_double(mountNewZ);
+
+					if (!world.isAirBlock(mCheckX, mCheckY, mCheckZ)) {
+						for (int i = 1; i <= 5; i++) {
+							if (world.isAirBlock(mCheckX, mCheckY + i, mCheckZ)) {
+								mountNewY = mCheckY + i;
+								break;
+							}
+						}
+					}
+
+					// Move the mount entity server-side first
+					mount.setPosition(mountNewX, mountNewY, mountNewZ);
+					// If the mount is an EntityLivingBase or custom vehicle that needs updating,
+					// you may want to call mount.onUpdate() or mount.updateRidden() in a mod-specific way.
+				}
+			}
+
+			// Teleport the player via server->client location update (keeps client in sync)
+			player.playerNetServerHandler.setPlayerLocation(newX, newY, newZ, player.rotationYaw, player.rotationPitch);
+
+			// Notify player
+			player.addChatComponentMessage(
+					new ChatComponentText(EnumChatFormatting.RED + "You have crossed the world border and wrapped around!")
+			);
 		}
 	}
 
@@ -378,48 +442,6 @@ public class CommonEventHandler {
 	
 	//handles the anti-mob wand
 
-	public void handlePlayerBorder(EntityPlayerMP player) {
-
-		if (border) {
-
-			double posX = player.posX;
-			double posZ = player.posZ;
-
-			//todo marker
-
-			// Wraparound logic for players
-			if (posX < MainRegistry.borderNegX || posX > MainRegistry.borderPosX ||
-					posZ < MainRegistry.borderNegZ || posZ > MainRegistry.borderPosZ) {
-
-				//player.mountEntity(null); // Dismount from any vehicle
-				//no dont do that, keeps the player in a vehicle
-
-				/** TODO: this logic here, because players are getting trapped in ground after wrap around on WB.
-				if (!world.isAirBlock(checkX, checkY, checkZ)) {
-					// Try moving up to find a non-solid block (limit to 5 blocks)
-					for (int i = 1; i <= 5; i++) {
-						if (world.isAirBlock(checkX, checkY + i, checkZ)) {
-							newY = checkY + i;
-							break;
-						}
-					}
-				}
-				 **/
-
-				player.playerNetServerHandler.setPlayerLocation(
-						wrapX(posX),
-						player.posY,
-						wrapZ(posZ),
-						player.rotationYaw,
-						player.rotationPitch
-				);
-
-				// Send notification
-				player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "You have crossed the world border and wrapped around!"));
-			}
-		}
-	}
-
 	@SubscribeEvent
 	public void onWorldTick(WorldTickEvent event) {
 
@@ -434,15 +456,21 @@ public class CommonEventHandler {
 		//todo marker
 
 		if (border) {
+			//if (!border) return;
+			if (event.world == null) return;
+			//if (event.world.isRemote) return;
+			//if (event.phase != Phase.START) return;
+
 
 			if (!event.world.isRemote && event.phase == Phase.START) { //if on server
-				for (Object entity : event.world.loadedEntityList) { //every entity
-					// Handle players with player-specific logic
-					if (entity instanceof EntityPlayerMP) { //crossover
+				List<Entity> snapshot = new ArrayList<Entity>(event.world.loadedEntityList);
+				for (Entity entity : snapshot) {
+					if (entity == null || entity.isDead) continue;
+
+					if (entity instanceof EntityPlayerMP) {
 						handlePlayerBorder((EntityPlayerMP) entity);
-					} else { //crossover everything else
-						// Handle all other entities
-						handleBorder((Entity) entity);
+					} else {
+						handleBorder(entity);
 					}
 				}
 			}
