@@ -17,6 +17,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.Vec3;
+import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
 public class TileEntityMachineSawmill extends TileEntityMachineBase implements IEnergyHandler {
@@ -33,6 +34,11 @@ public class TileEntityMachineSawmill extends TileEntityMachineBase implements I
 	@Override
 	public String getName() {
 		return "container.machineSawmill";
+	}
+
+	@Override
+	public TileEntity createNewTileEntity(World world, int meta) {
+		return null;
 	}
 
 	@Override

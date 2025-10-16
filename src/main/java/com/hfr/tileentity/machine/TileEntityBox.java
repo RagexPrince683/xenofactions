@@ -1,6 +1,8 @@
 package com.hfr.tileentity.machine;
 
 import com.hfr.main.MainRegistry;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.World;
 
 public class TileEntityBox extends TileEntityMachineBase {
 	
@@ -13,6 +15,11 @@ public class TileEntityBox extends TileEntityMachineBase {
 	@Override
 	public String getName() {
 		return "container.box";
+	}
+
+	@Override
+	public TileEntity createNewTileEntity(World world, int meta) {
+		return null;
 	}
 
 	@Override

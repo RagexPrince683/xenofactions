@@ -22,6 +22,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.DamageSource;
+import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
 public class TileEntityMachineBlastFurnace extends TileEntityMachineBase {
@@ -43,6 +44,11 @@ public class TileEntityMachineBlastFurnace extends TileEntityMachineBase {
 	@Override
 	public String getName() {
 		return "container.blastFurnace";
+	}
+
+	@Override
+	public TileEntity createNewTileEntity(World world, int meta) {
+		return null;
 	}
 
 	@Override

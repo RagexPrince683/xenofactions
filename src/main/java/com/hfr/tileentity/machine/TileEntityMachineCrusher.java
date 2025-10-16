@@ -1,6 +1,7 @@
 package com.hfr.tileentity.machine;
 
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.World;
 
 public class TileEntityMachineCrusher extends TileEntityMachineBase {
 
@@ -11,6 +12,11 @@ public class TileEntityMachineCrusher extends TileEntityMachineBase {
 	@Override
 	public String getName() {
 		return "container.machineCrusher";
+	}
+
+	@Override
+	public TileEntity createNewTileEntity(World world, int meta) {
+		return null;
 	}
 
 	@Override

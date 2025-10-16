@@ -14,6 +14,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityFurnace;
 import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
 public class TileEntityCoalGen extends TileEntityMachineBase implements IEnergyProvider {
@@ -113,6 +114,11 @@ public class TileEntityCoalGen extends TileEntityMachineBase implements IEnergyP
 	@Override
 	public boolean canInsertItem(int i, ItemStack itemStack, int j) {
 		return i == 0 && TileEntityFurnace.getItemBurnTime(itemStack) > 0;
+	}
+
+	@Override
+	public TileEntity createNewTileEntity(World world, int meta) {
+		return null;
 	}
 
 	@Override

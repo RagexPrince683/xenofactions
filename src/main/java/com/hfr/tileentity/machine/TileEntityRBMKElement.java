@@ -8,6 +8,8 @@ import com.hfr.items.ModItems;
 import net.minecraft.block.Block;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidRegistry;
@@ -33,6 +35,11 @@ public class TileEntityRBMKElement extends TileEntityMachineBase implements IFlu
 	@Override
 	public String getName() {
 		return "container.rbmkElement";
+	}
+
+	@Override
+	public TileEntity createNewTileEntity(World world, int meta) {
+		return null;
 	}
 
 	@Override

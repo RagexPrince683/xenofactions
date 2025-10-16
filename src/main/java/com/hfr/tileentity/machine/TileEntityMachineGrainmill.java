@@ -16,6 +16,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.world.World;
 
 public class TileEntityMachineGrainmill extends TileEntityMachineBase {
 	
@@ -34,6 +35,11 @@ public class TileEntityMachineGrainmill extends TileEntityMachineBase {
 	@Override
 	public String getName() {
 		return "container.grainmill";
+	}
+
+	@Override
+	public TileEntity createNewTileEntity(World world, int meta) {
+		return null;
 	}
 
 	@Override
