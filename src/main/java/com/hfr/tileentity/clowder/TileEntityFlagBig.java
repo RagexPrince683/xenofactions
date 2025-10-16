@@ -26,7 +26,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 
 public class TileEntityFlagBig extends TileEntityMachineBase implements ITerritoryProvider {
@@ -238,11 +237,6 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 	@Override
 	public boolean canExtractItem(int i, ItemStack itemStack, int j) {
 		return false;
-	}
-
-	@Override
-	public TileEntity createNewTileEntity(World world, int meta) {
-		return null;
 	}
 
 	@Override

@@ -23,7 +23,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.world.World;
 
 public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryProvider {
 
@@ -449,11 +448,6 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	@Override
 	public boolean canExtractItem(int i, ItemStack itemStack, int j) {
 		return true;
-	}
-
-	@Override
-	public TileEntity createNewTileEntity(World world, int meta) {
-		return null;
 	}
 
 	@Override
