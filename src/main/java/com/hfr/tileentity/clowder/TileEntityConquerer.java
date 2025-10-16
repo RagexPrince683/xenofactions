@@ -20,6 +20,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.world.World;
 
 public class TileEntityConquerer extends TileEntityMachineBase implements ITerritoryProvider {
 	
@@ -40,6 +41,11 @@ public class TileEntityConquerer extends TileEntityMachineBase implements ITerri
 	@Override
 	public String getName() {
 		return "undefined";
+	}
+
+	@Override
+	public TileEntity createNewTileEntity(World world, int meta) {
+		return null;
 	}
 
 	@Override
