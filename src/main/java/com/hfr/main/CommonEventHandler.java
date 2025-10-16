@@ -368,13 +368,24 @@ public class CommonEventHandler {
 			double newY = player.posY;
 
 			World world = player.worldObj;
+			// compute target block coords
 			int checkX = MathHelper.floor_double(newX);
 			int checkY = MathHelper.floor_double(newY);
 			int checkZ = MathHelper.floor_double(newZ);
 
-			// Find a safe Y for the player (up to +5 blocks)
-			if (!world.isAirBlock(checkX, checkY, checkZ)) {
-				for (int i = 1; i <= 5; i++) {
+			// try to use top solid/liquid block (fast)
+			try {
+				int topY = world.getTopSolidOrLiquidBlock(checkX, checkZ); // returns top block y
+				if (topY > checkY) {
+					newY = topY + 1; // place player/entity one block above highest solid/liquid block
+				} else {
+					// already above top block; keep current newY
+				}
+			} catch (NoSuchMethodError e) {
+				// fallback if method not present (shouldn't happen on standard 1.7.10)
+				int maxSearch = 255 - checkY; // top build limit is 255 (0..255)
+				if (maxSearch < 0) maxSearch = 0;
+				for (int i = 1; i <= maxSearch; i++) {
 					if (world.isAirBlock(checkX, checkY + i, checkZ)) {
 						newY = checkY + i;
 						break;
