@@ -12,6 +12,8 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.fluids.FluidTank;
 
+//base for retarded bobcat machines
+
 public abstract class TileEntityMachineBase extends TileEntity implements ISidedInventory {
 
 	public ItemStack slots[];
@@ -89,11 +91,42 @@ public abstract class TileEntityMachineBase extends TileEntity implements ISided
 	@Override
 	public void closeInventory() {}
 
+	//@Override
+	//public boolean isItemValidForSlot(int i, ItemStack itemStack) {
+	//	// allow items into slot 0 (or add more specific checks)
+	//	return i == 0;
+	//}
+//
+	//@Override
+	//public boolean canExtractItem(int i, ItemStack itemStack, int side) {
+	//	// allow extraction from slot 0. You can restrict by side if needed.
+	//	return i == 3;
+	//}
+
 	@Override
 	public boolean isItemValidForSlot(int i, ItemStack itemStack) {
+
+		//if(i == 0)
+		//	return FurnaceRecipes.smelting().getSmeltingResult(itemStack) != null;
+		//temp
+
+		//if(i < 3)
+		//	return burnModule.getBurnTime(itemStack) > 0;
+		//taken from iron furnace code. I have no idea what this will do
+
 		return false;
 	}
-	
+
+	@Override
+	public boolean canExtractItem(int i, ItemStack itemStack, int j) {
+		//return i == 3;
+		//temp
+		return false;
+	}
+
+
+
+
 	@Override
 	public ItemStack decrStackSize(int i, int j) {
 		if(slots[i] != null)
@@ -121,15 +154,35 @@ public abstract class TileEntityMachineBase extends TileEntity implements ISided
 		return this.isItemValidForSlot(i, itemStack);
 	}
 
-	@Override
-	public boolean canExtractItem(int i, ItemStack itemStack, int j) {
-		return false;
-	}
+	//@Override
+	//public boolean canExtractItem(int i, ItemStack itemStack, int j) {
+	//	return false;
+	//}
 
 	@Override
 	public int[] getAccessibleSlotsFromSide(int p_94128_1_) {
 		return new int[] { 0 };
 	}
+
+	//@Override
+	//public int[] getAccessibleSlotsFromSide(int side) {
+	//	// only expose slot 0 to hoppers inserting from the top (side == 1).
+	//	if (side == 1) {
+	//		return new int[] { 0 };
+	//	}
+	//	// allow extraction from bottom maybe:
+	//	if (side == 0) {
+	//		return new int[] { 0 };
+	//	}
+	//	return new int[0];
+	//}
+
+	//nah im just gonna steal iron furnace code and pray it works
+
+	//@Override
+	//public int[] getAccessibleSlotsFromSide(int meta) {
+	//	return new int[] { 0, 1, 2, 3 };
+	//}
 	
 	public int getGaugeScaled(int i, FluidTank tank) {
 		return tank.getFluidAmount() * i / tank.getCapacity();

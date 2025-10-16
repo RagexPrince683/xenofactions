@@ -10,12 +10,15 @@ import com.hfr.items.ModItems;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.init.Items;
+import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraftforge.oredict.OreDictionary;
+
+//registers all foundry recipes here
 
 public class TileEntityFoundry extends TileEntityMachineBase {
 
@@ -32,6 +35,144 @@ public class TileEntityFoundry extends TileEntityMachineBase {
 	public int progress;
 	public static final int castTime = 100;
 	public int index = 0;
+
+
+	@Override
+	public int[] getAccessibleSlotsFromSide(int side) {
+		// side: 0 = down, 1 = up, 2-5 = sides
+		if (side == 0) { // bottom -> output
+			return new int[] { 2 };
+		} else if (side == 1) { // top -> steel input
+			return new int[] { 0 };
+		} else { // sides -> fuel
+			return new int[] { 1 };
+		}
+	}
+
+	//hopper compat:
+
+	@Override
+	public boolean isItemValidForSlot(int i, ItemStack itemStack) {
+		if (itemStack == null) return false;
+		if (i == 0) { // steel input slot (top)
+			return getSteel(itemStack) > 0.0F; // uses your existing getSteel(...) method
+		} else if (i == 1) { // fuel slot (sides)
+			return itemStack.getItem() == net.minecraft.init.Items.coal;
+		} else { // output slot not insertable
+			return false;
+		}
+	}
+
+	@Override
+	public boolean canInsertItem(int slot, ItemStack stack, int side) {
+		// only allow insertion into slots that are exposed for that side AND valid for that slot
+		int[] allowed = getAccessibleSlotsFromSide(side);
+		for (int s : allowed) {
+			if (s == slot) {
+				return isItemValidForSlot(slot, stack);
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public boolean canExtractItem(int slot, ItemStack stack, int side) {
+		// allow extraction only from output slot (slot 2) from bottom side
+		if (slot == 2 && side == 0) return true;
+		return false;
+	}
+
+	//end
+
+	//extra crap
+
+	/**
+	 * Attempt to push as many items as possible from slots[2] into the inventory directly below (y-1).
+	 * Uses ISidedInventory if available (asks for side=1, i.e. top of below-inventory).
+	 */
+	private void tryPushOutputDown() {
+		if (worldObj.isRemote) return;
+		if (slots[2] == null) return;
+
+		TileEntity teBelow = worldObj.getTileEntity(xCoord, yCoord - 1, zCoord);
+		if (teBelow == null) return;
+
+		// copy of what's available to send
+		ItemStack toSend = slots[2].copy();
+		final int prevOutputCount = slots[2].stackSize;
+
+		// helper inserter
+		class Inserter {
+			boolean insertIntoIInventory(net.minecraft.inventory.IInventory inv, int slotIndex, ItemStack stack, int sideFromBelow) {
+				ItemStack dest = inv.getStackInSlot(slotIndex);
+
+				// respect ISidedInventory rules
+				if (inv instanceof ISidedInventory) {
+					ISidedInventory sided = (ISidedInventory) inv;
+					int[] accessible = sided.getAccessibleSlotsFromSide(sideFromBelow);
+					boolean found = false;
+					for (int s : accessible) if (s == slotIndex) { found = true; break; }
+					if (!found) return false;
+					if (!sided.canInsertItem(slotIndex, stack, sideFromBelow)) return false;
+				} else {
+					if (!inv.isItemValidForSlot(slotIndex, stack)) return false;
+				}
+
+				if (dest == null) {
+					int move = Math.min(stack.stackSize, Math.min(stack.getMaxStackSize(), inv.getInventoryStackLimit()));
+					ItemStack put = stack.copy();
+					put.stackSize = move;
+					inv.setInventorySlotContents(slotIndex, put);
+					stack.stackSize -= move;
+					inv.markDirty();
+					return move > 0;
+				} else if (dest.isItemEqual(stack) && dest.stackSize < Math.min(dest.getMaxStackSize(), inv.getInventoryStackLimit())) {
+					int space = Math.min(dest.getMaxStackSize(), inv.getInventoryStackLimit()) - dest.stackSize;
+					int move = Math.min(space, stack.stackSize);
+					dest.stackSize += move;
+					stack.stackSize -= move;
+					inv.setInventorySlotContents(slotIndex, dest);
+					inv.markDirty();
+					return move > 0;
+				}
+				return false;
+			}
+		}
+
+		Inserter ins = new Inserter();
+
+		if (teBelow instanceof net.minecraft.inventory.IInventory) {
+			net.minecraft.inventory.IInventory inv = (net.minecraft.inventory.IInventory) teBelow;
+			if (inv instanceof ISidedInventory) {
+				ISidedInventory sided = (ISidedInventory) inv;
+				int[] slotsForTop = sided.getAccessibleSlotsFromSide(1); // 1 = UP for the below-inventory
+				for (int slotIndex : slotsForTop) {
+					if (toSend.stackSize <= 0) break;
+					ins.insertIntoIInventory(inv, slotIndex, toSend, 1);
+				}
+			} else {
+				for (int slotIndex = 0; slotIndex < inv.getSizeInventory(); slotIndex++) {
+					if (toSend.stackSize <= 0) break;
+					ins.insertIntoIInventory(inv, slotIndex, toSend, 1);
+				}
+			}
+		}
+
+		// write remaining back to our output slot
+		if (toSend.stackSize <= 0) {
+			slots[2] = null;
+		} else {
+			slots[2].stackSize = toSend.stackSize;
+		}
+
+		// mark only if something changed
+		int newOutputCount = (slots[2] == null) ? 0 : slots[2].stackSize;
+		if (newOutputCount != prevOutputCount) {
+			this.markDirty();
+		}
+	}
+
+	//end
 	
 	@Override
 	public void readFromNBT(NBTTagCompound nbt) {
@@ -158,6 +299,9 @@ public class TileEntityFoundry extends TileEntityMachineBase {
 					} else {
 						slots[2].stackSize++;
 					}
+
+					// Try to push the new output into the inventory below immediately:
+					tryPushOutputDown();
 					
 					this.markDirty();
 				}
