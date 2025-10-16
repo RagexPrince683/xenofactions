@@ -353,6 +353,35 @@ public class CommonEventHandler {
 		}
 	}
 
+	/**
+	 * Return a safe Y for an entity at column (checkX, checkZ).
+	 * If the column's top block is above checkY, returns top+1.
+	 * Otherwise returns the original y.
+	 *
+	 * Tries getTopSolidOrLiquidBlock first (fast). Falls back to scanning up to build height.
+	 */
+	private double findSafeY(World world, int checkX, int checkY, int checkZ) {
+		// Try fast path
+		try {
+			int top = world.getTopSolidOrLiquidBlock(checkX, checkZ); // typical on 1.7.10
+			if (top > checkY) {
+				return top + 1; // place one block above top solid/liquid block
+			}
+			return checkY;
+		} catch (NoSuchMethodError e) {
+			// Fallback: scan upwards up to build limit (0..255)
+			int maxSearch = 255 - checkY;
+			if (maxSearch <= 0) return checkY;
+
+			for (int i = 1; i <= maxSearch; i++) {
+				if (world.isAirBlock(checkX, checkY + i, checkZ)) {
+					return checkY + i;
+				}
+			}
+			return checkY;
+		}
+	}
+
 	public void handlePlayerBorder(EntityPlayerMP player) {
 		if (!border) return;
 		if (player == null || player.isDead) return;
@@ -399,25 +428,29 @@ public class CommonEventHandler {
 				if (mount != null && !mount.isDead && mount.worldObj == world) {
 					double mountNewX = wrapX(mount.posX);
 					double mountNewZ = wrapZ(mount.posZ);
-					double mountNewY = mount.posY;
-
 					int mCheckX = MathHelper.floor_double(mountNewX);
-					int mCheckY = MathHelper.floor_double(mountNewY);
+					int mCheckY = MathHelper.floor_double(mount.posY);
 					int mCheckZ = MathHelper.floor_double(mountNewZ);
 
-					if (!world.isAirBlock(mCheckX, mCheckY, mCheckZ)) {
-						for (int i = 1; i <= 5; i++) {
-							if (world.isAirBlock(mCheckX, mCheckY + i, mCheckZ)) {
-								mountNewY = mCheckY + i;
-								break;
-							}
-						}
-					}
+					// Find safe Y using fast topSolid or fallback scan
+					double mountNewY = findSafeY(world, mCheckX, mCheckY, mCheckZ);
 
 					// Move the mount entity server-side first
-					mount.setPosition(mountNewX, mountNewY, mountNewZ);
-					// If the mount is an EntityLivingBase or custom vehicle that needs updating,
-					// you may want to call mount.onUpdate() or mount.updateRidden() in a mod-specific way.
+					// setPosition is usually fine; some entities/vehicles may prefer setPositionAndUpdate
+					try {
+						// try calling setPositionAndUpdate if available (safer for some entities)
+						mount.getClass().getMethod("setPositionAndUpdate", double.class, double.class, double.class)
+								.invoke(mount, mountNewX, mountNewY, mountNewZ);
+					} catch (Exception ignore) {
+						// method not present / invocation failed — fall back to setPosition
+						mount.setPosition(mountNewX, mountNewY, mountNewZ);
+						System.out.println("tried to wrap a mount and caught an exception" + ignore.getMessage());
+					}
+
+					// If mount has mod-specific sync needs (MCH vehicles), you'll likely need to call
+					// a vehicle-specific sync/update packet here. If you see desync, tell me the vehicle class
+					// and I can suggest the exact sync call.
+					//TODO: cleaner implementation, this is just a skeleton for the full thing
 				}
 			}
 
