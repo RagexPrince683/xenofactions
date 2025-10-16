@@ -475,6 +475,7 @@ public class CommonEventHandler {
 			}
 
 			// If player is riding something, try to teleport the mount first (best-effort).
+			/** not needed, already done in entity handling
 			if (player.ridingEntity != null) {
 				Entity mount = player.ridingEntity;
 				if (mount != null && !mount.isDead && mount.worldObj == world) {
@@ -505,6 +506,7 @@ public class CommonEventHandler {
 					//TODO: cleaner implementation, this is just a skeleton for the full thing
 				}
 			}
+			 **/
 
 			// Teleport the player via server->client location update (keeps client in sync)
 			player.playerNetServerHandler.setPlayerLocation(newX, newY, newZ, player.rotationYaw, player.rotationPitch);
