@@ -24,8 +24,11 @@ public class CraftingManager {
 		OreDictionary.registerOre("ingotSteel", ModItems.ingot_steel);
 		//give RagexPrince683 mcheli:item.ingot_steel
 		//interesting, I wonder if this will work item.ingot_steel did not work, ill try adding mcheli: before it
-		OreDictionary.registerOre("mcheli:item.ingot_steel", ModItems.ingot_steel);
-		
+		//OreDictionary.registerOre("mcheli:item.ingot_steel", ModItems.ingot_steel);
+
+		//OreDictionary.registerOre("ingotSteel", ModItems.ingot_steel);
+
+
 		//for(int i = 1; i < TrackType.values().length; i++) {
 		//	int next = i + 1;
 		//

@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import net.minecraftforge.oredict.OreDictionary;
 import org.apache.logging.log4j.Logger;
 
 import com.google.gson.JsonIOException;
@@ -668,6 +669,18 @@ public class MainRegistry
 	public static void load(FMLInitializationEvent event)
 	{
 		
+	}
+
+	@Mod.EventHandler
+	public void postInit(FMLPostInitializationEvent event) {
+		///give RagexPrince683 mcheli:item.ingot_steel
+		Item steelIngot = GameRegistry.findItem("mcheli", "item.ingot_steel");
+		if (steelIngot != null) {
+			OreDictionary.registerOre("ingotSteel", steelIngot);
+			System.out.println("[XF] Registered MCHeli steel ingot to OreDict");
+		} else {
+			System.out.println("[XF] Failed to find MCHeli steel ingot!");
+		}
 	}
 	
 	@EventHandler
