@@ -40,6 +40,9 @@ public class TileEntityFoundry extends TileEntityMachineBase {
 
 	public TileEntity createNewTileEntity(World world, int meta) {
 		// TEMPORARY: always create the foundry TE for testing
+		//this only makes hoppers work with the 1 single block that's technically the placement block. Not all the foundry (multiblocks)
+		//so this works with output, but not input. I wonder how the fuck we can get this shit to work with input?
+		//we can't do an override here, not that that does anything, I already tried.
 		return new TileEntityFoundry();
 	}
 
