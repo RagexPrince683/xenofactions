@@ -445,40 +445,31 @@ public class CommonEventHandler {
 	@SubscribeEvent
 	public void onWorldTick(WorldTickEvent event) {
 
-		//if (!event.world.isRemote && event.phase == Phase.START) {
-		//	// Iterate over all entities in the world
-		//	for (Object entity : event.world.loadedEntityList) {
-		//		handleBorder((Entity) entity);
-		//	}
-		//}
-		//unoptimized gpt slop
+		// basic guard checks up-front
+		if (event == null || event.world == null) return;
+		if (event.world.isRemote) return;            // server-only logic
+		if (event.phase != Phase.START) return;      // run once per tick (start)
 
-		//todo marker
+		World world = event.world;
 
+		// --------------------
+		// World-border logic
+		// --------------------
 		if (border) {
-			//if (!border) return;
-			if (event.world == null) return;
-			//if (event.world.isRemote) return;
-			//if (event.phase != Phase.START) return;
+			// take a snapshot of the entity list to avoid ConcurrentModificationException
+			List<Entity> snapshot = new ArrayList<Entity>(world.loadedEntityList);
 
+			for (Entity entity : snapshot) {
+				if (entity == null || entity.isDead) continue;
 
-			if (!event.world.isRemote && event.phase == Phase.START) { //if on server
-				List<Entity> snapshot = new ArrayList<Entity>(event.world.loadedEntityList);
-				for (Entity entity : snapshot) {
-					if (entity == null || entity.isDead) continue;
-
-					if (entity instanceof EntityPlayerMP) {
-						handlePlayerBorder((EntityPlayerMP) entity);
-					} else {
-						handleBorder(entity);
-					}
+				if (entity instanceof EntityPlayerMP) {
+					handlePlayerBorder((EntityPlayerMP) entity);
+				} else {
+					handleBorder(entity);
 				}
 			}
 		}
-		//end of wb logic--
 
-		
-		World world = event.world;
 		
 		if(!world.isRemote && event.phase == Phase.START) {
 			
