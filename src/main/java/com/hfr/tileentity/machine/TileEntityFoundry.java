@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import com.google.common.collect.HashBiMap;
 import com.hfr.items.ModItems;
 
 import cpw.mods.fml.relauncher.Side;
@@ -38,48 +37,52 @@ public class TileEntityFoundry extends TileEntityMachineBase {
 	public int index = 0;
 
 
+	@Override
 	public TileEntity createNewTileEntity(World world, int meta) {
 		// TEMPORARY: always create the foundry TE for testing
 		return new TileEntityFoundry();
 	}
 
 
-	@Override
+
+
+	//@Override
+	//public int[] getAccessibleSlotsFromSide(int side) {
+	//	// side: 0 = down, 1 = up, 2-5 = sides
+	//	if (side == 0) { // bottom -> output
+	//		return new int[] { 2 };
+	//	} else if (side == 1) { // top -> steel input
+	//		return new int[] { 0 };
+	//	} else { // sides -> fuel
+	//		return new int[] { 1 };
+	//	}
+	//}
+	//temp test
 	public int[] getAccessibleSlotsFromSide(int side) {
-		// side: 0 = down, 1 = up, 2-5 = sides
-		if (side == 0) { // bottom -> output
-			return new int[] { 2 };
-		} else if (side == 1) { // top -> steel input
-			return new int[] { 0 };
-		} else { // sides -> fuel
-			return new int[] { 1 };
-		}
+		System.out.println("[Foundry] getAccessibleSlotsFromSide side=" + side + " at " + xCoord + "," + yCoord + "," + zCoord);
+		if (side == 0) return new int[] { 2 };
+		if (side == 1) return new int[] { 0 };
+		return new int[] { 1 };
 	}
 
 	//hopper compat:
 
-	@Override
+	// TEMP - permissive test: allow inserting into slot 0 (top) and slot 1 (sides)
 	public boolean isItemValidForSlot(int i, ItemStack itemStack) {
 		if (itemStack == null) return false;
-		if (i == 0) { // steel input slot (top)
-			return getSteel(itemStack) > 0.0F; // uses your existing getSteel(...) method
-		} else if (i == 1) { // fuel slot (sides)
-			return itemStack.getItem() == net.minecraft.init.Items.coal;
-		} else { // output slot not insertable
-			return false;
-		}
+		// allow anything into input & fuel for testing; forbid putting into output slot
+		return i != 2;
 	}
 
-	@Override
+	//public boolean canInsertItem(int slot, ItemStack stack, int side) {
+	//	// allow insertion to any exposed slot (for testing). We'll inspect side values below.
+	//	return slot != 2;
+	//}
+
+	//temp test2
 	public boolean canInsertItem(int slot, ItemStack stack, int side) {
-		// only allow insertion into slots that are exposed for that side AND valid for that slot
-		int[] allowed = getAccessibleSlotsFromSide(side);
-		for (int s : allowed) {
-			if (s == slot) {
-				return isItemValidForSlot(slot, stack);
-			}
-		}
-		return false;
+		System.out.println("[Foundry] canInsertItem slot=" + slot + " side=" + side + " stack=" + (stack==null?"null":stack.getDisplayName()));
+		return slot != 2; // permissive for test
 	}
 
 	@Override

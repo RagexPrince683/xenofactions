@@ -10,6 +10,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.World;
 import net.minecraftforge.fluids.FluidTank;
 
 //base for retarded bobcat machines
@@ -158,6 +159,8 @@ public abstract class TileEntityMachineBase extends TileEntity implements ISided
 	//public boolean canExtractItem(int i, ItemStack itemStack, int j) {
 	//	return false;
 	//}
+
+	public abstract TileEntity createNewTileEntity(World world, int meta);
 
 	@Override
 	public int[] getAccessibleSlotsFromSide(int p_94128_1_) {
