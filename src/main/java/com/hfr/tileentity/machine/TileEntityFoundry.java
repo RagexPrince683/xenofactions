@@ -16,6 +16,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.world.World;
 import net.minecraftforge.oredict.OreDictionary;
 
 //registers all foundry recipes here
@@ -35,6 +36,12 @@ public class TileEntityFoundry extends TileEntityMachineBase {
 	public int progress;
 	public static final int castTime = 100;
 	public int index = 0;
+
+
+	public TileEntity createNewTileEntity(World world, int meta) {
+		// TEMPORARY: always create the foundry TE for testing
+		return new TileEntityFoundry();
+	}
 
 
 	@Override
