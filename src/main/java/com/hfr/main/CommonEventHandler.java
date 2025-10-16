@@ -227,7 +227,8 @@ public class CommonEventHandler {
 		
 		return false;
 	}
-	
+
+	/** UNUSED shitty bobcode or something
 	@SubscribeEvent
 	public void handleRVITick(TickEvent.PlayerTickEvent event) {
 		
@@ -299,7 +300,25 @@ public class CommonEventHandler {
 			player.worldObj.theProfiler.endSection();
 		}
 	}
+	**/
 
+	public List<EntityPlayer> getPlayersInAABB(World world, double x, double y, double z, double range) {
+
+		List<EntityPlayer> list = new ArrayList();
+
+		for(Object entry : world.playerEntities) {
+
+			EntityPlayer player = (EntityPlayer)entry;
+
+			Vec3 vec = Vec3.createVectorHelper(x - player.posX, y - player.posY, z - player.posZ);
+			if(vec.lengthVector() <= range)
+				list.add(player);
+		}
+
+		return list;
+	}
+
+	//wb logic --
 	public void handleBorder(Entity entity) {
 		double posX = entity.posX;
 		double posZ = entity.posZ;
@@ -318,6 +337,7 @@ public class CommonEventHandler {
 			World world = entity.worldObj;
 
 			// Check if the position is in a solid block
+			/**
 			if (!world.isAirBlock(checkX, checkY, checkZ)) {
 				// Try moving up to find a non-solid block (limit to 5 blocks)
 				for (int i = 1; i <= 5; i++) {
@@ -327,7 +347,10 @@ public class CommonEventHandler {
 					}
 				}
 			}
+			**/
 			//should hopefully fix the issue of players getting stuck in the ground when wrapping on ground
+			//does not work at all, oh that's because we're doing this for entities, not players
+			//todo: do this for MCH vehicles only
 
 			entity.setPosition(newX, newY, newZ);
 		}
@@ -351,52 +374,6 @@ public class CommonEventHandler {
 		return z;
 	}
 
-	//unused
-	//public boolean isWithinNotifRange(double x, double z) {
-
-	//	if(x > MainRegistry.borderPosX - MainRegistry.borderBuffer)
-	//		return true;
-	//	if(x < MainRegistry.borderNegX + MainRegistry.borderBuffer)
-	//		return true;
-	//	if(z > MainRegistry.borderPosZ - MainRegistry.borderBuffer)
-	//		return true;
-	//	if(z < MainRegistry.borderNegZ + MainRegistry.borderBuffer)
-	//		return true;
-	//
-	//	return false;
-	//}
-
-	//unused
-	//public boolean leftBorder(double x, double z) {
-
-	//	if(x > MainRegistry.borderPosX)
-	//		return true;
-	//	if(x < MainRegistry.borderNegX)
-	//		return true;
-	//	if(z > MainRegistry.borderPosZ)
-	//		return true;
-	//	if(z < MainRegistry.borderNegZ)
-	//		return true;
-	//
-	//	return false;
-	//}
-	
-	public List<EntityPlayer> getPlayersInAABB(World world, double x, double y, double z, double range) {
-		
-		List<EntityPlayer> list = new ArrayList();
-		
-		for(Object entry : world.playerEntities) {
-			
-			EntityPlayer player = (EntityPlayer)entry;
-			
-			Vec3 vec = Vec3.createVectorHelper(x - player.posX, y - player.posY, z - player.posZ);
-			if(vec.lengthVector() <= range)
-				list.add(player);
-		}
-		
-		return list;
-	}
-
 	int timer = 0;
 	
 	//handles the anti-mob wand
@@ -415,7 +392,20 @@ public class CommonEventHandler {
 					posZ < MainRegistry.borderNegZ || posZ > MainRegistry.borderPosZ) {
 
 				//player.mountEntity(null); // Dismount from any vehicle
-				//no dont do that we are going to keep the player on the vehicle hopefully
+				//no dont do that, keeps the player in a vehicle
+
+				/** TODO: this logic here, because players are getting trapped in ground after wrap around on WB.
+				if (!world.isAirBlock(checkX, checkY, checkZ)) {
+					// Try moving up to find a non-solid block (limit to 5 blocks)
+					for (int i = 1; i <= 5; i++) {
+						if (world.isAirBlock(checkX, checkY + i, checkZ)) {
+							newY = checkY + i;
+							break;
+						}
+					}
+				}
+				 **/
+
 				player.playerNetServerHandler.setPlayerLocation(
 						wrapX(posX),
 						player.posY,
@@ -445,18 +435,19 @@ public class CommonEventHandler {
 
 		if (border) {
 
-			if (!event.world.isRemote && event.phase == Phase.START) {
-				for (Object entity : event.world.loadedEntityList) {
+			if (!event.world.isRemote && event.phase == Phase.START) { //if on server
+				for (Object entity : event.world.loadedEntityList) { //every entity
 					// Handle players with player-specific logic
-					if (entity instanceof EntityPlayerMP) {
+					if (entity instanceof EntityPlayerMP) { //crossover
 						handlePlayerBorder((EntityPlayerMP) entity);
-					} else {
+					} else { //crossover everything else
 						// Handle all other entities
 						handleBorder((Entity) entity);
 					}
 				}
 			}
 		}
+		//end of wb logic--
 
 		
 		World world = event.world;
@@ -515,6 +506,36 @@ public class CommonEventHandler {
 			ExplosionController.automaton(world);
 		}
 	}
+
+	//unused
+	//public boolean isWithinNotifRange(double x, double z) {
+
+	//	if(x > MainRegistry.borderPosX - MainRegistry.borderBuffer)
+	//		return true;
+	//	if(x < MainRegistry.borderNegX + MainRegistry.borderBuffer)
+	//		return true;
+	//	if(z > MainRegistry.borderPosZ - MainRegistry.borderBuffer)
+	//		return true;
+	//	if(z < MainRegistry.borderNegZ + MainRegistry.borderBuffer)
+	//		return true;
+	//
+	//	return false;
+	//}
+
+	//unused
+	//public boolean leftBorder(double x, double z) {
+
+	//	if(x > MainRegistry.borderPosX)
+	//		return true;
+	//	if(x < MainRegistry.borderNegX)
+	//		return true;
+	//	if(z > MainRegistry.borderPosZ)
+	//		return true;
+	//	if(z < MainRegistry.borderNegZ)
+	//		return true;
+	//
+	//	return false;
+	//}
 
 	//unused
 	//private boolean isNearBorder(Entity entity) {
