@@ -1,5 +1,6 @@
 package com.hfr.main;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -320,6 +321,7 @@ public class CommonEventHandler {
 
 	// world border logic - fixed
 
+	// --- handleBorder: safe wrap for every non-player entity (and vehicles) ---
 	public void handleBorder(Entity entity) {
 		if (entity == null || entity.isDead) return;
 
@@ -331,24 +333,78 @@ public class CommonEventHandler {
 
 			double newX = wrapX(posX);
 			double newZ = wrapZ(posZ);
-			double newY = entity.posY;
 
 			World world = entity.worldObj;
 			int checkX = MathHelper.floor_double(newX);
-			int checkY = MathHelper.floor_double(newY);
+			int checkY = MathHelper.floor_double(entity.posY);
 			int checkZ = MathHelper.floor_double(newZ);
 
-			// Try to avoid placing entity inside solid blocks (move up up to 5 blocks)
-			if (!world.isAirBlock(checkX, checkY, checkZ)) {
-				for (int i = 1; i <= 5; i++) {
-					if (world.isAirBlock(checkX, checkY + i, checkZ)) {
-						newY = checkY + i;
-						break;
+			// Use findSafeY for a robust Y (fast topSolid fallback to scan)
+			double newY = findSafeY(world, checkX, checkY, checkZ);
+
+			// If this is an MCH entity (or other mcheli.* classes), try a stronger teleport/sync
+			String clsName = entity.getClass().getName();
+			boolean moved = false;
+
+			if (clsName != null && clsName.startsWith("mcheli.")) {
+				// Try reflection to call setPositionAndUpdate(double,double,double)
+				try {
+					Method m = null;
+					try {
+						m = entity.getClass().getMethod("setPositionAndUpdate", double.class, double.class, double.class);
+					} catch (NoSuchMethodException nsme) {
+						// try declared method (non-public) on class hierarchy
+						try {
+							m = entity.getClass().getDeclaredMethod("setPositionAndUpdate", double.class, double.class, double.class);
+						} catch (NoSuchMethodException ignored) {
+							m = null;
+						}
+					}
+
+					if (m != null) {
+						m.setAccessible(true);
+						m.invoke(entity, newX, newY, newZ);
+						moved = true;
+					}
+				} catch (Throwable t) {
+					// short, non-spamming log so you know something went wrong
+					System.out.println("handleBorder: reflection setPositionAndUpdate failed for " + clsName + " -> " + t.getClass().getSimpleName() + ": " + t.getMessage());
+					moved = false;
+				}
+
+				// If reflection didn't work, fall back to setPosition (safe but may desync)
+				if (!moved) {
+					try {
+						entity.setPosition(newX, newY, newZ);
+						moved = true;
+					} catch (Throwable t) {
+						System.out.println("handleBorder: fallback setPosition failed for " + clsName + ": " + t.getMessage());
 					}
 				}
+
+				// Try lightweight post-teleport hooks if present (best-effort)
+				try {
+					// onUpdate or updateRidden are common names in various mods; try calling them if present
+					try {
+						Method onUp = entity.getClass().getMethod("onUpdate");
+						onUp.setAccessible(true);
+						onUp.invoke(entity);
+					} catch (NoSuchMethodException ignored) {}
+
+					try {
+						Method upd = entity.getClass().getMethod("updateRidden");
+						upd.setAccessible(true);
+						upd.invoke(entity);
+					} catch (NoSuchMethodException ignored) {}
+				} catch (Throwable ignored) {
+					// don't spam
+				}
+
+				// We're done for MCH-class entities
+				return;
 			}
 
-			// Set position for non-player entities. This is safe for most entities.
+			// Non-MCH (normal entities) - default safe setPosition
 			entity.setPosition(newX, newY, newZ);
 		}
 	}
@@ -360,23 +416,19 @@ public class CommonEventHandler {
 	 *
 	 * Tries getTopSolidOrLiquidBlock first (fast). Falls back to scanning up to build height.
 	 */
+	// --- helper: safe Y finder (fast path + fallback) ---
 	private double findSafeY(World world, int checkX, int checkY, int checkZ) {
-		// Try fast path
+		// Fast path: top solid or liquid block (typical in 1.7.10)
 		try {
-			int top = world.getTopSolidOrLiquidBlock(checkX, checkZ); // typical on 1.7.10
-			if (top > checkY) {
-				return top + 1; // place one block above top solid/liquid block
-			}
+			int top = world.getTopSolidOrLiquidBlock(checkX, checkZ);
+			if (top > checkY) return top + 1;
 			return checkY;
-		} catch (NoSuchMethodError e) {
-			// Fallback: scan upwards up to build limit (0..255)
+		} catch (NoSuchMethodError ignored) {
+			// fallback: scan upward to build limit (0..255)
 			int maxSearch = 255 - checkY;
 			if (maxSearch <= 0) return checkY;
-
 			for (int i = 1; i <= maxSearch; i++) {
-				if (world.isAirBlock(checkX, checkY + i, checkZ)) {
-					return checkY + i;
-				}
+				if (world.isAirBlock(checkX, checkY + i, checkZ)) return checkY + i;
 			}
 			return checkY;
 		}
