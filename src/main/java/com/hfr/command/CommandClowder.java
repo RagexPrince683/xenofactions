@@ -2,6 +2,7 @@ package com.hfr.command;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.hfr.blocks.BlockDummyable;
 import com.hfr.blocks.ModBlocks;
@@ -40,6 +41,8 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.ForgeDirection;
+
+import static com.hfr.main.MainRegistry.sub;
 
 public class CommandClowder extends CommandBase {
 
@@ -84,6 +87,14 @@ public class CommandClowder extends CommandBase {
 
 	//fuck bob and his entire ass spaghetti monster of a command system
 
+	private String sanitizeFactionName(String name) {
+		String sanitized = name;
+		for (Map.Entry<String, String> entry : sub.entrySet()) {
+			sanitized = sanitized.replaceAll(entry.getKey(), entry.getValue());
+		}
+		return sanitized;
+	}
+
 	@Override
 	public void processCommand(ICommandSender sender, String[] args) {
 
@@ -111,8 +122,11 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 
-		if(cmd.equals("create") && args.length > 1) {
-			cmdCreate(sender, args[1]);
+		//the command for creating a faction.
+		if (cmd.equals("create") && args.length > 1) {
+			//sanitize faction names
+			String factionName = sanitizeFactionName(args[1]);
+			cmdCreate(sender, factionName);
 			return;
 		}
 

@@ -481,7 +481,8 @@ public class MainRegistry
 		sub.put(regexify("chungus"), "annoying redditor talk");
 		sub.put(regexify("wholesome"), "annoying redditor talk");
 		sub.put(regexify("job"), "pawj*b");
-		sub.put(regexify("j o b"), "pawj*b");
+		//sub.put(regexify("j o b"), "pawj*b");
+		//already does
 		sub.put(regexify("fuck dog"), "I have a bestiality fetish and I can't stop projecting");
 		sub.put(regexify("vic"), "model stealer");
 		sub.put(regexify("vic's modern warfare"), "complete garbage");
