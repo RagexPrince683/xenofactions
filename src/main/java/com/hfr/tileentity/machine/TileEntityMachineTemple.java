@@ -4,8 +4,6 @@ import com.hfr.items.ModItems;
 import com.hfr.main.MainRegistry;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.world.World;
 
 public class TileEntityMachineTemple extends TileEntityMachineBase {
 
@@ -16,11 +14,6 @@ public class TileEntityMachineTemple extends TileEntityMachineBase {
 	@Override
 	public String getName() {
 		return "container.temple";
-	}
-
-	@Override
-	public TileEntity createNewTileEntity(World world, int meta) {
-		return null;
 	}
 
 	@Override

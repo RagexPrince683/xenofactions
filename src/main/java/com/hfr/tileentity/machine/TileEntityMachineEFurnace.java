@@ -13,7 +13,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.Vec3;
-import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
 public class TileEntityMachineEFurnace extends TileEntityMachineBase implements IEnergyHandler {
@@ -31,12 +30,7 @@ public class TileEntityMachineEFurnace extends TileEntityMachineBase implements 
 	public String getName() {
 		return "container.machineEFurnace";
 	}
-
-	@Override
-	public TileEntity createNewTileEntity(World world, int meta) {
-		return null;
-	}
-
+	
 	public int getDiFurnaceProgressScaled(int i) {
 		return (progress * i) / processingSpeed;
 	}

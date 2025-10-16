@@ -14,7 +14,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
 public class TileEntityDieselGen extends TileEntityMachineBase implements IEnergyProvider {
@@ -31,11 +30,6 @@ public class TileEntityDieselGen extends TileEntityMachineBase implements IEnerg
 	@Override
 	public String getName() {
 		return "container.dieselGen";
-	}
-
-	@Override
-	public TileEntity createNewTileEntity(World world, int meta) {
-		return null;
 	}
 
 	@Override

@@ -4,7 +4,6 @@ import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.world.World;
 
 public class TileEntityMachineAlloy extends TileEntityMachineBase {
 	
@@ -21,11 +20,6 @@ public class TileEntityMachineAlloy extends TileEntityMachineBase {
 	@Override
 	public String getName() {
 		return "container.machineAlloy";
-	}
-
-	@Override
-	public TileEntity createNewTileEntity(World world, int meta) {
-		return null;
 	}
 
 	@Override
