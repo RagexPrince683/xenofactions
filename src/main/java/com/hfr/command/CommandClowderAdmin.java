@@ -186,7 +186,7 @@ public class CommandClowderAdmin extends CommandBase {
 	private void cmdHelp(ICommandSender sender, String page) {
 		
 		int p = this.parseInt(sender, page);
-		int pages = 1;
+		int pages = 2;
 		
 		if(p < 1 || p > pages)
 			p = 1;
