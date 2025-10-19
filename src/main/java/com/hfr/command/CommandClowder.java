@@ -98,6 +98,8 @@ public class CommandClowder extends CommandBase {
 	@Override
 	public void processCommand(ICommandSender sender, String[] args) {
 
+		//todo add a /c merge command to merge into other factions (with consent ofc)
+
 		if(sender.getEntityWorld().provider.dimensionId != 0) {
 			sender.addChatMessage(new ChatComponentText(CRITICAL + "Critical error: XenoFac only works in overworld!!"));
 			//todo... remove??? why is this the case? does it work outside overworld?
@@ -414,6 +416,16 @@ public class CommandClowder extends CommandBase {
 					new ChatComponentText(COMMAND + "-allywarp <name>" + TITLE + " - Teleports to an ally rally-point"));
 			sender.addChatMessage(
 					new ChatComponentText(COMMAND + "-alliance" + TITLE + " - Shows name of all allied clowders"));
+			sender.addChatMessage(
+					new ChatComponentText(INFO + "/xmap to get a claim map!")
+			);
+			sender.addChatMessage(
+					new ChatComponentText(INFO + "/xflags to get conquest flags! WAR MODE ENABLED ONLY!")
+			);
+			sender.addChatMessage(
+					new ChatComponentText(INFO + "/xmulti to get a multitool!")
+			);
+
 		}
 
 	}

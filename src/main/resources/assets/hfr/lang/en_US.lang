@@ -1,4 +1,4 @@
-itemGroup.tabHFR=xRadar
+itemGroup.tabHFR=XenoFactions
 
 potion.hfr_emp=EMP
 
@@ -42,7 +42,7 @@ tile.hydro_core.name=Hydroelectric Dam Core Component
 container.hydro=Hydroelectric Dam
 tile.machine_net.name=Fishing Net
 container.machineNet=Fishing Net
-tile.machine_market.name=BobShop
+tile.machine_market.name=XShop
 tile.builder.name=Schematic Printer
 container.builder=Schematic Printer
 tile.machine_uni.name=University
@@ -82,11 +82,11 @@ tile.officer_chest.name=Officer Chest
 
 tile.teleporter.name=Teleporter
 
-tile.clowder_flag.name=Clowder Flag
-container.flagPole=Clowder Flag
-tile.clowder_flag_big.name=Clowder Territory Flag
-tile.clowder_cap.name=Clowder Cap Point (ALSO DON'T USE THIS ONE AS WELL)
-tile.clowder_conquerer.name=Clowder Conquest Flag
+tile.clowder_flag.name=Claim Flag
+container.flagPole=Claim Flag
+tile.clowder_flag_big.name=Claim Territory Flag
+tile.clowder_cap.name=Claim Cap Point (ALSO DON'T USE THIS ONE AS WELL)
+tile.clowder_conquerer.name=Claim Conquest Flag
 
 tile.rbmk_element.name=RBMK Fuel Rod
 tile.rbmk_rods.name=RBMK Control Rods
@@ -162,7 +162,7 @@ item.gas_mask.name=Dräger M65 Gas Mask
 item.gas_mask_grey.name=Dräger M65 Gas Mask Grey Edition
 item.gas_mask_black.name=Dräger M65 Gas Mask Black Edition
 item.graphene_vest.name=Graphene Vest
-item.clowder_banner.name=Wearable Clowder Banner
+item.clowder_banner.name=Wearable Claim Banner
 item.lead_boots.name=Lead Boots
 item.scanner.name=Block Damage Scanner
 item.repair_1.name=Duct Tape
@@ -303,7 +303,7 @@ item.remote.name=Coordinate Remote
 
 item.mace.name=Hammer of Raiding
 item.hatchet.name=Hatchet of Province Creation
-item.clowder_map.name=Clowder Map
+item.clowder_map.name=Faction Claim Map
 item.flaregun.name=Flare Gun
 item.flare.name=Flare Cartridge
 item.pakker.name=Debug Launcher

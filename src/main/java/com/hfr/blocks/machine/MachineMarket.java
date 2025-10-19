@@ -28,7 +28,9 @@ import net.minecraft.world.World;
 
 public class MachineMarket extends BlockContainer {
 
-	//todo: figure out why markets work clientside, but not serverside
+	//todone: figure out why markets work clientside, but not serverside
+	//todo
+	// add craftable shops so players don't have to go to spawn every time they want to trade with the shops but eh whatever its good as is
 
 	@SideOnly(Side.CLIENT)
 	private IIcon iconTop;
