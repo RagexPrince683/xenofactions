@@ -3,8 +3,12 @@ package com.hfr.items;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumChatFormatting;
+
+import java.util.List;
 
 public class ItemMultitool extends Item {
 
@@ -16,6 +20,13 @@ public class ItemMultitool extends Item {
     	} catch(NullPointerException ex) { }
     	
         return 5F;
+    }
+
+    @Override
+    public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean advanced) {
+        list.add(EnumChatFormatting.GREEN + "∞ Infinite Durability");
+        list.add(EnumChatFormatting.AQUA + "Completely Free Item");
+        list.add(EnumChatFormatting.GRAY + "Perfect for new players!");
     }
     
     @Override

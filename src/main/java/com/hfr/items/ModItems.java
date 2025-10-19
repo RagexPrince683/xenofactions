@@ -412,6 +412,7 @@ public class ModItems {
 		mult_roman = new ItemMultitool().setUnlocalizedName("mult_roman").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":mult_roman");
 		mult_steel = new ItemMultitool().setUnlocalizedName("mult_steel").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":mult_steel");
 		mult_alloy = new ItemMultitool().setUnlocalizedName("mult_alloy").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":mult_alloy");
+		//todone descriptions
 		
 		mace = new ItemMace().setUnlocalizedName("mace").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":mace");
 		hatchet = new ItemHatchet().setUnlocalizedName("hatchet").setMaxStackSize(1).setFull3D().setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":hatchet");
