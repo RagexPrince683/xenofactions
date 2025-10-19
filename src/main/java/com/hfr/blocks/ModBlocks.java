@@ -285,7 +285,7 @@ public class ModBlocks {
 		clowder_cap = new Cap(Material.iron).setStepSound(soundTypeMetal).setBlockName("clowder_cap").setHardness(Float.POSITIVE_INFINITY).setResistance(Float.POSITIVE_INFINITY).setCreativeTab(null).setBlockTextureName(RefStrings.MODID + ":clowder_cap");
 		clowder_flag_big = new FlagBig(Material.iron).setStepSound(soundTypeMetal).setBlockName("clowder_flag_big").setLightLevel(1F).setHardness(Float.POSITIVE_INFINITY).setResistance(Float.POSITIVE_INFINITY).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":clowder_flag_big");
 
-		clowder_conquerer = new Conquerer(Material.cloth).setStepSound(soundTypeMetal).setBlockName("clowder_conquerer").setHardness(0.8F).setResistance(4F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":clowder_conquerer");
+		clowder_conquerer = new Conquerer(Material.cloth).setStepSound(Block.soundTypeCloth).setBlockName("clowder_conquerer").setHardness(0.8F).setResistance(4F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":clowder_conquerer");
 
 		officer_chest = new OfficerChest().setStepSound(soundTypeWood).setBlockName("officer_chest").setResistance(10F).setHardness(5.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":officer_chest");
 

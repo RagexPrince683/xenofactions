@@ -23,6 +23,8 @@ import net.minecraft.util.EnumChatFormatting;
 
 public class CommandClowderAdmin extends CommandBase {
 
+	public static boolean WARENABLED = false;
+
 	@Override
 	public String getCommandName() {
 		return "xclowder";
@@ -129,6 +131,20 @@ public class CommandClowderAdmin extends CommandBase {
 			cmdRename(sender, args[1]);
 			return;
 		}
+
+		if(cmd.equals("warenable")) {
+			//ClowderTerritory.WAR_ENABLED = true;
+			WARENABLED = true;
+			sender.addChatMessage(new ChatComponentText(INFO + "War mode enabled!"));
+			return;
+		}
+
+		if(cmd.equals("wardisable")) {
+			//ClowderTerritory.WAR_ENABLED = true;
+			WARENABLED = false;
+			sender.addChatMessage(new ChatComponentText(INFO + "War mode disabled!"));
+			return;
+		}
 		
 		sender.addChatMessage(new ChatComponentText(ERROR + getCommandUsage(sender)));
 	}
@@ -161,6 +177,8 @@ public class CommandClowderAdmin extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-disband <name>" + TITLE + " - Disbands a faction, name parameter for confirmation"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-rename <name>" + TITLE + " - Renames your faction"));
 			//sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-info" + TITLE + " - Shows info on your faction"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-warenable" + TITLE + " - Enables war mode"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-wardisable" + TITLE + " - Disables war mode"));
 		}
 	}
 	

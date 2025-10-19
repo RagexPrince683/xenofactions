@@ -67,7 +67,7 @@ public class ItemBlockLore extends ItemBlock {
 			list.add("Increases speed by 25%");
 		}
 		if(field_150939_a == ModBlocks.box) {
-			list.add("Crappy storage block for storing items outside of claims");
+			list.add("Bad storage block for storing items outside of claims");
 			list.add("Rots after a while");
 		}
 
