@@ -5,6 +5,7 @@ import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.Ownership;
 import com.hfr.clowder.ClowderTerritory.Zone;
+import com.hfr.command.CommandClowderAdmin;
 import com.hfr.tileentity.clowder.TileEntityConquerer;
 import com.hfr.tileentity.clowder.TileEntityFlag;
 
@@ -48,47 +49,64 @@ public class Conquerer extends BlockContainer {
 	
 	@Override
 	public void onBlockPlacedBy(World world, int x, int y, int z, EntityLivingBase player, ItemStack itemStack) {
-		
-		int i = MathHelper.floor_double(player.rotationYaw * 4.0F / 360.0F + 0.5D) & 3;
-		
-		if(i == 0)
-		{
+
+		if (CommandClowderAdmin.WARENABLED) {
+
+			int i = MathHelper.floor_double(player.rotationYaw * 4.0F / 360.0F + 0.5D) & 3;
+
+		if (i == 0) {
 			world.setBlockMetadataWithNotify(x, y, z, 2, 2);
 		}
-		if(i == 1)
-		{
+		if (i == 1) {
 			world.setBlockMetadataWithNotify(x, y, z, 5, 2);
 		}
-		if(i == 2)
-		{
+		if (i == 2) {
 			world.setBlockMetadataWithNotify(x, y, z, 3, 2);
 		}
-		if(i == 3)
-		{
+		if (i == 3) {
 			world.setBlockMetadataWithNotify(x, y, z, 4, 2);
 		}
-		
-		if(player instanceof EntityPlayer && !world.isRemote) {
-			TileEntityConquerer flag = (TileEntityConquerer)world.getTileEntity(x, y, z);
-			
-			Clowder clowder = Clowder.getClowderFromPlayer((EntityPlayer)player);
+
+		if (player instanceof EntityPlayer && !world.isRemote) {
+			TileEntityConquerer flag = (TileEntityConquerer) world.getTileEntity(x, y, z);
+
+			Clowder clowder = Clowder.getClowderFromPlayer((EntityPlayer) player);
 			flag.owner = clowder;
-			
-			if(clowder != null && flag.checkBorder(x, z) && flag.canSeeSky() && noProximity(world, x, y, z)) { //todo here??? no this is conquerer
+
+			if (clowder != null && flag.checkBorder(x, z) && flag.canSeeSky() && noProximity(world, x, y, z)) { //todo here??? no this is conquerer
+				//successful flag placement here?? I think?
+				//maybe send the coordinates to the enemy faction? Here? IF that is what this is.
+
 				flag.owner.addPrestigeReq(0.2F, world);
 				flag.markDirty();
 			} else {
 				flag.owner = null;
-				((EntityPlayer)player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "You won't be able to raise this flag. This may be due to:"));
-				((EntityPlayer)player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-You not being in any faction"));
-				((EntityPlayer)player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag not having sky access"));
-				((EntityPlayer)player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag not being in a foreign border chunk"));
-				((EntityPlayer)player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The enemy faction or your faction not being raidable"));
-				((EntityPlayer)player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag being too close to another conquest flag"));
+				((EntityPlayer) player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "You won't be able to raise this flag. This may be due to:"));
+				((EntityPlayer) player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-You not being in any faction"));
+				((EntityPlayer) player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag not having sky access"));
+				((EntityPlayer) player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag not being in a foreign border chunk"));
+				((EntityPlayer) player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The enemy faction or your faction not being raidable"));
+				((EntityPlayer) player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag being too close to another conquest flag"));
+				//give back the flag then, RETARD
+				((EntityPlayer) player).inventory.addItemStackToInventory
+				(new ItemStack(ModBlocks.clowder_conquerer, 1));
+				//world.setBlockToAir(x, y, z);
+				//not needed
 			}
 		}
 
 		super.onBlockPlacedBy(world, x, y, z, player, itemStack);
+	} else {
+			if (player instanceof EntityPlayer && !world.isRemote) {
+				TileEntityConquerer flag = (TileEntityConquerer) world.getTileEntity(x, y, z);
+				flag.owner = null;
+				//give back the flag
+				((EntityPlayer) player).inventory.addItemStackToInventory
+						(new ItemStack(ModBlocks.clowder_conquerer, 1));
+				((EntityPlayer) player).addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD + "Peacetime enabled!"));
+			}
+		}
+
 	}
 	
 	public boolean noProximity(World world, int x, int y, int z) {
