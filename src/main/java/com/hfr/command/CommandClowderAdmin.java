@@ -132,16 +132,50 @@ public class CommandClowderAdmin extends CommandBase {
 			return;
 		}
 
-		if(cmd.equals("warenable")) {
-			//ClowderTerritory.WAR_ENABLED = true;
+		if (cmd.equals("warenable")) {
 			WARENABLED = true;
 			sender.addChatMessage(new ChatComponentText(INFO + "War mode enabled!"));
+
+			// Notify and play sound for all players
+			for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
+				if (obj instanceof EntityPlayerMP) {
+					EntityPlayerMP player = (EntityPlayerMP) obj;
+
+					// Broadcast message
+					player.addChatMessage(new ChatComponentText(INFO + "⚔ War mode has been ENABLED!"));
+
+					// Play Wither spawn sound at each player’s position
+					player.worldObj.playSoundEffect(
+							player.posX,
+							player.posY,
+							player.posZ,
+							"mob.wither.spawn",
+							5.0F, // volume
+							0.5F  // pitch
+					);
+				}
+			}
+
 			return;
 		}
 
 		if(cmd.equals("wardisable")) {
 			//ClowderTerritory.WAR_ENABLED = true;
 			WARENABLED = false;
+			for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
+				if (obj instanceof EntityPlayerMP) {
+					EntityPlayerMP player = (EntityPlayerMP) obj;
+					player.worldObj.playSoundEffect(
+							player.posX,
+							player.posY,
+							player.posZ,
+							"mob.wither.death",
+							5.0F, // volume
+							0.5F  // pitch
+					);
+					player.addChatMessage(new ChatComponentText(INFO + "⚔ War mode has been DISABLED!"));
+				}
+			}
 			sender.addChatMessage(new ChatComponentText(INFO + "War mode disabled!"));
 			return;
 		}
