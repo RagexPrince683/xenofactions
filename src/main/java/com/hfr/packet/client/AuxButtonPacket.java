@@ -36,7 +36,10 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.Vec3;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class AuxButtonPacket implements IMessage {
 
@@ -45,6 +48,9 @@ public class AuxButtonPacket implements IMessage {
 	int z;
 	int value;
 	int id;
+
+	public static final Map<UUID, Long> lastClickMap = new HashMap<>();
+
 
 	public AuxButtonPacket()
 	{
@@ -253,18 +259,21 @@ public class AuxButtonPacket implements IMessage {
 						foundry.increment();
 				}
 
+				
 				if (te instanceof TileEntityMarket) {
+					// --- Rate limit check (per player) ---
+					final UUID id = p.getUniqueID();
+					final long now = System.currentTimeMillis();
+					Long last = lastClickMap.get(id);
+					if (last != null && now - last < 300) { // 300 ms cooldown (≈3 clicks/sec)
+						return null; // Ignore spam click
+					}
+					lastClickMap.put(id, now);
+
 					System.out.println("Market packet received");
 					TileEntityMarket market = (TileEntityMarket) te;
 
 					// Get the market's offers from JSON
-					//if (this.isRemote) {
-					//	System.out.println("This packet should not be processed on the client side.");
-					//	return null;
-					//}
-					//TODO: REMOTE CHECK HERE so we are ENSURING ALL DATA is processed on the SERVER.
-					// although I'm pretty sure in PacketDispatcher.java we DEFINE this.
-					// side tangent. Why the fuck is it clientside by default. Bobcat moment!
 					List<ItemStack[]> offers = MarketData.getOffers(market.name);
 
 					if (offers.isEmpty()) {
@@ -315,12 +324,14 @@ public class AuxButtonPacket implements IMessage {
 						} else {
 							// Failure: Not enough currency
 							p.worldObj.playSoundAtEntity(p, "hfr:block.buttonNo", 1.0F, 1.0F);
-							p.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "You lack the required items."));
+							p.addChatComponentMessage(new ChatComponentText(
+									EnumChatFormatting.RED + "You lack the required items."));
 						}
 					} else {
 						System.out.println("The selected offer is null for market: " + market.name);
 					}
 				}
+
 
 
 			} catch (Exception x) { }
