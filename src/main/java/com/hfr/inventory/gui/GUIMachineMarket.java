@@ -132,40 +132,53 @@ public class GUIMachineMarket extends GuiScreen {
 	}
 
 
+	private long lastClickTime = 0;
+
+	@Override
 	protected void mouseClicked(int x, int y, int i) {
+		long now = System.currentTimeMillis();
+		if (now - lastClickTime < 200) {
+			// Too soon since last click, ignore to prevent spam
+			return;
+		}
+		lastClickTime = now;
 
-		if(guiLeft + 25 <= x && guiLeft + 25 + 18 > x && guiTop + 7 < y && guiTop + 7 + 18 >= y) {
-
-			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
-			if(page > 1) {
-				mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
+		// Left arrow
+		if (guiLeft + 25 <= x && guiLeft + 25 + 18 > x && guiTop + 7 < y && guiTop + 7 + 18 >= y) {
+			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(
+					new ResourceLocation("gui.button.press"), 1.0F));
+			if (page > 1) {
 				page--;
 			}
 			return;
 		}
 
-		if(guiLeft + 113 + 18 <= x && guiLeft + 113 + 36 > x && guiTop + 7 < y && guiTop + 7 + 18 >= y) {
-
-			if(page < pagecount()) {
-				mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
+		// Right arrow
+		if (guiLeft + 113 + 18 <= x && guiLeft + 113 + 36 > x && guiTop + 7 < y && guiTop + 7 + 18 >= y) {
+			if (page < pagecount()) {
+				mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(
+						new ResourceLocation("gui.button.press"), 1.0F));
 				page++;
 			}
 			return;
 		}
 
-		for(int j = 0; j < 6; j++) {
-			if(guiLeft + 133 <= x && guiLeft + 133 + 18 > x && guiTop + 34 + 27 * j < y && guiTop + 34 + 27 * j + 18 >= y) {
+		// Offer buttons
+		for (int j = 0; j < 6; j++) {
+			if (guiLeft + 133 <= x && guiLeft + 133 + 18 > x &&
+					guiTop + 34 + 27 * j < y && guiTop + 34 + 27 * j + 18 >= y) {
 
 				ItemStack[] offer = getOffer(j);
-
-				if(offer != null) {
-					PacketDispatcher.wrapper.sendToServer(new AuxButtonPacket(market.xCoord, market.yCoord, market.zCoord, (page - 1) * 6 + j, 999));
+				if (offer != null) {
+					PacketDispatcher.wrapper.sendToServer(
+							new AuxButtonPacket(market.xCoord, market.yCoord, market.zCoord,
+									(page - 1) * 6 + j, 999));
 				}
-
 				return;
 			}
 		}
 	}
+
 
 	public ItemStack[] getOffer(int index) {
 
