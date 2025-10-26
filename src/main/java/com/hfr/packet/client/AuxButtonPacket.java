@@ -259,7 +259,7 @@ public class AuxButtonPacket implements IMessage {
 						foundry.increment();
 				}
 
-				
+
 				if (te instanceof TileEntityMarket) {
 					// --- Rate limit check (per player) ---
 					final UUID id = p.getUniqueID();

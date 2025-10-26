@@ -1550,6 +1550,9 @@ public class Clowder {
 	public static void updatePrestige(World world) {
 		for (Clowder clowder : clowders) {
 			if (clowder.valid()) {
+				//if (clowder.getPrestigeGen() > 0 && clowder.getPrestige() < clowder.getPrestigeReq()) {
+				clowder.addPrestige(clowder.getPrestigeGen(), world);
+				//}
 				// ... prestige math ...
 			}
 		}
