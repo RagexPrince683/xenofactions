@@ -335,6 +335,7 @@ public class ClowderEvents {
 			}
 
 			if(player.worldObj.getBlock(x, y, z) != ModBlocks.clowder_flag) {
+
 				for(int i = x - 2; i <= x + 2; i++)
 					for(int j = z - 2; j <= z + 2; j++)
 						if(player.worldObj.getBlock(i, y + 1, j) == ModBlocks.clowder_flag) {
@@ -363,16 +364,20 @@ public class ClowderEvents {
 			
 			if(clowder != owner.owner && !clowder.isRaidable())
 				return false;
-			
-			if(player.worldObj.getBlock(x, y, z) != ModBlocks.clowder_flag) {
-				for(int i = x - 2; i <= x + 2; i++) {
-					for(int j = z - 2; j <= z + 2; j++) {
-						
-						int h = player.worldObj.getHeightValue(i, j);
-						
-						if(player.worldObj.getBlock(i, h, j) == ModBlocks.clowder_flag || player.worldObj.getBlock(i, h - 2, j) == ModBlocks.clowder_flag) {
-							player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Please refrain from obstructing the flag."));
-							return false;
+
+			if (player.worldObj.getBlock(x, y, z) != ModBlocks.clowder_flag) {
+				for (int i = x - 2; i <= x + 2; i++) {
+					for (int j = z - 2; j <= z + 2; j++) {
+
+						int topY = player.worldObj.getHeightValue(i, j);
+						int minY = Math.max(0, topY - 12); // don’t go lower than world bottom
+
+						// Check only within 12 blocks below flag surface
+						for (int checkY = topY; checkY >= minY; checkY--) {
+							if (player.worldObj.getBlock(i, checkY, j) == ModBlocks.clowder_flag) {
+								player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Please refrain from obstructing the flag."));
+								return false;
+							}
 						}
 					}
 				}
