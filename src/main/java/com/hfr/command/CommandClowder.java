@@ -136,10 +136,11 @@ public class CommandClowder extends CommandBase {
 
 
 
-		/*if(cmd.equals("disband") && args.length > 1) {
-			cmdDisband(sender, args[1]);
-			return;
-		}*/
+		//todo readd disband command, but also maybe add a merge command that allows a faction to merge into another faction with the consent of both parties. This would be useful for smaller factions that want to join forces with larger ones, or for factions that want to combine their resources and territories. The disband command could be used as a last resort for factions that are no longer active or have been abandoned by their members. It would require confirmation from the faction owner to prevent accidental disbanding.
+		//if(cmd.equals("disband") && args.length > 1) {
+		//	cmdDisband(sender, args[1]);
+		//	return;
+		//}
 
 		if(cmd.equals("comrades")) {
 			cmdComrades(sender);
@@ -461,6 +462,8 @@ public class CommandClowder extends CommandBase {
 			if(name.equals(clowder.name)) {
 
 				if(clowder.disbandClowder(player)) {
+					//wait ten minutes before allowing the player to create a new faction, or maybe just prevent them from creating a new one for a while. This is to prevent abuse of the disband command.
+					//todo maybe add a cooldown system for creating new factions after disbanding?
 					sender.addChatMessage(new ChatComponentText(CRITICAL + "Your faction was disbanded!"));
 				} else {
 					sender.addChatMessage(new ChatComponentText(ERROR + "Can not disband a faction you do not own!"));
@@ -517,8 +520,8 @@ public class CommandClowder extends CommandBase {
 
 		if(diplomat != null) {
 
-			if(diplomat.suzerain == null)
-			{
+			//if(diplomat.suzerain == null)
+			//{
 
 				if(diplomat.getPermLevel(envoy.getDisplayName()) > 1) {
 
@@ -546,10 +549,10 @@ public class CommandClowder extends CommandBase {
 				{
 					sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions for foreign diplomacy!"));
 				}
-			} else
-			{
-				sender.addChatMessage(new ChatComponentText(ERROR + "Tributaries cannot form alliances!"));
-			}
+			//} else
+			//{
+			//	sender.addChatMessage(new ChatComponentText(ERROR + "Tributaries cannot form alliances!"));
+			//}
 		}
 		else {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You need to be in a clowder!"));
@@ -569,12 +572,12 @@ public class CommandClowder extends CommandBase {
 				if(clowder.getPermLevel(player.getDisplayName()) > 1) {
 
 					if(clowder.potentialFriends.contains(name))
-					{ //checks if the name of the guy you typed in command actually applied to become your slave
+					{ //checks if the name of the guy you typed in command actually applied to become your ALLY
 
 						if(Clowder.getClowderFromPlayerName(name) != null)
 						{
 
-							Clowder friend = Clowder.getClowderFromPlayerName(name); //clowder of guy who offered to suck you off
+							Clowder friend = Clowder.getClowderFromPlayerName(name); //clowder of guy who offered to ALLY
 
 
 							if (friend != clowder) //prevent becoming your own tributary
@@ -590,13 +593,13 @@ public class CommandClowder extends CommandBase {
 								//friend.addPeaceTreaty(60, player.worldObj);
 
 								//for cancelling wars against the tributary
-								if(clowder.enemy == friend)
-								{
-									clowder.pussy(player.worldObj);
-									friend.notifyAll(player.worldObj, new ChatComponentText(INFO + "Because " + clowder.name + " accepted our alliance offer, their war goals against us were cancelled."));
-									clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Because " + friend.name + " is now our ally, our war goals against them have been cancelled."));
-
-								}
+								//if(clowder.enemy == friend)
+								//{
+								//	clowder.pussy(player.worldObj);
+								//	friend.notifyAll(player.worldObj, new ChatComponentText(INFO + "Because " + clowder.name + " accepted our alliance offer, their war goals against us were cancelled."));
+								//	clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Because " + friend.name + " is now our ally, our war goals against them have been cancelled."));
+//
+								//}
 
 
 

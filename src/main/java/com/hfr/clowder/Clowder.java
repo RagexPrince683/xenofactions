@@ -111,8 +111,8 @@ public class Clowder {
 	//for vassal wars not targeting master
 	public boolean vassalTarget = false;
 
-	//for preventing retreat during insta-raid time
-	public boolean hungaryTarget = false;
+	//unused crap from shitty weeder code fabricate crap annoying bullshit
+	//public boolean hungaryTarget = false;
 
 	//for one-time use war extension for attacker
 	public boolean overtime = false;
@@ -816,8 +816,12 @@ public class Clowder {
 			return false;
 
 		allies.put(friend, time());
-		alliesS.put(friend.name, time()); //nbt compliant gay version
-		//inverseMap.put(name, this); i dont know wtf the inversemap shit is
+		alliesS.put(friend.name, time()); //nbt compliant version..? what does that mean??
+		//probably fixes ally shit to actually work...?
+		//I fucking hate old labshit weeder and retarded bob code so goddamn much
+		inverseMap.put(name, this); //i dont know wtf the inversemap shit is
+
+		//I fucking HATE everything about this mod.
 
 		ClowderData.getData(world).markDirty();
 
@@ -1106,6 +1110,7 @@ public class Clowder {
 	}
 
 	public int getPlayersOnline() {
+		//very broken, this just doesn't work
 
 		int online = 0;
 		int members = this.members.size();
