@@ -1055,8 +1055,8 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 				
 				Ownership owner = ClowderTerritory.getOwnerFromInts(tp.posX, tp.posZ);
 				Clowder me = Clowder.getClowderFromPlayer(player);
-				
-				if(owner == null || owner.zone != Zone.FACTION || owner.owner != me) {
+
+				if(!tp.rendezvous && (owner == null || owner.zone != Zone.FACTION || owner.owner != me)) {
 
 					player.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "Warp destination appears to be outside of your territory."));
 					player.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "Warp aborted."));
