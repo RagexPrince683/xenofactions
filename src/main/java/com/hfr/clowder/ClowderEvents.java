@@ -1041,18 +1041,18 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 		} else {
 			delay = MainRegistry.territoryDelay;
 		}
-		
+
 		List<Long> rem = new ArrayList();
 		for(Long time : Clowder.teleports.keySet()) {
-			
+
 			ScheduledTeleport tp = Clowder.teleports.get(time);
 			EntityPlayer player = world.getPlayerEntityByName(tp.player);
-			
+
 			if(player == null)
 				continue;
-			
+
 			if(time < System.currentTimeMillis()) {
-				
+
 				Ownership owner = ClowderTerritory.getOwnerFromInts(tp.posX, tp.posZ);
 				Clowder me = Clowder.getClowderFromPlayer(player);
 
@@ -1060,32 +1060,39 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 
 					player.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "Warp destination appears to be outside of your territory."));
 					player.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "Warp aborted."));
-					
+
 				} else if(player instanceof EntityPlayerMP) {
-					
+
 					EntityPlayerMP playermp = (EntityPlayerMP)player;
 					playermp.mountEntity(null);
 					playermp.playerNetServerHandler.setPlayerLocation(tp.posX + 0.5D, tp.posY, tp.posZ + 0.5D, player.rotationYaw, player.rotationPitch);
-					
-					if(!tp.home) {
+
+					if(tp.rendezvous)
+					{
+						me.notifyAll(world, new ChatComponentText(CommandClowder.INFO + "Player " + player.getDisplayName() + " is warping to an ally warp point!"));
+						Clowder ally = Clowder.getClowderFromName(tp.allyName);
+						if (ally != null)
+							ally.notifyAll(world, new ChatComponentText(CommandClowder.INFO + "Player " + player.getDisplayName() + " from allied faction " + me.name + " is warping to our ally warp point!"));
+					}
+					else if(!tp.home) {
 						me.notifyAll(world, new ChatComponentText(CommandClowder.INFO + "Player " + player.getDisplayName() + " is warping to " + tp.warp + "!"));
 					} else {
 						me.notifyAll(world, new ChatComponentText(CommandClowder.INFO + "Player " + player.getDisplayName() + " is warping home!"));
-						playermp.addPotionEffect(new PotionEffect(Potion.resistance.id, 60, 9)); 
+						playermp.addPotionEffect(new PotionEffect(Potion.resistance.id, 60, 9));
 					}
-					
+
 				}
 				rem.add(time);
-				
+
 			} else {
-				
+
 				if(player.posX != player.lastTickPosX || player.posZ != player.lastTickPosZ) {
 					rem.add(time);
 					player.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "Warp aborted!"));
 				}
 			}
 		}
-		
+
 		for(Long time : rem) {
 			Clowder.teleports.remove(time);
 		}
