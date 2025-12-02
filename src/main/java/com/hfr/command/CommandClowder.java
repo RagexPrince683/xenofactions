@@ -384,7 +384,7 @@ public class CommandClowder extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-listflags" + TITLE + " - Lists availible flags"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-sethome" + TITLE + " - Sets the clowder's home point"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-home" + TITLE + " - Teleports to the clowder's home"));
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-addwarp <name>" + TITLE + " - Creates a warp"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-setwarp <name>" + TITLE + " - Creates a warp"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-delwarp <name>" + TITLE + " - Removes a warp"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-warp <name>" + TITLE + " - Teleports to a warp point"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-warps" + TITLE + " - Lists all warps"));
