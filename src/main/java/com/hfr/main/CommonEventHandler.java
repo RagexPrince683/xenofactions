@@ -446,7 +446,25 @@ public class CommonEventHandler {
 
 			double newX = wrapX(posX);
 			double newZ = wrapZ(posZ);
-			double newY = player.posY;
+
+			// Try to use player's current Y, but validate it — invalid Y (NaN, Inf, or out of bounds)
+			// could previously crash the world handling. If invalid, fall back to a safe default
+			// (use bounding box minY or sea level).
+			double newY;
+			try {
+				newY = player.posY;
+				if (Double.isNaN(newY) || Double.isInfinite(newY) || newY < 0.0D ) { //|| newY > 255.0D
+					// try a reasonable fallback from the player's bounding box
+					newY = player.boundingBox != null ? player.boundingBox.minY : Double.NaN;
+					if (Double.isNaN(newY) || Double.isInfinite(newY) || newY < 0.0D ) { //|| newY > 255.0D
+						// final safe fallback: sea level
+						newY = 64.0D;
+					}
+				}
+			} catch (Throwable t) {
+				// defensive: if reading posY or boundingBox throws for some reason, pick safe default
+				newY = 64.0D;
+			}
 
 			World world = player.worldObj;
 			// compute target block coords
@@ -454,7 +472,7 @@ public class CommonEventHandler {
 			int checkY = MathHelper.floor_double(newY);
 			int checkZ = MathHelper.floor_double(newZ);
 
-			// try to use top solid/liquid block (fast)
+			// try to use top solid/liquid block (fast). Catch any exception and fallback to scan.
 			try {
 				int topY = world.getTopSolidOrLiquidBlock(checkX, checkZ); // returns top block y
 				if (topY > checkY) {
@@ -462,51 +480,24 @@ public class CommonEventHandler {
 				} else {
 					// already above top block; keep current newY
 				}
-			} catch (NoSuchMethodError e) {
-				// fallback if method not present (shouldn't happen on standard 1.7.10)
+			} catch (Throwable e) {
+				// fallback if method throws or isn't available (defensive for modded worlds)
 				int maxSearch = 255 - checkY; // top build limit is 255 (0..255)
 				if (maxSearch < 0) maxSearch = 0;
+				boolean found = false;
 				for (int i = 1; i <= maxSearch; i++) {
 					if (world.isAirBlock(checkX, checkY + i, checkZ)) {
 						newY = checkY + i;
+						found = true;
 						break;
 					}
 				}
-			}
-
-			// If player is riding something, try to teleport the mount first (best-effort).
-			/** not needed, already done in entity handling
-			if (player.ridingEntity != null) {
-				Entity mount = player.ridingEntity;
-				if (mount != null && !mount.isDead && mount.worldObj == world) {
-					double mountNewX = wrapX(mount.posX);
-					double mountNewZ = wrapZ(mount.posZ);
-					int mCheckX = MathHelper.floor_double(mountNewX);
-					int mCheckY = MathHelper.floor_double(mount.posY);
-					int mCheckZ = MathHelper.floor_double(mountNewZ);
-
-					// Find safe Y using fast topSolid or fallback scan
-					double mountNewY = findSafeY(world, mCheckX, mCheckY, mCheckZ);
-
-					// Move the mount entity server-side first
-					// setPosition is usually fine; some entities/vehicles may prefer setPositionAndUpdate
-					try {
-						// try calling setPositionAndUpdate if available (safer for some entities)
-						mount.getClass().getMethod("setPositionAndUpdate", double.class, double.class, double.class)
-								.invoke(mount, mountNewX, mountNewY, mountNewZ);
-					} catch (Exception ignore) {
-						// method not present / invocation failed — fall back to setPosition
-						mount.setPosition(mountNewX, mountNewY, mountNewZ);
-						System.out.println("tried to wrap a mount and caught an exception" + ignore.getMessage());
-					}
-
-					// If mount has mod-specific sync needs (MCH vehicles), you'll likely need to call
-					// a vehicle-specific sync/update packet here. If you see desync, tell me the vehicle class
-					// and I can suggest the exact sync call.
-					//TODO: cleaner implementation, this is just a skeleton for the full thing
+				if (!found) {
+					// still not found a safe spot — ensure newY is within world bounds
+					if (newY < 1.0D) newY = 1.0D;
+					if (newY > 254.0D) newY = 254.0D;
 				}
 			}
-			 **/
 
 			// Teleport the player via server->client location update (keeps client in sync)
 			player.playerNetServerHandler.setPlayerLocation(newX, newY, newZ, player.rotationYaw, player.rotationPitch);
@@ -517,6 +508,7 @@ public class CommonEventHandler {
 			);
 		}
 	}
+
 
 	private double wrapX(double x) {
 		if (x < MainRegistry.borderNegX) {
