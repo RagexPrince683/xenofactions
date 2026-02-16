@@ -699,20 +699,22 @@ public class CommonEventHandler {
 
 	}
 
-	@SubscribeEvent
-	public void onCheckSpawn(LivingSpawnEvent.CheckSpawn event) {
-		
-		if(event.entity instanceof EntityMob && MainRegistry.surfaceMobs) {
+	//@SubscribeEvent
+	//public void onCheckSpawn(LivingSpawnEvent.CheckSpawn event) {
+	//
+	//	if(event.entity instanceof EntityMob && MainRegistry.surfaceMobs) {
+//
+	//		double x = event.entity.posX;
+	//		double z = event.entity.posZ;
+	//		double y = event.entity.worldObj.getHeightValue((int) Math.floor(x), (int) Math.floor(z));
+//
+	//		if(event.entity.posY < y - 1) {
+	//			event.setCanceled(true);
+	//		}
+	//	}
+	//}
 
-			double x = event.entity.posX;
-			double z = event.entity.posZ;
-			double y = event.entity.worldObj.getHeightValue((int) Math.floor(x), (int) Math.floor(z));
-
-			if(event.entity.posY < y - 1) {
-				event.setCanceled(true);
-			}
-		}
-	}
+	//fuck off with your uncancelable event shit
 
 	//for handling damage immunity
 	@SubscribeEvent
