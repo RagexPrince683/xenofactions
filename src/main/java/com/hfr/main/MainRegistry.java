@@ -213,7 +213,7 @@ public class MainRegistry
 	public static int prestigeDelay = 60 * 60 * 20;
 	public static boolean disableChests = true;
 	public static int mold = 5 * 60 * 60 * 20;
-	public static boolean freeRaid = false;
+	public static boolean freeRaid = true;
 
 	public static boolean bb_rng = false;
 	
@@ -777,8 +777,8 @@ public class MainRegistry
 	public static List<Integer> t2Buffer = new ArrayList();
 	public static boolean skeletonAIDS = false;
 	public static float skeletonHIV = 2.5F;
-	public static boolean zombAI = true;
-	public static boolean creepAI = true;
+	public static boolean zombAI = false;
+	public static boolean creepAI = false;
 	public static boolean surfaceMobs = false;
 	public static double zombMiningMult = 1.0D;
 
@@ -786,10 +786,10 @@ public class MainRegistry
 	public static List<String> u1 = new ArrayList();
 	public static List<String> d1 = new ArrayList();
 	public static List<String> d2 = new ArrayList();
-	public static boolean u2en = true;
-	public static boolean u1en = true;
-	public static boolean d1en = true;
-	public static boolean d2en = true;
+	public static boolean u2en = false;
+	public static boolean u1en = false;
+	public static boolean d1en = false;
+	public static boolean d2en = false;
 	public static int updateInterval = 10 * 60;
 	public static int stockCap = 50;
 	
@@ -1413,7 +1413,7 @@ public class MainRegistry
 
         warpCost = createConfigInt(config, "CLOWDER", "warpCost", "How much prestige a warp point costs to create", 25);
         territoryDelay = createConfigInt(config, "CLOWDER", "territoryDelay", "How many ticks inbetween territory validation operations", 5);
-        territoryAmount = createConfigInt(config, "CLOWDER", "territoryAmount", "How many chunks are checked eaach operation", 50);
+        territoryAmount = createConfigInt(config, "CLOWDER", "territoryAmount", "How many chunks are checked each operation", 50);
         prestigeDelay = createConfigInt(config, "CLOWDER", "prestigeDelay", "How many ticks inbetween prestige updates (1h per default)", 60 * 60 * 20);
         disableChests = createConfigBool(config, "CLOWDER", "disableChests", "Whether chests should not be placable outside of claims", true);
         mold = createConfigInt(config, "CLOWDER", "mold", "How many ticks cardboard boxes can remain loaded until rotting (5h by default)", 5 * 60 * 60 * 20);
@@ -1427,19 +1427,20 @@ public class MainRegistry
         prop_chatfilter.setRequiresWorldRestart(false);
         chatfilter = prop_chatfilter.getBoolean(true);
         
-        u2en = createConfigBool(config, "STOCKMARKET", "u2enable", "Whether econ boost messages should be broadcasted", true);
-        u1en = createConfigBool(config, "STOCKMARKET", "u1enable", "Whether small econ boost messages should be broadcasted", true);
-        d1en = createConfigBool(config, "STOCKMARKET", "d1enable", "Whether small econ fall messages should be broadcasted", true);
-        d2en = createConfigBool(config, "STOCKMARKET", "d2enable", "Whether econ fall messages should be broadcasted", true);
+        u2en = createConfigBool(config, "STOCKMARKET", "u2enable", "Whether econ boost messages should be broadcasted", false);
+        u1en = createConfigBool(config, "STOCKMARKET", "u1enable", "Whether small econ boost messages should be broadcasted", false);
+        d1en = createConfigBool(config, "STOCKMARKET", "d1enable", "Whether small econ fall messages should be broadcasted", false);
+        d2en = createConfigBool(config, "STOCKMARKET", "d2enable", "Whether econ fall messages should be broadcasted", false);
         updateInterval = createConfigInt(config, "STOCKMARKET", "updateInterval", "Time in seconds between market updates", 10 * 60);
         stockCap = createConfigInt(config, "STOCKMARKET", "stockCap", "How many shares a player can own per stock", 50);
+		//there shouldn't be a cap lol wtf??
         
         enableStocks = createConfigBool(config, "STOCKMARKET", "enableStocks", "Enables the stock market", true);
         
         /////////////////////////////////////////////////////////////////////////
         
         mlpf = createConfigInt(config, "ENTITYCONTROL", "MLPF", "How far the multi-layered pathfinder for zombs and creeps reaches", 100);
-        caveCap = createConfigInt(config, "ENTITYCONTROL", "caveCap_New", "Sets the maximum Y-coord where cave sickness kick in", -10);
+        caveCap = createConfigInt(config, "ENTITYCONTROL", "caveCap_New", "Sets the maximum Y-coord where cave sickness kick in", -20);
 
         zombAI = createConfigBool(config, "ENTITYCONTROL", "zombAI", "Enables advanced zombert AI", false);
         creepAI = createConfigBool(config, "ENTITYCONTROL", "creepAI", "Enables advanced creeper AI", false);

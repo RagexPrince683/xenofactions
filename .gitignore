@@ -56,3 +56,4 @@ saves/
 *.ogg
 .idea/gradle.xml
 .idea/workspace.xml
+/eclipse/world
