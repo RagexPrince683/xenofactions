@@ -57,3 +57,4 @@ saves/
 .idea/gradle.xml
 .idea/workspace.xml
 /eclipse/world
+/eclipse/asm

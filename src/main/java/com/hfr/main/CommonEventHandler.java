@@ -148,25 +148,34 @@ public class CommonEventHandler {
 			/// UPDATE CLOWDER INFO ///
 			
 			long age = player.worldObj.getTotalWorldTime();
-			
-			if(age % 10 == 0 && !player.worldObj.playerEntities.isEmpty()) {
-				
+
+			//NAMEPLATES
+			if(age % 10 == 0 && !player.worldObj.playerEntities.isEmpty() && !player.isSneaking()) {
+
 				age /= 10;
 				age %= player.worldObj.playerEntities.size();
-				
+
 				EntityPlayer pl = (EntityPlayer) player.worldObj.playerEntities.get((int)age);
 				Clowder clow = Clowder.getClowderFromPlayer(pl);
-				
+
+
 				String name = "###";
-				
+
 				if(clow != null)
+				{
 					name = clow.name;
-				
+					for (Clowder A : clow.allies.keySet())
+						name = clow.name + "_" + A.name; //secretly loads entire list of allies into your fucking ID
+				}
+
+
+
 				NBTTagCompound data = new NBTTagCompound();
 				data.setString("type", "clowderNotif");
 				data.setString("player", pl.getUniqueID().toString());
 				data.setString("clowder", name);
-				
+
+
 				PacketDispatcher.wrapper.sendTo(new AuxParticlePacketNT(data, 0, 0, 0), (EntityPlayerMP) player);
 			}
 			
@@ -176,18 +185,18 @@ public class CommonEventHandler {
 			//client stuff
 		}
 		
-		if(player.worldObj.isRemote && event.phase == event.phase.START && player.getUniqueID().toString().equals("192af5d7-ed0f-48d8-bd89-9d41af8524f8") && !player.isInvisible() && !player.isSneaking()) {
-			
-			int i = player.ticksExisted * 3;
-			
-			Vec3 vec = Vec3.createVectorHelper(3, 0, 0);
-			vec.rotateAroundY((float) (i * Math.PI / 180D));
-			MainRegistry.proxy.howDoIUseTheZOMG(player.worldObj, player.posX + vec.xCoord, player.posY + 1.5, player.posZ + vec.zCoord, 1);
-			vec.rotateAroundY((float) (Math.PI * 2D / 3D));
-			MainRegistry.proxy.howDoIUseTheZOMG(player.worldObj, player.posX + vec.xCoord, player.posY + 1.5, player.posZ + vec.zCoord, 2);
-			vec.rotateAroundY((float) (Math.PI * 2D / 3D));
-			MainRegistry.proxy.howDoIUseTheZOMG(player.worldObj, player.posX + vec.xCoord, player.posY + 1.5, player.posZ + vec.zCoord, 3);
-		}
+		//if(player.worldObj.isRemote && event.phase == event.phase.START && player.getUniqueID().toString().equals("192af5d7-ed0f-48d8-bd89-9d41af8524f8") && !player.isInvisible() && !player.isSneaking()) {
+		//
+		//	int i = player.ticksExisted * 3;
+		//
+		//	Vec3 vec = Vec3.createVectorHelper(3, 0, 0);
+		//	vec.rotateAroundY((float) (i * Math.PI / 180D));
+		//	MainRegistry.proxy.howDoIUseTheZOMG(player.worldObj, player.posX + vec.xCoord, player.posY + 1.5, player.posZ + vec.zCoord, 1);
+		//	vec.rotateAroundY((float) (Math.PI * 2D / 3D));
+		//	MainRegistry.proxy.howDoIUseTheZOMG(player.worldObj, player.posX + vec.xCoord, player.posY + 1.5, player.posZ + vec.zCoord, 2);
+		//	vec.rotateAroundY((float) (Math.PI * 2D / 3D));
+		//	MainRegistry.proxy.howDoIUseTheZOMG(player.worldObj, player.posX + vec.xCoord, player.posY + 1.5, player.posZ + vec.zCoord, 3);
+		//}
 		
 		//if(player.worldObj.provider instanceof WorldProviderMoon) {
 		//

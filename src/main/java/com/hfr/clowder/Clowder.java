@@ -1121,6 +1121,9 @@ public class Clowder {
 
 			if (l > System.currentTimeMillis())
 				online++;
+				System.out.println(s + " is online!");
+				System.out.println(members + "members");
+
 		}
 
 		return online;

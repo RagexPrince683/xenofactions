@@ -55,6 +55,8 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 
 	@Override
 	public void updateEntity() {
+
+
 		
 		if(!worldObj.isRemote) {
 			

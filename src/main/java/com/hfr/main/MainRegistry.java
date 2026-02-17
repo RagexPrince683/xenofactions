@@ -205,7 +205,7 @@ public class MainRegistry
 	public static int mudrate = 10;
 	
 	public static boolean enableStocks = true;
-	public static boolean enableRadar = true;
+	public static boolean enableRadar = false;
 
 	public static int warpCost = 25;
 	public static int territoryDelay = 5;

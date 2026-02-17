@@ -101,6 +101,11 @@ public class TileEntityConquerer extends TileEntityMachineBase implements ITerri
 				this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hfr:block.flagCapture", 100.0F, 1.0F);
 				conquer();
 			}
+
+			//if(owner != null) {
+			//	owner.notifyCapture(worldObj, xCoord, zCoord, "Flags");
+			//}
+			//this just spams ourself, we need to tell the person who owns the chunk, and not spam the chat...
 			
 			this.updateGauge(owner.flag.ordinal(), 0, 250);
 			this.updateGauge(owner.color, 1, 250);
