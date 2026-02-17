@@ -75,7 +75,25 @@ minecraft {
     runDir = "eclipse"
 }
 
+repositories {
+    maven { name = "chickenbones"; url = "http://chickenbones.net/maven/" }
+}
+
 dependencies {
+    //no idea how bob did this with hbm I'm going to try to do it using mcheli stuff
+    //implementation 'codechicken:CodeChickenCore:1.7.10-1.0.4.29:dev'
+    //compileOnly 'codechicken:CodeChickenCore:1.7.10-1.0.4.29:src'
+//
+    //implementation 'codechicken:CodeChickenLib:1.7.10-1.1.3.140:dev'
+    //compileOnly 'codechicken:CodeChickenLib:1.7.10-1.1.3.140:src'
+//
+    //implementation 'codechicken:NotEnoughItems:1.7.10-1.0.3.74:dev'
+    //compileOnly 'codechicken:NotEnoughItems:1.7.10-1.0.3.74:src'
+//
+    //compileOnly "inventorytweaks:InventoryTweaks:1.59-dev:deobf"
+    runtime "codechicken:CodeChickenLib:1.7.10-1.1.3.140:dev"
+    runtime "codechicken:CodeChickenCore:1.7.10-1.0.7.47:dev"
+    runtime "codechicken:NotEnoughItems:1.7.10-1.0.5.120:dev"
     compile fileTree(dir: 'libs', include: ['*.jar'])
 }
 

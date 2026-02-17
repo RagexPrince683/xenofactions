@@ -1418,7 +1418,7 @@ public class MainRegistry
         prestigeDelay = createConfigInt(config, "CLOWDER", "prestigeDelay", "How many ticks inbetween prestige updates (1h per default)", 60 * 60 * 20);
         disableChests = createConfigBool(config, "CLOWDER", "disableChests", "Whether chests should not be placable outside of claims", true);
         mold = createConfigInt(config, "CLOWDER", "mold", "How many ticks cardboard boxes can remain loaded until rotting (5h by default)", 5 * 60 * 60 * 20);
-        freeRaid = createConfigBool(config, "CLOWDER", "freeRaid", "Enabling this will cause all raidability checks to be ignored, everyone will alway be raidable", false);
+        freeRaid = createConfigBool(config, "CLOWDER", "freeRaid", "Enabling this will cause all raidability checks to be ignored, everyone will alway be raidable", true);
 
         bb_rng = createConfigBool(config, "BOBBYBREAKER", "enableFineCalc", "Whether or not BB uses exact position values or rounded ones, exact values simulate RNG due to bomb spread and highly varying damage", false);
 
