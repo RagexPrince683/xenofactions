@@ -1,6 +1,7 @@
 package com.hfr.command;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -87,12 +88,23 @@ public class CommandClowder extends CommandBase {
 
 	//fuck bob and his entire ass spaghetti monster of a command system
 
+
+	//todo fix
 	private String sanitizeFactionName(String name) {
 		String sanitized = name;
 		for (Map.Entry<String, String> entry : sub.entrySet()) {
 			sanitized = sanitized.replaceAll(entry.getKey(), entry.getValue());
 		}
 		return sanitized;
+	}
+
+	private boolean containsBannedWord(String name) {
+		for (String pattern : sub.keySet()) {
+			if (name.toLowerCase().matches(".*" + pattern + ".*")) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -125,12 +137,24 @@ public class CommandClowder extends CommandBase {
 		}
 
 		//the command for creating a faction.
+		//todo this bugs out if you use a name with spaces in it? I know it bugs out when sanitizing the word rape as a faction name which is regexified to haiiii :3
+		// maybe just replace spaces with underscores or something, or idk maybe allow spaces but handle it properly? maybe just use the args array to reconstruct the name instead of just taking args[1]?
 		if (cmd.equals("create") && args.length > 1) {
-			//sanitize faction names
-			String factionName = sanitizeFactionName(args[1]);
-			cmdCreate(sender, factionName);
+			//prevent censored faction names from being made
+			String rawName = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+
+			if (containsBannedWord(rawName)) {
+				sender.addChatMessage(new ChatComponentText(ERROR + "That faction name is not allowed."));
+				return;
+			}
+
+			cmdCreate(sender, rawName);
+
 			return;
 		}
+
+
+
 
 
 

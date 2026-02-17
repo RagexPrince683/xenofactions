@@ -4,7 +4,7 @@ fov:0.625
 gamma:1.0
 saturation:0.0
 renderDistance:12
-guiScale:0
+guiScale:2
 particles:0
 bobView:true
 anaglyph3d:false
