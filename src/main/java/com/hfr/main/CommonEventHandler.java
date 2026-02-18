@@ -150,7 +150,10 @@ public class CommonEventHandler {
 			long age = player.worldObj.getTotalWorldTime();
 
 			//NAMEPLATES
-			if(age % 10 == 0 && !player.worldObj.playerEntities.isEmpty() && !player.isSneaking()) {
+			if(age % 10 == 0 && !player.worldObj.playerEntities.isEmpty() ) { //&& !player.isSneaking()
+				//so if !player.isSneaking() I thought the nameplate would be gone but apparently not
+
+				//if only I knew what was causing allied nameplates to be red
 
 				age /= 10;
 				age %= player.worldObj.playerEntities.size();

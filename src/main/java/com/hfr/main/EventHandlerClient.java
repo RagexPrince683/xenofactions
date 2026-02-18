@@ -304,25 +304,38 @@ public class EventHandlerClient {
 	}
 	
 	public static HashMap<String, String> lookup = new HashMap();
-	
+
 	@SubscribeEvent
 	public void preRenderEvent(RenderLivingEvent.Pre event) {
 
 		if(event.entity instanceof EntityPlayer) {
-			
+			//allahu bookmark note important - this is the part where player name changes based on clowder
 			String clowder = lookup.get(event.entity.getUniqueID().toString());
 			String own = lookup.get(Minecraft.getMinecraft().thePlayer.getUniqueID().toString());
-			
+
+			//doesnt work this way
+			//Clowder enemy = Clowder.getClowderFromName(clowder);
+			//Clowder mines =  Clowder.getClowderFromName(own);
+
 			if(clowder != null && !clowder.equals("###")) {
-				
+
+				String trueName = clowder.split("_")[0];  //cuts off the list of allies
+
 				if(own == null || own.equals("###")) {
-					clowder = EnumChatFormatting.YELLOW + clowder;
+					clowder = EnumChatFormatting.YELLOW + trueName;
 				} else if(own.equals(clowder)) {
-					clowder = EnumChatFormatting.GREEN + clowder;
-				} else {
-					clowder = EnumChatFormatting.RED + clowder;
+					clowder = EnumChatFormatting.GREEN + trueName;
 				}
-				
+				else if(own.contains(trueName)) { //for allies
+					clowder = EnumChatFormatting.BLUE + trueName;
+				} else {
+					clowder = EnumChatFormatting.RED + trueName;
+				}
+
+				//if(mines != null && enemy != null && mines.allies.get(enemy) != null)
+				//	clowder = EnumChatFormatting.BLUE + clowder;
+
+
 				renderTag((EntityPlayer)event.entity, event.x, event.y, event.z, event.renderer, clowder.replaceAll("_", " "));
 			}
 		}
@@ -345,38 +358,9 @@ public class EventHandlerClient {
             {
                 String s = name;
 
-                if (player.isSneaking())
-                {
-                    FontRenderer fontrenderer = Minecraft.getMinecraft().fontRenderer;
-                    GL11.glPushMatrix();
-                    GL11.glTranslatef((float)x + 0.0F, (float)y + player.height + 0.75F, (float)z);
-                    GL11.glNormal3f(0.0F, 1.0F, 0.0F);
-                    GL11.glRotatef(-RenderManager.instance.playerViewY, 0.0F, 1.0F, 0.0F);
-                    GL11.glRotatef(RenderManager.instance.playerViewX, 1.0F, 0.0F, 0.0F);
-                    GL11.glScalef(-f1, -f1, f1);
-                    GL11.glDisable(GL11.GL_LIGHTING);
-                    GL11.glTranslatef(0.0F, 0.25F / f1, 0.0F);
-                    GL11.glDepthMask(false);
-                    GL11.glEnable(GL11.GL_BLEND);
-                    OpenGlHelper.glBlendFunc(770, 771, 1, 0);
-                    Tessellator tessellator = Tessellator.instance;
-                    GL11.glDisable(GL11.GL_TEXTURE_2D);
-                    tessellator.startDrawingQuads();
-                    int i = fontrenderer.getStringWidth(s) / 2;
-                    tessellator.setColorRGBA_F(0.0F, 0.0F, 0.0F, 0.25F);
-                    tessellator.addVertex((double)(-i - 1), -1.0D, 0.0D);
-                    tessellator.addVertex((double)(-i - 1), 8.0D, 0.0D);
-                    tessellator.addVertex((double)(i + 1), 8.0D, 0.0D);
-                    tessellator.addVertex((double)(i + 1), -1.0D, 0.0D);
-                    tessellator.draw();
-                    GL11.glEnable(GL11.GL_TEXTURE_2D);
-                    GL11.glDepthMask(true);
-                    fontrenderer.drawString(s, -fontrenderer.getStringWidth(s) / 2, 0, 553648127);
-                    GL11.glEnable(GL11.GL_LIGHTING);
-                    GL11.glDisable(GL11.GL_BLEND);
-                    GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-                    GL11.glPopMatrix();
-                }
+				if (player.isSneaking()) {
+					return; // Do not render nameplate at all when sneaking
+				}
                 else
                 {
                 	func_96449_a(player, x, y, z, name, f1, d3);
