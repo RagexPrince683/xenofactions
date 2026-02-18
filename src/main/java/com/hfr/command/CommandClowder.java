@@ -597,6 +597,7 @@ public class CommandClowder extends CommandBase {
 
 					if(clowder.potentialFriends.contains(name))
 					{ //checks if the name of the guy you typed in command actually applied to become your ALLY
+						//why is it the PERSON, it should be the FACTION. STUPID FUCKING BOB OR WEEDER OR WHOEVER THE FUCK
 
 						if(Clowder.getClowderFromPlayerName(name) != null)
 						{

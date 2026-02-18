@@ -558,6 +558,7 @@ public class Clowder {
 	}
 
 	//memory memes initialize memory shit for labjac poorly coded stuff
+	//... literally could just be saved to txt or something
 	public static void initializeDiplomacy(World world)
 	{
 

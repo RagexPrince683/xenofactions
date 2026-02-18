@@ -81,6 +81,9 @@ import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.registry.EntityRegistry;
 import cpw.mods.fml.common.registry.GameRegistry;
 
+import static com.hfr.clowder.Clowder.initializeDiplomacy;
+
+
 @Mod(modid = RefStrings.MODID, name = RefStrings.NAME, version = RefStrings.VERSION, guiFactory = RefStrings.GUI_FACTORY)
 public class MainRegistry
 {
@@ -367,6 +370,7 @@ public class MainRegistry
 		FluidHandler.init();
 		HFRPotion.init();
 		MainRegistry.loadCustomDrops();
+
 
 		//todone: make chat filter apply to faction names so we don't have edgelords putting swastikas and shit in their fac names
 		//todo pick which name should be used for the faction name (so the censored one)
@@ -730,6 +734,7 @@ public class MainRegistry
 		event.registerServerCommand(new CommandXFlags());
 		event.registerServerCommand(new CommandXMulti());
 		MarketData.loadMarketData();
+
 		//and now we just pray that the market data does not cope over serverside
 
 		//I'm flying too high
@@ -1427,6 +1432,7 @@ public class MainRegistry
         prop_chatfilter.setRequiresMcRestart(false);
         prop_chatfilter.setRequiresWorldRestart(false);
         chatfilter = prop_chatfilter.getBoolean(true);
+		//sometimes it doesn't like being turned off for some reason (I think)
         
         u2en = createConfigBool(config, "STOCKMARKET", "u2enable", "Whether econ boost messages should be broadcasted", false);
         u1en = createConfigBool(config, "STOCKMARKET", "u1enable", "Whether small econ boost messages should be broadcasted", false);

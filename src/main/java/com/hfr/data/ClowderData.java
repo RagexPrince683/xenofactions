@@ -11,6 +11,8 @@ import net.minecraft.world.WorldSavedData;
 
 import java.util.ArrayList;
 
+import static com.hfr.clowder.Clowder.initializeDiplomacy;
+
 public class ClowderData extends WorldSavedData {
 
 	private final ArrayList claimedPlayers = new ArrayList();
@@ -66,6 +68,9 @@ public class ClowderData extends WorldSavedData {
 	static ClowderData data = null;
 	
 	public static ClowderData getData(World worldObj) {
+
+		//initializeDiplomacy(worldObj);
+		//there's no way this works but let's try it
 		
 		if(worldObj.provider.dimensionId == 0) {
 	
