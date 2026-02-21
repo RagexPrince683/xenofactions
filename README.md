@@ -18,5 +18,5 @@ All we ask is that you give credit to either "Ragex", "The Swamp", or "Swag Gang
 
 Don't ask me for help making modpacks. We are not going to help you make a modpack. Stop asking. Stop opening issues for modpacks. 
 
-As for plugins. This mod is intended to be a mod plugin. Not to be added on top of plugins. We will not be adding anything that causes the mod to rely on plugins.]
+As for plugins. This mod is intended to be a mod plugin. Not to be added on top of plugins. We will not be adding anything that causes the mod to rely on plugins.
 
