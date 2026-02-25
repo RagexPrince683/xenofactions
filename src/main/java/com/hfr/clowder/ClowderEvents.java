@@ -2,7 +2,6 @@ package com.hfr.clowder;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import com.hbm.extprop.HbmLivingProps;
 import com.hbm.potion.HbmPotion;
@@ -12,7 +11,10 @@ import com.hfr.clowder.Clowder.ScheduledTeleport;
 import com.hfr.clowder.ClowderTerritory.Ownership;
 import com.hfr.clowder.ClowderTerritory.TerritoryMeta;
 import com.hfr.clowder.ClowderTerritory.Zone;
-import com.hfr.command.*;
+import com.hfr.command.CommandClowder;
+import com.hfr.command.CommandClowderChat;
+import com.hfr.command.Mute;
+import com.hfr.command.MuteManager;
 import com.hfr.data.ClowderData;
 import com.hfr.handler.BobbyBreaker;
 import com.hfr.handler.ExplosionSound;
@@ -129,59 +131,40 @@ public class ClowderEvents {
 	 */
 	@SubscribeEvent
 	public void handleChatServer(ServerChatEvent event) {
-
+		
 		Clowder clowder = Clowder.getClowderFromPlayer(event.player);
-
-		if (clowder != null) {
-
-			// --- Team chat ---
-			if (event.player.getEntityData().getInteger(CommandClowderChat.CHAT_KEY) == 1) {
+		
+		if(clowder != null) {
+			
+			if(event.player.getEntityData().getInteger(CommandClowderChat.CHAT_KEY) == 1) {
 				sendToTeam(clowder, event.player, event.message);
 				event.setCanceled(true);
 				return;
 			}
 
-			// --- Alliance chat ---
 			if (event.player.getEntityData().getInteger(CommandClowderChat.CHAT_KEY) == 2) {
 				sendToAlliance(clowder, event.player, event.message);
 				event.setCanceled(true);
 				return;
 			}
 
-			UUID senderUUID = event.player.getUniqueID();
+			if (!MuteManager.isMuted(event.player.getUniqueID())) { // mute check { //mute check
 
-			// --- Check if muted (existing behavior) ---
-			if (!MuteManager.isMuted(senderUUID)) {
 
-				String name = clowder.getDecoratedName();
-				String messagePrefix = EnumChatFormatting.DARK_GREEN + "[ " + name + " Citizen ]";
-				if (clowder.getPermLevel(event.player.getDisplayName()) > 1) {
-					messagePrefix = EnumChatFormatting.BLUE + "[ " + name + " Officer ]";
-				}
-				if (clowder.getPermLevel(event.player.getDisplayName()) > 2) {
-					messagePrefix = EnumChatFormatting.GOLD + "[ " + name + " Leader ]";
-				}
 
-				ChatComponentText chatComponent = new ChatComponentText(messagePrefix + " " + event.message);
-
-				// --- Send to all players except those ignoring the sender ---
-				for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
-					if (!(obj instanceof EntityPlayerMP)) continue;
-
-					EntityPlayerMP recipient = (EntityPlayerMP) obj;
-					UUID recipientUUID = recipient.getUniqueID();
-
-					if (IgnoreManager.isIgnoring(recipientUUID, senderUUID)) continue;
-
-					recipient.addChatMessage(chatComponent);
-				}
-
-				event.setCanceled(true); // Cancel original broadcast
-
-			} else { // --- Muted ---
+			String name = clowder.getDecoratedName();
+			String message = EnumChatFormatting.DARK_GREEN + "[ " + name + " Citizen ]";
+			if(clowder.getPermLevel(event.player.getDisplayName()) > 1) {
+				message = EnumChatFormatting.BLUE + "[ " + name + " Officer ]";
+			}
+			if(clowder.getPermLevel(event.player.getDisplayName()) > 2) {
+				message = EnumChatFormatting.GOLD + "[ " + name + " Leader ]";
+			}
+			MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(message));
+			} else {
 				event.setCanceled(true);
 
-				Mute mute = MuteManager.getMute(senderUUID);
+				Mute mute = MuteManager.getMute(event.player.getUniqueID());
 				if (mute != null) {
 					if (mute.isPermanent()) {
 						event.player.addChatMessage(
@@ -195,6 +178,7 @@ public class ClowderEvents {
 					}
 				}
 			}
+
 		}
 	}
 	

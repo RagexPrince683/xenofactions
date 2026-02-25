@@ -288,9 +288,10 @@ public class CommonEventHandler {
 			}
 		}
 
-		// --- Ignore logic for private messages ---
+		// --- Ignore logic (only affects private messages) ---
 		if (commandName.equals("msg") || commandName.equals("tell") || commandName.equals("w")) {
 			if (event.parameters.length > 0) {
+				// Get the target player
 				EntityPlayerMP target = MinecraftServer.getServer()
 						.getConfigurationManager()
 						.func_152612_a(event.parameters[0]);
@@ -303,33 +304,9 @@ public class CommonEventHandler {
 						player.addChatMessage(
 								new ChatComponentText("That player is ignoring you.")
 						);
-						return;
 					}
 				}
 			}
-		}
-
-		// --- Ignore logic for public messages (/say, /me) ---
-		if (commandName.equals("say") || commandName.equals("me")) {
-			String message = String.join(" ", event.parameters);
-
-			// Broadcast to all players except those ignoring the sender
-			for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
-				if (!(obj instanceof EntityPlayerMP)) continue;
-
-				EntityPlayerMP recipient = (EntityPlayerMP) obj;
-				UUID recipientUUID = recipient.getUniqueID();
-
-				if (IgnoreManager.isIgnoring(recipientUUID, playerUUID)) continue;
-
-				if (commandName.equals("say")) {
-					recipient.addChatMessage(new ChatComponentText("<" + player.getCommandSenderName() + "> " + message));
-				} else if (commandName.equals("me")) {
-					recipient.addChatMessage(new ChatComponentText("* " + player.getCommandSenderName() + " " + message));
-				}
-			}
-
-			event.setCanceled(true); // Prevent vanilla broadcast
 		}
 	}
 
