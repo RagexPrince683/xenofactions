@@ -73,6 +73,7 @@ import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.entity.projectile.EntityThrowable;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import com.hfr.command.Mute;
 
 public class ClowderEvents {
 
@@ -147,7 +148,7 @@ public class ClowderEvents {
 				return;
 			}
 
-			if (!MuteManager.isMuted(event.player.toString())) { //mute check
+			if (!MuteManager.isMuted(event.player.getUniqueID())) { // mute check
 
 
 
@@ -162,6 +163,20 @@ public class ClowderEvents {
 			MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(message));
 			} else {
 				event.setCanceled(true);
+
+				Mute mute = MuteManager.getMute(event.player.getUniqueID());
+				if (mute != null) {
+					if (mute.isPermanent()) {
+						event.player.addChatMessage(
+								new ChatComponentText("You are permanently muted. Reason: " + mute.reason)
+						);
+					} else {
+						long remaining = (mute.expiresAt - System.currentTimeMillis()) / 1000;
+						event.player.addChatMessage(
+								new ChatComponentText("You are muted for " + remaining + " more seconds. Reason: " + mute.reason)
+						);
+					}
+				}
 			}
 
 		}
