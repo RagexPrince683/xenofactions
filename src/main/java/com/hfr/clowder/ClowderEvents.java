@@ -134,77 +134,85 @@ public class ClowderEvents {
 	@SubscribeEvent
 	public void handleChatServer(ServerChatEvent event) {
 
+		UUID senderUUID = event.player.getUniqueID();
+		String playerName = event.player.getCommandSenderName(); // safer than getDisplayName()
+		String message = event.message;
+
 		Clowder clowder = Clowder.getClowderFromPlayer(event.player);
+
+		// --- Muted check ---
+		if (MuteManager.isMuted(senderUUID)) {
+			event.setCanceled(true);
+			Mute mute = MuteManager.getMute(senderUUID);
+			if (mute != null) {
+				if (mute.isPermanent()) {
+					event.player.addChatMessage(
+							new ChatComponentText("You are permanently muted. Reason: " + mute.reason)
+					);
+				} else {
+					long remaining = (mute.expiresAt - System.currentTimeMillis()) / 1000;
+					event.player.addChatMessage(
+							new ChatComponentText("You are muted for " + remaining + " more seconds. Reason: " + mute.reason)
+					);
+				}
+			}
+			return;
+		}
+
+		// --- Team chat ---
+		if (event.player.getEntityData().getInteger(CommandClowderChat.CHAT_KEY) == 1 && clowder != null) {
+			sendToTeam(clowder, event.player, message);
+			event.setCanceled(true);
+			return;
+		}
+
+		// --- Alliance chat ---
+		if (event.player.getEntityData().getInteger(CommandClowderChat.CHAT_KEY) == 2 && clowder != null) {
+			sendToAlliance(clowder, event.player, message);
+			event.setCanceled(true);
+			return;
+		}
+
+		// ================================
+		// BUILD PREFIX FIRST (clean logic)
+		// ================================
+
+		String factionLine = null;
 
 		if (clowder != null) {
 
-			// --- Team chat ---
-			if (event.player.getEntityData().getInteger(CommandClowderChat.CHAT_KEY) == 1) {
-				sendToTeam(clowder, event.player, event.message);
-				event.setCanceled(true);
-				return;
-			}
-
-			// --- Alliance chat ---
-			if (event.player.getEntityData().getInteger(CommandClowderChat.CHAT_KEY) == 2) {
-				sendToAlliance(clowder, event.player, event.message);
-				event.setCanceled(true);
-				return;
-			}
-
-			UUID senderUUID = event.player.getUniqueID();
-
-			// --- Check if muted ---
-			if (MuteManager.isMuted(senderUUID)) {
-				event.setCanceled(true);
-
-				Mute mute = MuteManager.getMute(senderUUID);
-				if (mute != null) {
-					if (mute.isPermanent()) {
-						event.player.addChatMessage(
-								new ChatComponentText("You are permanently muted. Reason: " + mute.reason)
-						);
-					} else {
-						long remaining = (mute.expiresAt - System.currentTimeMillis()) / 1000;
-						event.player.addChatMessage(
-								new ChatComponentText("You are muted for " + remaining + " more seconds. Reason: " + mute.reason)
-						);
-					}
-				}
-				return;
-			}
-
-			// --- Build faction/rank prefix ---
-			String clowderName = clowder.getDecoratedName(); // faction/clowder name
-			String playerName = event.player.getDisplayName(); // actual player name
 			int permLevel = clowder.getPermLevel(playerName);
+			String clowderName = clowder.getDecoratedName();
 
-			String factionLine = EnumChatFormatting.DARK_GREEN + "[ " + clowderName + " Citizen ]";
-			if (permLevel > 1) {
-				factionLine = EnumChatFormatting.BLUE + "[ " + clowderName + " Officer ]";
-			}
 			if (permLevel > 2) {
 				factionLine = EnumChatFormatting.GOLD + "[ " + clowderName + " Leader ]";
+			} else if (permLevel > 1) {
+				factionLine = EnumChatFormatting.BLUE + "[ " + clowderName + " Officer ]";
+			} else {
+				factionLine = EnumChatFormatting.DARK_GREEN + "[ " + clowderName + " Citizen ]";
 			}
-
-			String messageLine = EnumChatFormatting.WHITE + playerName + ": " + event.message;
-
-			// --- Send two separate messages to all players except those ignoring the sender ---
-			for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
-				if (!(obj instanceof EntityPlayerMP)) continue;
-
-				EntityPlayerMP recipient = (EntityPlayerMP) obj;
-				UUID recipientUUID = recipient.getUniqueID();
-
-				if (IgnoreManager.isIgnoring(recipientUUID, senderUUID)) continue;
-
-				recipient.addChatMessage(new ChatComponentText(factionLine));
-				recipient.addChatMessage(new ChatComponentText(messageLine));
-			}
-
-			event.setCanceled(true); // prevent default broadcast
 		}
+
+		String messageLine = EnumChatFormatting.WHITE + playerName + ": " + message;
+
+		// --- Send to all online players except those ignoring sender ---
+		for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
+			if (!(obj instanceof EntityPlayerMP)) continue;
+
+			EntityPlayerMP recipient = (EntityPlayerMP) obj;
+
+			if (IgnoreManager.isIgnoring(recipient.getUniqueID(), senderUUID)) continue;
+
+			if (factionLine != null) {
+				recipient.addChatMessage(new ChatComponentText(factionLine));
+			}
+
+			recipient.addChatMessage(new ChatComponentText(messageLine));
+		}
+
+		event.setCanceled(true);
 	}
+
 	private void sendToTeam(Clowder clowder, EntityPlayer player, String message) {
 		
 		String name = "";

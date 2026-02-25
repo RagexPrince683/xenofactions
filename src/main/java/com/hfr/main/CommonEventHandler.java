@@ -232,28 +232,45 @@ public class CommonEventHandler {
 	@SubscribeEvent
 	public void onPlayerChat(ServerChatEvent event) {
 
-		if (event.player.getEntityData().getInteger(CommandClowderChat.CHAT_KEY) == 0) {
 
-			if (MuteManager.isMuted(event.player.getUniqueID())) {
+		if (event.player.getEntityData().getInteger(CommandClowderChat.CHAT_KEY) == 0) return;
 
-				event.setCanceled(true);
+		UUID senderUUID = event.player.getUniqueID();
+		String playerName = event.player.getDisplayName();
+		String message = event.message;
 
-				Mute mute = MuteManager.getMute(event.player.getUniqueID());
-
-				if (mute != null) {
-					if (mute.isPermanent()) {
-						event.player.addChatMessage(
-								new ChatComponentText("You are permanently muted. Reason: " + mute.reason)
-						);
-					} else {
-						long remaining = (mute.expiresAt - System.currentTimeMillis()) / 1000;
-						event.player.addChatMessage(
-								new ChatComponentText("You are muted for " + remaining + " more seconds. Reason: " + mute.reason)
-						);
-					}
+		// --- Muted check ---
+		if (MuteManager.isMuted(senderUUID)) {
+			event.setCanceled(true);
+			Mute mute = MuteManager.getMute(senderUUID);
+			if (mute != null) {
+				if (mute.isPermanent()) {
+					event.player.addChatMessage(
+							new ChatComponentText("You are permanently muted. Reason: " + mute.reason)
+					);
+				} else {
+					long remaining = (mute.expiresAt - System.currentTimeMillis()) / 1000;
+					event.player.addChatMessage(
+							new ChatComponentText("You are muted for " + remaining + " more seconds. Reason: " + mute.reason)
+					);
 				}
 			}
+			return;
 		}
+
+		// --- Send public chat respecting ignores ---
+		for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
+			if (!(obj instanceof EntityPlayerMP)) continue;
+
+			EntityPlayerMP recipient = (EntityPlayerMP) obj;
+			UUID recipientUUID = recipient.getUniqueID();
+
+			if (IgnoreManager.isIgnoring(recipientUUID, senderUUID)) continue;
+
+			recipient.addChatMessage(new ChatComponentText("<" + playerName + "> " + message));
+		}
+
+		event.setCanceled(true); // prevent vanilla broadcast
 	}
 
 	@SubscribeEvent
