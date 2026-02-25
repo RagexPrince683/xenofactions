@@ -48,6 +48,12 @@ public class CommandIgnore extends CommandBase {
         UUID senderUUID = senderPlayer.getUniqueID();
         UUID targetUUID = target.getUniqueID();
 
+        // Prevent ignoring yourself
+        if (senderUUID.equals(targetUUID)) {
+            sender.addChatMessage(new ChatComponentText("You cannot ignore yourself."));
+            return;
+        }
+
         IgnoreManager.toggleIgnore(senderUUID, targetUUID);
 
         if (IgnoreManager.isIgnoring(senderUUID, targetUUID)) {
