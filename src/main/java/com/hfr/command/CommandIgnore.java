@@ -52,6 +52,7 @@ public class CommandIgnore extends CommandBase {
 
         if (IgnoreManager.isIgnoring(senderUUID, targetUUID)) {
             sender.addChatMessage(new ChatComponentText("Now ignoring " + target.getCommandSenderName()));
+            //TODO: Add code to actually prevent messages from the ignored player from being seen by the sender
         } else {
             sender.addChatMessage(new ChatComponentText("No longer ignoring " + target.getCommandSenderName()));
         }

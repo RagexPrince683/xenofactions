@@ -196,7 +196,7 @@ public class ClowderEvents {
 		String messageLine = EnumChatFormatting.WHITE + playerName + ": " + message;
 
 		// --- Send to all online players except those ignoring sender ---
-		for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
+		for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) { //TODO ENSURE WE ARE NOT BROADCASTING ALLIANCE OR TEAM CHATS
 			if (!(obj instanceof EntityPlayerMP)) continue;
 
 			EntityPlayerMP recipient = (EntityPlayerMP) obj;
