@@ -131,87 +131,105 @@ public class ClowderEvents {
 	 * Handles chat events related to clowders, mainly adding the clowder name to a chat message.
 	 * @param event
 	 */
-	@SubscribeEvent
-	public void handleChatServer(ServerChatEvent event) {
+@SubscribeEvent(priority = EventPriority.HIGHEST)
+public void handleChatServer(ServerChatEvent event) {
 
-		UUID senderUUID = event.player.getUniqueID();
-		String playerName = event.player.getCommandSenderName(); // safer than getDisplayName()
-		String message = event.message;
+	if (event.isCanceled()) return;
 
-		Clowder clowder = Clowder.getClowderFromPlayer(event.player);
+	// Server-only safety
+	if (event.player.worldObj.isRemote) return;
 
-		// --- Muted check ---
-		if (MuteManager.isMuted(senderUUID)) {
-			event.setCanceled(true);
-			Mute mute = MuteManager.getMute(senderUUID);
-			if (mute != null) {
-				if (mute.isPermanent()) {
-					event.player.addChatMessage(
-							new ChatComponentText("You are permanently muted. Reason: " + mute.reason)
-					);
-				} else {
-					long remaining = (mute.expiresAt - System.currentTimeMillis()) / 1000;
-					event.player.addChatMessage(
-							new ChatComponentText("You are muted for " + remaining + " more seconds. Reason: " + mute.reason)
-					);
-				}
-			}
-			return;
-		}
+	EntityPlayerMP sender = (EntityPlayerMP) event.player;
+	UUID senderUUID = sender.getUniqueID();
+	String playerName = sender.getCommandSenderName();
+	String message = event.message;
 
-		// --- Team chat ---
-		if (event.player.getEntityData().getInteger(CommandClowderChat.CHAT_KEY) == 1 && clowder != null) {
-			sendToTeam(clowder, event.player, message);
-			event.setCanceled(true);
-			return;
-		}
+	Clowder clowder = Clowder.getClowderFromPlayer(sender);
 
-		// --- Alliance chat ---
-		if (event.player.getEntityData().getInteger(CommandClowderChat.CHAT_KEY) == 2 && clowder != null) {
-			sendToAlliance(clowder, event.player, message);
-			event.setCanceled(true);
-			return;
-		}
-
-		// ================================
-		// BUILD PREFIX FIRST (clean logic)
-		// ================================
-
-		String factionLine = null;
-
-		if (clowder != null) {
-
-			int permLevel = clowder.getPermLevel(playerName);
-			String clowderName = clowder.getDecoratedName();
-
-			if (permLevel > 2) {
-				factionLine = EnumChatFormatting.GOLD + "[ " + clowderName + " Leader ]";
-			} else if (permLevel > 1) {
-				factionLine = EnumChatFormatting.BLUE + "[ " + clowderName + " Officer ]";
-			} else {
-				factionLine = EnumChatFormatting.DARK_GREEN + "[ " + clowderName + " Citizen ]";
-			}
-		}
-
-		String messageLine = EnumChatFormatting.WHITE + playerName + ": " + message;
-
-		// --- Send to all online players except those ignoring sender ---
-		for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) { //TODO ENSURE WE ARE NOT BROADCASTING ALLIANCE OR TEAM CHATS
-			if (!(obj instanceof EntityPlayerMP)) continue;
-
-			EntityPlayerMP recipient = (EntityPlayerMP) obj;
-
-			if (IgnoreManager.isIgnoring(recipient.getUniqueID(), senderUUID)) continue;
-
-			if (factionLine != null) {
-				recipient.addChatMessage(new ChatComponentText(factionLine));
-			}
-
-			recipient.addChatMessage(new ChatComponentText(messageLine));
-		}
-
+	// =========================
+	// MUTE CHECK (HARD STOP)
+	// =========================
+	if (MuteManager.isMuted(senderUUID)) {
 		event.setCanceled(true);
+
+		Mute mute = MuteManager.getMute(senderUUID);
+		if (mute != null) {
+			if (mute.isPermanent()) {
+				sender.addChatMessage(
+						new ChatComponentText("You are permanently muted. Reason: " + mute.reason)
+				);
+			} else {
+				long remaining = (mute.expiresAt - System.currentTimeMillis()) / 1000;
+				sender.addChatMessage(
+						new ChatComponentText("You are muted for " + remaining + " more seconds. Reason: " + mute.reason)
+				);
+			}
+		}
+		return;
 	}
+
+	// =========================
+	// TEAM / ALLIANCE MODES
+	// =========================
+	int chatMode = sender.getEntityData().getInteger(CommandClowderChat.CHAT_KEY);
+
+	if (clowder != null) {
+
+		// TEAM CHAT
+		if (chatMode == 1) {
+			event.setCanceled(true);
+			sendToTeam(clowder, sender, message);
+			return;
+		}
+
+		// ALLIANCE CHAT
+		if (chatMode == 2) {
+			event.setCanceled(true);
+			sendToAlliance(clowder, sender, message);
+			return;
+		}
+	}
+
+	// =========================
+	// GLOBAL CHAT STARTS HERE
+	// =========================
+	event.setCanceled(true); // prevent vanilla broadcast
+
+	String factionLine = null;
+
+	if (clowder != null) {
+
+		int permLevel = clowder.getPermLevel(playerName);
+		String clowderName = clowder.getDecoratedName();
+
+		if (permLevel > 2) {
+			factionLine = EnumChatFormatting.GOLD + "[ " + clowderName + " Leader ]";
+		} else if (permLevel > 1) {
+			factionLine = EnumChatFormatting.BLUE + "[ " + clowderName + " Officer ]";
+		} else {
+			factionLine = EnumChatFormatting.DARK_GREEN + "[ " + clowderName + " Citizen ]";
+		}
+	}
+
+	String messageLine = EnumChatFormatting.WHITE + playerName + ": " + message;
+
+	for (Object obj : MinecraftServer.getServer()
+			.getConfigurationManager()
+			.playerEntityList) {
+
+		if (!(obj instanceof EntityPlayerMP)) continue;
+
+		EntityPlayerMP recipient = (EntityPlayerMP) obj;
+
+		if (IgnoreManager.isIgnoring(recipient.getUniqueID(), senderUUID)) continue;
+
+		if (factionLine != null) {
+			recipient.addChatMessage(new ChatComponentText(factionLine));
+		}
+
+		recipient.addChatMessage(new ChatComponentText(messageLine));
+	}
+}
 
 	private void sendToTeam(Clowder clowder, EntityPlayer player, String message) {
 		

@@ -18,9 +18,12 @@ import com.hfr.tileentity.prop.TileEntityProp;
 import cpw.mods.fml.common.Loader;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.IChatComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
@@ -1424,12 +1427,15 @@ public class Clowder {
 	 * 10f, notif.dimension, "hfr:item.hoiFabrication", false); } }
 	 */
 
-	public void notifyPlayer(World world, String player, ChatComponentText message) {
+	public void notifyPlayer(World world, String playerName, IChatComponent message) {
 
-		EntityPlayer notif = world.getPlayerEntityByName(player);
+		EntityPlayerMP player =
+				MinecraftServer.getServer()
+						.getConfigurationManager()
+						.func_152612_a(playerName);
 
-		if (notif != null) {
-			notif.addChatMessage(message);
+		if (player != null) {
+			player.addChatMessage(message);
 		}
 	}
 

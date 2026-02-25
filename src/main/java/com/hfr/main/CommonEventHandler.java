@@ -232,8 +232,14 @@ public class CommonEventHandler {
 	@SubscribeEvent
 	public void onPlayerChat(ServerChatEvent event) {
 
+		EntityPlayerMP sender = (EntityPlayerMP) event.player;
+		int chatMode = sender.getEntityData().getInteger(CommandClowderChat.CHAT_KEY);
 
 		if (event.player.getEntityData().getInteger(CommandClowderChat.CHAT_KEY) == 0) return;
+
+		if (chatMode == 1 || chatMode == 2) {
+			return; // let the main handler deal with it
+		}
 
 		UUID senderUUID = event.player.getUniqueID();
 		String playerName = event.player.getDisplayName();
