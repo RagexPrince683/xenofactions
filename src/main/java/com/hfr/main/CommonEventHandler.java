@@ -4,12 +4,14 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 
 import com.hbm.util.fauxpointtwelve.BlockPos;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder;
 import com.hfr.command.CommandClowderChat;
+import com.hfr.command.IgnoreManager;
 import com.hfr.command.Mute;
 import com.hfr.command.MuteManager;
 import com.hfr.data.AntiMobData;
@@ -42,6 +44,7 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.Phase;
 import cpw.mods.fml.common.gameevent.TickEvent.WorldTickEvent;
+import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
@@ -70,6 +73,7 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
+import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
@@ -78,6 +82,7 @@ import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.event.entity.living.LivingSpawnEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.BlockEvent.BreakEvent;
+
 
 import static com.hfr.main.MainRegistry.border;
 
@@ -250,7 +255,61 @@ public class CommonEventHandler {
 			}
 		}
 	}
-	
+
+	@SubscribeEvent
+	public void onCommand(CommandEvent event) {
+		if (!(event.sender instanceof EntityPlayerMP)) return;
+
+		EntityPlayerMP player = (EntityPlayerMP) event.sender;
+		UUID playerUUID = player.getUniqueID();
+		String commandName = event.command.getCommandName().toLowerCase();
+
+		// --- Global mute for chat commands ---
+		if (commandName.equals("say") || commandName.equals("me") ||
+				commandName.equals("msg") || commandName.equals("tell") || commandName.equals("w")) {
+
+			if (MuteManager.isMuted(playerUUID)) {
+				event.setCanceled(true);
+
+				Mute mute = MuteManager.getMute(playerUUID);
+				if (mute != null) {
+					if (mute.isPermanent()) {
+						player.addChatMessage(
+								new ChatComponentText("You are permanently muted. Reason: " + mute.reason)
+						);
+					} else {
+						long remaining = (mute.expiresAt - System.currentTimeMillis()) / 1000;
+						player.addChatMessage(
+								new ChatComponentText("You are muted for " + remaining + " more seconds. Reason: " + mute.reason)
+						);
+					}
+				}
+				return;
+			}
+		}
+
+		// --- Ignore logic (only affects private messages) ---
+		if (commandName.equals("msg") || commandName.equals("tell") || commandName.equals("w")) {
+			if (event.parameters.length > 0) {
+				// Get the target player
+				EntityPlayerMP target = MinecraftServer.getServer()
+						.getConfigurationManager()
+						.func_152612_a(event.parameters[0]);
+
+				if (target != null) {
+					UUID targetUUID = target.getUniqueID();
+
+					if (IgnoreManager.isIgnoring(targetUUID, playerUUID)) {
+						event.setCanceled(true);
+						player.addChatMessage(
+								new ChatComponentText("That player is ignoring you.")
+						);
+					}
+				}
+			}
+		}
+	}
+
 	public boolean hasDigiOverlay(EntityPlayer player) {
 		
 		Object vehicle = ReflectionEngine.getVehicleFromSeat(player.ridingEntity);

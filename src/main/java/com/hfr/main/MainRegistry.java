@@ -729,8 +729,10 @@ public class MainRegistry
 		event.registerServerCommand(new CommandXMarket());
 		event.registerServerCommand(new CommandStoneDrop());
 		MuteManager.init();
+		IgnoreManager.init();
 		event.registerServerCommand(new CommandMute());
 		event.registerServerCommand(new CommandUnmute());
+		event.registerServerCommand(new CommandIgnore());
 		event.registerServerCommand(new CommandXmap());
 		event.registerServerCommand(new CommandXFlags());
 		event.registerServerCommand(new CommandXMulti());
