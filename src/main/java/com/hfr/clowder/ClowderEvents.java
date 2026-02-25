@@ -12,6 +12,10 @@ import com.hfr.clowder.Clowder.ScheduledTeleport;
 import com.hfr.clowder.ClowderTerritory.Ownership;
 import com.hfr.clowder.ClowderTerritory.TerritoryMeta;
 import com.hfr.clowder.ClowderTerritory.Zone;
+import com.hfr.command.CommandClowder;
+import com.hfr.command.CommandClowderChat;
+import com.hfr.command.Mute;
+import com.hfr.command.MuteManager;
 import com.hfr.command.*;
 import com.hfr.data.ClowderData;
 import com.hfr.handler.BobbyBreaker;
@@ -150,35 +154,8 @@ public class ClowderEvents {
 
 			UUID senderUUID = event.player.getUniqueID();
 
-			// --- Check if muted (existing behavior) ---
-			if (!MuteManager.isMuted(senderUUID)) {
-
-				String name = clowder.getDecoratedName();
-				String messagePrefix = EnumChatFormatting.DARK_GREEN + "[ " + name + " Citizen ]";
-				if (clowder.getPermLevel(event.player.getDisplayName()) > 1) {
-					messagePrefix = EnumChatFormatting.BLUE + "[ " + name + " Officer ]";
-				}
-				if (clowder.getPermLevel(event.player.getDisplayName()) > 2) {
-					messagePrefix = EnumChatFormatting.GOLD + "[ " + name + " Leader ]";
-				}
-
-				ChatComponentText chatComponent = new ChatComponentText(messagePrefix + " " + event.message);
-
-				// --- Send to all players except those ignoring the sender ---
-				for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
-					if (!(obj instanceof EntityPlayerMP)) continue;
-
-					EntityPlayerMP recipient = (EntityPlayerMP) obj;
-					UUID recipientUUID = recipient.getUniqueID();
-
-					if (IgnoreManager.isIgnoring(recipientUUID, senderUUID)) continue;
-
-					recipient.addChatMessage(chatComponent);
-				}
-
-				event.setCanceled(true); // Cancel original broadcast
-
-			} else { // --- Muted ---
+			// --- Check if muted ---
+			if (MuteManager.isMuted(senderUUID)) {
 				event.setCanceled(true);
 
 				Mute mute = MuteManager.getMute(senderUUID);
@@ -194,10 +171,40 @@ public class ClowderEvents {
 						);
 					}
 				}
+				return;
 			}
+
+			// --- Build faction/rank prefix ---
+			String clowderName = clowder.getDecoratedName(); // faction/clowder name
+			String playerName = event.player.getDisplayName(); // actual player name
+			int permLevel = clowder.getPermLevel(playerName);
+
+			String factionLine = EnumChatFormatting.DARK_GREEN + "[ " + clowderName + " Citizen ]";
+			if (permLevel > 1) {
+				factionLine = EnumChatFormatting.BLUE + "[ " + clowderName + " Officer ]";
+			}
+			if (permLevel > 2) {
+				factionLine = EnumChatFormatting.GOLD + "[ " + clowderName + " Leader ]";
+			}
+
+			String messageLine = EnumChatFormatting.WHITE + playerName + ": " + event.message;
+
+			// --- Send two separate messages to all players except those ignoring the sender ---
+			for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
+				if (!(obj instanceof EntityPlayerMP)) continue;
+
+				EntityPlayerMP recipient = (EntityPlayerMP) obj;
+				UUID recipientUUID = recipient.getUniqueID();
+
+				if (IgnoreManager.isIgnoring(recipientUUID, senderUUID)) continue;
+
+				recipient.addChatMessage(new ChatComponentText(factionLine));
+				recipient.addChatMessage(new ChatComponentText(messageLine));
+			}
+
+			event.setCanceled(true); // prevent default broadcast
 		}
 	}
-	
 	private void sendToTeam(Clowder clowder, EntityPlayer player, String message) {
 		
 		String name = "";
