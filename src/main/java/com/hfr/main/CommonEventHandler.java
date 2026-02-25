@@ -10,6 +10,7 @@ import com.hbm.util.fauxpointtwelve.BlockPos;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder;
 import com.hfr.command.CommandClowderChat;
+import com.hfr.command.Mute;
 import com.hfr.command.MuteManager;
 import com.hfr.data.AntiMobData;
 import com.hfr.data.CBTData;
@@ -225,10 +226,28 @@ public class CommonEventHandler {
 
 	@SubscribeEvent
 	public void onPlayerChat(ServerChatEvent event) {
-		String name = event.player.getCommandSenderName();
-		if (MuteManager.isMuted(name) && event.player.getEntityData().getInteger(CommandClowderChat.CHAT_KEY) == 0) { //todo && not in faction chat/ally chat (if I implemented that)
-			event.setCanceled(true);
-			event.player.addChatMessage(new ChatComponentText("You are muted."));
+
+		if (event.player.getEntityData().getInteger(CommandClowderChat.CHAT_KEY) == 0) {
+
+			if (MuteManager.isMuted(event.player.getUniqueID())) {
+
+				event.setCanceled(true);
+
+				Mute mute = MuteManager.getMute(event.player.getUniqueID());
+
+				if (mute != null) {
+					if (mute.isPermanent()) {
+						event.player.addChatMessage(
+								new ChatComponentText("You are permanently muted. Reason: " + mute.reason)
+						);
+					} else {
+						long remaining = (mute.expiresAt - System.currentTimeMillis()) / 1000;
+						event.player.addChatMessage(
+								new ChatComponentText("You are muted for " + remaining + " more seconds. Reason: " + mute.reason)
+						);
+					}
+				}
+			}
 		}
 	}
 	

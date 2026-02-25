@@ -2,7 +2,11 @@ package com.hfr.command;
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.command.PlayerNotFoundException;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.ChatComponentText;
+
+import java.util.UUID;
 
 public class CommandMute extends CommandBase {
 
@@ -13,28 +17,64 @@ public class CommandMute extends CommandBase {
 
     @Override
     public String getCommandUsage(ICommandSender sender) {
-        return "/xmute <player> <duration> [reason]";
+        return "/xmute <player> <seconds|perm> [reason]";
     }
 
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
+
         if (args.length < 2) {
             sender.addChatMessage(new ChatComponentText("Usage: " + getCommandUsage(sender)));
             return;
         }
 
-        String playerName = args[0];
-        int durationSeconds = Integer.parseInt(args[1]);
-        String reason = args.length > 2 ? args[2] : "No reason provided";
+        EntityPlayerMP target;
+        try {
+            target = getPlayer(sender, args[0]);
+        } catch (PlayerNotFoundException e) {
+            sender.addChatMessage(new ChatComponentText("Player not found."));
+            return;
+        }
 
-        // Here you would implement the logic to mute the player
-        // For example, you could store the mute information in a database or a file
-        MuteManager.mute(playerName, durationSeconds);
-        sender.addChatMessage(new ChatComponentText("Player " + playerName + " has been muted for " + durationSeconds + " seconds. Reason: " + reason));
-        //playerName.addChatMessage(new ChatComponentText("You have been muted for " + durationSeconds + " seconds. Reason: " + reason));
-        //todo tell the player they are muted
+        String durationArg = args[1];
+        int durationSeconds;
 
+        if (durationArg.equalsIgnoreCase("perm")) {
+            durationSeconds = -1;
+        } else {
+            try {
+                durationSeconds = Integer.parseInt(durationArg);
+            } catch (NumberFormatException e) {
+                sender.addChatMessage(new ChatComponentText("Invalid duration."));
+                return;
+            }
+        }
+
+        // Join full reason (supports spaces)
+        String reason = "No reason provided";
+        if (args.length > 2) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 2; i < args.length; i++) {
+                sb.append(args[i]).append(" ");
+            }
+            reason = sb.toString().trim();
+        }
+
+        UUID uuid = target.getUniqueID();
+        MuteManager.mute(uuid, durationSeconds, reason);
+
+        if (durationSeconds < 0) {
+            sender.addChatMessage(new ChatComponentText(
+                    "Player " + target.getCommandSenderName() + " has been permanently muted."
+            ));
+        } else {
+            sender.addChatMessage(new ChatComponentText(
+                    "Player " + target.getCommandSenderName() + " has been muted for " + durationSeconds + " seconds."
+            ));
+        }
+
+        target.addChatMessage(new ChatComponentText(
+                "You have been muted. Reason: " + reason
+        ));
     }
-
-
 }

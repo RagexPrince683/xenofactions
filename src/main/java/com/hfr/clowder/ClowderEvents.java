@@ -13,6 +13,7 @@ import com.hfr.clowder.ClowderTerritory.TerritoryMeta;
 import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.command.CommandClowder;
 import com.hfr.command.CommandClowderChat;
+import com.hfr.command.Mute;
 import com.hfr.command.MuteManager;
 import com.hfr.data.ClowderData;
 import com.hfr.handler.BobbyBreaker;
@@ -147,7 +148,7 @@ public class ClowderEvents {
 				return;
 			}
 
-			if (!MuteManager.isMuted(event.player.toString())) { //mute check
+			if (!MuteManager.isMuted(event.player.getUniqueID())) { // mute check { //mute check
 
 
 
@@ -162,6 +163,20 @@ public class ClowderEvents {
 			MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(message));
 			} else {
 				event.setCanceled(true);
+
+				Mute mute = MuteManager.getMute(event.player.getUniqueID());
+				if (mute != null) {
+					if (mute.isPermanent()) {
+						event.player.addChatMessage(
+								new ChatComponentText("You are permanently muted. Reason: " + mute.reason)
+						);
+					} else {
+						long remaining = (mute.expiresAt - System.currentTimeMillis()) / 1000;
+						event.player.addChatMessage(
+								new ChatComponentText("You are muted for " + remaining + " more seconds. Reason: " + mute.reason)
+						);
+					}
+				}
 			}
 
 		}
