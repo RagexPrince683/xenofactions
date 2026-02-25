@@ -21,6 +21,12 @@ public class CommandIgnore extends CommandBase {
     }
 
     @Override
+    public boolean canCommandSenderUseCommand(ICommandSender sender) {
+        // Anyone can use this command; no permission required
+        return true;
+    }
+
+    @Override
     public void processCommand(ICommandSender sender, String[] args) {
 
         if (args.length < 1) {
