@@ -313,23 +313,20 @@ public class CommonEventHandler {
 		if (commandName.equals("say") || commandName.equals("me")) {
 			String message = String.join(" ", event.parameters);
 
-			// Broadcast to all players except those ignoring the sender
+			// Send to all players except those ignoring the sender
 			for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
 				if (!(obj instanceof EntityPlayerMP)) continue;
-
 				EntityPlayerMP recipient = (EntityPlayerMP) obj;
-				UUID recipientUUID = recipient.getUniqueID();
-
-				if (IgnoreManager.isIgnoring(recipientUUID, playerUUID)) continue;
+				if (IgnoreManager.isIgnoring(recipient.getUniqueID(), playerUUID)) continue;
 
 				if (commandName.equals("say")) {
-					recipient.addChatMessage(new ChatComponentText("<" + player.getCommandSenderName() + "> " + message));
-				} else if (commandName.equals("me")) {
-					recipient.addChatMessage(new ChatComponentText("* " + player.getCommandSenderName() + " " + message));
+					recipient.addChatMessage(new ChatComponentText("<" + player.getDisplayName() + "> " + message));
+				} else {
+					recipient.addChatMessage(new ChatComponentText("* " + player.getDisplayName() + " " + message));
 				}
 			}
 
-			event.setCanceled(true); // Prevent vanilla broadcast
+			event.setCanceled(true); // Cancel vanilla broadcast so ignored players don't see it
 		}
 	}
 
