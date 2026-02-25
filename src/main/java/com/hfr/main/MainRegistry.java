@@ -373,7 +373,7 @@ public class MainRegistry
 
 
 		//todone: make chat filter apply to faction names so we don't have edgelords putting swastikas and shit in their fac names
-		//todo pick which name should be used for the faction name (so the censored one)
+		//todone pick which name should be used for the faction name (so the censored one)
 		sub.put(regexify("sex mod"), "funnies");
 		sub.put(regexify("fuck"), "frick");
 		sub.put(regexify("nigga"), "african american");

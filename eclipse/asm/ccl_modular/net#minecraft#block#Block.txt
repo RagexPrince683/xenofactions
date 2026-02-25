@@ -131,10 +131,6 @@ public class net/minecraft/block/Block {
   // access flags 0x2
   private Ljava/lang/String; unlocalizedName
 
-  // access flags 0x4
-  protected Lnet/minecraft/util/IIcon; blockIcon
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-
   // access flags 0x1A
   private final static Ljava/lang/String; __OBFID = "CL_00000199"
 
@@ -283,19 +279,6 @@ public class net/minecraft/block/Block {
     LINENUMBER 202 L0
     ALOAD 0
     GETFIELD net/minecraft/block/Block.lightOpacity : I
-    IRETURN
-   L1
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
-    MAXSTACK = 1
-    MAXLOCALS = 1
-
-  // access flags 0x1
-  public getCanBlockGrass()Z
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 208 L0
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.canBlockGrass : Z
     IRETURN
    L1
     LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
@@ -3774,31 +3757,6 @@ public class net/minecraft/block/Block {
     MAXLOCALS = 2
 
   // access flags 0x1
-  public isBlockNormalCube()Z
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 504 L0
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.blockMaterial : Lnet/minecraft/block/material/Material;
-    INVOKEVIRTUAL net/minecraft/block/material/Material.blocksMovement ()Z
-    IFEQ L1
-    ALOAD 0
-    INVOKEVIRTUAL net/minecraft/block/Block.renderAsNormalBlock ()Z
-    IFEQ L1
-    ICONST_1
-    GOTO L2
-   L1
-   FRAME FULL [net/minecraft/block/Block] []
-    ICONST_0
-   L2
-   FRAME FULL [net/minecraft/block/Block] [I]
-    IRETURN
-   L3
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L3 0
-    MAXSTACK = 1
-    MAXLOCALS = 1
-
-  // access flags 0x1
   public isNormalCube()Z
    L0
     LINENUMBER 509 L0
@@ -4036,180 +3994,6 @@ public class net/minecraft/block/Block {
     MAXLOCALS = 7
 
   // access flags 0x1
-  public getMixedBrightnessForBlock(Lnet/minecraft/world/IBlockAccess;III)I
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 608 L0
-    ALOAD 1
-    ILOAD 2
-    ILOAD 3
-    ILOAD 4
-    INVOKEINTERFACE net/minecraft/world/IBlockAccess.getBlock (III)Lnet/minecraft/block/Block;
-    ASTORE 5
-   L1
-    LINENUMBER 609 L1
-    ALOAD 1
-    ILOAD 2
-    ILOAD 3
-    ILOAD 4
-    ALOAD 5
-    ALOAD 1
-    ILOAD 2
-    ILOAD 3
-    ILOAD 4
-    INVOKEVIRTUAL net/minecraft/block/Block.getLightValue (Lnet/minecraft/world/IBlockAccess;III)I
-    INVOKEINTERFACE net/minecraft/world/IBlockAccess.getLightBrightnessForSkyBlocks (IIII)I
-    ISTORE 6
-   L2
-    LINENUMBER 611 L2
-    ILOAD 6
-    IFNE L3
-    ALOAD 5
-    INSTANCEOF net/minecraft/block/BlockSlab
-    IFEQ L3
-   L4
-    LINENUMBER 613 L4
-    IINC 3 -1
-   L5
-    LINENUMBER 614 L5
-    ALOAD 1
-    ILOAD 2
-    ILOAD 3
-    ILOAD 4
-    INVOKEINTERFACE net/minecraft/world/IBlockAccess.getBlock (III)Lnet/minecraft/block/Block;
-    ASTORE 5
-   L6
-    LINENUMBER 615 L6
-    ALOAD 1
-    ILOAD 2
-    ILOAD 3
-    ILOAD 4
-    ALOAD 5
-    ALOAD 1
-    ILOAD 2
-    ILOAD 3
-    ILOAD 4
-    INVOKEVIRTUAL net/minecraft/block/Block.getLightValue (Lnet/minecraft/world/IBlockAccess;III)I
-    INVOKEINTERFACE net/minecraft/world/IBlockAccess.getLightBrightnessForSkyBlocks (IIII)I
-    IRETURN
-   L3
-    LINENUMBER 619 L3
-   FRAME FULL [net/minecraft/block/Block net/minecraft/world/IBlockAccess I I I net/minecraft/block/Block I] []
-    ILOAD 6
-    IRETURN
-   L7
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L7 0
-    LOCALVARIABLE p_149677_1_ Lnet/minecraft/world/IBlockAccess; L0 L7 1
-    LOCALVARIABLE p_149677_2_ I L0 L7 2
-    LOCALVARIABLE p_149677_3_ I L0 L7 3
-    LOCALVARIABLE p_149677_4_ I L0 L7 4
-    LOCALVARIABLE block Lnet/minecraft/block/Block; L1 L7 5
-    LOCALVARIABLE l I L2 L7 6
-    MAXSTACK = 9
-    MAXLOCALS = 7
-
-  // access flags 0x1
-  public shouldSideBeRendered(Lnet/minecraft/world/IBlockAccess;IIII)Z
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 630 L0
-    ILOAD 5
-    IFNE L1
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.minY : D
-    DCONST_0
-    DCMPL
-    IFLE L1
-    ICONST_1
-    GOTO L2
-   L1
-   FRAME FULL [net/minecraft/block/Block net/minecraft/world/IBlockAccess I I I I] []
-    ILOAD 5
-    ICONST_1
-    IF_ICMPNE L3
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.maxY : D
-    DCONST_1
-    DCMPG
-    IFGE L3
-    ICONST_1
-    GOTO L2
-   L3
-   FRAME FULL [net/minecraft/block/Block net/minecraft/world/IBlockAccess I I I I] []
-    ILOAD 5
-    ICONST_2
-    IF_ICMPNE L4
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.minZ : D
-    DCONST_0
-    DCMPL
-    IFLE L4
-    ICONST_1
-    GOTO L2
-   L4
-   FRAME FULL [net/minecraft/block/Block net/minecraft/world/IBlockAccess I I I I] []
-    ILOAD 5
-    ICONST_3
-    IF_ICMPNE L5
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.maxZ : D
-    DCONST_1
-    DCMPG
-    IFGE L5
-    ICONST_1
-    GOTO L2
-   L5
-   FRAME FULL [net/minecraft/block/Block net/minecraft/world/IBlockAccess I I I I] []
-    ILOAD 5
-    ICONST_4
-    IF_ICMPNE L6
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.minX : D
-    DCONST_0
-    DCMPL
-    IFLE L6
-    ICONST_1
-    GOTO L2
-   L6
-   FRAME FULL [net/minecraft/block/Block net/minecraft/world/IBlockAccess I I I I] []
-    ILOAD 5
-    ICONST_5
-    IF_ICMPNE L7
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.maxX : D
-    DCONST_1
-    DCMPG
-    IFGE L7
-    ICONST_1
-    GOTO L2
-   L7
-   FRAME FULL [net/minecraft/block/Block net/minecraft/world/IBlockAccess I I I I] []
-    ALOAD 1
-    ILOAD 2
-    ILOAD 3
-    ILOAD 4
-    INVOKEINTERFACE net/minecraft/world/IBlockAccess.getBlock (III)Lnet/minecraft/block/Block;
-    INVOKEVIRTUAL net/minecraft/block/Block.isOpaqueCube ()Z
-    IFNE L8
-    ICONST_1
-    GOTO L2
-   L8
-   FRAME FULL [net/minecraft/block/Block net/minecraft/world/IBlockAccess I I I I] []
-    ICONST_0
-   L2
-   FRAME FULL [net/minecraft/block/Block net/minecraft/world/IBlockAccess I I I I] [I]
-    IRETURN
-   L9
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L9 0
-    LOCALVARIABLE p_149646_1_ Lnet/minecraft/world/IBlockAccess; L0 L9 1
-    LOCALVARIABLE p_149646_2_ I L0 L9 2
-    LOCALVARIABLE p_149646_3_ I L0 L9 3
-    LOCALVARIABLE p_149646_4_ I L0 L9 4
-    LOCALVARIABLE p_149646_5_ I L0 L9 5
-    MAXSTACK = 4
-    MAXLOCALS = 6
-
-  // access flags 0x1
   public isBlockSolid(Lnet/minecraft/world/IBlockAccess;IIII)Z
    L0
     LINENUMBER 639 L0
@@ -4230,45 +4014,6 @@ public class net/minecraft/block/Block {
     LOCALVARIABLE p_149747_5_ I L0 L1 5
     MAXSTACK = 4
     MAXLOCALS = 6
-
-  // access flags 0x1
-  public getIcon(Lnet/minecraft/world/IBlockAccess;IIII)Lnet/minecraft/util/IIcon;
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 645 L0
-    ALOAD 0
-    ILOAD 5
-    ALOAD 1
-    ILOAD 2
-    ILOAD 3
-    ILOAD 4
-    INVOKEINTERFACE net/minecraft/world/IBlockAccess.getBlockMetadata (III)I
-    INVOKEVIRTUAL net/minecraft/block/Block.getIcon (II)Lnet/minecraft/util/IIcon;
-    ARETURN
-   L1
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
-    LOCALVARIABLE p_149673_1_ Lnet/minecraft/world/IBlockAccess; L0 L1 1
-    LOCALVARIABLE p_149673_2_ I L0 L1 2
-    LOCALVARIABLE p_149673_3_ I L0 L1 3
-    LOCALVARIABLE p_149673_4_ I L0 L1 4
-    LOCALVARIABLE p_149673_5_ I L0 L1 5
-    MAXSTACK = 6
-    MAXLOCALS = 6
-
-  // access flags 0x1
-  public getIcon(II)Lnet/minecraft/util/IIcon;
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 654 L0
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.blockIcon : Lnet/minecraft/util/IIcon;
-    ARETURN
-   L1
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
-    LOCALVARIABLE p_149691_1_ I L0 L1 1
-    LOCALVARIABLE p_149691_2_ I L0 L1 2
-    MAXSTACK = 1
-    MAXLOCALS = 3
 
   // access flags 0x1
   public addCollisionBoxesToList(Lnet/minecraft/world/World;IIILnet/minecraft/util/AxisAlignedBB;Ljava/util/List;Lnet/minecraft/entity/Entity;)V
@@ -4357,68 +4102,6 @@ public class net/minecraft/block/Block {
     MAXSTACK = 14
     MAXLOCALS = 5
 
-  // access flags 0x11
-  public final getBlockTextureFromSide(I)Lnet/minecraft/util/IIcon;
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 686 L0
-    ALOAD 0
-    ILOAD 1
-    ICONST_0
-    INVOKEVIRTUAL net/minecraft/block/Block.getIcon (II)Lnet/minecraft/util/IIcon;
-    ARETURN
-   L1
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
-    LOCALVARIABLE p_149733_1_ I L0 L1 1
-    MAXSTACK = 3
-    MAXLOCALS = 2
-
-  // access flags 0x1
-  public getSelectedBoundingBoxFromPool(Lnet/minecraft/world/World;III)Lnet/minecraft/util/AxisAlignedBB;
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 695 L0
-    ILOAD 2
-    I2D
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.minX : D
-    DADD
-    ILOAD 3
-    I2D
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.minY : D
-    DADD
-    ILOAD 4
-    I2D
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.minZ : D
-    DADD
-    ILOAD 2
-    I2D
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.maxX : D
-    DADD
-    ILOAD 3
-    I2D
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.maxY : D
-    DADD
-    ILOAD 4
-    I2D
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.maxZ : D
-    DADD
-    INVOKESTATIC net/minecraft/util/AxisAlignedBB.getBoundingBox (DDDDDD)Lnet/minecraft/util/AxisAlignedBB;
-    ARETURN
-   L1
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
-    LOCALVARIABLE p_149633_1_ Lnet/minecraft/world/World; L0 L1 1
-    LOCALVARIABLE p_149633_2_ I L0 L1 2
-    LOCALVARIABLE p_149633_3_ I L0 L1 3
-    LOCALVARIABLE p_149633_4_ I L0 L1 4
-    MAXSTACK = 14
-    MAXLOCALS = 5
-
   // access flags 0x1
   public isOpaqueCube()Z
    L0
@@ -4467,22 +4150,6 @@ public class net/minecraft/block/Block {
     LOCALVARIABLE p_149674_3_ I L0 L1 3
     LOCALVARIABLE p_149674_4_ I L0 L1 4
     LOCALVARIABLE p_149674_5_ Ljava/util/Random; L0 L1 5
-    MAXSTACK = 0
-    MAXLOCALS = 6
-
-  // access flags 0x1
-  public randomDisplayTick(Lnet/minecraft/world/World;IIILjava/util/Random;)V
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 734 L0
-    RETURN
-   L1
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
-    LOCALVARIABLE p_149734_1_ Lnet/minecraft/world/World; L0 L1 1
-    LOCALVARIABLE p_149734_2_ I L0 L1 2
-    LOCALVARIABLE p_149734_3_ I L0 L1 3
-    LOCALVARIABLE p_149734_4_ I L0 L1 4
-    LOCALVARIABLE p_149734_5_ Ljava/util/Random; L0 L1 5
     MAXSTACK = 0
     MAXLOCALS = 6
 
@@ -5542,18 +5209,6 @@ public class net/minecraft/block/Block {
     MAXLOCALS = 7
 
   // access flags 0x1
-  public getRenderBlockPass()I
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 1032 L0
-    ICONST_0
-    IRETURN
-   L1
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
-    MAXSTACK = 1
-    MAXLOCALS = 1
-
-  // access flags 0x1
   public canPlaceBlockOnSide(Lnet/minecraft/world/World;IIII)Z
    L0
     LINENUMBER 1040 L0
@@ -5769,47 +5424,6 @@ public class net/minecraft/block/Block {
     LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
     MAXSTACK = 2
     MAXLOCALS = 1
-
-  // access flags 0x1
-  public getBlockColor()I
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 1138 L0
-    LDC 16777215
-    IRETURN
-   L1
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
-    MAXSTACK = 1
-    MAXLOCALS = 1
-
-  // access flags 0x1
-  public getRenderColor(I)I
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 1147 L0
-    LDC 16777215
-    IRETURN
-   L1
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
-    LOCALVARIABLE p_149741_1_ I L0 L1 1
-    MAXSTACK = 1
-    MAXLOCALS = 2
-
-  // access flags 0x1
-  public colorMultiplier(Lnet/minecraft/world/IBlockAccess;III)I
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 1157 L0
-    LDC 16777215
-    IRETURN
-   L1
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
-    LOCALVARIABLE p_149720_1_ Lnet/minecraft/world/IBlockAccess; L0 L1 1
-    LOCALVARIABLE p_149720_2_ I L0 L1 2
-    LOCALVARIABLE p_149720_3_ I L0 L1 3
-    LOCALVARIABLE p_149720_4_ I L0 L1 4
-    MAXSTACK = 1
-    MAXLOCALS = 5
 
   // access flags 0x1
   public isProvidingWeakPower(Lnet/minecraft/world/IBlockAccess;IIII)I
@@ -6283,27 +5897,6 @@ public class net/minecraft/block/Block {
     MAXLOCALS = 1
 
   // access flags 0x1
-  public getAmbientOcclusionLightValue()F
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 1336 L0
-    ALOAD 0
-    INVOKEVIRTUAL net/minecraft/block/Block.isBlockNormalCube ()Z
-    IFEQ L1
-    LDC 0.2
-    GOTO L2
-   L1
-   FRAME FULL [net/minecraft/block/Block] []
-    FCONST_1
-   L2
-   FRAME FULL [net/minecraft/block/Block] [F]
-    FRETURN
-   L3
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L3 0
-    MAXSTACK = 1
-    MAXLOCALS = 1
-
-  // access flags 0x1
   public onFallenUpon(Lnet/minecraft/world/World;IIILnet/minecraft/entity/Entity;F)V
    L0
     LINENUMBER 1342 L0
@@ -6318,23 +5911,6 @@ public class net/minecraft/block/Block {
     LOCALVARIABLE p_149746_6_ F L0 L1 6
     MAXSTACK = 0
     MAXLOCALS = 7
-
-  // access flags 0x1
-  public getItem(Lnet/minecraft/world/World;III)Lnet/minecraft/item/Item;
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 1350 L0
-    ALOAD 0
-    INVOKESTATIC net/minecraft/item/Item.getItemFromBlock (Lnet/minecraft/block/Block;)Lnet/minecraft/item/Item;
-    ARETURN
-   L1
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
-    LOCALVARIABLE p_149694_1_ Lnet/minecraft/world/World; L0 L1 1
-    LOCALVARIABLE p_149694_2_ I L0 L1 2
-    LOCALVARIABLE p_149694_3_ I L0 L1 3
-    LOCALVARIABLE p_149694_4_ I L0 L1 4
-    MAXSTACK = 1
-    MAXLOCALS = 5
 
   // access flags 0x1
   public getDamageValue(Lnet/minecraft/world/World;III)I
@@ -6356,31 +5932,6 @@ public class net/minecraft/block/Block {
     LOCALVARIABLE p_149643_4_ I L0 L1 4
     MAXSTACK = 5
     MAXLOCALS = 5
-
-  // access flags 0x1
-  public getSubBlocks(Lnet/minecraft/item/Item;Lnet/minecraft/creativetab/CreativeTabs;Ljava/util/List;)V
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 1367 L0
-    ALOAD 3
-    NEW net/minecraft/item/ItemStack
-    DUP
-    ALOAD 1
-    ICONST_1
-    ICONST_0
-    INVOKESPECIAL net/minecraft/item/ItemStack.<init> (Lnet/minecraft/item/Item;II)V
-    INVOKEINTERFACE java/util/List.add (Ljava/lang/Object;)Z
-    POP
-   L1
-    LINENUMBER 1368 L1
-    RETURN
-   L2
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L2 0
-    LOCALVARIABLE p_149666_1_ Lnet/minecraft/item/Item; L0 L2 1
-    LOCALVARIABLE p_149666_2_ Lnet/minecraft/creativetab/CreativeTabs; L0 L2 2
-    LOCALVARIABLE p_149666_3_ Ljava/util/List; L0 L2 3
-    MAXSTACK = 6
-    MAXLOCALS = 4
 
   // access flags 0x1
   public setCreativeTab(Lnet/minecraft/creativetab/CreativeTabs;)Lnet/minecraft/block/Block;
@@ -6416,19 +5967,6 @@ public class net/minecraft/block/Block {
     MAXLOCALS = 7
 
   // access flags 0x1
-  public getCreativeTabToDisplayOn()Lnet/minecraft/creativetab/CreativeTabs;
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 1387 L0
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.displayOnCreativeTab : Lnet/minecraft/creativetab/CreativeTabs;
-    ARETURN
-   L1
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
-    MAXSTACK = 1
-    MAXLOCALS = 1
-
-  // access flags 0x1
   public onBlockPreDestroy(Lnet/minecraft/world/World;IIII)V
    L0
     LINENUMBER 1394 L0
@@ -6456,18 +5994,6 @@ public class net/minecraft/block/Block {
     LOCALVARIABLE p_149639_4_ I L0 L1 4
     MAXSTACK = 0
     MAXLOCALS = 5
-
-  // access flags 0x1
-  public isFlowerPot()Z
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 1407 L0
-    ICONST_0
-    IRETURN
-   L1
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
-    MAXSTACK = 1
-    MAXLOCALS = 1
 
   // access flags 0x1
   public func_149698_L()Z
@@ -6587,90 +6113,6 @@ public class net/minecraft/block/Block {
     LOCALVARIABLE p_149658_1_ Ljava/lang/String; L0 L2 1
     MAXSTACK = 2
     MAXLOCALS = 2
-
-  // access flags 0x4
-  protected getTextureName()Ljava/lang/String;
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 1460 L0
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.textureName : Ljava/lang/String;
-    IFNONNULL L1
-    NEW java/lang/StringBuilder
-    DUP
-    INVOKESPECIAL java/lang/StringBuilder.<init> ()V
-    LDC "MISSING_ICON_BLOCK_"
-    INVOKEVIRTUAL java/lang/StringBuilder.append (Ljava/lang/String;)Ljava/lang/StringBuilder;
-    ALOAD 0
-    INVOKESTATIC net/minecraft/block/Block.getIdFromBlock (Lnet/minecraft/block/Block;)I
-    INVOKEVIRTUAL java/lang/StringBuilder.append (I)Ljava/lang/StringBuilder;
-    LDC "_"
-    INVOKEVIRTUAL java/lang/StringBuilder.append (Ljava/lang/String;)Ljava/lang/StringBuilder;
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.unlocalizedName : Ljava/lang/String;
-    INVOKEVIRTUAL java/lang/StringBuilder.append (Ljava/lang/String;)Ljava/lang/StringBuilder;
-    INVOKEVIRTUAL java/lang/StringBuilder.toString ()Ljava/lang/String;
-    GOTO L2
-   L1
-   FRAME FULL [net/minecraft/block/Block] []
-    ALOAD 0
-    GETFIELD net/minecraft/block/Block.textureName : Ljava/lang/String;
-   L2
-   FRAME FULL [net/minecraft/block/Block] [java/lang/String]
-    ARETURN
-   L3
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L3 0
-    MAXSTACK = 2
-    MAXLOCALS = 1
-
-  // access flags 0x1
-  public func_149735_b(II)Lnet/minecraft/util/IIcon;
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 1466 L0
-    ALOAD 0
-    ILOAD 1
-    ILOAD 2
-    INVOKEVIRTUAL net/minecraft/block/Block.getIcon (II)Lnet/minecraft/util/IIcon;
-    ARETURN
-   L1
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
-    LOCALVARIABLE p_149735_1_ I L0 L1 1
-    LOCALVARIABLE p_149735_2_ I L0 L1 2
-    MAXSTACK = 3
-    MAXLOCALS = 3
-
-  // access flags 0x1
-  public registerBlockIcons(Lnet/minecraft/client/renderer/texture/IIconRegister;)V
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 1472 L0
-    ALOAD 0
-    ALOAD 1
-    ALOAD 0
-    INVOKEVIRTUAL net/minecraft/block/Block.getTextureName ()Ljava/lang/String;
-    INVOKEINTERFACE net/minecraft/client/renderer/texture/IIconRegister.registerIcon (Ljava/lang/String;)Lnet/minecraft/util/IIcon;
-    PUTFIELD net/minecraft/block/Block.blockIcon : Lnet/minecraft/util/IIcon;
-   L1
-    LINENUMBER 1473 L1
-    RETURN
-   L2
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L2 0
-    LOCALVARIABLE p_149651_1_ Lnet/minecraft/client/renderer/texture/IIconRegister; L0 L2 1
-    MAXSTACK = 3
-    MAXLOCALS = 2
-
-  // access flags 0x1
-  public getItemIconName()Ljava/lang/String;
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 1481 L0
-    ACONST_NULL
-    ARETURN
-   L1
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
-    MAXSTACK = 1
-    MAXLOCALS = 1
 
   // access flags 0x1
   public getLightValue(Lnet/minecraft/world/IBlockAccess;III)I
@@ -7902,39 +7344,6 @@ public class net/minecraft/block/Block {
     LOCALVARIABLE z I L0 L1 4
     MAXSTACK = 1
     MAXLOCALS = 5
-
-  // access flags 0x1
-  public addHitEffects(Lnet/minecraft/world/World;Lnet/minecraft/util/MovingObjectPosition;Lnet/minecraft/client/particle/EffectRenderer;)Z
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 2175 L0
-    ICONST_0
-    IRETURN
-   L1
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
-    LOCALVARIABLE worldObj Lnet/minecraft/world/World; L0 L1 1
-    LOCALVARIABLE target Lnet/minecraft/util/MovingObjectPosition; L0 L1 2
-    LOCALVARIABLE effectRenderer Lnet/minecraft/client/particle/EffectRenderer; L0 L1 3
-    MAXSTACK = 1
-    MAXLOCALS = 4
-
-  // access flags 0x1
-  public addDestroyEffects(Lnet/minecraft/world/World;IIIILnet/minecraft/client/particle/EffectRenderer;)Z
-  @Lcpw/mods/fml/relauncher/SideOnly;(value=Lcpw/mods/fml/relauncher/Side;.CLIENT)
-   L0
-    LINENUMBER 2195 L0
-    ICONST_0
-    IRETURN
-   L1
-    LOCALVARIABLE this Lnet/minecraft/block/Block; L0 L1 0
-    LOCALVARIABLE world Lnet/minecraft/world/World; L0 L1 1
-    LOCALVARIABLE x I L0 L1 2
-    LOCALVARIABLE y I L0 L1 3
-    LOCALVARIABLE z I L0 L1 4
-    LOCALVARIABLE meta I L0 L1 5
-    LOCALVARIABLE effectRenderer Lnet/minecraft/client/particle/EffectRenderer; L0 L1 6
-    MAXSTACK = 1
-    MAXLOCALS = 7
 
   // access flags 0x1
   public canSustainPlant(Lnet/minecraft/world/IBlockAccess;IIILnet/minecraftforge/common/util/ForgeDirection;Lnet/minecraftforge/common/IPlantable;)Z
