@@ -40,36 +40,37 @@ public class CommandInvSee extends CommandBase {
         if (target == null)
             throw new PlayerNotFoundException();
 
-        // Create chest-style inventory (36 slots)
-        final InventoryBasic inv = new InventoryBasic(
+        final InventoryBasic chest = new InventoryBasic(
                 target.getCommandSenderName() + "'s Inventory",
                 false,
                 36
         );
 
-        // Copy target inventory into chest
+        // MOVE stacks into chest (not copy reference blindly)
         for (int i = 0; i < 36; i++) {
-            inv.setInventorySlotContents(i,
-                    target.inventory.getStackInSlot(i));
+            chest.setInventorySlotContents(i,
+                    target.inventory.getStackInSlot(i) == null ? null :
+                            target.inventory.getStackInSlot(i).copy());
         }
 
-        viewer.displayGUIChest(inv);
+        viewer.displayGUIChest(chest);
 
-        // Hook into container close to sync back changes
-        viewer.openContainer.onContainerClosed(viewer);
+        // Grab the container that was just opened
+        final net.minecraft.inventory.Container container = viewer.openContainer;
 
-        viewer.openContainer = new net.minecraft.inventory.ContainerChest(
-                viewer.inventory,
-                inv
-        ) {
+        container.addCraftingToCrafters(viewer);
+
+        // Hook close properly
+        viewer.openContainer = new net.minecraft.inventory.ContainerChest(viewer.inventory, chest) {
+
             @Override
             public void onContainerClosed(net.minecraft.entity.player.EntityPlayer player) {
                 super.onContainerClosed(player);
 
-                // Sync chest back into target inventory
                 for (int i = 0; i < 36; i++) {
                     target.inventory.setInventorySlotContents(i,
-                            inv.getStackInSlot(i));
+                            chest.getStackInSlot(i) == null ? null :
+                                    chest.getStackInSlot(i).copy());
                 }
 
                 target.inventory.markDirty();
