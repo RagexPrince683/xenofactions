@@ -22,7 +22,7 @@ public class CommandInvSee extends CommandBase {
 
     @Override
     public String getCommandUsage(ICommandSender sender) {
-        return "/invsee <player> <OPTIONAL armorslots>";
+        return "/invsee <player> [armorslots]";
     }
 
     @Override
