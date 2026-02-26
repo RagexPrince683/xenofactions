@@ -22,7 +22,7 @@ public class CommandInvSee extends CommandBase {
 
     @Override
     public String getCommandUsage(ICommandSender sender) {
-        return "/invsee <player>";
+        return "/invsee <player> <OPTIONAL armorslots>";
     }
 
     @Override
@@ -33,7 +33,7 @@ public class CommandInvSee extends CommandBase {
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
 
-        if (args.length != 1)
+        if (args.length < 1)
             throw new WrongUsageException(getCommandUsage(sender));
 
         final EntityPlayerMP viewer = getCommandSenderAsPlayer(sender);
@@ -45,21 +45,19 @@ public class CommandInvSee extends CommandBase {
         if (target == null)
             throw new PlayerNotFoundException();
 
-        // Close any existing container
-        viewer.closeContainer();
+        // If second arg is "armorslots", open armor GUI
+        if (args.length >= 2 && "armorslots".equalsIgnoreCase(args[1])) {
+            viewer.closeContainer();
+            final InvSeeArmorInventory armorInv = new InvSeeArmorInventory(target);
+            viewer.displayGUIChest(armorInv);
+            return;
+        }
 
-        // Create a wrapper inventory that delegates to the target's real inventory
+        // Default behavior: open main 36-slot live inv (existing code)
+        // Create a wrapper inventory that delegates to the target's real inventory (36 slots)
         final InvSeeInventory inv = new InvSeeInventory(target);
 
-        /*
-         * Use displayGUIChest(IInventory). In 1.7.10 this creates a ContainerChest
-         * and opens a chest GUI for the viewer that matches a vanilla chest window.
-         * Because InvSeeInventory delegates to target.inventory, all edits operate
-         * on the target's inventory live.
-         */
+        viewer.closeContainer();
         viewer.displayGUIChest(inv);
-
-        // viewer.openContainer is now the ContainerChest created by displayGUIChest
-        // No manual packet sending required.
     }
 }
