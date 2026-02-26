@@ -8,6 +8,11 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.InventoryBasic;
 import net.minecraft.server.MinecraftServer;
 
+/**
+ * Command that opens a chest GUI showing the target's live main inventory (36 slots).
+ * Taking/moving items removes them from the target immediately because InvSeeInventory
+ * delegates directly to the target InventoryPlayer.
+ */
 public class CommandInvSee extends CommandBase {
 
     @Override
@@ -22,7 +27,7 @@ public class CommandInvSee extends CommandBase {
 
     @Override
     public int getRequiredPermissionLevel() {
-        return 2;
+        return 2; // OP only
     }
 
     @Override
@@ -40,43 +45,21 @@ public class CommandInvSee extends CommandBase {
         if (target == null)
             throw new PlayerNotFoundException();
 
-        // Create chest-style inventory (36 slots)
-        final InventoryBasic chest = new InventoryBasic(
-                target.getCommandSenderName() + "'s Inventory",
-                false,
-                36
-        );
-
-        // Copy target inventory into chest (use copy to avoid reference issues)
-        for (int i = 0; i < 36; i++) {
-            chest.setInventorySlotContents(i,
-                    target.inventory.getStackInSlot(i) == null ? null :
-                            target.inventory.getStackInSlot(i).copy());
-        }
-
-        // Create container before opening GUI
-        final net.minecraft.inventory.ContainerChest container =
-                new net.minecraft.inventory.ContainerChest(viewer.inventory, chest) {
-
-                    @Override
-                    public void onContainerClosed(net.minecraft.entity.player.EntityPlayer player) {
-                        super.onContainerClosed(player);
-
-                        // Copy chest contents back into target inventory
-                        for (int i = 0; i < 36; i++) {
-                            target.inventory.setInventorySlotContents(i,
-                                    chest.getStackInSlot(i) == null ? null :
-                                            chest.getStackInSlot(i).copy());
-                        }
-
-                        target.inventory.markDirty();
-                    }
-                };
-
-        // Open the container for the player
+        // Close any existing container
         viewer.closeContainer();
-        viewer.openContainer = container;
-        viewer.displayGUIChest(chest);
 
+        // Create a wrapper inventory that delegates to the target's real inventory
+        final InvSeeInventory inv = new InvSeeInventory(target);
+
+        /*
+         * Use displayGUIChest(IInventory). In 1.7.10 this creates a ContainerChest
+         * and opens a chest GUI for the viewer that matches a vanilla chest window.
+         * Because InvSeeInventory delegates to target.inventory, all edits operate
+         * on the target's inventory live.
+         */
+        viewer.displayGUIChest(inv);
+
+        // viewer.openContainer is now the ContainerChest created by displayGUIChest
+        // No manual packet sending required.
     }
 }
