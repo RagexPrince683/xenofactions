@@ -40,41 +40,43 @@ public class CommandInvSee extends CommandBase {
         if (target == null)
             throw new PlayerNotFoundException();
 
+        // Create chest-style inventory (36 slots)
         final InventoryBasic chest = new InventoryBasic(
                 target.getCommandSenderName() + "'s Inventory",
                 false,
                 36
         );
 
-        // MOVE stacks into chest (not copy reference blindly)
+        // Copy target inventory into chest (use copy to avoid reference issues)
         for (int i = 0; i < 36; i++) {
             chest.setInventorySlotContents(i,
                     target.inventory.getStackInSlot(i) == null ? null :
                             target.inventory.getStackInSlot(i).copy());
         }
 
+        // Create container before opening GUI
+        final net.minecraft.inventory.ContainerChest container =
+                new net.minecraft.inventory.ContainerChest(viewer.inventory, chest) {
+
+                    @Override
+                    public void onContainerClosed(net.minecraft.entity.player.EntityPlayer player) {
+                        super.onContainerClosed(player);
+
+                        // Copy chest contents back into target inventory
+                        for (int i = 0; i < 36; i++) {
+                            target.inventory.setInventorySlotContents(i,
+                                    chest.getStackInSlot(i) == null ? null :
+                                            chest.getStackInSlot(i).copy());
+                        }
+
+                        target.inventory.markDirty();
+                    }
+                };
+
+        // Open the container for the player
+        viewer.closeContainer();
+        viewer.openContainer = container;
         viewer.displayGUIChest(chest);
 
-        // Grab the container that was just opened
-        final net.minecraft.inventory.Container container = viewer.openContainer;
-
-        container.addCraftingToCrafters(viewer);
-
-        // Hook close properly
-        viewer.openContainer = new net.minecraft.inventory.ContainerChest(viewer.inventory, chest) {
-
-            @Override
-            public void onContainerClosed(net.minecraft.entity.player.EntityPlayer player) {
-                super.onContainerClosed(player);
-
-                for (int i = 0; i < 36; i++) {
-                    target.inventory.setInventorySlotContents(i,
-                            chest.getStackInSlot(i) == null ? null :
-                                    chest.getStackInSlot(i).copy());
-                }
-
-                target.inventory.markDirty();
-            }
-        };
     }
 }
