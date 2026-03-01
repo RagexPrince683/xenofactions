@@ -53,7 +53,7 @@ saves/
 *.class
 *.jar
 *.json
-*.png
+##*.png
 *.ogg
 .idea/gradle.xml
 .idea/workspace.xml
@@ -61,3 +61,4 @@ saves/
 /eclipse/asm
 /eclipse/asm
 /eclipse/asm/ccl_modular
+/hbm/eclipse
