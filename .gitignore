@@ -52,9 +52,9 @@ saves/
 # Compiled output
 *.class
 *.jar
-*.json
+# *.json
 ##*.png
-*.ogg
+# *.ogg
 .idea/gradle.xml
 .idea/workspace.xml
 /eclipse/world
@@ -63,3 +63,4 @@ saves/
 /eclipse/asm/ccl_modular
 /hbm/eclipse
 /hbm/
+/eclipse
