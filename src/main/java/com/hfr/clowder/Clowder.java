@@ -157,6 +157,7 @@ public class Clowder {
 	public static final float BlastRate = 0.3F;
 	public static final float GrainRate = 0.2F;
 	public static final float UniRate = 0.6F;
+	public static final float FedRate = 0.2F;
 	public static final float statueRate = 0.5F;
 	public static final float flagRate = 0.1F;
 	public static final float flagReq = 1.0F;

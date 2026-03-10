@@ -164,6 +164,7 @@ public class ModItems {
 	public static Item science_4;
 	public static Item science_5;
 	public static Item science_6;
+	public static Item tax;
 	public static Item cog;
 	public static Item cog_2;
 	public static Item cog_3;
@@ -380,6 +381,9 @@ public class ModItems {
 		cog_4 = new ItemLore().setUnlocalizedName("cog_4").setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":cog_4");
 		cog_5 = new ItemLore().setUnlocalizedName("cog_5").setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":cog_5");
 		scroll = new ItemLore().setUnlocalizedName("scroll").setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":scroll");
+		//I don't fucking care enough
+		tax = new ItemLore().setUnlocalizedName("tax").setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":scroll");
+
 		coin = new ItemLore().setUnlocalizedName("hfr_coin").setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":coin");
 		wrench = new ItemLore().setUnlocalizedName("hfr_wrench").setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":wrench");
 		province_point = new ItemLore().setUnlocalizedName("province_point").setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":prestige");
@@ -560,6 +564,7 @@ public class ModItems {
 		GameRegistry.registerItem(cog_4, cog_4.getUnlocalizedName());
 		GameRegistry.registerItem(cog_5, cog_5.getUnlocalizedName());
 		GameRegistry.registerItem(scroll, scroll.getUnlocalizedName());
+		GameRegistry.registerItem(tax, tax.getUnlocalizedName());
 		GameRegistry.registerItem(coin, coin.getUnlocalizedName());
 		GameRegistry.registerItem(wrench, wrench.getUnlocalizedName());
 		GameRegistry.registerItem(province_point, province_point.getUnlocalizedName());

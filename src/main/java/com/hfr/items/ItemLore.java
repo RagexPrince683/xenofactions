@@ -58,6 +58,10 @@ public class ItemLore extends Item {
 		if(this == ModItems.scroll) {
 			list.add("In old times, ancient knowledge was just called knowledge.");
 		}
+
+		if(this == ModItems.tax) {
+			list.add("I hate tax.");
+		}
 		
 		
 

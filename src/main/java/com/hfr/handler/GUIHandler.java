@@ -1,5 +1,6 @@
 package com.hfr.handler;
 
+import com.hfr.inventory.container.*;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.ContainerChest;
@@ -8,39 +9,6 @@ import net.minecraft.world.World;
 
 import com.hfr.blocks.ModBlocks;
 import com.hfr.blocks.machine.MachineMarket.TileEntityMarket;
-import com.hfr.inventory.container.ContainerAlloy;
-import com.hfr.inventory.container.ContainerBattery;
-import com.hfr.inventory.container.ContainerBlastFurnace;
-import com.hfr.inventory.container.ContainerBox;
-import com.hfr.inventory.container.ContainerCoalGen;
-import com.hfr.inventory.container.ContainerCoalMine;
-import com.hfr.inventory.container.ContainerCrusher;
-import com.hfr.inventory.container.ContainerDieselGen;
-import com.hfr.inventory.container.ContainerDistillery;
-import com.hfr.inventory.container.ContainerEFurnace;
-import com.hfr.inventory.container.ContainerFactory;
-import com.hfr.inventory.container.ContainerFlag;
-import com.hfr.inventory.container.ContainerFlagBig;
-import com.hfr.inventory.container.ContainerForceField;
-import com.hfr.inventory.container.ContainerFoundry;
-import com.hfr.inventory.container.ContainerGrainMill;
-import com.hfr.inventory.container.ContainerHydro;
-import com.hfr.inventory.container.ContainerLaunchPad;
-import com.hfr.inventory.container.ContainerMachineBuilder;
-import com.hfr.inventory.container.ContainerMachineEMP;
-import com.hfr.inventory.container.ContainerMachineNet;
-import com.hfr.inventory.container.ContainerMachineOilWell;
-import com.hfr.inventory.container.ContainerMachineRadar;
-import com.hfr.inventory.container.ContainerMachineRefinery;
-import com.hfr.inventory.container.ContainerMachineSiren;
-import com.hfr.inventory.container.ContainerMachineUni;
-import com.hfr.inventory.container.ContainerNaval;
-import com.hfr.inventory.container.ContainerRBMKElement;
-import com.hfr.inventory.container.ContainerRailgun;
-import com.hfr.inventory.container.ContainerSawmill;
-import com.hfr.inventory.container.ContainerTank;
-import com.hfr.inventory.container.ContainerTemple;
-import com.hfr.inventory.container.ContainerTurbine;
 import com.hfr.inventory.gui.GUIAlloy;
 import com.hfr.inventory.gui.GUIBattery;
 import com.hfr.inventory.gui.GUIBlastFurnace;
@@ -396,6 +364,16 @@ public class GUIHandler implements IGuiHandler {
 				}
 				return null;
 			}
+
+			case ModBlocks.guiID_fed:
+			{
+				if(entity instanceof TileEntityMachineFederalReserve)
+				{
+					return new ContainerMachineFed(player.inventory, (TileEntityMachineFederalReserve) entity);
+				}
+				return null;
+			}
+
 		}
 		return null;
 	}

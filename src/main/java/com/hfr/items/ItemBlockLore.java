@@ -80,6 +80,11 @@ public class ItemBlockLore extends ItemBlock {
 			list.add("Generates research points over time");
 			list.add(Clowder.UniRate +" prestige gen / hour");
 		}
+		if(field_150939_a == ModBlocks.machine_reserve) {
+			list.add("Requires sky access and foundation");
+			list.add("Generates research points over time");
+			list.add(Clowder.FedRate +" prestige gen / hour");
+		}
 		if(field_150939_a == ModBlocks.machine_grainmill) {
 			list.add("Requires sky access and foundation");
 			list.add("Grinds wheat into flour");
