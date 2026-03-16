@@ -26,6 +26,7 @@ public class ItemMace extends ItemMultitool {
 
 		//props
 		add(ModBlocks.machine_uni);
+		add(ModBlocks.machine_reserve);
 		add(ModBlocks.clowder_flag);
 		add(ModBlocks.statue);
 		add(ModBlocks.machine_grainmill);
@@ -53,6 +54,7 @@ public class ItemMace extends ItemMultitool {
 		
 		//props
 		add(ModBlocks.machine_uni);
+		add(ModBlocks.machine_reserve);
 		add(ModBlocks.med_tent);
 		add(ModBlocks.statue);
 		add(ModBlocks.machine_grainmill);
