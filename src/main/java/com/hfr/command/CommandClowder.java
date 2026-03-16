@@ -467,6 +467,7 @@ public class CommandClowder extends CommandBase {
 				Clowder.createClowder(player, name);
 				sender.addChatMessage(new ChatComponentText(TITLE + "Created faction " + name + "!"));
 				sender.addChatMessage(new ChatComponentText(INFO + "Use /c claim to get started!"));
+				sender.addChatMessage(new ChatComponentText(INFO + "and use /c sethome to set a faction home!"));
 			} else {
 				sender.addChatMessage(new ChatComponentText(ERROR + "This name is already taken!"));
 			}
@@ -1213,11 +1214,6 @@ public class CommandClowder extends CommandBase {
 
 				sender.addChatMessage(new ChatComponentText(INFO + "Please stand still for 10 seconds!"));
 				clowder.teleports.put(System.currentTimeMillis() + 10000L, new ScheduledTeleport(clowder.homeX, clowder.homeY, clowder.homeZ, player.getDisplayName(), true));
-				//regen + resistance for 30s to prevent spawn camping
-				if (!CommandClowderAdmin.WARENABLED) {
-					player.addPotionEffect(new PotionEffect(Potion.regeneration.id, 600, 1));
-					player.addPotionEffect(new PotionEffect(Potion.resistance.id, 600, 1));
-				}
 			}
 
 		} else {

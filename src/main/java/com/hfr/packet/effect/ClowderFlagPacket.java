@@ -6,12 +6,15 @@ import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.main.MainRegistry;
 
+import cpw.mods.fml.common.eventhandler.EventPriority;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
 
 public class ClowderFlagPacket implements IMessage {
 
@@ -89,6 +92,7 @@ public class ClowderFlagPacket implements IMessage {
 				ClowderFlag flag = ClowderFlag.values()[m.flag];
 				MainRegistry.proxy.updateFlag(flag.getFlag(), flag.getFlagOverlay(), m.color, m.name, m.title);
 			} else {
+				//TODO ensure this is overlayed on TOP of everything else because HMG gun renderer makes territory displays disappear
 				MainRegistry.proxy.updateFlag(null, m.flag == -3 ? ClowderFlag.WARZONE : m.flag == -2 ? ClowderFlag.SAFEZONE : ClowderFlag.WILDERNESS, m.color, m.name, m.title);
 			}
 			
@@ -97,4 +101,7 @@ public class ClowderFlagPacket implements IMessage {
 			return null;
 		}
 	}
+
+
+
 }

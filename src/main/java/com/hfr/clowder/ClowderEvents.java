@@ -640,7 +640,7 @@ public void handleChatServer(ServerChatEvent event) {
 			player.getEntityData().setString(NBTKEY, name);
 			return;
 		}
-		
+
 		if(!name.equals(past)) {
 
 			if(owner.zone == Zone.FACTION) {
@@ -1142,7 +1142,12 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 						me.notifyAll(world, new ChatComponentText(CommandClowder.INFO + "Player " + player.getDisplayName() + " is warping to " + tp.warp + "!"));
 					} else {
 						me.notifyAll(world, new ChatComponentText(CommandClowder.INFO + "Player " + player.getDisplayName() + " is warping home!"));
-						playermp.addPotionEffect(new PotionEffect(Potion.resistance.id, 60, 9));
+						if (!CommandClowderAdmin.WARENABLED) {
+							playermp.addPotionEffect(new PotionEffect(Potion.resistance.id, 600, 9));
+							playermp.addPotionEffect(new PotionEffect(Potion.regeneration.id, 600, 4));
+						} else  {
+							playermp.addPotionEffect(new PotionEffect(Potion.resistance.id, 60, 9));
+						}
 					}
 
 				}
