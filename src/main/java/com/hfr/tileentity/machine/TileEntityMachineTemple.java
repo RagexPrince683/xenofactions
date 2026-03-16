@@ -26,7 +26,7 @@ public class TileEntityMachineTemple extends TileEntityMachineBase {
 				if(slots[0] == null) {
 					slots[0] = new ItemStack(ModItems.scroll);
 					
-				} else if(slots[0].getItem() == ModItems.scroll && slots[0].stackSize < 4) {
+				} else if(slots[0].getItem() == ModItems.scroll && slots[0].stackSize < 64) {
 					slots[0].stackSize++;
 				}
 			}

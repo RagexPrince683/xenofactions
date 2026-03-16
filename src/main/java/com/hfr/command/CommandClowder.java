@@ -35,6 +35,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.potion.Potion;
+import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatComponentText;
@@ -1211,7 +1213,11 @@ public class CommandClowder extends CommandBase {
 
 				sender.addChatMessage(new ChatComponentText(INFO + "Please stand still for 10 seconds!"));
 				clowder.teleports.put(System.currentTimeMillis() + 10000L, new ScheduledTeleport(clowder.homeX, clowder.homeY, clowder.homeZ, player.getDisplayName(), true));
-
+				//regen + resistance for 30s to prevent spawn camping
+				if (!CommandClowderAdmin.WARENABLED) {
+					player.addPotionEffect(new PotionEffect(Potion.regeneration.id, 600, 1));
+					player.addPotionEffect(new PotionEffect(Potion.resistance.id, 600, 1));
+				}
 			}
 
 		} else {
