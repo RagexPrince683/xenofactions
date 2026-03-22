@@ -31,6 +31,8 @@ import net.minecraftforge.common.util.ForgeDirection;
 //but with cats!
 public class Clowder {
 
+	public HashMap<Clowder, Long> potentialMerges = new HashMap<>();
+
 	public static HashSet<Integer> colours = new HashSet<Integer>();
 
 	private static float prestigeCap = 1000F;
@@ -174,395 +176,473 @@ public class Clowder {
 
 
 	//minute timer for war declarations and war timer
-	public static void updateWars(World world) {
-
-		for(Clowder clowder : clowders) {
-
-			//actually nvm send the message every 3 minutes
-			boolean isDivisibleBy5fab = clowder.getFabricatetime() % 5 == 0;
-
-
-			//initialize memory again just to be safe every minute
-			{
-				//memory memes so i can save clowders as strings for enemy and suzerain shit
-				if(clowder.suzerainS == "nobody2584369")
-					clowder.suzerain = null;
-				else
-					clowder.suzerain = getClowderFromName(clowder.suzerainS);
-
-				if(clowder.enemyS == "nobody2584369")
-					clowder.enemy = null;
-				else
-					clowder.enemy = getClowderFromName(clowder.enemyS);
-			}
-
-			if(clowder.treaty1 == "")
-			{
-				clowder.treaty1 = "nobody2584369";
-				clowder.treatyTime1 = 0;
-			}
-			if(clowder.treaty2 == "")
-			{
-				clowder.treaty2 = "nobody2584369";
-				clowder.treatyTime2 = 0;
-			}
-			if(clowder.treaty3 == "")
-			{
-				clowder.treaty3 = "nobody2584369";
-				clowder.treatyTime3 = 0;
-			}
-			if(clowder.treaty4 == "")
-			{
-				clowder.treaty4 = "nobody2584369";
-				clowder.treatyTime4 = 0;
-			}
-			if(clowder.treaty5 == "")
-			{
-				clowder.treaty5 = "nobody2584369";
-				clowder.treatyTime5 = 0;
-			}
-			if(clowder.treaty6 == "")
-			{
-				clowder.treaty6 = "nobody2584369";
-				clowder.treatyTime6 = 0;
-			}
-			if(clowder.treaty7 == "")
-			{
-				clowder.treaty7 = "nobody2584369";
-				clowder.treatyTime7 = 0;
-			}
-
-
-
-			//end of initialize again
-
-
-
-
-
-			/*
-			if(clowder.peaceTreaty > 60)
-				clowder.peaceTreaty = 60;
-				*/
-
-
-			//poorly coded anti fabrication bullying treaty
-			//timers
-			if (clowder.treatyTime1 > 0)
-				clowder.treatyTime1 --;
-			if (clowder.treatyTime2 > 0)
-				clowder.treatyTime2 --;
-			if (clowder.treatyTime3 > 0)
-				clowder.treatyTime3 --;
-			if (clowder.treatyTime4 > 0)
-				clowder.treatyTime4 --;
-			if (clowder.treatyTime5 > 0)
-				clowder.treatyTime5 --;
-			if (clowder.treatyTime6 > 0)
-				clowder.treatyTime6 --;
-			if (clowder.treatyTime7 > 0)
-				clowder.treatyTime7 --;
-
-			//if timer done, "null" the treaties
-			if (clowder.treatyTime1 <= 1 && clowder.treaty1 != "nobody2584369")
-				clowder.treaty1 = "nobody2584369";
-			if (clowder.treatyTime2 <= 1 && clowder.treaty2 != "nobody2584369")
-				clowder.treaty2 = "nobody2584369";
-			if (clowder.treatyTime3 <= 1 && clowder.treaty3 != "nobody2584369")
-				clowder.treaty3 = "nobody2584369";
-			if (clowder.treatyTime4 <= 1 && clowder.treaty4 != "nobody2584369")
-				clowder.treaty4 = "nobody2584369";
-			if (clowder.treatyTime5 <= 1 && clowder.treaty5 != "nobody2584369")
-				clowder.treaty5 = "nobody2584369";
-			if (clowder.treatyTime6 <= 1 && clowder.treaty6 != "nobody2584369")
-				clowder.treaty6 = "nobody2584369";
-			if (clowder.treatyTime7 <= 1 && clowder.treaty7 != "nobody2584369")
-				clowder.treaty7 = "nobody2584369";
-
-			clowder.save(world);
-
-
-
-			if(clowder.getFabricatetime() > -1 && (clowder.enemy)!=null && clowder.getWartime() <= 0 && clowder.getCanDeclareTime() <= 0 && clowder.enemy != clowder.suzerain)
-			{
-				//float fabricateTime = clowder.getFabricatetime();
-
-				//fabricateTime *= (float)Math.pow(0.99, clowder.getFabricatetime());
-
-				//spam message per minute during last 1 min
-				if(clowder.getFabricatetime()<5 && clowder.getFabricatetime()>2 && clowder.getCanDeclareTime() == 0 && clowder.getWartime() == 0 && clowder.enemy != clowder.suzerain)
-				{
-					clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "War declaration will be ready in " + (int)(clowder.getFabricatetime()-2) + " minutes!"));
-					clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + clowder.name + " will be able to attack us in " + (int)(clowder.getFabricatetime()-2) + " minute(s)!"));
-				}
-
-
-				clowder.addFabricateTime(-1, world);
-			}
-
-			//for revolt waiting time
-			if(clowder.getFabricatetime() > 0 && (clowder.enemy)!=null && clowder.getWartime() <= 0 && clowder.getCanDeclareTime() <= 0 && clowder.enemy == clowder.suzerain)
-			{
-				clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "If our oppressors don't strike back, we will be free in " + (int)(clowder.getFabricatetime()-1) + " minutes!"));
-				clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.ERROR + clowder.name + " will break free from us in " + (int)(clowder.getFabricatetime()-1) + " minute(s)!"));
-				clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + " Use /c suppress " + clowder.name + " to forcefully stop them! (Will start civil-war)"));
-				clowder.addFabricateTime(-1, world);
-			}
-
-
-
-
-			//handling vassal notifications
-
-
-
-			if (isDivisibleBy5fab)
-			{
-				//fabricate timer countdown per minute
-				if(clowder.valid())
-				{
-					if(clowder.getFabricatetime() > -1 && (clowder.enemy)!=null && clowder.getCanDeclareTime() == 0 && clowder.getWartime() == 0)
-					{
-						//float fabricateTime = clowder.getFabricatetime();
-
-						//fabricateTime *= (float)Math.pow(0.99, clowder.getFabricatetime());
-
-						//dont hsow the message if its a revolt
-						if (clowder.enemy != clowder.suzerain)
-							clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + clowder.name + " will be able to attack us in " + (int)(clowder.getFabricatetime()-1) + " minute(s)!"));
-						//if there is enough time to retreat, also suggest retreat to victim. not for revolts
-						if(clowder.getFabricatetime() > 10 && clowder.enemy != clowder.suzerain)
-						{
-							clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.TITLE + "Officers can use /c retreat to try to cancel this attack!"));
-							clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.TITLE + "Retreating makes you the aggressor's bitch, so choose wisely!"));
-						}
-					}
-				}
-			}
-
-			//if(clowder.enemy == null)
-			//{
-			//	clowder.pussy(world);
-			//}
-
-
-
-			//if fabricate time is 1 minute left be ready for war      added extra enemy null check to prevent random declarations ready generating for free
-			if(clowder.valid() && clowder.getFabricatetime() > -1 && clowder.getFabricatetime() <= 1.5 && clowder.enemy != null && clowder.getCanDeclareTime() == 0 && clowder.getWartime() == 0)
-			{
-
-				if(clowder.enemy != clowder.suzerain)
-				{
-					//10 minutes you can instantly start war and fabricate timer is set to 0, nvm changed to 3 hours per hungary suggestion
-					clowder.endFabricateTime(world);
-					clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "War declaration is ready! Officers can /c declare for the next 4 hours!"));
-				}
-				//for revolt fabrication time end sending unltimatum
-				else if (clowder.enemy == clowder.suzerain && clowder.getFabricatetime()==0 && clowder.getWartime() == 0)
-				{
-					//rebels break free peacefully and win some prestige
-					clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "Our former masters lacked the will to oppose us! We have peacefully broken free of their grasp!"));
-					clowder.notifyAll(world, new ChatComponentText(CommandClowder.INFO + "We also get back some prestige!"));
-					//clowder.addPrestige(MainRegistry.fabricateCost*1.75f, world);
-					//former master suffers
-					clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + clowder.name + " is no longer our vassal!"));
-					clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.ERROR + "This shameful setback will cost us some prestige..."));
-					//clowder.enemy.addPrestige(-MainRegistry.fabricateCost, world);
-					clowder.breakFree(world);
-
-				}
-
-
-			}
-
-			//when war timer ends
-			if(clowder.valid() && clowder.getWartime() <= 1.5 && (clowder.enemy)!=null && clowder.getCanDeclareTime() == 0 && clowder.getFabricatetime() == 0)
-			{
-				if(clowder.enemy != clowder.suzerain)
-				{
-
-					//end of war treaty
-					if(clowder.treaty1 == "nobody2584369" && clowder.treaty1 != clowder.enemy.name)
-					{
-						clowder.treaty1 = clowder.enemy.name;
-						clowder.treatyTime1 = 90;
-						//System.out.println("it tried to treaty1 puppy");
-					}
-					else if(clowder.treaty2 == "nobody2584369" && clowder.treaty2 != clowder.enemy.name)
-					{
-						clowder.treaty2 = clowder.enemy.name;
-						clowder.treatyTime2 = 90;
-					}
-					else if(clowder.treaty3 == "nobody2584369" && clowder.treaty3 != clowder.enemy.name)
-					{
-						clowder.treaty3 = clowder.enemy.name;
-						clowder.treatyTime3 = 90;
-					}
-					else if(clowder.treaty4 == "nobody2584369" && clowder.treaty4 != clowder.enemy.name)
-					{
-						clowder.treaty4 = clowder.enemy.name;
-						clowder.treatyTime4 = 90;
-					}
-					else if(clowder.treaty5 == "nobody2584369" && clowder.treaty5 != clowder.enemy.name)
-					{
-						clowder.treaty5 = clowder.enemy.name;
-						clowder.treatyTime5 = 90;
-					}
-					else if(clowder.treaty6 == "nobody2584369" && clowder.treaty6 != clowder.enemy.name)
-					{
-						clowder.treaty6 = clowder.enemy.name;
-						clowder.treatyTime6 = 90;
-					}
-					else if(clowder.treaty7 == "nobody2584369" && clowder.treaty7 != clowder.enemy.name)
-					{
-						clowder.treaty7 = clowder.enemy.name;
-						clowder.treatyTime7 = 90;
-					}
-
-
-
-
-					//war ended
-					clowder.endWarTime(world);
-
-
-
-					clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "The war period has ended! Pack it up boys!"));
-					clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + clowder.enemy.name + " also gets a 1.5 hour grace period."));
-					clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + clowder.name + "'s war against us has ended!"));
-
-					//unmarks being a vassal targeting war
-					clowder.vassalTarget = false;
-					//unmarks victim as being the attacker's target
-					clowder.enemy = null;
-					clowder.enemyS = "nobody2584369";
-					if(clowder.suzerain != null)
-					{
-						clowder.suzerain.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "Our vassal, " + clowder.name + ", has finished their war!"));
-					}
-					//resets overtime
-					clowder.overtime = false;
-					//and reset bonus minutes
-					clowder.bonusPoints = 0;
-				}
-				//for revolts
-
-			}
-
-			//if master loses a revolt (war score went up to 60 minutes
-			if(clowder.valid() && clowder.getWartime() >= 60 && clowder.enemy == clowder.suzerain && clowder.getCanDeclareTime() == 0 && clowder.getFabricatetime() == 0)
-			{
-				clowder.endWarTime(world);
-				clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "Our revolt has succeeded. We are now independent!"));
-				clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "We also get back our prestige!"));
-				clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + clowder.name + "'s revolt against us has cost us too much."));
-				clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "We have no choice but to let them leave the alliance. (for now)"));
-				//unmarks victim as being targeted
-				//clowder.enemy.targeted = false;
-				//unmarks victim as being the attacker's target
-				clowder.enemy = null;
-				clowder.enemyS = "nobody2584369";
-
-				//get back prestige revolt cost
-				//clowder.addPrestige(MainRegistry.fabricateCost*2, world);
-				//unbitches bitches
-				//clowder.bitch = false;
-				clowder.suzerain = null;
-				clowder.suzerainS = "nobody2584369";
-
-				//ClowderData.getData(world).markDirty();
-			}
-
-
-
-			//didnt declare war within the 10 minutes i mean 3 hours
-			if(clowder.valid() && clowder.getCanDeclareTime() <= 1.5 && (clowder.enemy)!=null && clowder.getWartime() <= 0 && clowder.getFabricatetime() <= 0 && clowder.enemy != clowder.suzerain)
-			{
-				//you missed the 10 minutes
-				//clowder.endDeclareTime(world);
-				//clowder.enemy.targeted = false;
-				clowder.vassalTarget = false;
-				clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + clowder.name + "'s war fabrication against us has expired!"));
-				//clowder.pussy(world);
-				clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "Too late! War fabrication has expired!"));
-				clowder.notifyAll(world, new ChatComponentText(CommandClowder.TITLE + "We also get most of our prestige back!"));
-				//clowder.addPrestige(MainRegistry.fabricateCost*0.9f, world);
-
-				//target is no longer enemy
-				clowder.enemy = null;
-				clowder.enemyS = "nobody2584369";
-			}
-
-
-
-			//war time ticker
-			if(clowder.valid() && clowder.getWartime() > 0 && (clowder.enemy)!=null) {
-
-				//float fabricateTime = clowder.getWartime();
-
-				//fabricateTime *= (float)Math.pow(0.99, clowder.getFabricatetime());
-
-				clowder.addWarTime(-1, world);
-
-				//during a revolt, if master pussies out, rebels get war score (timer going up to 1 hour means rebel victory)    also dont tick up if peace treaty so no 10 minute free conquest revolt timers from newly bitched
-				//if(clowder.enemy == clowder.suzerain && !clowder.enemy.isRaidable() && clowder.peaceTreaty <= 0)
-				//{
-				//	clowder.addWarTime(2, world);
-				//}
-
-
-
-
-
-
-
-
-				//ping everyone about war status every 5 minutes  nevermind glitches out if decimal minutes from casualties
-				/*
-				boolean isDivisibleBy5 = clowder.getWartime() % 5 == 0;
-
-				if (isDivisibleBy5)
-		        {
-					clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "War will last for about " + clowder.getWartime() + " more minutes!"));
-					clowder.notifyAll(world, new ChatComponentText(CommandClowder.TITLE + "War can be extended by using (WIP) but if we take casualties, it will end faster!"));
-					clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + clowder.name + "'s war against us will last for about " + clowder.getWartime() + " more minutes!"));
-					clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.TITLE + "War may be extended if " + clowder.name + " uses (WIP), but we can speed up the war by killing their members!"));
-		        }
-				*/
-			}
-
-			//can declare war time ticks down per minute
-			if(clowder.valid() && clowder.getCanDeclareTime() > 0 && clowder.enemy != null) {
-
-				//float canDeclareTime = clowder.getWartime();
-
-				//fabricateTime *= (float)Math.pow(0.99, clowder.getFabricatetime());
-				clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "Our officers have " + (int)(clowder.getCanDeclareTime()-1) + " minutes to officially declare war with /c declare!"));
-				clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + (clowder.name) + " can declare war against us for the next " + (int)(clowder.getCanDeclareTime()-1) + " minutes!"));
-				//suggest a preemptive strike
-				clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.TITLE + "We can start the war now with /c preemptive " + (clowder.name) ));
-				clowder.addCanDeclareTime(-1, world);
-			}
-
-
-
-
-		}
-	}
+//	public static void updateWars(World world) {
+//
+//		for(Clowder clowder : clowders) {
+//
+//			//actually nvm send the message every 3 minutes
+//			boolean isDivisibleBy5fab = clowder.getFabricatetime() % 5 == 0;
+//
+//
+//			//initialize memory again just to be safe every minute
+//			{
+//				//memory memes so i can save clowders as strings for enemy and suzerain shit
+//				if(clowder.suzerainS == "nobody2584369")
+//					clowder.suzerain = null;
+//				else
+//					clowder.suzerain = getClowderFromName(clowder.suzerainS);
+//
+//				if(clowder.enemyS == "nobody2584369")
+//					clowder.enemy = null;
+//				else
+//					clowder.enemy = getClowderFromName(clowder.enemyS);
+//			}
+//
+//			if(clowder.treaty1 == "")
+//			{
+//				clowder.treaty1 = "nobody2584369";
+//				clowder.treatyTime1 = 0;
+//			}
+//			if(clowder.treaty2 == "")
+//			{
+//				clowder.treaty2 = "nobody2584369";
+//				clowder.treatyTime2 = 0;
+//			}
+//			if(clowder.treaty3 == "")
+//			{
+//				clowder.treaty3 = "nobody2584369";
+//				clowder.treatyTime3 = 0;
+//			}
+//			if(clowder.treaty4 == "")
+//			{
+//				clowder.treaty4 = "nobody2584369";
+//				clowder.treatyTime4 = 0;
+//			}
+//			if(clowder.treaty5 == "")
+//			{
+//				clowder.treaty5 = "nobody2584369";
+//				clowder.treatyTime5 = 0;
+//			}
+//			if(clowder.treaty6 == "")
+//			{
+//				clowder.treaty6 = "nobody2584369";
+//				clowder.treatyTime6 = 0;
+//			}
+//			if(clowder.treaty7 == "")
+//			{
+//				clowder.treaty7 = "nobody2584369";
+//				clowder.treatyTime7 = 0;
+//			}
+//
+//
+//
+//			//end of initialize again
+//
+//
+//
+//
+//
+//			/*
+//			if(clowder.peaceTreaty > 60)
+//				clowder.peaceTreaty = 60;
+//				*/
+//
+//
+//			//poorly coded anti fabrication bullying treaty
+//			//timers
+//			if (clowder.treatyTime1 > 0)
+//				clowder.treatyTime1 --;
+//			if (clowder.treatyTime2 > 0)
+//				clowder.treatyTime2 --;
+//			if (clowder.treatyTime3 > 0)
+//				clowder.treatyTime3 --;
+//			if (clowder.treatyTime4 > 0)
+//				clowder.treatyTime4 --;
+//			if (clowder.treatyTime5 > 0)
+//				clowder.treatyTime5 --;
+//			if (clowder.treatyTime6 > 0)
+//				clowder.treatyTime6 --;
+//			if (clowder.treatyTime7 > 0)
+//				clowder.treatyTime7 --;
+//
+//			//if timer done, "null" the treaties
+//			if (clowder.treatyTime1 <= 1 && clowder.treaty1 != "nobody2584369")
+//				clowder.treaty1 = "nobody2584369";
+//			if (clowder.treatyTime2 <= 1 && clowder.treaty2 != "nobody2584369")
+//				clowder.treaty2 = "nobody2584369";
+//			if (clowder.treatyTime3 <= 1 && clowder.treaty3 != "nobody2584369")
+//				clowder.treaty3 = "nobody2584369";
+//			if (clowder.treatyTime4 <= 1 && clowder.treaty4 != "nobody2584369")
+//				clowder.treaty4 = "nobody2584369";
+//			if (clowder.treatyTime5 <= 1 && clowder.treaty5 != "nobody2584369")
+//				clowder.treaty5 = "nobody2584369";
+//			if (clowder.treatyTime6 <= 1 && clowder.treaty6 != "nobody2584369")
+//				clowder.treaty6 = "nobody2584369";
+//			if (clowder.treatyTime7 <= 1 && clowder.treaty7 != "nobody2584369")
+//				clowder.treaty7 = "nobody2584369";
+//
+//			clowder.save(world);
+//
+//
+//
+//			if(clowder.getFabricatetime() > -1 && (clowder.enemy)!=null && clowder.getWartime() <= 0 && clowder.getCanDeclareTime() <= 0 && clowder.enemy != clowder.suzerain)
+//			{
+//				//float fabricateTime = clowder.getFabricatetime();
+//
+//				//fabricateTime *= (float)Math.pow(0.99, clowder.getFabricatetime());
+//
+//				//spam message per minute during last 1 min
+//				if(clowder.getFabricatetime()<5 && clowder.getFabricatetime()>2 && clowder.getCanDeclareTime() == 0 && clowder.getWartime() == 0 && clowder.enemy != clowder.suzerain)
+//				{
+//					clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "War declaration will be ready in " + (int)(clowder.getFabricatetime()-2) + " minutes!"));
+//					clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + clowder.name + " will be able to attack us in " + (int)(clowder.getFabricatetime()-2) + " minute(s)!"));
+//				}
+//
+//
+//				clowder.addFabricateTime(-1, world);
+//			}
+//
+//			//for revolt waiting time
+//			if(clowder.getFabricatetime() > 0 && (clowder.enemy)!=null && clowder.getWartime() <= 0 && clowder.getCanDeclareTime() <= 0 && clowder.enemy == clowder.suzerain)
+//			{
+//				clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "If our oppressors don't strike back, we will be free in " + (int)(clowder.getFabricatetime()-1) + " minutes!"));
+//				clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.ERROR + clowder.name + " will break free from us in " + (int)(clowder.getFabricatetime()-1) + " minute(s)!"));
+//				clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + " Use /c suppress " + clowder.name + " to forcefully stop them! (Will start civil-war)"));
+//				clowder.addFabricateTime(-1, world);
+//			}
+//
+//
+//
+//
+//			//handling vassal notifications
+//
+//
+//
+//			if (isDivisibleBy5fab)
+//			{
+//				//fabricate timer countdown per minute
+//				if(clowder.valid())
+//				{
+//					if(clowder.getFabricatetime() > -1 && (clowder.enemy)!=null && clowder.getCanDeclareTime() == 0 && clowder.getWartime() == 0)
+//					{
+//						//float fabricateTime = clowder.getFabricatetime();
+//
+//						//fabricateTime *= (float)Math.pow(0.99, clowder.getFabricatetime());
+//
+//						//dont hsow the message if its a revolt
+//						if (clowder.enemy != clowder.suzerain)
+//							clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + clowder.name + " will be able to attack us in " + (int)(clowder.getFabricatetime()-1) + " minute(s)!"));
+//						//if there is enough time to retreat, also suggest retreat to victim. not for revolts
+//						if(clowder.getFabricatetime() > 10 && clowder.enemy != clowder.suzerain)
+//						{
+//							clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.TITLE + "Officers can use /c retreat to try to cancel this attack!"));
+//							clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.TITLE + "Retreating makes you the aggressor's bitch, so choose wisely!"));
+//						}
+//					}
+//				}
+//			}
+//
+//			//if(clowder.enemy == null)
+//			//{
+//			//	clowder.pussy(world);
+//			//}
+//
+//
+//
+//			//if fabricate time is 1 minute left be ready for war      added extra enemy null check to prevent random declarations ready generating for free
+//			if(clowder.valid() && clowder.getFabricatetime() > -1 && clowder.getFabricatetime() <= 1.5 && clowder.enemy != null && clowder.getCanDeclareTime() == 0 && clowder.getWartime() == 0)
+//			{
+//
+//				if(clowder.enemy != clowder.suzerain)
+//				{
+//					//10 minutes you can instantly start war and fabricate timer is set to 0, nvm changed to 3 hours per hungary suggestion
+//					clowder.endFabricateTime(world);
+//					clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "War declaration is ready! Officers can /c declare for the next 4 hours!"));
+//				}
+//				//for revolt fabrication time end sending unltimatum
+//				else if (clowder.enemy == clowder.suzerain && clowder.getFabricatetime()==0 && clowder.getWartime() == 0)
+//				{
+//					//rebels break free peacefully and win some prestige
+//					clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "Our former masters lacked the will to oppose us! We have peacefully broken free of their grasp!"));
+//					clowder.notifyAll(world, new ChatComponentText(CommandClowder.INFO + "We also get back some prestige!"));
+//					//clowder.addPrestige(MainRegistry.fabricateCost*1.75f, world);
+//					//former master suffers
+//					clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + clowder.name + " is no longer our vassal!"));
+//					clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.ERROR + "This shameful setback will cost us some prestige..."));
+//					//clowder.enemy.addPrestige(-MainRegistry.fabricateCost, world);
+//					clowder.breakFree(world);
+//
+//				}
+//
+//
+//			}
+//
+//			//when war timer ends
+//			if(clowder.valid() && clowder.getWartime() <= 1.5 && (clowder.enemy)!=null && clowder.getCanDeclareTime() == 0 && clowder.getFabricatetime() == 0)
+//			{
+//				if(clowder.enemy != clowder.suzerain)
+//				{
+//
+//					//end of war treaty
+//					if(clowder.treaty1 == "nobody2584369" && clowder.treaty1 != clowder.enemy.name)
+//					{
+//						clowder.treaty1 = clowder.enemy.name;
+//						clowder.treatyTime1 = 90;
+//						//System.out.println("it tried to treaty1 puppy");
+//					}
+//					else if(clowder.treaty2 == "nobody2584369" && clowder.treaty2 != clowder.enemy.name)
+//					{
+//						clowder.treaty2 = clowder.enemy.name;
+//						clowder.treatyTime2 = 90;
+//					}
+//					else if(clowder.treaty3 == "nobody2584369" && clowder.treaty3 != clowder.enemy.name)
+//					{
+//						clowder.treaty3 = clowder.enemy.name;
+//						clowder.treatyTime3 = 90;
+//					}
+//					else if(clowder.treaty4 == "nobody2584369" && clowder.treaty4 != clowder.enemy.name)
+//					{
+//						clowder.treaty4 = clowder.enemy.name;
+//						clowder.treatyTime4 = 90;
+//					}
+//					else if(clowder.treaty5 == "nobody2584369" && clowder.treaty5 != clowder.enemy.name)
+//					{
+//						clowder.treaty5 = clowder.enemy.name;
+//						clowder.treatyTime5 = 90;
+//					}
+//					else if(clowder.treaty6 == "nobody2584369" && clowder.treaty6 != clowder.enemy.name)
+//					{
+//						clowder.treaty6 = clowder.enemy.name;
+//						clowder.treatyTime6 = 90;
+//					}
+//					else if(clowder.treaty7 == "nobody2584369" && clowder.treaty7 != clowder.enemy.name)
+//					{
+//						clowder.treaty7 = clowder.enemy.name;
+//						clowder.treatyTime7 = 90;
+//					}
+//
+//
+//
+//
+//					//war ended
+//					clowder.endWarTime(world);
+//
+//
+//
+//					clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "The war period has ended! Pack it up boys!"));
+//					clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + clowder.enemy.name + " also gets a 1.5 hour grace period."));
+//					clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + clowder.name + "'s war against us has ended!"));
+//
+//					//unmarks being a vassal targeting war
+//					clowder.vassalTarget = false;
+//					//unmarks victim as being the attacker's target
+//					clowder.enemy = null;
+//					clowder.enemyS = "nobody2584369";
+//					if(clowder.suzerain != null)
+//					{
+//						clowder.suzerain.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "Our vassal, " + clowder.name + ", has finished their war!"));
+//					}
+//					//resets overtime
+//					clowder.overtime = false;
+//					//and reset bonus minutes
+//					clowder.bonusPoints = 0;
+//				}
+//				//for revolts
+//
+//			}
+//
+//			//if master loses a revolt (war score went up to 60 minutes
+//			if(clowder.valid() && clowder.getWartime() >= 60 && clowder.enemy == clowder.suzerain && clowder.getCanDeclareTime() == 0 && clowder.getFabricatetime() == 0)
+//			{
+//				clowder.endWarTime(world);
+//				clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "Our revolt has succeeded. We are now independent!"));
+//				clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "We also get back our prestige!"));
+//				clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + clowder.name + "'s revolt against us has cost us too much."));
+//				clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "We have no choice but to let them leave the alliance. (for now)"));
+//				//unmarks victim as being targeted
+//				//clowder.enemy.targeted = false;
+//				//unmarks victim as being the attacker's target
+//				clowder.enemy = null;
+//				clowder.enemyS = "nobody2584369";
+//
+//				//get back prestige revolt cost
+//				//clowder.addPrestige(MainRegistry.fabricateCost*2, world);
+//				//unbitches bitches
+//				//clowder.bitch = false;
+//				clowder.suzerain = null;
+//				clowder.suzerainS = "nobody2584369";
+//
+//				//ClowderData.getData(world).markDirty();
+//			}
+//
+//
+//
+//			//didnt declare war within the 10 minutes i mean 3 hours
+//			if(clowder.valid() && clowder.getCanDeclareTime() <= 1.5 && (clowder.enemy)!=null && clowder.getWartime() <= 0 && clowder.getFabricatetime() <= 0 && clowder.enemy != clowder.suzerain)
+//			{
+//				//you missed the 10 minutes
+//				//clowder.endDeclareTime(world);
+//				//clowder.enemy.targeted = false;
+//				clowder.vassalTarget = false;
+//				clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + clowder.name + "'s war fabrication against us has expired!"));
+//				//clowder.pussy(world);
+//				clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "Too late! War fabrication has expired!"));
+//				clowder.notifyAll(world, new ChatComponentText(CommandClowder.TITLE + "We also get most of our prestige back!"));
+//				//clowder.addPrestige(MainRegistry.fabricateCost*0.9f, world);
+//
+//				//target is no longer enemy
+//				clowder.enemy = null;
+//				clowder.enemyS = "nobody2584369";
+//			}
+//
+//
+//
+//			//war time ticker
+//			if(clowder.valid() && clowder.getWartime() > 0 && (clowder.enemy)!=null) {
+//
+//				//float fabricateTime = clowder.getWartime();
+//
+//				//fabricateTime *= (float)Math.pow(0.99, clowder.getFabricatetime());
+//
+//				clowder.addWarTime(-1, world);
+//
+//				//during a revolt, if master pussies out, rebels get war score (timer going up to 1 hour means rebel victory)    also dont tick up if peace treaty so no 10 minute free conquest revolt timers from newly bitched
+//				//if(clowder.enemy == clowder.suzerain && !clowder.enemy.isRaidable() && clowder.peaceTreaty <= 0)
+//				//{
+//				//	clowder.addWarTime(2, world);
+//				//}
+//
+//
+//
+//
+//
+//
+//
+//
+//				//ping everyone about war status every 5 minutes  nevermind glitches out if decimal minutes from casualties
+//				/*
+//				boolean isDivisibleBy5 = clowder.getWartime() % 5 == 0;
+//
+//				if (isDivisibleBy5)
+//		        {
+//					clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "War will last for about " + clowder.getWartime() + " more minutes!"));
+//					clowder.notifyAll(world, new ChatComponentText(CommandClowder.TITLE + "War can be extended by using (WIP) but if we take casualties, it will end faster!"));
+//					clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + clowder.name + "'s war against us will last for about " + clowder.getWartime() + " more minutes!"));
+//					clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.TITLE + "War may be extended if " + clowder.name + " uses (WIP), but we can speed up the war by killing their members!"));
+//		        }
+//				*/
+//			}
+//
+//			//can declare war time ticks down per minute
+//			if(clowder.valid() && clowder.getCanDeclareTime() > 0 && clowder.enemy != null) {
+//
+//				//float canDeclareTime = clowder.getWartime();
+//
+//				//fabricateTime *= (float)Math.pow(0.99, clowder.getFabricatetime());
+//				clowder.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "Our officers have " + (int)(clowder.getCanDeclareTime()-1) + " minutes to officially declare war with /c declare!"));
+//				clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + (clowder.name) + " can declare war against us for the next " + (int)(clowder.getCanDeclareTime()-1) + " minutes!"));
+//				//suggest a preemptive strike
+//				clowder.enemy.notifyAll(world, new ChatComponentText(CommandClowder.TITLE + "We can start the war now with /c preemptive " + (clowder.name) ));
+//				clowder.addCanDeclareTime(-1, world);
+//			}
+//
+//
+//
+//
+//		}
+//	}
+
+	//annoying and retarded
 
 	//for cancelling wars/fabrications
-	public void pussy(World world) {
-		fabricateTime = 0;
-		canDeclareTime = 0;
-		//if(enemy != null)
-		//	enemy.targeted = false;
-		enemy = null;
-		enemyS = "nobody2584369";
-		warTime = 0;
-		overtime = false;
-		bonusPoints = 0;
-		vassalTarget = false;
-		this.save(world);
+	//public void pussy(World world) {
+	//	fabricateTime = 0;
+	//	canDeclareTime = 0;
+	//	//if(enemy != null)
+	//	//	enemy.targeted = false;
+	//	enemy = null;
+	//	enemyS = "nobody2584369";
+	//	warTime = 0;
+	//	overtime = false;
+	//	bonusPoints = 0;
+	//	vassalTarget = false;
+	//	this.save(world);
+	//}
+
+	//YOU DONT GET TO DO THAT THIS IS A WAR SERVER
+
+	public Clowder split(String name, String[] players, World world) {
+
+		Clowder newClowder = new Clowder();
+
+		String newLeader = null;
+		boolean movedAnyone = false;
+
+		for (String p : players) {
+
+			if (!this.members.containsKey(p)) continue;
+
+			movedAnyone = true;
+
+			// Preserve officer status
+			boolean wasOfficer = this.officers.contains(p);
+
+			// Remove from old
+			this.members.remove(p);
+			this.officers.remove(p);
+
+			if (p.equals(this.leader)) {
+				this.leader = null;
+			}
+
+			// Add to new
+			newClowder.members.put(p, time());
+			inverseMap.put(p, newClowder);
+
+			if (wasOfficer) {
+				newClowder.officers.add(p);
+			}
+
+			if (newLeader == null) {
+				newLeader = p;
+			}
+		}
+
+		// 🚫 No valid players → cancel
+		if (!movedAnyone) {
+			return null;
+		}
+
+		// Set name (CRITICAL)
+		newClowder.name = name;
+
+		// Assign leader
+		newClowder.leader = newLeader;
+
+		// Fix old faction leader if needed
+		if (this.leader == null && !this.members.isEmpty()) {
+			this.leader = this.members.keySet().iterator().next();
+		}
+
+		// Stats (your choice)
+		newClowder.prestige = 0;
+		newClowder.prestigeGen = 0;
+
+		// Register
+		clowders.add(newClowder);
+
+		// Notify
+		this.notifyAll(world, new ChatComponentText(
+				CommandClowder.TITLE + "A new faction " + name + " has split off!"
+		));
+
+		newClowder.notifyAll(world, new ChatComponentText(
+				CommandClowder.TITLE + "You are now part of " + name + "!"
+		));
+
+		ClowderData.getData(world).markDirty();
+
+		return newClowder;
 	}
 
 	//memory memes initialize memory shit for labjac poorly coded stuff
@@ -668,71 +748,6 @@ public class Clowder {
 
 			notifyAll(world, new ChatComponentText(EnumChatFormatting.RED + "Your closest warp is " + closest + " (" + ((int)dist) + "m)"));
 		}
-	}
-
-	public void addWarTime(float f, World world) {
-		warTime += f;
-
-		if(warTime < 0)
-			warTime = 0F;
-
-		this.save(world);
-	}
-
-	public void addFabricateTime(float f, World world) {
-		fabricateTime += f;
-
-		if(fabricateTime < 0)
-			fabricateTime = 0F;
-
-		this.save(world);
-	}
-
-	public void addCanDeclareTime(float f, World world) {
-		canDeclareTime += f;
-
-		if(canDeclareTime < 0)
-			canDeclareTime = 0F;
-
-		this.save(world);
-	}
-
-	//fabrication time ends, you get 10 minutes to declare war, nvm buffed to 4 hours so this period acts as a human temp-ban
-	public void endFabricateTime(World world) {
-		fabricateTime = 0;
-		canDeclareTime = 241;
-
-		this.save(world);
-	}
-
-
-	//void for vassal freedom
-	public void breakFree(World world) {
-		fabricateTime = 0;
-		enemy = null;
-		enemyS = "nobody2584369";
-		suzerainS = "nobody2584369";
-		suzerain = null;
-		warTime = 0;
-
-
-
-		this.save(world);
-	}
-
-	//declaration time ends, you missed the 10 minutes pussy
-	public void endDeclareTime(World world) {
-		fabricateTime = 0;
-		canDeclareTime = 0;
-
-		this.save(world);
-	}
-
-	//war time ends
-	public void endWarTime(World world) {
-		warTime = 0;
-
-		this.save(world);
 	}
 
 
@@ -1058,6 +1073,84 @@ public class Clowder {
 		return this.leader.equals(key);
 	}
 
+	public void mergeWith(Clowder target, World world) {
+
+		if (target == null || target == this) return;
+
+		// Cancel any active war/fabrication to avoid weird state carryover
+		//this.pussy(world);
+		//not used crap from shitty labjac code
+
+		// 1. Transfer members (CRITICAL: fix inverseMap)
+		for (String member : this.members.keySet()) {
+			target.members.put(member, time());
+			inverseMap.put(member, target);
+		}
+
+		// 2. Transfer officers
+		for (String officer : this.officers) {
+			target.officers.add(officer);
+		}
+
+		// 3. Move leader → officer in target
+		if (this.leader != null && !this.leader.isEmpty()) {
+			target.members.put(this.leader, time());
+			target.officers.add(this.leader);
+			inverseMap.put(this.leader, target);
+		}
+
+		// 4. Merge warps (avoid overwriting)
+		for (String warp : this.warps.keySet()) {
+			if (!target.warps.containsKey(warp)) {
+				target.warps.put(warp, this.warps.get(warp));
+			} else {
+				target.warps.put(warp + "_m", this.warps.get(warp));
+			}
+		}
+
+		// 5. Merge allies (simple add, no duplicates)
+		for (Clowder ally : this.allies.keySet()) {
+			if (ally != target) {
+				target.allies.put(ally, time());
+				target.alliesS.put(ally.name, time());
+			}
+		}
+
+		// 6. Fix OTHER clowders that reference this one as ally
+		for (Clowder c : clowders) {
+			if (c.allies.containsKey(this)) {
+				c.allies.remove(this);
+				c.allies.put(target, time());
+				c.alliesS.remove(this.name);
+				c.alliesS.put(target.name, time());
+			}
+
+			// also fix enemy references
+			if (c.enemy == this) {
+				c.enemy = target;
+				c.enemyS = target.name;
+			}
+		}
+
+		// 7. Merge stats
+		target.addPrestige(this.prestige, world);
+		target.addPrestigeGen(this.prestigeGen, world);
+
+		// 8. Notify both sides
+		target.notifyAll(world, new ChatComponentText(
+				CommandClowder.TITLE + this.name + " merged into " + target.name + "!"
+		));
+		this.notifyAll(world, new ChatComponentText(
+				CommandClowder.TITLE + "Your faction has merged into " + target.name + "!"
+		));
+
+		// 9. Delete this clowder
+		this.disbandClowder(world);
+
+		// 10. Save
+		ClowderData.getData(world).markDirty();
+	}
+
 	public boolean disbandClowder(EntityPlayer player) {
 
 		if (!isOwner(player))
@@ -1071,6 +1164,8 @@ public class Clowder {
 
 		return true;
 	}
+
+
 
 	public boolean disbandClowder(World world) {
 

@@ -168,6 +168,16 @@ public class CommandClowder extends CommandBase {
 		//	return;
 		//}
 
+		if(cmd.equals("merge")) {
+			cmdMerge(sender, args[1]);
+			return;
+		}
+
+		if(cmd.equals("acceptmerge")) {
+			acceptMerge(sender, args[1]);
+			return;
+		}
+
 		if(cmd.equals("comrades")) {
 			cmdComrades(sender);
 			return;
@@ -498,6 +508,119 @@ public class CommandClowder extends CommandBase {
 
 			} else {
 				sender.addChatMessage(new ChatComponentText(ERROR + "Confirmation unsuccessful. Please enter the faction name to disband the faction."));
+			}
+
+		} else {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
+		}
+	}
+
+	private void acceptMerge(ICommandSender sender, String name) {
+
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder clowder = Clowder.getClowderFromPlayer(player); // receiver
+		Clowder target = Clowder.getClowderFromName(name);      // requester
+
+		if (clowder != null) {
+
+			if (target != null) {
+
+				if (clowder.potentialMerges.containsKey(target)) {
+
+					// CORRECT direction: requester gets absorbed
+					target.mergeWith(clowder, player.worldObj);
+
+					clowder.potentialMerges.remove(target);
+
+					sender.addChatMessage(new ChatComponentText(
+							TITLE + "Successfully merged " + target.name + " into your faction!"
+					));
+
+				} else {
+					sender.addChatMessage(new ChatComponentText(
+							ERROR + "There is no pending merge request from this faction!"
+					));
+				}
+
+			} else {
+				sender.addChatMessage(new ChatComponentText(
+						ERROR + "There is no faction with this name!"
+				));
+			}
+
+		} else {
+			sender.addChatMessage(new ChatComponentText(
+					ERROR + "You are not in any faction!"
+			));
+		}
+	}
+
+	private void cmdMerge(ICommandSender sender, String name) {
+
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder clowder = Clowder.getClowderFromPlayer(player);
+		Clowder target = Clowder.getClowderFromName(name);
+
+		if(clowder != null) {
+
+			if(target != null) {
+				//OFFICER+ BEHAVIOR
+				if(clowder.getPermLevel(player.getDisplayName()) > 1 ) {
+
+
+
+
+					if(clowder != target) {
+
+						sender.addChatMessage(new ChatComponentText("Sent merge request to " + target.name + "!"));
+						target.potentialMerges.put(clowder, System.currentTimeMillis());
+
+						//DO NOT DO THAT OP ONLY IF AT ALL
+						//clowder.mergeWith(target, player.worldObj);
+						//sender.addChatMessage(new ChatComponentText(TITLE + "Successfully merged with " + target.name + "!"));
+
+					} else {
+						sender.addChatMessage(new ChatComponentText(ERROR + "You cannot merge with your own faction!"));
+					}
+
+				} else {
+					//non OFFICER+ BEHAVIOR
+					sender.addChatMessage(new ChatComponentText(ERROR + "You do not have permission to merge the faction!"));
+				}
+
+			} else {
+				sender.addChatMessage(new ChatComponentText(ERROR + "There is no faction with this name!"));
+			}
+
+		} else {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
+		}
+	}
+
+	//alright, that looks like it SHOULD work,
+	// now we need a balkanization/split command that allows a faction to split into two factions,
+	// with the original faction keeping its name and the new faction getting a new name.
+	// The command would be something like /c split <new faction name> <player1> <player2> ... <playerN>, where the players listed are the ones that will be moved to the new faction. The command would only be usable by the faction owner or officers, and it would require confirmation from the owner to prevent accidental splits. The new faction would start with the same territory as the original faction, and the players that were moved would lose access to the original faction's territory and gain access to the new faction's territory. This would allow for more dynamic faction management and give players more options for how they want to organize themselves within the game.
+
+	private void cmdSplit(ICommandSender sender, String name, String[] players) {
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder clowder = Clowder.getClowderFromPlayer(player);
+
+		if(clowder != null) {
+
+			//officers and above can split factions and invite players in the current faction into the new faction using a different command
+			if(clowder.getPermLevel(player.getDisplayName()) > 1) {
+
+				if(Clowder.getClowderFromName(name) == null) {
+					Clowder newClowder = clowder.split(name, players, player.worldObj);
+					sender.addChatMessage(new ChatComponentText(TITLE + "Successfully split into new faction " + name + "!"));
+					sender.addChatMessage(new ChatComponentText(INFO + "The following players were moved to the new faction: " + String.join(", ", players)));
+				} else {
+					sender.addChatMessage(new ChatComponentText(ERROR + "There is already a faction with this name!"));
+				}
+
+			} else {
+				sender.addChatMessage(new ChatComponentText(ERROR + "You do not have permission to split the faction!"));
 			}
 
 		} else {
