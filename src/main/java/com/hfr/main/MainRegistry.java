@@ -392,7 +392,8 @@ public class MainRegistry
 		sub.put(regexify("goddamn"), "goshdarn");
 		sub.put(regexify("damn"), "darn");
 		sub.put(regexify("asshole"), "poohole");
-		sub.put(regexify("jew"), "יהודי");
+		//sub.put(regexify("jew"), "יהודי");
+		//the overton window shifted so this is like acceptable or something idk I mean it can just be a general term too so it's not derog
 		sub.put(regexify("kike"), "יהודי");
 		sub.put(regexify("kys"), "stop");
 		sub.put(regexify("kill yourself"), "reconsider your life choices");
@@ -404,7 +405,7 @@ public class MainRegistry
 		sub.put(regexify("negro"), "melanine man");
 		sub.put(regexify("negroid"), "african-like");
 		sub.put(regexify("groid"), "OWO :3 haiiiii you like boys don't you :3");
-		//sub.put(regexify("coon"), "overweight");
+		sub.put(regexify(" coon "), "overweight");
 		//weirdly just decides to like replace unrelated shit
 		sub.put(regexify("penis"), "junk");
 		//sub.put(regexify("twat"), "天安门广场大屠杀");
@@ -431,6 +432,7 @@ public class MainRegistry
 		sub.put(regexify("soylent"), "chad sauce");
 		sub.put(regexify("xenobyte"), "I'm a furry uwu");
 		sub.put(regexify("xradar"), "xenofactions");
+		//the psyop is working
 		sub.put(regexify("blackie"), "YES KING");
 		sub.put(regexify("cotton picker"), "I'm from rust");
 		sub.put(regexify("jiggabo"), "OWO maxxing rn");
@@ -445,7 +447,7 @@ public class MainRegistry
 		sub.put(regexify("nog"), "I'm a furry x333");
 		sub.put(regexify("shitskin"), "What in the whiskers?! :3");
 		sub.put(regexify("spade"), "What the actual fur?! OWO :3");
-		sub.put(regexify("spook"), "OmO Pawsitively ridiculous! :3");
+		sub.put(regexify("spook "), "OmO Pawsitively ridiculous! :3");
 		sub.put(regexify("tar baby"), "Fuzz nuggets! :33");
 		sub.put(regexify("my bad gang"), "Fluff me sideways!");
 		sub.put(regexify("mb gng"), "Fluff me sideways!");
@@ -455,12 +457,12 @@ public class MainRegistry
 		sub.put(regexify("pajeet"), "Fwend :33");
 		sub.put(regexify("gang gang"), "guys how do I clean my fursuits ><");
 		sub.put(regexify("raghead"), "Yiff maxxing rn x3 UwU");
-		sub.put(regexify("buck"), "you like boyys dont you x333");
+		sub.put(regexify("buck "), "you like boyys dont you x333");
 		sub.put(regexify("cracka"), "Fur-tastic! :3");
 		sub.put(regexify("trenbolone acetate"), "turkesteron and go2 max");
-		sub.put(regexify("`1989`"), "please respect our chinese partners uwu");
+		//sub.put(regexify("`1989`"), "please respect our chinese partners uwu");
 		sub.put(regexify("tiannamen square massacre"), "never happened");
-		sub.put(regexify("`mao`"), "mandela");
+		sub.put(regexify(" mao "), "mandela");
 		sub.put(regexify("hotdog"), "please respect our north korean partners");
 		sub.put(regexify("janny"), "terrorist");
 		sub.put(regexify("jannie"), "terrorist");
@@ -473,7 +475,8 @@ public class MainRegistry
 		sub.put(regexify("trannyfag"), "furry");
 		sub.put(regexify("trannyfaggot"), "furry");
 		sub.put(regexify("intcraft"), "bad serb");
-		sub.put(regexify("tap"), "turkish coding");
+		//this '' doesn't actually work
+		sub.put(regexify(" tap "), "turkish coding");
 		sub.put(regexify("tyrants and plebians"), "turkish coding");
 		sub.put(regexify("monorisu"), "turkish coding");
 		sub.put(regexify("mono"), "turkish coding");
@@ -483,19 +486,64 @@ public class MainRegistry
 		sub.put(regexify("dr nostalgia"), "fat bronie");
 		sub.put(regexify("drnostalgia"), "fat bronie");
 		sub.put(regexify("hbm"), "hated by many");
-		sub.put(regexify("duck"), "annoying redditor talk");
+		sub.put(regexify("duck "), "annoying redditor talk");
 		sub.put(regexify("chungus"), "annoying redditor talk");
 		sub.put(regexify("wholesome"), "annoying redditor talk");
 		sub.put(regexify("job"), "pawj*b");
-		//sub.put(regexify("j o b"), "pawj*b");
-		//already does
 		sub.put(regexify("fuck dog"), "I have a bestiality fetish and I can't stop projecting");
-		sub.put(regexify("vic"), "model stealer");
+		sub.put(regexify(" vic "), "model stealer");
 		sub.put(regexify("vic's modern warfare"), "complete garbage");
-		sub.put(regexify("event"), "iteration");
+		sub.put(regexify("event "), "iteration");
 		sub.put(regexify("skibidi"), "iq reduction");
 		sub.put(regexify("minors"), "./ban @whoeversaid this :3");
-		sub.put(regexify("'cp'"), "./ban @whoeversaid this :3");
+		//sub.put(regexify("'cp'"), "./ban @whoeversaid this :3");
+		//I'm gonna be honest, airpiglet should just be banned.
+		sub.put(regexify("children"), "I'm epstein");
+		sub.put(regexify("kid "), "I'm epstein");
+		sub.put(regexify(" kids "), "I'm epstein");
+		sub.put(regexify("f4g"), "I'm in the closet");
+		sub.put(regexify("trçnny"), "Obsessed");
+		sub.put(regexify("kafir"), "Hey man that's like not nice or something");
+		sub.put(regexify("hitler"), "coal mines");
+		sub.put(regexify("piggie"), "large person");
+		sub.put(regexify("code"), "I'm probably crying about something");
+		sub.put(regexify("unmute "), "I'm definitely crying about something");
+		sub.put(regexify("goy"), "clueless");
+		sub.put(regexify("flans"), "-4 tps");
+		//sub.put(regexify("mute "), "I'm probably bitching about something");
+		//will conflict with /c mute...?
+		sub.put(regexify("rping"), "9000th chat filter bypass");
+		sub.put(regexify("white power"), "I'm probably american and fat");
+		sub.put(regexify("aryan"), "indian");
+		sub.put(regexify("ngger"), "african american");
+		sub.put(regexify("ngr"), "african american");
+		//sub.put(regexify("server"), "I'm complaining");
+		//possibly
+		sub.put(regexify("nig "), "african american");
+		sub.put(regexify("tr@ns"), "yiff enjoyer");
+		sub.put(regexify("slave"), "helper");
+		sub.put(regexify("n¡gger"), "african american");
+		sub.put(regexify("rapist"), "someone who really likes rap music");
+		sub.put(regexify("chatgpt"), "I can't code");
+		sub.put(regexify("hoi4"), "not this server");
+		sub.put(regexify("gaped"), "I am strange");
+		sub.put(regexify("gaping"), "I am very strange");
+		sub.put(regexify("jeet"), "indian");
+		sub.put(regexify("impregnation"), "why am I talking about this on a minecraft server");
+		sub.put(regexify("doxxed"), "I want my ip leaked");
+		sub.put(regexify("kigger"), "african american");
+		sub.put(regexify("klu klux"), "I'm a furry");
+		sub.put(regexify("ai code"), "I can't code");
+		sub.put(regexify("negar"), "african american");
+		sub.put(regexify("ngger"), "african american");
+		sub.put(regexify("doxxbin"), "I'm furry");
+		sub.put(regexify("doxbin"), "I'm furry");
+		sub.put(regexify("neegar"), "I'm furry");
+		sub.put(regexify("peepee"), "I have a problem");
+		sub.put(regexify("little girls"), "I'm epstein");
+		sub.put(regexify("breed you"), "I'm furry");
+		sub.put(regexify("white rights"), "I'm furry");
+		sub.put(regexify("azov"), "larp");
 
 
 

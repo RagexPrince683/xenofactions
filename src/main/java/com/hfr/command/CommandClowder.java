@@ -564,8 +564,8 @@ public class CommandClowder extends CommandBase {
 		if(clowder != null) {
 
 			if(target != null) {
-				//OFFICER+ BEHAVIOR
-				if(clowder.getPermLevel(player.getDisplayName()) > 1 ) {
+				//ONLY LEADERS CAN MERGE
+				if(clowder.getPermLevel(player.getDisplayName()) > 2 ) {
 
 
 
@@ -574,8 +574,10 @@ public class CommandClowder extends CommandBase {
 
 						sender.addChatMessage(new ChatComponentText("Sent merge request to " + target.name + "!"));
 						target.potentialMerges.put(clowder, System.currentTimeMillis());
+						//ADD A CHAT MESSAGE TO THE TARGET FACTION TELLING THEM THAT THEY HAVE A MERGE REQUEST PENDING, AND HOW TO ACCEPT IT. MAYBE ALSO ADD A TIME LIMIT ON THE MERGE REQUEST? LIKE 5 MINUTES OR SOMETHING? AFTER THAT THE REQUEST EXPIRES AND THEY HAVE TO SEND A NEW ONE IF THEY STILL WANT TO MERGE.
+						target.notifyLeader(player.worldObj, new ChatComponentText(INFO + sender.getCommandSenderName() + " of " + clowder.name + " has sent a merge request! Use /c acceptmerge or /c denymerge"));
 
-						//DO NOT DO THAT OP ONLY IF AT ALL
+						//DO NOT DO THAT, OP ONLY, IF AT ALL
 						//clowder.mergeWith(target, player.worldObj);
 						//sender.addChatMessage(new ChatComponentText(TITLE + "Successfully merged with " + target.name + "!"));
 
