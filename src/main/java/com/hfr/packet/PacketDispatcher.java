@@ -71,6 +71,8 @@ public class PacketDispatcher {
 		wrapper.registerMessage(ReseatRequestPacket.Handler.class, ReseatRequestPacket.class, i++, Side.SERVER);
 
 		wrapper.registerMessage(PacketAddImage.Handler.class, PacketAddImage.class, i++, Side.SERVER);
+		wrapper.registerMessage(TDMKitGuiPacket.Handler.class, TDMKitGuiPacket.class, i++, Side.CLIENT);
+		wrapper.registerMessage(TDMKitSelectPacket.Handler.class, TDMKitSelectPacket.class, i++, Side.SERVER);
 
 	}
 	

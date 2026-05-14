@@ -32,6 +32,8 @@ public class TDMHandler {
         if (event.phase != TickEvent.Phase.END) return;
         if (event.player.worldObj.isRemote) return;
 
+        TDMManager.tickKitSelection(event.player);
+
         String playerName = getKey(event.player);
         Integer ticksLeft = pendingRespawns.get(playerName);
         if (ticksLeft == null) return;
@@ -41,8 +43,12 @@ public class TDMHandler {
             return;
         }
 
-        if (TDMManager.respawnPlayer(event.player, random) || ticksLeft <= 1) {
+        if (TDMManager.respawnPlayer(event.player, random)) {
             pendingRespawns.remove(playerName);
+            TDMManager.promptForKit(event.player);
+        } else if (ticksLeft <= 1) {
+            pendingRespawns.remove(playerName);
+            TDMManager.promptForKit(event.player);
         } else {
             pendingRespawns.put(playerName, ticksLeft - 1);
         }
