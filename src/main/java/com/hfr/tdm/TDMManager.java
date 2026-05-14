@@ -12,7 +12,9 @@ import net.minecraft.world.World;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -43,6 +45,15 @@ public class TDMManager {
             }
 
             return null;
+        }
+    }
+
+    public static class TDMMap {
+        public final String name;
+        public final List<SpawnPoint> spawns = new ArrayList<SpawnPoint>();
+
+        public TDMMap(String name) {
+            this.name = normalizeMapName(name);
         }
     }
 
@@ -97,6 +108,180 @@ public class TDMManager {
         TDMData data = TDMData.get(world);
         data.autoBalanceEnabled = enabled;
         data.markDirty();
+    }
+
+
+    public static boolean createMap(World world, String mapName) {
+        String normalized = normalizeMapName(mapName);
+        if (normalized.length() == 0) {
+            return false;
+        }
+
+        TDMData data = TDMData.get(world);
+        if (data.maps.containsKey(normalized)) {
+            return false;
+        }
+
+        data.maps.put(normalized, new TDMMap(normalized));
+        if (data.selectedMap.length() == 0) {
+            data.selectedMap = normalized;
+        }
+        data.markDirty();
+        return true;
+    }
+
+    public static boolean deleteMap(World world, String mapName) {
+        String normalized = normalizeMapName(mapName);
+        TDMData data = TDMData.get(world);
+        if (data.maps.remove(normalized) == null) {
+            return false;
+        }
+
+        if (data.selectedMap.equals(normalized)) {
+            data.selectedMap = "";
+        }
+
+        List<String> playersToClear = new ArrayList<String>();
+        for (Map.Entry<String, String> entry : data.mapVotes.entrySet()) {
+            if (entry.getValue().equals(normalized)) {
+                playersToClear.add(entry.getKey());
+            }
+        }
+        for (String player : playersToClear) {
+            data.mapVotes.remove(player);
+        }
+
+        data.markDirty();
+        return true;
+    }
+
+    public static boolean selectMap(World world, String mapName) {
+        String normalized = normalizeMapName(mapName);
+        TDMData data = TDMData.get(world);
+        if (!data.maps.containsKey(normalized)) {
+            return false;
+        }
+
+        data.selectedMap = normalized;
+        data.markDirty();
+        return true;
+    }
+
+    public static String getSelectedMap(World world) {
+        return TDMData.get(world).selectedMap;
+    }
+
+    public static boolean hasMap(World world, String mapName) {
+        return TDMData.get(world).maps.containsKey(normalizeMapName(mapName));
+    }
+
+    public static List<String> getMapNames(World world) {
+        return new ArrayList<String>(TDMData.get(world).maps.keySet());
+    }
+
+    public static void addMapSpawn(World world, String mapName, Team team, int dim, int x, int y, int z) {
+        TDMData data = TDMData.get(world);
+        String normalized = normalizeMapName(mapName);
+        TDMMap map = data.maps.get(normalized);
+        if (map == null) {
+            map = new TDMMap(normalized);
+            data.maps.put(normalized, map);
+        }
+
+        map.spawns.add(new SpawnPoint(team, dim, x, y, z));
+        if (data.selectedMap.length() == 0) {
+            data.selectedMap = normalized;
+        }
+        data.markDirty();
+    }
+
+    public static boolean clearMapSpawns(World world, String mapName) {
+        TDMMap map = TDMData.get(world).maps.get(normalizeMapName(mapName));
+        if (map == null) {
+            return false;
+        }
+
+        map.spawns.clear();
+        TDMData.get(world).markDirty();
+        return true;
+    }
+
+    public static int getMapSpawnCount(World world, String mapName) {
+        TDMMap map = TDMData.get(world).maps.get(normalizeMapName(mapName));
+        return map == null ? 0 : map.spawns.size();
+    }
+
+    public static int getMapSpawnCount(World world, String mapName, Team team) {
+        TDMMap map = TDMData.get(world).maps.get(normalizeMapName(mapName));
+        if (map == null) {
+            return 0;
+        }
+
+        int count = 0;
+        for (SpawnPoint spawn : map.spawns) {
+            if (spawn.team == team) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public static String voteForMap(World world, String playerName, String mapName) {
+        String normalized = normalizeMapName(mapName);
+        TDMData data = TDMData.get(world);
+        if (!data.enabled || !data.maps.containsKey(normalized)) {
+            return null;
+        }
+
+        data.mapVotes.put(playerName.toLowerCase(), normalized);
+        String winner = getWinningMap(data);
+        if (winner != null && !winner.equals(data.selectedMap)) {
+            data.selectedMap = winner;
+        }
+        data.markDirty();
+        return data.selectedMap;
+    }
+
+    public static Map<String, Integer> getVoteCounts(World world) {
+        TDMData data = TDMData.get(world);
+        Map<String, Integer> counts = new LinkedHashMap<String, Integer>();
+        for (String mapName : data.maps.keySet()) {
+            counts.put(mapName, Integer.valueOf(0));
+        }
+        for (String mapName : data.mapVotes.values()) {
+            if (counts.containsKey(mapName)) {
+                counts.put(mapName, Integer.valueOf(counts.get(mapName).intValue() + 1));
+            }
+        }
+        return counts;
+    }
+
+    private static String getWinningMap(TDMData data) {
+        String winner = null;
+        int winnerVotes = -1;
+        Map<String, Integer> counts = new LinkedHashMap<String, Integer>();
+        for (String mapName : data.maps.keySet()) {
+            counts.put(mapName, Integer.valueOf(0));
+        }
+        for (String mapName : data.mapVotes.values()) {
+            if (counts.containsKey(mapName)) {
+                counts.put(mapName, Integer.valueOf(counts.get(mapName).intValue() + 1));
+            }
+        }
+        for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+            if (entry.getValue().intValue() > winnerVotes) {
+                winner = entry.getKey();
+                winnerVotes = entry.getValue().intValue();
+            }
+        }
+        return winner;
+    }
+
+    public static String normalizeMapName(String mapName) {
+        if (mapName == null) {
+            return "";
+        }
+        return mapName.trim().toLowerCase();
     }
 
     public static void addSpawn(World world, Team team, int dim, int x, int y, int z) {
@@ -344,11 +529,16 @@ public class TDMManager {
     }
 
     public static SpawnPoint getRandomSpawn(World world, Team team, Random rand) {
+        TDMData data = TDMData.get(world);
         List<SpawnPoint> valid = new ArrayList<SpawnPoint>();
-        for (SpawnPoint spawn : TDMData.get(world).spawns) {
-            if (spawn.team == team && spawn.dim == world.provider.dimensionId) {
-                valid.add(spawn);
-            }
+        TDMMap selected = data.maps.get(data.selectedMap);
+
+        if (selected != null) {
+            addValidSpawns(valid, selected.spawns, team, world.provider.dimensionId);
+        }
+
+        if (valid.isEmpty()) {
+            addValidSpawns(valid, data.spawns, team, world.provider.dimensionId);
         }
 
         if (valid.isEmpty()) {
@@ -356,5 +546,13 @@ public class TDMManager {
         }
 
         return valid.get(rand.nextInt(valid.size()));
+    }
+
+    private static void addValidSpawns(List<SpawnPoint> valid, List<SpawnPoint> spawns, Team team, int dim) {
+        for (SpawnPoint spawn : spawns) {
+            if (spawn.team == team && spawn.dim == dim) {
+                valid.add(spawn);
+            }
+        }
     }
 }
