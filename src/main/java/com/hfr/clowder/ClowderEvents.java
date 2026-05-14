@@ -2,6 +2,7 @@ package com.hfr.clowder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 import com.hbm.extprop.HbmLivingProps;
@@ -27,6 +28,7 @@ import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.effect.ClowderBorderPacket;
 import com.hfr.packet.effect.ClowderFlagPacket;
 import com.hfr.packet.effect.CumPacket;
+import com.hfr.tdm.TDMManager;
 import com.hfr.tileentity.prop.TileEntityProp;
 import com.hfr.tileentity.prop.TileEntityStatue;
 import cpw.mods.fml.common.eventhandler.EventPriority;
@@ -63,6 +65,7 @@ import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.Action;
 import net.minecraftforge.event.world.BlockEvent;
@@ -1198,5 +1201,24 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 			
 		} catch(NullPointerException ex) { }
 	}
+	@SubscribeEvent
+	public void onPlayerClone(PlayerEvent.Clone event) {
 
+		if (!TDMManager.tdmEnabled) return;
+		if (!event.wasDeath) return;
+
+		EntityPlayer oldPlayer = event.original;
+		EntityPlayer newPlayer = event.entityPlayer;
+
+		TDMManager.SpawnPoint spawn = TDMManager.getRandomSpawn(newPlayer.worldObj, new Random());
+		if (spawn == null) return;
+
+		newPlayer.setPositionAndUpdate(
+				spawn.x + 0.5,
+				spawn.y,
+				spawn.z + 0.5
+		);
+
+		newPlayer.dimension = spawn.dim;
+	}
 }

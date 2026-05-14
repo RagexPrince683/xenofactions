@@ -65,6 +65,7 @@ import com.hfr.lib.*;
 import com.hfr.packet.*;
 import com.hfr.potion.HFRPotion;
 import com.hfr.schematic.*;
+import com.hfr.tdm.*;
 import com.hfr.tileentity.*;
 import com.hfr.tileentity.clowder.*;
 import com.hfr.tileentity.machine.*;
@@ -370,6 +371,8 @@ public class MainRegistry
 		FluidHandler.init();
 		HFRPotion.init();
 		MainRegistry.loadCustomDrops();
+		TDMManager.init();
+		MinecraftForge.EVENT_BUS.register(new TDMHandler());
 
 
 		//todone: make chat filter apply to faction names so we don't have edgelords putting swastikas and shit in their fac names
@@ -785,6 +788,7 @@ public class MainRegistry
 		event.registerServerCommand(new CommandXFlags());
 		event.registerServerCommand(new CommandXMulti());
 		event.registerServerCommand(new CommandInvSee());
+		event.registerServerCommand(new CommandTDM());
 		MarketData.loadMarketData();
 
 		//and now we just pray that the market data does not cope over serverside
