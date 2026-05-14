@@ -2,7 +2,9 @@ package com.hfr.main;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -15,6 +17,7 @@ import com.hfr.command.IgnoreManager;
 import com.hfr.command.Mute;
 import com.hfr.command.MuteManager;
 import com.hfr.data.AntiMobData;
+import com.hfr.data.OutOfBoundsData;
 import com.hfr.data.CBTData;
 import com.hfr.data.ResourceData;
 import com.hfr.data.CBTData.CBTEntry;
@@ -662,6 +665,7 @@ public class CommonEventHandler {
 	}
 
 	int timer = 0;
+	private final Map<String, Integer> outOfBoundsTimers = new HashMap<String, Integer>();
 	
 	//handles the anti-mob wand
 
@@ -674,6 +678,7 @@ public class CommonEventHandler {
 		if (event.phase != Phase.START) return;      // run once per tick (start)
 
 		World world = event.world;
+		handleOutOfBoundsRegions(world);
 
 		// --------------------
 		// World-border logic
@@ -746,6 +751,54 @@ public class CommonEventHandler {
 			
 			/// AUTOMATA ///
 			ExplosionController.automaton(world);
+		}
+	}
+
+	private void handleOutOfBoundsRegions(World world) {
+		if (OutOfBoundsData.getRegions(world).isEmpty()) {
+			outOfBoundsTimers.clear();
+			return;
+		}
+
+		List<EntityPlayerMP> players = new ArrayList<EntityPlayerMP>();
+		for (Object object : world.playerEntities) {
+			if (object instanceof EntityPlayerMP) {
+				players.add((EntityPlayerMP) object);
+			}
+		}
+
+		for (EntityPlayerMP player : players) {
+			String key = player.getCommandSenderName().toLowerCase();
+			boolean outOfBounds = OutOfBoundsData.isOutOfBounds(
+					world,
+					player.dimension,
+					MathHelper.floor_double(player.posX),
+					MathHelper.floor_double(player.posZ)
+			);
+
+			if (!outOfBounds) {
+				if (outOfBoundsTimers.remove(key) != null) {
+					player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.GREEN + "You returned in bounds."));
+				}
+				continue;
+			}
+
+			Integer ticksLeft = outOfBoundsTimers.get(key);
+			if (ticksLeft == null) {
+				ticksLeft = Integer.valueOf(10 * 20);
+				player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "You are out of bounds! Return within 10 seconds or you will die."));
+			}
+
+			int nextTicksLeft = ticksLeft.intValue() - 1;
+			if (nextTicksLeft <= 0) {
+				player.attackEntityFrom(DamageSource.outOfWorld, Float.MAX_VALUE);
+				outOfBoundsTimers.remove(key);
+			} else {
+				outOfBoundsTimers.put(key, Integer.valueOf(nextTicksLeft));
+				if (nextTicksLeft % 100 == 0) {
+					player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "Out of bounds: " + (nextTicksLeft / 20) + " seconds to return."));
+				}
+			}
 		}
 	}
 

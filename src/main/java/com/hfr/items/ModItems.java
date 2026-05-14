@@ -181,6 +181,7 @@ public class ModItems {
 
 	public static Item hammer;
 	public static Item wand;
+	public static Item out_of_bounds_wand;
 	public static Item wand_iron;
 	public static Item wand_coal;
 	public static Item wand_custom;
@@ -393,6 +394,7 @@ public class ModItems {
 
 		hammer = new ItemHammer().setUnlocalizedName("hammer").setMaxStackSize(1).setFull3D().setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":hammer");
 		wand = new ItemWand().setUnlocalizedName("wand").setMaxStackSize(1).setFull3D().setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":wand");
+		out_of_bounds_wand = new ItemOutOfBoundsWand().setUnlocalizedName("out_of_bounds_wand").setMaxStackSize(1).setFull3D().setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":wand");
 		wand_iron = new ItemWandOre().setUnlocalizedName("wand_iron").setMaxStackSize(1).setFull3D().setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":wand_iron");
 		wand_coal = new ItemWandOre().setUnlocalizedName("wand_coal").setMaxStackSize(1).setFull3D().setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":wand_coal");
 		//oil_detector = new ItemOilDetector().setUnlocalizedName("oil_detector").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":oil_detector");
@@ -442,6 +444,7 @@ public class ModItems {
 	private static void registerItem() {
 		GameRegistry.registerItem(hammer, hammer.getUnlocalizedName());
 		GameRegistry.registerItem(wand, wand.getUnlocalizedName());
+		GameRegistry.registerItem(out_of_bounds_wand, out_of_bounds_wand.getUnlocalizedName());
 		GameRegistry.registerItem(wand_iron, wand_iron.getUnlocalizedName());
 		GameRegistry.registerItem(wand_coal, wand_coal.getUnlocalizedName());
 		GameRegistry.registerItem(battery, battery.getUnlocalizedName());
