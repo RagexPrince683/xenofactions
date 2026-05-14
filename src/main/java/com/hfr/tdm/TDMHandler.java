@@ -76,8 +76,8 @@ public class TDMHandler {
         EntityPlayer attacker = getAttackingPlayer(event.source);
         if (attacker == null || attacker == victim) return;
 
-        TDMManager.Team victimTeam = TDMManager.getPlayerTeam(victim.worldObj, victim.getCommandSenderName());
-        TDMManager.Team attackerTeam = TDMManager.getPlayerTeam(victim.worldObj, attacker.getCommandSenderName());
+        TDMManager.Team victimTeam = TDMManager.getOrAssignPlayerTeam(victim);
+        TDMManager.Team attackerTeam = TDMManager.getOrAssignPlayerTeam(attacker);
         if (attackerTeam != null && attackerTeam != victimTeam) {
             TDMManager.addKillScore(victim.worldObj, attackerTeam);
         }
