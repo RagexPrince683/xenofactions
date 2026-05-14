@@ -18,6 +18,6 @@ public class TDMHandler {
         TDMManager.SpawnPoint spawn = TDMManager.getRandomSpawn(newPlayer, new Random());
         if (spawn == null) return;
 
-        TDMManager.respawnPlayer(player, new Random());
+        TDMManager.respawnPlayer(newPlayer, new Random());
     }
 }
