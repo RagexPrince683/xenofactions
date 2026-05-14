@@ -372,7 +372,9 @@ public class MainRegistry
 		HFRPotion.init();
 		MainRegistry.loadCustomDrops();
 		TDMManager.init();
-		MinecraftForge.EVENT_BUS.register(new TDMHandler());
+		TDMHandler tdmHandler = new TDMHandler();
+		MinecraftForge.EVENT_BUS.register(tdmHandler);
+		FMLCommonHandler.instance().bus().register(tdmHandler);
 
 
 		//todone: make chat filter apply to faction names so we don't have edgelords putting swastikas and shit in their fac names
