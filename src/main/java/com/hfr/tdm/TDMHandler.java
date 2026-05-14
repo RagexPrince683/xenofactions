@@ -17,6 +17,7 @@ public class TDMHandler {
 
     private static final int RESPAWN_RETRY_TICKS = 20;
     private static final int AUTO_BALANCE_INTERVAL_TICKS = 100;
+    private static final int TEAM_CHANGE_REMINDER_INTERVAL_TICKS = 8 * 60 * 20;
     private long lastAutoBalanceTick = -1;
     private long lastRoundTick = -1;
     private final Map<String, Integer> pendingRespawns = new HashMap<String, Integer>();
@@ -47,6 +48,7 @@ public class TDMHandler {
         }
 
         runRoundTimer(event.player);
+        sendTeamChangeReminder(event.player);
         runAutoBalance(event.player);
 
         String playerName = getKey(event.player);
@@ -110,6 +112,13 @@ public class TDMHandler {
 
         lastRoundTick = worldTime;
         TDMManager.tickRound(player.worldObj);
+    }
+
+    private void sendTeamChangeReminder(EntityPlayer player) {
+        long worldTime = player.worldObj.getTotalWorldTime();
+        if (worldTime > 0 && worldTime % TEAM_CHANGE_REMINDER_INTERVAL_TICKS == 0) {
+            player.addChatMessage(new net.minecraft.util.ChatComponentText("You can change TDM teams using /teamchange."));
+        }
     }
 
     private void runAutoBalance(EntityPlayer player) {

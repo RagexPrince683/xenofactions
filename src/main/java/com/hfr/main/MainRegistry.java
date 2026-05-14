@@ -794,6 +794,7 @@ public class MainRegistry
 		event.registerServerCommand(new CommandTDM());
 		event.registerServerCommand(new CommandKit());
 		event.registerServerCommand(new CommandKits());
+		event.registerServerCommand(new CommandTeamChange());
 		MarketData.loadMarketData();
 
 		//and now we just pray that the market data does not cope over serverside
