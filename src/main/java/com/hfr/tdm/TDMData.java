@@ -16,6 +16,8 @@ public class TDMData extends WorldSavedData {
     public static final String DATA_NAME = "xenofactions_tdm";
 
     public boolean enabled = false;
+    public boolean friendlyFireEnabled = true;
+    public boolean autoBalanceEnabled = true;
     public final List<TDMManager.SpawnPoint> spawns = new ArrayList<TDMManager.SpawnPoint>();
     public final Map<String, TDMManager.Team> playerTeams = new HashMap<String, TDMManager.Team>();
 
@@ -48,6 +50,8 @@ public class TDMData extends WorldSavedData {
     @Override
     public void readFromNBT(NBTTagCompound nbt) {
         enabled = nbt.getBoolean("enabled");
+        friendlyFireEnabled = !nbt.hasKey("friendlyFireEnabled") || nbt.getBoolean("friendlyFireEnabled");
+        autoBalanceEnabled = !nbt.hasKey("autoBalanceEnabled") || nbt.getBoolean("autoBalanceEnabled");
         spawns.clear();
         playerTeams.clear();
 
@@ -81,6 +85,8 @@ public class TDMData extends WorldSavedData {
     @Override
     public void writeToNBT(NBTTagCompound nbt) {
         nbt.setBoolean("enabled", enabled);
+        nbt.setBoolean("friendlyFireEnabled", friendlyFireEnabled);
+        nbt.setBoolean("autoBalanceEnabled", autoBalanceEnabled);
         nbt.setInteger("spawnCount", spawns.size());
 
         for (int i = 0; i < spawns.size(); i++) {
