@@ -18,6 +18,7 @@ import java.io.Writer;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,13 +27,12 @@ public class TDMKitManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final int MAIN_INVENTORY_SIZE = 36;
     private static final int ARMOR_INVENTORY_SIZE = 4;
-    private static final Map<TDMManager.Team, List<KitEntry>> kits = new EnumMap<TDMManager.Team, List<KitEntry>>(TDMManager.Team.class);
+    private static final String GLOBAL_MAP = "";
+    private static final Map<String, Map<TDMManager.Team, List<KitEntry>>> kits = new LinkedHashMap<String, Map<TDMManager.Team, List<KitEntry>>>();
     private static File saveFile;
 
     static {
-        for (TDMManager.Team team : TDMManager.Team.values()) {
-            kits.put(team, new ArrayList<KitEntry>());
-        }
+        getOrCreateMapKits(GLOBAL_MAP);
     }
 
     public static void init() {
@@ -42,6 +42,11 @@ public class TDMKitManager {
     }
 
     public static int addKit(TDMManager.Team team, EntityPlayer player) {
+        return addKit(GLOBAL_MAP, team, player);
+    }
+
+    public static int addKit(String mapName, TDMManager.Team team, EntityPlayer player) {
+        String normalizedMap = TDMManager.normalizeMapName(mapName);
         List<ItemEntry> items = new ArrayList<ItemEntry>();
 
         for (int i = 0; i < MAIN_INVENTORY_SIZE; i++) {
@@ -58,19 +63,28 @@ public class TDMKitManager {
             }
         }
 
-        List<KitEntry> teamKits = kits.get(team);
-        KitEntry kit = new KitEntry(team.name.substring(0, 1).toUpperCase() + team.name.substring(1) + " Kit " + (teamKits.size() + 1), items);
+        List<KitEntry> teamKits = getOrCreateTeamKits(normalizedMap, team);
+        String mapPrefix = normalizedMap.length() > 0 ? normalizedMap + " " : "";
+        KitEntry kit = new KitEntry(mapPrefix + team.name.substring(0, 1).toUpperCase() + team.name.substring(1) + " Kit " + (teamKits.size() + 1), items);
         teamKits.add(kit);
         save();
         return teamKits.size();
     }
 
     public static int getKitCount(TDMManager.Team team) {
-        return kits.get(team).size();
+        return getKitCount(GLOBAL_MAP, team);
+    }
+
+    public static int getKitCount(String mapName, TDMManager.Team team) {
+        return getTeamKits(mapName, team).size();
     }
 
     public static String[] getKitNames(TDMManager.Team team) {
-        List<KitEntry> teamKits = kits.get(team);
+        return getKitNames(GLOBAL_MAP, team);
+    }
+
+    public static String[] getKitNames(String mapName, TDMManager.Team team) {
+        List<KitEntry> teamKits = getTeamKits(mapName, team);
         String[] names = new String[teamKits.size()];
         for (int i = 0; i < teamKits.size(); i++) {
             names[i] = teamKits.get(i).name;
@@ -79,7 +93,11 @@ public class TDMKitManager {
     }
 
     public static boolean applyKit(TDMManager.Team team, int kitIndex, EntityPlayer player) {
-        List<KitEntry> teamKits = kits.get(team);
+        return applyKit(GLOBAL_MAP, team, kitIndex, player);
+    }
+
+    public static boolean applyKit(String mapName, TDMManager.Team team, int kitIndex, EntityPlayer player) {
+        List<KitEntry> teamKits = getTeamKits(mapName, team);
         if (kitIndex < 0 || kitIndex >= teamKits.size()) {
             return false;
         }
@@ -108,12 +126,54 @@ public class TDMKitManager {
         return true;
     }
 
+    private static List<KitEntry> getTeamKits(String mapName, TDMManager.Team team) {
+        String normalizedMap = TDMManager.normalizeMapName(mapName);
+        Map<TDMManager.Team, List<KitEntry>> mapKits = kits.get(normalizedMap);
+        if (mapKits != null && mapKits.get(team) != null && !mapKits.get(team).isEmpty()) {
+            return mapKits.get(team);
+        }
+
+        Map<TDMManager.Team, List<KitEntry>> globalKits = kits.get(GLOBAL_MAP);
+        if (globalKits == null || globalKits.get(team) == null) {
+            return new ArrayList<KitEntry>();
+        }
+        return globalKits.get(team);
+    }
+
+    private static List<KitEntry> getOrCreateTeamKits(String mapName, TDMManager.Team team) {
+        return getOrCreateMapKits(mapName).get(team);
+    }
+
+    private static Map<TDMManager.Team, List<KitEntry>> getOrCreateMapKits(String mapName) {
+        String normalizedMap = TDMManager.normalizeMapName(mapName);
+        Map<TDMManager.Team, List<KitEntry>> mapKits = kits.get(normalizedMap);
+        if (mapKits == null) {
+            mapKits = new EnumMap<TDMManager.Team, List<KitEntry>>(TDMManager.Team.class);
+            for (TDMManager.Team team : TDMManager.Team.values()) {
+                mapKits.put(team, new ArrayList<KitEntry>());
+            }
+            kits.put(normalizedMap, mapKits);
+        }
+        return mapKits;
+    }
+
     private static void save() {
         if (saveFile == null) return;
 
         SaveData data = new SaveData();
-        data.red = kits.get(TDMManager.Team.RED);
-        data.blue = kits.get(TDMManager.Team.BLUE);
+        Map<TDMManager.Team, List<KitEntry>> globalKits = getOrCreateMapKits(GLOBAL_MAP);
+        data.red = globalKits.get(TDMManager.Team.RED);
+        data.blue = globalKits.get(TDMManager.Team.BLUE);
+        for (Map.Entry<String, Map<TDMManager.Team, List<KitEntry>>> entry : kits.entrySet()) {
+            if (entry.getKey().length() == 0) {
+                continue;
+            }
+
+            TeamKitData mapData = new TeamKitData();
+            mapData.red = entry.getValue().get(TDMManager.Team.RED);
+            mapData.blue = entry.getValue().get(TDMManager.Team.BLUE);
+            data.maps.put(entry.getKey(), mapData);
+        }
 
         try {
             Writer writer = new FileWriter(saveFile);
@@ -128,9 +188,8 @@ public class TDMKitManager {
     }
 
     private static void load() {
-        for (TDMManager.Team team : TDMManager.Team.values()) {
-            kits.get(team).clear();
-        }
+        kits.clear();
+        getOrCreateMapKits(GLOBAL_MAP);
 
         if (saveFile == null || !saveFile.exists()) return;
 
@@ -140,8 +199,21 @@ public class TDMKitManager {
                 Type type = new TypeToken<SaveData>() {}.getType();
                 SaveData data = GSON.fromJson(reader, type);
                 if (data != null) {
-                    if (data.red != null) kits.get(TDMManager.Team.RED).addAll(data.red);
-                    if (data.blue != null) kits.get(TDMManager.Team.BLUE).addAll(data.blue);
+                    Map<TDMManager.Team, List<KitEntry>> globalKits = getOrCreateMapKits(GLOBAL_MAP);
+                    if (data.red != null) globalKits.get(TDMManager.Team.RED).addAll(data.red);
+                    if (data.blue != null) globalKits.get(TDMManager.Team.BLUE).addAll(data.blue);
+                    if (data.maps != null) {
+                        for (Map.Entry<String, TeamKitData> entry : data.maps.entrySet()) {
+                            String mapName = TDMManager.normalizeMapName(entry.getKey());
+                            if (mapName.length() == 0 || entry.getValue() == null) {
+                                continue;
+                            }
+
+                            Map<TDMManager.Team, List<KitEntry>> mapKits = getOrCreateMapKits(mapName);
+                            if (entry.getValue().red != null) mapKits.get(TDMManager.Team.RED).addAll(entry.getValue().red);
+                            if (entry.getValue().blue != null) mapKits.get(TDMManager.Team.BLUE).addAll(entry.getValue().blue);
+                        }
+                    }
                 }
             } finally {
                 reader.close();
@@ -151,7 +223,11 @@ public class TDMKitManager {
         }
     }
 
-    private static class SaveData {
+    private static class SaveData extends TeamKitData {
+        Map<String, TeamKitData> maps = new LinkedHashMap<String, TeamKitData>();
+    }
+
+    private static class TeamKitData {
         List<KitEntry> red = new ArrayList<KitEntry>();
         List<KitEntry> blue = new ArrayList<KitEntry>();
     }
