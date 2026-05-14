@@ -8,6 +8,7 @@ import net.minecraftforge.common.DimensionManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,8 +19,16 @@ public class TDMData extends WorldSavedData {
     public boolean enabled = false;
     public boolean friendlyFireEnabled = true;
     public boolean autoBalanceEnabled = true;
+    public String selectedMap = "";
+    public int redScore = 0;
+    public int blueScore = 0;
+    public long roundEndTick = 0;
+    public boolean mapVoteActive = false;
+    public long mapVoteEndTick = 0;
     public final List<TDMManager.SpawnPoint> spawns = new ArrayList<TDMManager.SpawnPoint>();
+    public final Map<String, TDMManager.TDMMap> maps = new LinkedHashMap<String, TDMManager.TDMMap>();
     public final Map<String, TDMManager.Team> playerTeams = new HashMap<String, TDMManager.Team>();
+    public final Map<String, String> mapVotes = new HashMap<String, String>();
 
     public TDMData(String name) {
         super(name);
@@ -52,24 +61,47 @@ public class TDMData extends WorldSavedData {
         enabled = nbt.getBoolean("enabled");
         friendlyFireEnabled = !nbt.hasKey("friendlyFireEnabled") || nbt.getBoolean("friendlyFireEnabled");
         autoBalanceEnabled = !nbt.hasKey("autoBalanceEnabled") || nbt.getBoolean("autoBalanceEnabled");
+        selectedMap = nbt.hasKey("selectedMap") ? nbt.getString("selectedMap").toLowerCase() : "";
+        redScore = nbt.getInteger("redScore");
+        blueScore = nbt.getInteger("blueScore");
+        roundEndTick = nbt.hasKey("roundEndTick") ? nbt.getLong("roundEndTick") : 0;
+        mapVoteActive = nbt.getBoolean("mapVoteActive");
+        mapVoteEndTick = nbt.hasKey("mapVoteEndTick") ? nbt.getLong("mapVoteEndTick") : 0;
         spawns.clear();
+        maps.clear();
         playerTeams.clear();
+        mapVotes.clear();
 
         int spawnCount = nbt.getInteger("spawnCount");
         for (int i = 0; i < spawnCount; i++) {
             NBTTagCompound spawnTag = nbt.getCompoundTag("spawn" + i);
-            TDMManager.Team team = TDMManager.Team.fromName(spawnTag.getString("team"));
-            if (team == null) {
+            TDMManager.SpawnPoint spawn = readSpawn(spawnTag);
+            if (spawn != null) {
+                spawns.add(spawn);
+            }
+        }
+
+        int mapCount = nbt.getInteger("mapCount");
+        for (int i = 0; i < mapCount; i++) {
+            NBTTagCompound mapTag = nbt.getCompoundTag("map" + i);
+            String mapName = mapTag.getString("name").toLowerCase();
+            if (mapName.length() == 0) {
                 continue;
             }
 
-            spawns.add(new TDMManager.SpawnPoint(
-                    team,
-                    spawnTag.getInteger("dim"),
-                    spawnTag.getInteger("x"),
-                    spawnTag.getInteger("y"),
-                    spawnTag.getInteger("z")
-            ));
+            TDMManager.TDMMap map = new TDMManager.TDMMap(mapName);
+            int mapSpawnCount = mapTag.getInteger("spawnCount");
+            for (int j = 0; j < mapSpawnCount; j++) {
+                TDMManager.SpawnPoint spawn = readSpawn(mapTag.getCompoundTag("spawn" + j));
+                if (spawn != null) {
+                    map.spawns.add(spawn);
+                }
+            }
+            maps.put(map.name, map);
+        }
+
+        if (selectedMap.length() > 0 && !maps.containsKey(selectedMap)) {
+            selectedMap = "";
         }
 
         int playerCount = nbt.getInteger("playerCount");
@@ -80,6 +112,15 @@ public class TDMData extends WorldSavedData {
                 playerTeams.put(player.toLowerCase(), team);
             }
         }
+
+        int voteCount = nbt.getInteger("voteCount");
+        for (int i = 0; i < voteCount; i++) {
+            String player = nbt.getString("votePlayer" + i).toLowerCase();
+            String map = nbt.getString("voteMap" + i).toLowerCase();
+            if (player.length() > 0 && maps.containsKey(map)) {
+                mapVotes.put(player, map);
+            }
+        }
     }
 
     @Override
@@ -87,18 +128,30 @@ public class TDMData extends WorldSavedData {
         nbt.setBoolean("enabled", enabled);
         nbt.setBoolean("friendlyFireEnabled", friendlyFireEnabled);
         nbt.setBoolean("autoBalanceEnabled", autoBalanceEnabled);
+        nbt.setString("selectedMap", selectedMap);
+        nbt.setInteger("redScore", redScore);
+        nbt.setInteger("blueScore", blueScore);
+        nbt.setLong("roundEndTick", roundEndTick);
+        nbt.setBoolean("mapVoteActive", mapVoteActive);
+        nbt.setLong("mapVoteEndTick", mapVoteEndTick);
         nbt.setInteger("spawnCount", spawns.size());
 
         for (int i = 0; i < spawns.size(); i++) {
-            TDMManager.SpawnPoint spawn = spawns.get(i);
-            NBTTagCompound spawnTag = new NBTTagCompound();
-            spawnTag.setString("team", spawn.team.name);
-            spawnTag.setInteger("dim", spawn.dim);
-            spawnTag.setInteger("x", spawn.x);
-            spawnTag.setInteger("y", spawn.y);
-            spawnTag.setInteger("z", spawn.z);
-            nbt.setTag("spawn" + i, spawnTag);
+            nbt.setTag("spawn" + i, writeSpawn(spawns.get(i)));
         }
+
+        int mapIndex = 0;
+        for (TDMManager.TDMMap map : maps.values()) {
+            NBTTagCompound mapTag = new NBTTagCompound();
+            mapTag.setString("name", map.name);
+            mapTag.setInteger("spawnCount", map.spawns.size());
+            for (int i = 0; i < map.spawns.size(); i++) {
+                mapTag.setTag("spawn" + i, writeSpawn(map.spawns.get(i)));
+            }
+            nbt.setTag("map" + mapIndex, mapTag);
+            mapIndex++;
+        }
+        nbt.setInteger("mapCount", mapIndex);
 
         int playerIndex = 0;
         for (Map.Entry<String, TDMManager.Team> entry : playerTeams.entrySet()) {
@@ -107,5 +160,38 @@ public class TDMData extends WorldSavedData {
             playerIndex++;
         }
         nbt.setInteger("playerCount", playerIndex);
+
+        int voteIndex = 0;
+        for (Map.Entry<String, String> entry : mapVotes.entrySet()) {
+            nbt.setString("votePlayer" + voteIndex, entry.getKey());
+            nbt.setString("voteMap" + voteIndex, entry.getValue());
+            voteIndex++;
+        }
+        nbt.setInteger("voteCount", voteIndex);
+    }
+
+    private TDMManager.SpawnPoint readSpawn(NBTTagCompound spawnTag) {
+        TDMManager.Team team = TDMManager.Team.fromName(spawnTag.getString("team"));
+        if (team == null) {
+            return null;
+        }
+
+        return new TDMManager.SpawnPoint(
+                team,
+                spawnTag.getInteger("dim"),
+                spawnTag.getInteger("x"),
+                spawnTag.getInteger("y"),
+                spawnTag.getInteger("z")
+        );
+    }
+
+    private NBTTagCompound writeSpawn(TDMManager.SpawnPoint spawn) {
+        NBTTagCompound spawnTag = new NBTTagCompound();
+        spawnTag.setString("team", spawn.team.name);
+        spawnTag.setInteger("dim", spawn.dim);
+        spawnTag.setInteger("x", spawn.x);
+        spawnTag.setInteger("y", spawn.y);
+        spawnTag.setInteger("z", spawn.z);
+        return spawnTag;
     }
 }

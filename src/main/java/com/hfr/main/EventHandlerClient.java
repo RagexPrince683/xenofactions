@@ -30,6 +30,7 @@ import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderManager;
@@ -65,9 +66,55 @@ public class EventHandlerClient {
 	public static boolean tilt = false;
 	public static boolean shader = false;
 	
+	private static boolean tdmHudEnabled = false;
+	private static boolean tdmVoting = false;
+	private static int tdmRoundSeconds = 0;
+	private static int tdmVoteSeconds = 0;
+	private static int tdmRedScore = 0;
+	private static int tdmBlueScore = 0;
+	private static String tdmMapName = "";
+
 	public static List<int[]> resourceBorders = new ArrayList();
 	boolean resources = false;
 	
+	public static void updateTDMStatus(boolean enabled, boolean voting, int roundSeconds, int voteSeconds, int redScore, int blueScore, String mapName) {
+		tdmHudEnabled = enabled;
+		tdmVoting = voting;
+		tdmRoundSeconds = roundSeconds;
+		tdmVoteSeconds = voteSeconds;
+		tdmRedScore = redScore;
+		tdmBlueScore = blueScore;
+		tdmMapName = mapName == null ? "" : mapName;
+	}
+
+	private static void drawTDMHud() {
+		if (!tdmHudEnabled) {
+			return;
+		}
+
+		Minecraft mc = Minecraft.getMinecraft();
+		if (mc == null || mc.fontRenderer == null) {
+			return;
+		}
+
+		FontRenderer font = mc.fontRenderer;
+		String timer = tdmVoting ? "Map vote: " + formatSeconds(tdmVoteSeconds) : "Round: " + formatSeconds(tdmRoundSeconds);
+		String map = tdmMapName.length() > 0 ? " Map: " + tdmMapName : "";
+		String text = timer + "  Red: " + tdmRedScore + "  Blue: " + tdmBlueScore + map;
+		ScaledResolution resolution = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
+		int x = (resolution.getScaledWidth() - font.getStringWidth(text)) / 2;
+		font.drawStringWithShadow(text, Math.max(2, x), 6, tdmVoting ? 0xFFFF55 : 0xFFFFFF);
+	}
+
+	private static String formatSeconds(int seconds) {
+		if (seconds < 0) {
+			seconds = 0;
+		}
+		int minutes = seconds / 60;
+		int secs = seconds % 60;
+		return minutes + ":" + (secs < 10 ? "0" : "") + secs;
+	}
+
 	public void register() {
 
 		MinecraftForge.EVENT_BUS.register(this);
@@ -79,6 +126,10 @@ public class EventHandlerClient {
 		
 		EntityPlayer player = Minecraft.getMinecraft().thePlayer;
 		
+		if(event.type == ElementType.TEXT) {
+			drawTDMHud();
+		}
+
 		if(event.type == ElementType.CROSSHAIRS)
 		{
 			//anti-ragex mechanism, do not delete - oops i deleted it
