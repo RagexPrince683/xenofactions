@@ -37,32 +37,6 @@ public class TDMManager {
         }
     }
 
-    public static boolean respawnPlayer(EntityPlayer player, Random rand) {
-        SpawnPoint spawn = getRandomSpawn(player, rand);
-        if (spawn == null) {
-            return false;
-        }
-
-        if (player instanceof EntityPlayerMP) {
-            EntityPlayerMP playerMP = (EntityPlayerMP) player;
-            playerMP.playerNetServerHandler.setPlayerLocation(
-                    spawn.x + 0.5,
-                    spawn.y,
-                    spawn.z + 0.5,
-                    playerMP.rotationYaw,
-                    playerMP.rotationPitch
-            );
-        } else {
-            player.setPositionAndUpdate(
-                    spawn.x + 0.5,
-                    spawn.y,
-                    spawn.z + 0.5
-            );
-        }
-
-        return true;
-    }
-
     public static class SpawnPoint {
         public final Team team;
         public final int dim;
@@ -159,6 +133,32 @@ public class TDMManager {
         }
 
         return red <= blue ? Team.RED : Team.BLUE;
+    }
+
+    public static boolean respawnPlayer(EntityPlayer player, Random rand) {
+        SpawnPoint spawn = getRandomSpawn(player, rand);
+        if (spawn == null) {
+            return false;
+        }
+
+        if (player instanceof EntityPlayerMP) {
+            EntityPlayerMP playerMP = (EntityPlayerMP) player;
+            playerMP.playerNetServerHandler.setPlayerLocation(
+                    spawn.x + 0.5,
+                    spawn.y,
+                    spawn.z + 0.5,
+                    playerMP.rotationYaw,
+                    playerMP.rotationPitch
+            );
+        } else {
+            player.setPositionAndUpdate(
+                    spawn.x + 0.5,
+                    spawn.y,
+                    spawn.z + 0.5
+            );
+        }
+
+        return true;
     }
 
     public static SpawnPoint getRandomSpawn(EntityPlayer player, Random rand) {
