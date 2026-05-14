@@ -6,9 +6,14 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ChatComponentText;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 public class CommandTeamChange extends CommandBase {
+
+    private static final int TEAM_CHANGE_COOLDOWN_TICKS = 30 * 20;
+    private final Map<String, Long> nextTeamChangeTick = new HashMap<String, Long>();
 
     @Override
     public String getCommandName() {
@@ -28,9 +33,19 @@ public class CommandTeamChange extends CommandBase {
             return;
         }
 
+        String playerKey = player.getCommandSenderName().toLowerCase();
+        long worldTime = player.worldObj.getTotalWorldTime();
+        Long nextAllowedTick = nextTeamChangeTick.get(playerKey);
+        if (nextAllowedTick != null && worldTime < nextAllowedTick.longValue()) {
+            int secondsLeft = (int) ((nextAllowedTick.longValue() - worldTime + 19) / 20);
+            sender.addChatMessage(new ChatComponentText("You can change teams again in " + secondsLeft + " seconds."));
+            return;
+        }
+
         TDMManager.Team currentTeam = TDMManager.getOrAssignPlayerTeam(player);
         TDMManager.Team newTeam = currentTeam == TDMManager.Team.RED ? TDMManager.Team.BLUE : TDMManager.Team.RED;
         TDMManager.setPlayerTeam(player.worldObj, player.getCommandSenderName(), newTeam);
+        nextTeamChangeTick.put(playerKey, Long.valueOf(worldTime + TEAM_CHANGE_COOLDOWN_TICKS));
         sender.addChatMessage(new ChatComponentText("You changed to the " + newTeam.name + " TDM team."));
 
         if (!TDMManager.respawnPlayer(player, new Random())) {
