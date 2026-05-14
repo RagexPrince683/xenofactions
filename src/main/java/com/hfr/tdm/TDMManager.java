@@ -281,6 +281,8 @@ public class TDMManager {
             return;
         }
 
+        player.addPotionEffect(new PotionEffect(Potion.invisibility.id, 40, 4, true));
+        player.addPotionEffect(new PotionEffect(Potion.moveSlowdown.id, 40, 4, true));
         player.addPotionEffect(new PotionEffect(Potion.resistance.id, 40, 4, true));
         player.addPotionEffect(new PotionEffect(Potion.regeneration.id, 40, 4, true));
     }
