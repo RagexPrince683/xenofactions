@@ -154,6 +154,7 @@ item.hook.name=Grappling Hook
 
 item.hammer.name=Maul of Bench Appearo
 item.wand.name=ThotBeGone Anti Mob Wand
+item.out_of_bounds_wand.name=Out of Bounds Wand
 item.wand_iron.name=Iron Wand
 item.wand_coal.name=Coal Wand
 item.battery.name=HFR Infinite Battery
