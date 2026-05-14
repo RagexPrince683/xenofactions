@@ -19,7 +19,7 @@ public class CommandTDM extends CommandBase {
 
     @Override
     public String getCommandUsage(ICommandSender sender) {
-        return "/tdm <vote <map>|maps|toggle|friendlyfire <on|off>|autobalance <on|off|now>|addspawn <red|blue>|map <create|delete|select|addspawn|clearspawns|list> ...|setteam <player> <red|blue>|clear>";
+        return "/tdm <vote <map>|maps|forcemapvote|toggle|friendlyfire <on|off>|autobalance <on|off|now>|addspawn <red|blue>|map <create|delete|select|addspawn|clearspawns|list> ...|setteam <player> <red|blue>|clear>";
     }
 
     @Override
@@ -62,6 +62,27 @@ public class CommandTDM extends CommandBase {
         if (args[0].equalsIgnoreCase("toggle")) {
             boolean enabled = TDMManager.toggle(world);
             sender.addChatMessage(new ChatComponentText("TDM: " + enabled));
+            return;
+        }
+
+        if (args[0].equalsIgnoreCase("forcemapvote") || args[0].equalsIgnoreCase("forcevote")) {
+            if (!TDMManager.isEnabled(world)) {
+                sender.addChatMessage(new ChatComponentText("TDM must be enabled before forcing a map vote."));
+                return;
+            }
+
+            if (TDMManager.getMapNames(world).isEmpty()) {
+                sender.addChatMessage(new ChatComponentText("No TDM maps defined. Use /tdm map create <map> first."));
+                return;
+            }
+
+            if (TDMManager.isMapVoteActive(world)) {
+                sender.addChatMessage(new ChatComponentText("A TDM map vote is already active."));
+                return;
+            }
+
+            TDMManager.startMapVote(world);
+            sender.addChatMessage(new ChatComponentText("Forced a 30 second TDM map vote."));
             return;
         }
 
