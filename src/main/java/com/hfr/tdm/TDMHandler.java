@@ -10,20 +10,19 @@ public class TDMHandler {
 
     @SubscribeEvent
     public void onClone(PlayerEvent.Clone event) {
-        if (!TDMManager.tdmEnabled) return;
         if (!event.wasDeath) return;
 
-        EntityPlayer newPlayer = event.entityPlayer;
+        respawn(event.entityPlayer);
+    }
 
-        TDMManager.SpawnPoint spawn =
-                TDMManager.getRandomSpawn(newPlayer.worldObj, new Random());
+    @SubscribeEvent
+    public void onRespawn(cpw.mods.fml.common.gameevent.PlayerEvent.PlayerRespawnEvent event) {
+        respawn(event.player);
+    }
 
-        if (spawn == null) return;
+    private void respawn(EntityPlayer player) {
+        if (!TDMManager.isEnabled(player.worldObj)) return;
 
-        newPlayer.setPositionAndUpdate(
-                spawn.x + 0.5,
-                spawn.y,
-                spawn.z + 0.5
-        );
+        TDMManager.respawnPlayer(player, new Random());
     }
 }
