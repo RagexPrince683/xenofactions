@@ -84,12 +84,22 @@ public class TDMKitManager {
     }
 
     public static String[] getKitNames(String mapName, TDMManager.Team team) {
-        List<KitEntry> teamKits = getTeamKits(mapName, team);
-        String[] names = new String[teamKits.size()];
-        for (int i = 0; i < teamKits.size(); i++) {
-            names[i] = teamKits.get(i).name;
+        return getKitNames(getTeamKits(mapName, team));
+    }
+
+    public static String[] getDirectKitNames(String mapName, TDMManager.Team team) {
+        return getKitNames(getDirectTeamKits(mapName, team));
+    }
+
+    public static boolean removeKit(String mapName, TDMManager.Team team, int kitIndex) {
+        List<KitEntry> teamKits = getDirectTeamKits(mapName, team);
+        if (kitIndex < 0 || kitIndex >= teamKits.size()) {
+            return false;
         }
-        return names;
+
+        teamKits.remove(kitIndex);
+        save();
+        return true;
     }
 
     public static boolean applyKit(TDMManager.Team team, int kitIndex, EntityPlayer player) {
@@ -127,17 +137,29 @@ public class TDMKitManager {
     }
 
     private static List<KitEntry> getTeamKits(String mapName, TDMManager.Team team) {
-        String normalizedMap = TDMManager.normalizeMapName(mapName);
-        Map<TDMManager.Team, List<KitEntry>> mapKits = kits.get(normalizedMap);
-        if (mapKits != null && mapKits.get(team) != null && !mapKits.get(team).isEmpty()) {
-            return mapKits.get(team);
+        List<KitEntry> directKits = getDirectTeamKits(mapName, team);
+        if (!directKits.isEmpty()) {
+            return directKits;
         }
 
-        Map<TDMManager.Team, List<KitEntry>> globalKits = kits.get(GLOBAL_MAP);
-        if (globalKits == null || globalKits.get(team) == null) {
+        return getDirectTeamKits(GLOBAL_MAP, team);
+    }
+
+    private static List<KitEntry> getDirectTeamKits(String mapName, TDMManager.Team team) {
+        String normalizedMap = TDMManager.normalizeMapName(mapName);
+        Map<TDMManager.Team, List<KitEntry>> mapKits = kits.get(normalizedMap);
+        if (mapKits == null || mapKits.get(team) == null) {
             return new ArrayList<KitEntry>();
         }
-        return globalKits.get(team);
+        return mapKits.get(team);
+    }
+
+    private static String[] getKitNames(List<KitEntry> teamKits) {
+        String[] names = new String[teamKits.size()];
+        for (int i = 0; i < teamKits.size(); i++) {
+            names[i] = teamKits.get(i).name;
+        }
+        return names;
     }
 
     private static List<KitEntry> getOrCreateTeamKits(String mapName, TDMManager.Team team) {
