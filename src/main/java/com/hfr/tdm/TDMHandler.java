@@ -10,14 +10,12 @@ public class TDMHandler {
 
     @SubscribeEvent
     public void onClone(PlayerEvent.Clone event) {
-        if (!TDMManager.tdmEnabled) return;
         if (!event.wasDeath) return;
 
         EntityPlayer newPlayer = event.entityPlayer;
+        if (!TDMManager.isEnabled(newPlayer.worldObj)) return;
 
-        TDMManager.SpawnPoint spawn =
-                TDMManager.getRandomSpawn(newPlayer.worldObj, new Random());
-
+        TDMManager.SpawnPoint spawn = TDMManager.getRandomSpawn(newPlayer, new Random());
         if (spawn == null) return;
 
         newPlayer.setPositionAndUpdate(
