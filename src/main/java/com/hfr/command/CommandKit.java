@@ -16,7 +16,7 @@ public class CommandKit extends CommandBase {
 
     @Override
     public String getCommandUsage(ICommandSender sender) {
-        return "/kit <blue|red>";
+        return "/kit <blue|red> [map]";
     }
 
     @Override
@@ -33,8 +33,10 @@ public class CommandKit extends CommandBase {
         }
 
         EntityPlayer player = getCommandSenderAsPlayer(sender);
-        int kitCount = TDMKitManager.addKit(team, player);
-        sender.addChatMessage(new ChatComponentText("Saved " + team.name + " kit #" + kitCount + " from your inventory to tdm_kits.txt"));
+        String mapName = args.length >= 2 ? TDMManager.normalizeMapName(args[1]) : TDMManager.getSelectedMap(sender.getEntityWorld());
+        int kitCount = TDMKitManager.addKit(mapName, team, player);
+        String mapText = mapName.length() > 0 ? " for map " + mapName : " as a global fallback";
+        sender.addChatMessage(new ChatComponentText("Saved " + team.name + " kit #" + kitCount + mapText + " from your inventory to tdm_kits.txt"));
     }
 
     @Override
