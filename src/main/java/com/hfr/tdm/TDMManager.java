@@ -1,16 +1,23 @@
 package com.hfr.tdm;
 
+import com.hfr.packet.PacketDispatcher;
+import com.hfr.packet.effect.TDMKitGuiPacket;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.potion.Potion;
+import net.minecraft.potion.PotionEffect;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 public class TDMManager {
 
     public static boolean tdmEnabled = false;
+    private static final Set<String> pendingKitSelection = new HashSet<String>();
 
     public enum Team {
         RED("red"),
@@ -53,6 +60,7 @@ public class TDMManager {
 
     public static void init() {
         tdmEnabled = false;
+        pendingKitSelection.clear();
     }
 
     public static boolean isEnabled(World world) {
@@ -133,6 +141,60 @@ public class TDMManager {
         }
 
         return red <= blue ? Team.RED : Team.BLUE;
+    }
+
+    public static void promptForKit(EntityPlayer player) {
+        if (!(player instanceof EntityPlayerMP)) {
+            return;
+        }
+
+        Team team = getOrAssignPlayerTeam(player);
+        if (TDMKitManager.getKitCount(team) <= 0) {
+            player.addChatMessage(new net.minecraft.util.ChatComponentText("No TDM kits have been saved for " + team.name + ". Ask an admin to use /kit " + team.name + "."));
+            return;
+        }
+
+        pendingKitSelection.add(getPlayerKey(player));
+        PacketDispatcher.wrapper.sendTo(new TDMKitGuiPacket(team.name, TDMKitManager.getKitNames(team)), (EntityPlayerMP) player);
+    }
+
+    public static void tickKitSelection(EntityPlayer player) {
+        if (!pendingKitSelection.contains(getPlayerKey(player))) {
+            return;
+        }
+
+        if (!isEnabled(player.worldObj)) {
+            pendingKitSelection.remove(getPlayerKey(player));
+            return;
+        }
+
+        player.addPotionEffect(new PotionEffect(Potion.resistance.id, 40, 4, true));
+        player.addPotionEffect(new PotionEffect(Potion.regeneration.id, 40, 4, true));
+    }
+
+    public static boolean selectKit(EntityPlayer player, int kitIndex) {
+        if (!pendingKitSelection.contains(getPlayerKey(player))) {
+            return false;
+        }
+
+        if (!isEnabled(player.worldObj)) {
+            pendingKitSelection.remove(getPlayerKey(player));
+            return false;
+        }
+
+        Team team = getOrAssignPlayerTeam(player);
+        if (!TDMKitManager.applyKit(team, kitIndex, player)) {
+            return false;
+        }
+
+        pendingKitSelection.remove(getPlayerKey(player));
+        player.removePotionEffect(Potion.resistance.id);
+        player.removePotionEffect(Potion.regeneration.id);
+        return true;
+    }
+
+    private static String getPlayerKey(EntityPlayer player) {
+        return player.getCommandSenderName().toLowerCase();
     }
 
     public static boolean respawnPlayer(EntityPlayer player, Random rand) {

@@ -782,6 +782,7 @@ public class MainRegistry
 		event.registerServerCommand(new CommandXMarket());
 		event.registerServerCommand(new CommandStoneDrop());
 		MuteManager.init();
+		TDMKitManager.init();
 		IgnoreManager.init();
 		event.registerServerCommand(new CommandMute());
 		event.registerServerCommand(new CommandUnmute());
@@ -791,6 +792,7 @@ public class MainRegistry
 		event.registerServerCommand(new CommandXMulti());
 		event.registerServerCommand(new CommandInvSee());
 		event.registerServerCommand(new CommandTDM());
+		event.registerServerCommand(new CommandKit());
 		MarketData.loadMarketData();
 
 		//and now we just pray that the market data does not cope over serverside
