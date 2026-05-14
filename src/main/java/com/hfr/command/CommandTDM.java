@@ -43,13 +43,13 @@ public class CommandTDM extends CommandBase {
             }
 
             EntityPlayer player = getCommandSenderAsPlayer(sender);
-            String selectedMap = TDMManager.voteForMap(world, player.getCommandSenderName(), args[1]);
-            if (selectedMap == null) {
-                sender.addChatMessage(new ChatComponentText("Unable to vote. TDM must be enabled and the map must exist."));
+            String votedMap = TDMManager.voteForMap(world, player.getCommandSenderName(), args[1]);
+            if (votedMap == null) {
+                sender.addChatMessage(new ChatComponentText("Unable to vote. A TDM map vote must be active and the map must exist."));
                 return;
             }
 
-            sender.addChatMessage(new ChatComponentText("Voted for TDM map " + TDMManager.normalizeMapName(args[1]) + ". Selected map: " + selectedMap));
+            sender.addChatMessage(new ChatComponentText("Voted for TDM map " + votedMap + "."));
             sendVoteCounts(sender, world);
             return;
         }

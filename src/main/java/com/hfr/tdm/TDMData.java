@@ -20,6 +20,11 @@ public class TDMData extends WorldSavedData {
     public boolean friendlyFireEnabled = true;
     public boolean autoBalanceEnabled = true;
     public String selectedMap = "";
+    public int redScore = 0;
+    public int blueScore = 0;
+    public long roundEndTick = 0;
+    public boolean mapVoteActive = false;
+    public long mapVoteEndTick = 0;
     public final List<TDMManager.SpawnPoint> spawns = new ArrayList<TDMManager.SpawnPoint>();
     public final Map<String, TDMManager.TDMMap> maps = new LinkedHashMap<String, TDMManager.TDMMap>();
     public final Map<String, TDMManager.Team> playerTeams = new HashMap<String, TDMManager.Team>();
@@ -57,6 +62,11 @@ public class TDMData extends WorldSavedData {
         friendlyFireEnabled = !nbt.hasKey("friendlyFireEnabled") || nbt.getBoolean("friendlyFireEnabled");
         autoBalanceEnabled = !nbt.hasKey("autoBalanceEnabled") || nbt.getBoolean("autoBalanceEnabled");
         selectedMap = nbt.hasKey("selectedMap") ? nbt.getString("selectedMap").toLowerCase() : "";
+        redScore = nbt.getInteger("redScore");
+        blueScore = nbt.getInteger("blueScore");
+        roundEndTick = nbt.hasKey("roundEndTick") ? nbt.getLong("roundEndTick") : 0;
+        mapVoteActive = nbt.getBoolean("mapVoteActive");
+        mapVoteEndTick = nbt.hasKey("mapVoteEndTick") ? nbt.getLong("mapVoteEndTick") : 0;
         spawns.clear();
         maps.clear();
         playerTeams.clear();
@@ -119,6 +129,11 @@ public class TDMData extends WorldSavedData {
         nbt.setBoolean("friendlyFireEnabled", friendlyFireEnabled);
         nbt.setBoolean("autoBalanceEnabled", autoBalanceEnabled);
         nbt.setString("selectedMap", selectedMap);
+        nbt.setInteger("redScore", redScore);
+        nbt.setInteger("blueScore", blueScore);
+        nbt.setLong("roundEndTick", roundEndTick);
+        nbt.setBoolean("mapVoteActive", mapVoteActive);
+        nbt.setLong("mapVoteEndTick", mapVoteEndTick);
         nbt.setInteger("spawnCount", spawns.size());
 
         for (int i = 0; i < spawns.size(); i++) {

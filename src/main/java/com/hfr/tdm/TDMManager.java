@@ -2,6 +2,8 @@ package com.hfr.tdm;
 
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.effect.TDMKitGuiPacket;
+import com.hfr.packet.effect.TDMMapVoteGuiPacket;
+import com.hfr.packet.effect.TDMStatusPacket;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
@@ -21,6 +23,10 @@ import java.util.Set;
 public class TDMManager {
 
     public static boolean tdmEnabled = false;
+    public static final int ROUND_TICKS = 20 * 60 * 20;
+    public static final int MAP_VOTE_TICKS = 30 * 20;
+    public static final int SCORE_LIMIT = 10000;
+    public static final int POINTS_PER_KILL = 100;
     private static final Set<String> pendingKitSelection = new HashSet<String>();
 
     public enum Team {
@@ -86,7 +92,16 @@ public class TDMManager {
         TDMData data = TDMData.get(world);
         data.enabled = !data.enabled;
         tdmEnabled = data.enabled;
+        if (data.enabled) {
+            startRound(world, false);
+        } else {
+            data.roundEndTick = 0;
+            data.mapVoteActive = false;
+            data.mapVoteEndTick = 0;
+            data.mapVotes.clear();
+        }
         data.markDirty();
+        sendStatusToAll(world);
         return data.enabled;
     }
 
@@ -229,17 +244,13 @@ public class TDMManager {
     public static String voteForMap(World world, String playerName, String mapName) {
         String normalized = normalizeMapName(mapName);
         TDMData data = TDMData.get(world);
-        if (!data.enabled || !data.maps.containsKey(normalized)) {
+        if (!data.enabled || !data.mapVoteActive || !data.maps.containsKey(normalized)) {
             return null;
         }
 
         data.mapVotes.put(playerName.toLowerCase(), normalized);
-        String winner = getWinningMap(data);
-        if (winner != null && !winner.equals(data.selectedMap)) {
-            data.selectedMap = winner;
-        }
         data.markDirty();
-        return data.selectedMap;
+        return normalized;
     }
 
     public static Map<String, Integer> getVoteCounts(World world) {
@@ -282,6 +293,174 @@ public class TDMManager {
             return "";
         }
         return mapName.trim().toLowerCase();
+    }
+
+
+    public static void tickRound(World world) {
+        TDMData data = TDMData.get(world);
+        if (!data.enabled) {
+            return;
+        }
+
+        long now = world.getTotalWorldTime();
+        if (data.mapVoteActive) {
+            if (data.mapVoteEndTick <= 0) {
+                data.mapVoteEndTick = now + MAP_VOTE_TICKS;
+                data.markDirty();
+            }
+            if (now >= data.mapVoteEndTick) {
+                finishMapVote(world);
+            } else {
+                sendStatusToAll(world);
+            }
+            return;
+        }
+
+        if (data.roundEndTick <= 0 || now > data.roundEndTick + MAP_VOTE_TICKS) {
+            startRound(world, false);
+            return;
+        }
+
+        if (now >= data.roundEndTick || data.redScore >= SCORE_LIMIT || data.blueScore >= SCORE_LIMIT) {
+            startMapVote(world);
+            return;
+        }
+
+        if (now % 20 == 0) {
+            sendStatusToAll(world);
+        }
+    }
+
+    public static void startRound(World world, boolean resetVotes) {
+        TDMData data = TDMData.get(world);
+        data.redScore = 0;
+        data.blueScore = 0;
+        data.roundEndTick = world.getTotalWorldTime() + ROUND_TICKS;
+        data.mapVoteActive = false;
+        data.mapVoteEndTick = 0;
+        if (resetVotes) {
+            data.mapVotes.clear();
+        }
+        data.markDirty();
+        sendStatusToAll(world);
+    }
+
+    public static void addKillScore(World world, Team scoringTeam) {
+        TDMData data = TDMData.get(world);
+        if (!data.enabled || data.mapVoteActive || scoringTeam == null) {
+            return;
+        }
+
+        if (scoringTeam == Team.RED) {
+            data.redScore += POINTS_PER_KILL;
+        } else if (scoringTeam == Team.BLUE) {
+            data.blueScore += POINTS_PER_KILL;
+        }
+        data.markDirty();
+
+        if (data.redScore >= SCORE_LIMIT || data.blueScore >= SCORE_LIMIT) {
+            startMapVote(world);
+        } else {
+            sendStatusToAll(world);
+        }
+    }
+
+    public static void startMapVote(World world) {
+        TDMData data = TDMData.get(world);
+        if (data.mapVoteActive) {
+            return;
+        }
+
+        data.mapVoteActive = true;
+        data.mapVoteEndTick = world.getTotalWorldTime() + MAP_VOTE_TICKS;
+        data.mapVotes.clear();
+        data.markDirty();
+        sendMapVoteGuiToAll(world);
+        sendStatusToAll(world);
+    }
+
+    public static void finishMapVote(World world) {
+        TDMData data = TDMData.get(world);
+        String winner = getWinningMap(data);
+        if (winner != null && data.maps.containsKey(winner)) {
+            data.selectedMap = winner;
+        }
+        data.mapVoteActive = false;
+        data.mapVoteEndTick = 0;
+        data.mapVotes.clear();
+        data.markDirty();
+        startRound(world, false);
+        teleportAllPlayersToSelectedMap(world);
+    }
+
+    public static int getRemainingRoundSeconds(World world) {
+        TDMData data = TDMData.get(world);
+        if (!data.enabled || data.roundEndTick <= 0) {
+            return 0;
+        }
+        return Math.max(0, (int) ((data.roundEndTick - world.getTotalWorldTime() + 19) / 20));
+    }
+
+    public static int getRemainingVoteSeconds(World world) {
+        TDMData data = TDMData.get(world);
+        if (!data.enabled || !data.mapVoteActive || data.mapVoteEndTick <= 0) {
+            return 0;
+        }
+        return Math.max(0, (int) ((data.mapVoteEndTick - world.getTotalWorldTime() + 19) / 20));
+    }
+
+    public static boolean isMapVoteActive(World world) {
+        return TDMData.get(world).mapVoteActive;
+    }
+
+    public static int getScore(World world, Team team) {
+        TDMData data = TDMData.get(world);
+        return team == Team.RED ? data.redScore : data.blueScore;
+    }
+
+    public static void sendStatusToAll(World world) {
+        TDMData data = TDMData.get(world);
+        for (EntityPlayerMP player : getOnlinePlayers()) {
+            if (player.worldObj.provider.dimensionId == world.provider.dimensionId) {
+                PacketDispatcher.wrapper.sendTo(new TDMStatusPacket(
+                        data.enabled,
+                        data.mapVoteActive,
+                        getRemainingRoundSeconds(world),
+                        getRemainingVoteSeconds(world),
+                        data.redScore,
+                        data.blueScore,
+                        data.selectedMap
+                ), player);
+            }
+        }
+    }
+
+    private static void sendMapVoteGuiToAll(World world) {
+        List<String> mapNames = getMapNames(world);
+        if (mapNames.isEmpty()) {
+            return;
+        }
+
+        String[] maps = mapNames.toArray(new String[mapNames.size()]);
+        for (EntityPlayerMP player : getOnlinePlayers()) {
+            if (player.worldObj.provider.dimensionId == world.provider.dimensionId) {
+                PacketDispatcher.wrapper.sendTo(new TDMMapVoteGuiPacket(maps, MAP_VOTE_TICKS / 20), player);
+            }
+        }
+    }
+
+    private static void teleportAllPlayersToSelectedMap(World world) {
+        Random rand = new Random();
+        for (EntityPlayerMP player : getOnlinePlayers()) {
+            if (player.worldObj.provider.dimensionId != world.provider.dimensionId) {
+                continue;
+            }
+
+            if (respawnPlayer(player, rand)) {
+                pendingKitSelection.remove(getPlayerKey(player));
+                promptForKit(player);
+            }
+        }
     }
 
     public static void addSpawn(World world, Team team, int dim, int x, int y, int z) {
@@ -447,13 +626,14 @@ public class TDMManager {
         }
 
         Team team = getOrAssignPlayerTeam(player);
-        if (TDMKitManager.getKitCount(team) <= 0) {
-            player.addChatMessage(new net.minecraft.util.ChatComponentText("No TDM kits have been saved for " + team.name + ". Ask an admin to use /kit " + team.name + "."));
+        String mapName = getSelectedMap(player.worldObj);
+        if (TDMKitManager.getKitCount(mapName, team) <= 0) {
+            player.addChatMessage(new net.minecraft.util.ChatComponentText("No TDM kits have been saved for " + team.name + " on map " + (mapName.length() == 0 ? "global" : mapName) + ". Ask an admin to use /kit " + team.name + " [map]."));
             return;
         }
 
         pendingKitSelection.add(getPlayerKey(player));
-        PacketDispatcher.wrapper.sendTo(new TDMKitGuiPacket(team.name, TDMKitManager.getKitNames(team)), (EntityPlayerMP) player);
+        PacketDispatcher.wrapper.sendTo(new TDMKitGuiPacket(team.name, TDMKitManager.getKitNames(mapName, team)), (EntityPlayerMP) player);
     }
 
     public static void tickKitSelection(EntityPlayer player) {
@@ -483,7 +663,7 @@ public class TDMManager {
         }
 
         Team team = getOrAssignPlayerTeam(player);
-        if (!TDMKitManager.applyKit(team, kitIndex, player)) {
+        if (!TDMKitManager.applyKit(getSelectedMap(player.worldObj), team, kitIndex, player)) {
             return false;
         }
 
