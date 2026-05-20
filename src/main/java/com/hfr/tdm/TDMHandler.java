@@ -82,6 +82,8 @@ public class TDMHandler {
         TDMManager.Team attackerTeam = TDMManager.getOrAssignPlayerTeam(attacker);
         if (attackerTeam != null && attackerTeam != victimTeam) {
             TDMManager.addKillScore(victim.worldObj, attackerTeam);
+            TDMManager.recordKill(victim.worldObj, attacker.getCommandSenderName());
+            TDMManager.recordDeath(victim.worldObj, victim.getCommandSenderName());
         }
     }
 
@@ -117,7 +119,7 @@ public class TDMHandler {
     private void sendTeamChangeReminder(EntityPlayer player) {
         long worldTime = player.worldObj.getTotalWorldTime();
         if (worldTime > 0 && worldTime % TEAM_CHANGE_REMINDER_INTERVAL_TICKS == 0) {
-            player.addChatMessage(new net.minecraft.util.ChatComponentText("You can change TDM teams using /teamchange."));
+            player.addChatMessage(new net.minecraft.util.ChatComponentText("Open the TDM menu from the HUD button to change teams."));
         }
     }
 

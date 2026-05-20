@@ -76,6 +76,8 @@ public class PacketDispatcher {
 		wrapper.registerMessage(TDMStatusPacket.Handler.class, TDMStatusPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(TDMMapVoteGuiPacket.Handler.class, TDMMapVoteGuiPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(TDMMapVoteSelectPacket.Handler.class, TDMMapVoteSelectPacket.class, i++, Side.SERVER);
+		wrapper.registerMessage(TDMMenuActionPacket.Handler.class, TDMMenuActionPacket.class, i++, Side.SERVER);
+		wrapper.registerMessage(TDMMenuDataPacket.Handler.class, TDMMenuDataPacket.class, i++, Side.CLIENT);
 
 	}
 	
