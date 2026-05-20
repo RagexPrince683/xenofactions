@@ -253,6 +253,36 @@ public class TDMManager {
         return normalized;
     }
 
+
+    public static void recordKill(World world, String playerName) {
+        updateStat(TDMData.get(world).playerKills, playerName);
+        TDMData.get(world).markDirty();
+    }
+
+    public static void recordDeath(World world, String playerName) {
+        updateStat(TDMData.get(world).playerDeaths, playerName);
+        TDMData.get(world).markDirty();
+    }
+
+    private static void updateStat(Map<String, Integer> map, String playerName) {
+        if (playerName == null) return;
+        String key = playerName.toLowerCase();
+        Integer old = map.get(key);
+        map.put(key, Integer.valueOf(old == null ? 1 : old.intValue() + 1));
+    }
+
+    public static int getKills(World world, String playerName) {
+        if (playerName == null) return 0;
+        Integer v = TDMData.get(world).playerKills.get(playerName.toLowerCase());
+        return v == null ? 0 : v.intValue();
+    }
+
+    public static int getDeaths(World world, String playerName) {
+        if (playerName == null) return 0;
+        Integer v = TDMData.get(world).playerDeaths.get(playerName.toLowerCase());
+        return v == null ? 0 : v.intValue();
+    }
+
     public static Map<String, Integer> getVoteCounts(World world) {
         TDMData data = TDMData.get(world);
         Map<String, Integer> counts = new LinkedHashMap<String, Integer>();
@@ -335,6 +365,8 @@ public class TDMManager {
         TDMData data = TDMData.get(world);
         data.redScore = 0;
         data.blueScore = 0;
+        data.playerKills.clear();
+        data.playerDeaths.clear();
         data.roundEndTick = world.getTotalWorldTime() + ROUND_TICKS;
         data.mapVoteActive = false;
         data.mapVoteEndTick = 0;

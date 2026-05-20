@@ -29,6 +29,8 @@ public class TDMData extends WorldSavedData {
     public final Map<String, TDMManager.TDMMap> maps = new LinkedHashMap<String, TDMManager.TDMMap>();
     public final Map<String, TDMManager.Team> playerTeams = new HashMap<String, TDMManager.Team>();
     public final Map<String, String> mapVotes = new HashMap<String, String>();
+    public final Map<String, Integer> playerKills = new HashMap<String, Integer>();
+    public final Map<String, Integer> playerDeaths = new HashMap<String, Integer>();
 
     public TDMData(String name) {
         super(name);
@@ -71,6 +73,8 @@ public class TDMData extends WorldSavedData {
         maps.clear();
         playerTeams.clear();
         mapVotes.clear();
+        playerKills.clear();
+        playerDeaths.clear();
 
         int spawnCount = nbt.getInteger("spawnCount");
         for (int i = 0; i < spawnCount; i++) {
@@ -111,6 +115,17 @@ public class TDMData extends WorldSavedData {
             if (player.length() > 0 && team != null) {
                 playerTeams.put(player.toLowerCase(), team);
             }
+        }
+
+
+        int statCount = nbt.getInteger("statCount");
+        for (int i = 0; i < statCount; i++) {
+            String player = nbt.getString("statPlayer" + i).toLowerCase();
+            if (player.length() == 0) {
+                continue;
+            }
+            playerKills.put(player, Integer.valueOf(nbt.getInteger("statKills" + i)));
+            playerDeaths.put(player, Integer.valueOf(nbt.getInteger("statDeaths" + i)));
         }
 
         int voteCount = nbt.getInteger("voteCount");
@@ -160,6 +175,18 @@ public class TDMData extends WorldSavedData {
             playerIndex++;
         }
         nbt.setInteger("playerCount", playerIndex);
+
+
+        int statIndex = 0;
+        for (Map.Entry<String, Integer> entry : playerKills.entrySet()) {
+            String player = entry.getKey();
+            nbt.setString("statPlayer" + statIndex, player);
+            nbt.setInteger("statKills" + statIndex, entry.getValue().intValue());
+            Integer deaths = playerDeaths.get(player);
+            nbt.setInteger("statDeaths" + statIndex, deaths == null ? 0 : deaths.intValue());
+            statIndex++;
+        }
+        nbt.setInteger("statCount", statIndex);
 
         int voteIndex = 0;
         for (Map.Entry<String, String> entry : mapVotes.entrySet()) {

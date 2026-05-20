@@ -14,6 +14,8 @@ import com.hfr.items.ModItems;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.client.ReseatRequestPacket;
 import com.hfr.packet.effect.PlayerDataPacket;
+import com.hfr.packet.client.TDMMenuActionPacket;
+import com.hfr.inventory.gui.GUITDMMenu;
 import com.hfr.render.hud.RenderFlagOverlay;
 import com.hfr.render.hud.RenderRVIOverlay;
 import com.hfr.render.hud.RenderRadarScreen;
@@ -73,7 +75,7 @@ public class EventHandlerClient {
 	private static int tdmRedScore = 0;
 	private static int tdmBlueScore = 0;
 	private static String tdmMapName = "";
-
+	
 	public static List<int[]> resourceBorders = new ArrayList();
 	boolean resources = false;
 	
@@ -104,6 +106,14 @@ public class EventHandlerClient {
 		ScaledResolution resolution = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
 		int x = (resolution.getScaledWidth() - font.getStringWidth(text)) / 2;
 		font.drawStringWithShadow(text, Math.max(2, x), 6, tdmVoting ? 0xFFFF55 : 0xFFFFFF);
+	}
+
+
+	public static void openTDMMenu(String currentTeam, int cooldownSeconds, String[] lines) {
+		Minecraft mc = Minecraft.getMinecraft();
+		if (mc != null) {
+			mc.displayGuiScreen(new GUITDMMenu(currentTeam, cooldownSeconds, lines));
+		}
 	}
 
 	private static String formatSeconds(int seconds) {
@@ -201,6 +211,16 @@ public class EventHandlerClient {
 					
 					lock = true;
 
+				//tdm menu
+				} else if(Keyboard.isKeyDown(ClientProxy.tdmMenu.getKeyCode())) {
+					
+					if(!lock) {
+						PacketDispatcher.wrapper.sendToServer(new TDMMenuActionPacket(false));
+						Minecraft.getMinecraft().thePlayer.playSound("hfr:item.toggle", 0.25F, 1.0F);
+					}
+					
+					lock = true;
+				
 				//logger
 				} else if(Keyboard.isKeyDown(ClientProxy.flushLog.getKeyCode())) {
 					
