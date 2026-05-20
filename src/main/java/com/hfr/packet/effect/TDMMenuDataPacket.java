@@ -18,7 +18,8 @@ import java.util.List;
 public class TDMMenuDataPacket implements IMessage {
     public String currentTeam;
     public int cooldownSeconds;
-    public String[] lines;
+    public String[] friendlyLines;
+    public String[] enemyLines;
     public TDMMenuDataPacket() {}
     public TDMMenuDataPacket(EntityPlayerMP player, int cooldownSeconds) {
         this.cooldownSeconds = cooldownSeconds;
@@ -40,21 +41,33 @@ public class TDMMenuDataPacket implements IMessage {
                 enemy.add(line);
             }
         }
-        List<String> l = new ArrayList<String>();
-        l.add("Friendly Team (" + self.name.toUpperCase() + ")");
-        l.addAll(friend);
-        l.add("Enemy Team");
-        l.addAll(enemy);
-        this.lines = l.toArray(new String[0]);
+        this.friendlyLines = friend.toArray(new String[0]);
+        this.enemyLines = enemy.toArray(new String[0]);
     }
-    public void fromBytes(ByteBuf buf){ currentTeam = ByteBufUtils.readUTF8String(buf); cooldownSeconds = buf.readInt(); int c=buf.readInt(); lines=new String[c]; for(int i=0;i<c;i++) lines[i]=ByteBufUtils.readUTF8String(buf);}    
-    public void toBytes(ByteBuf buf){ ByteBufUtils.writeUTF8String(buf, currentTeam); buf.writeInt(cooldownSeconds); buf.writeInt(lines.length); for(String s:lines) ByteBufUtils.writeUTF8String(buf,s);}    
+    public void fromBytes(ByteBuf buf){
+        currentTeam = ByteBufUtils.readUTF8String(buf);
+        cooldownSeconds = buf.readInt();
+        int friendlyCount = buf.readInt();
+        friendlyLines = new String[friendlyCount];
+        for(int i = 0; i < friendlyCount; i++) friendlyLines[i] = ByteBufUtils.readUTF8String(buf);
+        int enemyCount = buf.readInt();
+        enemyLines = new String[enemyCount];
+        for(int i = 0; i < enemyCount; i++) enemyLines[i] = ByteBufUtils.readUTF8String(buf);
+    }
+    public void toBytes(ByteBuf buf){
+        ByteBufUtils.writeUTF8String(buf, currentTeam);
+        buf.writeInt(cooldownSeconds);
+        buf.writeInt(friendlyLines.length);
+        for(String s : friendlyLines) ByteBufUtils.writeUTF8String(buf, s);
+        buf.writeInt(enemyLines.length);
+        for(String s : enemyLines) ByteBufUtils.writeUTF8String(buf, s);
+    }
 
     public static class Handler implements IMessageHandler<TDMMenuDataPacket, IMessage> {
         @Override
         @SideOnly(Side.CLIENT)
         public IMessage onMessage(TDMMenuDataPacket message, MessageContext ctx) {
-            EventHandlerClient.openTDMMenu(message.currentTeam, message.cooldownSeconds, message.lines);
+            EventHandlerClient.openTDMMenu(message.currentTeam, message.cooldownSeconds, message.friendlyLines, message.enemyLines);
             return null;
         }
     }

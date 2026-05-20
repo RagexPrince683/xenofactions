@@ -109,10 +109,10 @@ public class EventHandlerClient {
 	}
 
 
-	public static void openTDMMenu(String currentTeam, int cooldownSeconds, String[] lines) {
+	public static void openTDMMenu(String currentTeam, int cooldownSeconds, String[] friendlyLines, String[] enemyLines) {
 		Minecraft mc = Minecraft.getMinecraft();
 		if (mc != null) {
-			mc.displayGuiScreen(new GUITDMMenu(currentTeam, cooldownSeconds, lines));
+			mc.displayGuiScreen(new GUITDMMenu(currentTeam, cooldownSeconds, friendlyLines, enemyLines));
 		}
 	}
 
