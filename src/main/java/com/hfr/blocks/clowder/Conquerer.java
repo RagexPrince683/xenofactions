@@ -19,6 +19,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.MathHelper;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.World;
 
 public class Conquerer extends BlockContainer {
@@ -73,12 +74,14 @@ public class Conquerer extends BlockContainer {
 			Clowder clowder = Clowder.getClowderFromPlayer((EntityPlayer) player);
 			flag.owner = clowder;
 
-			if (clowder != null && flag.checkBorder(x, z) && flag.canSeeSky() && noProximity(world, x, y, z)) { //todo here??? no this is conquerer
-				//successful flag placement here?? I think?
-				//maybe send the coordinates to the enemy faction? Here? IF that is what this is.
+			if (clowder != null && flag.checkBorder(x, z) && flag.canSeeSky() && noProximity(world, x, y, z)) {
 
 				flag.owner.addPrestigeReq(0.2F, world);
 				flag.markDirty();
+				MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(
+						EnumChatFormatting.RED + "[WAR] " + EnumChatFormatting.GOLD + clowder.name +
+						EnumChatFormatting.YELLOW + " placed a claim flag at " + EnumChatFormatting.AQUA + "(" + x + ", " + y + ", " + z + ")"
+				));
 			} else {
 				flag.owner = null;
 				((EntityPlayer) player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "You won't be able to raise this flag. This may be due to:"));
