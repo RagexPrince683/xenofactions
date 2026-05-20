@@ -12,7 +12,7 @@ import java.util.Random;
 
 public class CommandTeamChange extends CommandBase {
 
-    private static final int TEAM_CHANGE_COOLDOWN_TICKS = 30 * 20;
+    private static final int TEAM_CHANGE_COOLDOWN_TICKS = 120 * 20;
     private final Map<String, Long> nextTeamChangeTick = new HashMap<String, Long>();
 
     @Override

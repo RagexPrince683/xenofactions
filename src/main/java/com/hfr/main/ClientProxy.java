@@ -72,6 +72,7 @@ public class ClientProxy extends ServerProxy
 	public static KeyBinding filter = new KeyBinding("Toggle chat filter", 62, "xRadar");
 	public static KeyBinding markers = new KeyBinding("Toggle resource markers", 0, "xRadar");
 	public static KeyBinding flushLog = new KeyBinding("Flush extended debugging log", 0, "xRadar");
+	public static KeyBinding tdmMenu = new KeyBinding("Open TDM Menu", 38, "xRadar");
 	
 	@Override
 	public void registerRenderInfo()
@@ -101,6 +102,7 @@ public class ClientProxy extends ServerProxy
 		ClientRegistry.registerKeyBinding(filter);
 		ClientRegistry.registerKeyBinding(markers);
 		ClientRegistry.registerKeyBinding(flushLog);
+		ClientRegistry.registerKeyBinding(tdmMenu);
 		
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityMachineRadar.class, new RenderRadar());
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityForceField.class, new RenderMachineForceField());
