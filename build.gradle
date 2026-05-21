@@ -21,7 +21,7 @@ buildscript {
 
 // Define the version increment logic
 def versionFile = file('version.properties')
-def currentVersion = '1.5.2' // Default version
+def currentVersion = '2.0.0' // Default version
 
 if (versionFile.exists()) {
     currentVersion = versionFile.text.trim()
