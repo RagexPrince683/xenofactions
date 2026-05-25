@@ -376,6 +376,38 @@ public class CommandClowder extends CommandBase {
 			cmdNameClaim(sender, args[1]);
 			return;
 		}
+		if(cmd.equals("declarewar") && args.length > 1) {
+			cmdDeclareWar(sender, args[1]);
+			return;
+		}
+		if(cmd.equals("peace") && args.length > 1) {
+			cmdRequestPeace(sender, args[1]);
+			return;
+		}
+		if(cmd.equals("acceptpeace") && args.length > 1) {
+			cmdAcceptPeace(sender, args[1]);
+			return;
+		}
+		if(cmd.equals("ceasefire") && args.length > 1) {
+			cmdRequestCeasefire(sender, args[1]);
+			return;
+		}
+		if(cmd.equals("acceptceasefire") && args.length > 1) {
+			cmdAcceptCeasefire(sender, args[1]);
+			return;
+		}
+		if(cmd.equals("surrender") && args.length > 1) {
+			cmdSurrender(sender, args[1]);
+			return;
+		}
+		if(cmd.equals("acceptsurrender") && args.length > 1) {
+			cmdAcceptSurrender(sender, args[1]);
+			return;
+		}
+		if(cmd.equals("defendally") && args.length > 1) {
+			cmdDefendAlly(sender, args[1]);
+			return;
+		}
 
 		sender.addChatMessage(new ChatComponentText(ERROR + getCommandUsage(sender)));
 	}
@@ -453,6 +485,22 @@ public class CommandClowder extends CommandBase {
 					new ChatComponentText(COMMAND + "-allywarp <name>" + TITLE + " - Teleports to an ally rally-point"));
 			sender.addChatMessage(
 					new ChatComponentText(COMMAND + "-alliance" + TITLE + " - Shows name of all allied clowders"));
+			sender.addChatMessage(
+					new ChatComponentText(COMMAND_LEADER + "-declarewar <faction>" + TITLE + " - Declares war on another faction"));
+			sender.addChatMessage(
+					new ChatComponentText(COMMAND_LEADER + "-peace <faction>" + TITLE + " - Ends war with another faction"));
+			sender.addChatMessage(
+					new ChatComponentText(COMMAND_LEADER + "-acceptpeace <faction>" + TITLE + " - Accepts peace proposal"));
+			sender.addChatMessage(
+					new ChatComponentText(COMMAND_LEADER + "-ceasefire <faction>" + TITLE + " - Proposes ceasefire"));
+			sender.addChatMessage(
+					new ChatComponentText(COMMAND_LEADER + "-acceptceasefire <faction>" + TITLE + " - Accepts ceasefire"));
+			sender.addChatMessage(
+					new ChatComponentText(COMMAND_LEADER + "-surrender <faction>" + TITLE + " - Offers surrender"));
+			sender.addChatMessage(
+					new ChatComponentText(COMMAND_LEADER + "-acceptsurrender <faction>" + TITLE + " - Accepts enemy surrender"));
+			sender.addChatMessage(
+					new ChatComponentText(COMMAND_LEADER + "-defendally <ally>" + TITLE + " - Joins an ally's active wars"));
 			sender.addChatMessage(
 					new ChatComponentText(INFO + "/xmap to get a claim map!")
 			);
@@ -806,6 +854,9 @@ public class CommandClowder extends CommandBase {
 							formerFriend.notifyAll(player.worldObj, new ChatComponentText(INFO + clowder.name + " has cancelled our alliance!"));
 							clowder.removeAlly(player.worldObj, kickee);
 							formerFriend.removeAlly(player.worldObj, clowder.name);
+							long until = System.currentTimeMillis() + 24L * 60L * 60L * 1000L;
+							clowder.formerAllyNoWarUntil.put(formerFriend.name, until);
+							formerFriend.formerAllyNoWarUntil.put(clowder.name, until);
 							// modid instead of modname
 
 							clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Friendship with " + kickee + " has ended!"));
@@ -1854,6 +1905,131 @@ public class CommandClowder extends CommandBase {
 
 		sender.addChatMessage(new ChatComponentText(INFO + "Your claim has been renamed! It might take a few moments for all chunks to assume the new name."));
 		ClowderData.getData(player.worldObj).markDirty();
+	}
+
+	private void cmdDeclareWar(ICommandSender sender, String targetName) {
+		if (!CommandClowderAdmin.WARENABLED) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "War declarations are currently disabled by admins."));
+			return;
+		}
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder me = Clowder.getClowderFromPlayer(player);
+		Clowder target = Clowder.getClowderFromName(targetName);
+		if (me == null || target == null || me == target) return;
+		if (me.getPermLevel(player.getDisplayName()) < 2) return;
+		if(!CommandClowderAdmin.WAR_COMMAND_CHECKS_DISABLED && target.getOnlineMemberCount() < 2 && !Clowder.forceOnline) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You can only declare war on factions that are currently online (2+ members)."));
+			return;
+		}
+		if (me.allies.containsKey(target)) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You can not declare war on an ally."));
+			return;
+		}
+		long now = System.currentTimeMillis();
+		if(!CommandClowderAdmin.WAR_COOLDOWNS_DISABLED) {
+			Long cd = me.noWarUntil.get(target.name);
+			if (cd != null && cd > now) return;
+			Long allyCd = me.formerAllyNoWarUntil.get(target.name);
+			if (allyCd != null && allyCd > now) return;
+		}
+		me.activeWars.add(target.name);
+		target.activeWars.add(me.name);
+		me.warDeclaredAt.put(target.name, now);
+		target.warDeclaredAt.put(me.name, now);
+		ClowderData.getData(player.worldObj).markDirty();
+		MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(
+				EnumChatFormatting.DARK_RED + "[WAR] " + EnumChatFormatting.GOLD + me.name + EnumChatFormatting.RED + " has declared war on " + EnumChatFormatting.GOLD + target.name + EnumChatFormatting.RED + "!"));
+	}
+
+	private void cmdRequestPeace(ICommandSender sender, String targetName) {
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder me = Clowder.getClowderFromPlayer(player);
+		Clowder target = Clowder.getClowderFromName(targetName);
+		if (me == null || target == null || me == target) return;
+		if (me.getPermLevel(player.getDisplayName()) < 2) return;
+		me.peaceRequests.add(target.name);
+		target.notifyAll(player.worldObj, new ChatComponentText(INFO + me.name + " has offered peace. Use /c acceptpeace " + me.name));
+	}
+	private void cmdAcceptPeace(ICommandSender sender, String targetName) {
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder me = Clowder.getClowderFromPlayer(player);
+		Clowder target = Clowder.getClowderFromName(targetName);
+		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 2) return;
+		if(!CommandClowderAdmin.WAR_COMMAND_CHECKS_DISABLED && !me.isAtWarWith(target)) return;
+		if(!target.peaceRequests.contains(me.name)) return;
+		target.peaceRequests.remove(me.name);
+		me.activeWars.remove(target.name); target.activeWars.remove(me.name);
+		if(!CommandClowderAdmin.WAR_COOLDOWNS_DISABLED) {
+			long until = System.currentTimeMillis() + 84L * 60L * 60L * 1000L;
+			me.noWarUntil.put(target.name, until); target.noWarUntil.put(me.name, until);
+		}
+		MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(EnumChatFormatting.GREEN + "[WAR] " + me.name + " and " + target.name + " have agreed to peace."));
+	}
+	private void cmdRequestCeasefire(ICommandSender sender, String targetName) {
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder me = Clowder.getClowderFromPlayer(player);
+		Clowder target = Clowder.getClowderFromName(targetName);
+		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 2) return;
+		if(!CommandClowderAdmin.WAR_COMMAND_CHECKS_DISABLED && !me.isAtWarWith(target)) return;
+		me.ceasefireRequests.add(target.name);
+		target.notifyAll(player.worldObj, new ChatComponentText(INFO + me.name + " has proposed a ceasefire. Use /c acceptceasefire " + me.name));
+	}
+	private void cmdAcceptCeasefire(ICommandSender sender, String targetName) {
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder me = Clowder.getClowderFromPlayer(player);
+		Clowder target = Clowder.getClowderFromName(targetName);
+		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 2) return;
+		if(!target.ceasefireRequests.contains(me.name)) return;
+		target.ceasefireRequests.remove(me.name);
+		me.activeWars.remove(target.name); target.activeWars.remove(me.name);
+		if(!CommandClowderAdmin.WAR_COOLDOWNS_DISABLED) {
+			long until = System.currentTimeMillis() + 24L * 60L * 60L * 1000L;
+			me.noWarUntil.put(target.name, until); target.noWarUntil.put(me.name, until);
+		}
+	}
+	private void cmdSurrender(ICommandSender sender, String targetName) {
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder me = Clowder.getClowderFromPlayer(player);
+		Clowder target = Clowder.getClowderFromName(targetName);
+		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 2) return;
+		if(!CommandClowderAdmin.WAR_COMMAND_CHECKS_DISABLED && !me.isAtWarWith(target)) return;
+		me.surrenderRequests.add(target.name);
+		target.notifyAll(player.worldObj, new ChatComponentText(CRITICAL + me.name + " offers surrender. Use /c acceptsurrender " + me.name + " to accept."));
+	}
+	private void cmdAcceptSurrender(ICommandSender sender, String targetName) {
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder me = Clowder.getClowderFromPlayer(player);
+		Clowder target = Clowder.getClowderFromName(targetName);
+		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 2) return;
+		if(!target.surrenderRequests.contains(me.name)) return;
+		target.surrenderRequests.remove(me.name);
+		me.activeWars.remove(target.name); target.activeWars.remove(me.name);
+		if(!CommandClowderAdmin.WAR_COOLDOWNS_DISABLED) {
+			long until = System.currentTimeMillis() + 84L * 60L * 60L * 1000L;
+			me.noWarUntil.put(target.name, until); target.noWarUntil.put(me.name, until);
+		}
+		MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(EnumChatFormatting.GREEN + "[WAR] " + me.name + " accepted " + target.name + "'s surrender."));
+	}
+
+	private void cmdDefendAlly(ICommandSender sender, String allyName) {
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder me = Clowder.getClowderFromPlayer(player);
+		Clowder ally = Clowder.getClowderFromName(allyName);
+		if (me == null || ally == null) return;
+		if (me.getPermLevel(player.getDisplayName()) < 2) return;
+		if (!me.allies.containsKey(ally)) return;
+		int joined = 0;
+		for (String enemyName : ally.activeWars) {
+			if (!enemyName.equals(me.name)) {
+				me.activeWars.add(enemyName);
+				Clowder enemy = Clowder.getClowderFromName(enemyName);
+				if (enemy != null) enemy.activeWars.add(me.name);
+				joined++;
+			}
+		}
+		me.defendingAllies.add(ally.name);
+		ClowderData.getData(player.worldObj).markDirty();
+		sender.addChatMessage(new ChatComponentText(INFO + "Joined " + joined + " war(s) to defend ally " + ally.name + "."));
 	}
 
 	@Override
