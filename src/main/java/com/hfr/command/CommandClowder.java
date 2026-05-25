@@ -1916,7 +1916,7 @@ public class CommandClowder extends CommandBase {
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
 		if (me == null || target == null || me == target) return;
-		if (me.getPermLevel(player.getDisplayName()) < 2) return;
+		if (me.getPermLevel(player.getDisplayName()) < 3) return;
 		if(!CommandClowderAdmin.WAR_COMMAND_CHECKS_DISABLED && target.getOnlineMemberCount() < 2 && !Clowder.forceOnline) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You can only declare war on factions that are currently online (2+ members)."));
 			return;
@@ -1946,7 +1946,7 @@ public class CommandClowder extends CommandBase {
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
 		if (me == null || target == null || me == target) return;
-		if (me.getPermLevel(player.getDisplayName()) < 2) return;
+		if (me.getPermLevel(player.getDisplayName()) < 3) return;
 		me.peaceRequests.add(target.name);
 		target.notifyAll(player.worldObj, new ChatComponentText(INFO + me.name + " has offered peace. Use /c acceptpeace " + me.name));
 	}
@@ -1954,7 +1954,7 @@ public class CommandClowder extends CommandBase {
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
-		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 2) return;
+		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 3) return;
 		if(!CommandClowderAdmin.WAR_COMMAND_CHECKS_DISABLED && !me.isAtWarWith(target)) return;
 		if(!target.peaceRequests.contains(me.name)) return;
 		target.peaceRequests.remove(me.name);
@@ -1969,7 +1969,7 @@ public class CommandClowder extends CommandBase {
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
-		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 2) return;
+		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 3) return;
 		if(!CommandClowderAdmin.WAR_COMMAND_CHECKS_DISABLED && !me.isAtWarWith(target)) return;
 		me.ceasefireRequests.add(target.name);
 		target.notifyAll(player.worldObj, new ChatComponentText(INFO + me.name + " has proposed a ceasefire. Use /c acceptceasefire " + me.name));
@@ -1978,7 +1978,7 @@ public class CommandClowder extends CommandBase {
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
-		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 2) return;
+		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 3) return;
 		if(!target.ceasefireRequests.contains(me.name)) return;
 		target.ceasefireRequests.remove(me.name);
 		me.activeWars.remove(target.name); target.activeWars.remove(me.name);
@@ -1991,7 +1991,7 @@ public class CommandClowder extends CommandBase {
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
-		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 2) return;
+		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 3) return;
 		if(!CommandClowderAdmin.WAR_COMMAND_CHECKS_DISABLED && !me.isAtWarWith(target)) return;
 		me.surrenderRequests.add(target.name);
 		target.notifyAll(player.worldObj, new ChatComponentText(CRITICAL + me.name + " offers surrender. Use /c acceptsurrender " + me.name + " to accept."));
@@ -2000,7 +2000,7 @@ public class CommandClowder extends CommandBase {
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
-		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 2) return;
+		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 3) return;
 		if(!target.surrenderRequests.contains(me.name)) return;
 		target.surrenderRequests.remove(me.name);
 		me.activeWars.remove(target.name); target.activeWars.remove(me.name);
@@ -2016,7 +2016,7 @@ public class CommandClowder extends CommandBase {
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder ally = Clowder.getClowderFromName(allyName);
 		if (me == null || ally == null) return;
-		if (me.getPermLevel(player.getDisplayName()) < 2) return;
+		if (me.getPermLevel(player.getDisplayName()) < 3) return;
 		if (!me.allies.containsKey(ally)) return;
 		int joined = 0;
 		for (String enemyName : ally.activeWars) {
