@@ -34,11 +34,11 @@ public class CommandXFlags extends CommandBase {
 
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
-        if (sender instanceof EntityPlayerMP && CommandClowderAdmin.WARENABLED ) { //todone? add central toggle
+        if (sender instanceof EntityPlayerMP && CommandClowderAdmin.WARENABLED ) { // declaration system enabled
             EntityPlayerMP player = (EntityPlayerMP) sender;
             ItemStack map = new ItemStack(ModBlocks.clowder_conquerer, 64);
             player.inventory.addItemStackToInventory(map);
-            player.addChatMessage(new ChatComponentText("Conquest Flags Given!"));
+            player.addChatMessage(new ChatComponentText("Conquest Flags Given! (usable only against active war enemies)"));
         }
     }
 }

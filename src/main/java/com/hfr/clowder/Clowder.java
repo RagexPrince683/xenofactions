@@ -136,6 +136,15 @@ public class Clowder {
 	public Set<String> potentialFriends = new HashSet();
 	public HashMap<Clowder, Long> allies = new HashMap();
 	public HashMap<String, Long> alliesS = new HashMap(); //string version since NBT cringe memory gay
+	public Set<String> activeWars = new HashSet();
+	public Set<String> defendingAllies = new HashSet();
+	public HashMap<String, Long> warDeclaredAt = new HashMap();
+	public Set<String> surrenderRequests = new HashSet();
+	public Set<String> ceasefireRequests = new HashSet();
+	public Set<String> peaceRequests = new HashSet();
+	public HashMap<String, Long> noWarUntil = new HashMap();
+	public HashMap<String, Long> formerAllyNoWarUntil = new HashMap();
+	public long belowOnlineThresholdSince = 0L;
 	public int allyWarpX;
 	public int allyWarpY;
 	public int allyWarpZ;
@@ -852,6 +861,38 @@ public class Clowder {
 		return true;
 	}
 
+	public boolean isAtWarWith(Clowder other) {
+		return other != null && activeWars.contains(other.name);
+	}
+
+	public boolean canRaid(Clowder other) {
+		if(other == null || !isAtWarWith(other))
+			return false;
+		if(!this.isRaidable())
+			return false;
+		return other.isRaidableAgainst(this);
+	}
+
+	public boolean isRaidableAgainst(Clowder aggressor) {
+		long now = System.currentTimeMillis();
+		int online = getOnlineMemberCount();
+		if (online >= 2) {
+			belowOnlineThresholdSince = 0L;
+			return true;
+		}
+		if (belowOnlineThresholdSince <= 0L)
+			belowOnlineThresholdSince = now;
+		if (now - belowOnlineThresholdSince <= 30L * 60L * 1000L)
+			return true;
+
+		if(aggressor != null) {
+			Long decl = aggressor.warDeclaredAt.get(this.name);
+			if(decl != null && now - decl >= 12L * 60L * 60L * 1000L)
+				return true;
+		}
+		return false;
+	}
+
 
 	public boolean addMember(World world, String name) {
 
@@ -1193,24 +1234,24 @@ public class Clowder {
 		if (Clowder.forceOnline)
 			return true;
 
+		int online = getOnlineMemberCount();
+		if (online >= 2) {
+			belowOnlineThresholdSince = 0L;
+			return true;
+		}
+		if (belowOnlineThresholdSince <= 0L)
+			belowOnlineThresholdSince = System.currentTimeMillis();
+		return System.currentTimeMillis() - belowOnlineThresholdSince <= 30L * 60L * 1000L;
+	}
+
+	public int getOnlineMemberCount() {
 		int online = 0;
-		int members = this.members.size();
-
 		for (String s : this.members.keySet()) {
-
 			Long l = this.members.get(s);
-
 			if (l > System.currentTimeMillis())
 				online++;
 		}
-
-		if (members >= 6)
-			return online >= 3;
-
-		if (members >= 3)
-			return online >= 2;
-
-		return online >= 1;
+		return online;
 	}
 
 	public int getPlayersOnline() {
@@ -1348,6 +1389,15 @@ public class Clowder {
 		nbt.setInteger(i + "_members", this.members.size());
 		nbt.setInteger(i + "_officers", this.officers.size());
 		nbt.setInteger(i + "_warps", this.warps.size());
+		nbt.setInteger(i + "_activeWars", this.activeWars.size());
+		nbt.setInteger(i + "_defendingAllies", this.defendingAllies.size());
+		nbt.setInteger(i + "_warDeclaredAt", this.warDeclaredAt.size());
+		nbt.setInteger(i + "_surrenderReq", this.surrenderRequests.size());
+		nbt.setInteger(i + "_ceaseReq", this.ceasefireRequests.size());
+		nbt.setInteger(i + "_peaceReq", this.peaceRequests.size());
+		nbt.setInteger(i + "_noWarUntil", this.noWarUntil.size());
+		nbt.setInteger(i + "_formerAllyNoWar", this.formerAllyNoWarUntil.size());
+		nbt.setLong(i + "_belowOnlineSince", this.belowOnlineThresholdSince);
 
 		///poorly coded "treaty" system///
 		//nbt.setString(i + "_treaty1", this.treaty1);
@@ -1394,6 +1444,33 @@ public class Clowder {
 			nbt.setInteger(i + "_" + j + "_x", coords[0]);
 			nbt.setInteger(i + "_" + j + "_y", coords[1]);
 			nbt.setInteger(i + "_" + j + "_z", coords[2]);
+		}
+
+		for (int j = 0; j < this.activeWars.size(); j++)
+			nbt.setString(i + "_" + j + "_war", (String) this.activeWars.toArray()[j]);
+
+		for (int j = 0; j < this.defendingAllies.size(); j++)
+			nbt.setString(i + "_" + j + "_def", (String) this.defendingAllies.toArray()[j]);
+		for (int j = 0; j < this.warDeclaredAt.size(); j++) {
+			String n = (String) this.warDeclaredAt.keySet().toArray()[j];
+			nbt.setString(i + "_" + j + "_wdecl_n", n);
+			nbt.setLong(i + "_" + j + "_wdecl_t", this.warDeclaredAt.get(n));
+		}
+		for (int j = 0; j < this.surrenderRequests.size(); j++)
+			nbt.setString(i + "_" + j + "_sreq", (String) this.surrenderRequests.toArray()[j]);
+		for (int j = 0; j < this.ceasefireRequests.size(); j++)
+			nbt.setString(i + "_" + j + "_creq", (String) this.ceasefireRequests.toArray()[j]);
+		for (int j = 0; j < this.peaceRequests.size(); j++)
+			nbt.setString(i + "_" + j + "_preq", (String) this.peaceRequests.toArray()[j]);
+		for (int j = 0; j < this.noWarUntil.size(); j++) {
+			String n = (String) this.noWarUntil.keySet().toArray()[j];
+			nbt.setString(i + "_" + j + "_nwu_n", n);
+			nbt.setLong(i + "_" + j + "_nwu_t", this.noWarUntil.get(n));
+		}
+		for (int j = 0; j < this.formerAllyNoWarUntil.size(); j++) {
+			String n = (String) this.formerAllyNoWarUntil.keySet().toArray()[j];
+			nbt.setString(i + "_" + j + "_fanwu_n", n);
+			nbt.setLong(i + "_" + j + "_fanwu_t", this.formerAllyNoWarUntil.get(n));
 		}
 	}
 
@@ -1476,6 +1553,15 @@ public class Clowder {
 		int count = nbt.getInteger(i + "_members");
 		int co = nbt.getInteger(i + "_officers");
 		int cwarp = nbt.getInteger(i + "_warps");
+		int cwar = nbt.getInteger(i + "_activeWars");
+		int cdef = nbt.getInteger(i + "_defendingAllies");
+		int cdecl = nbt.getInteger(i + "_warDeclaredAt");
+		int csreq = nbt.getInteger(i + "_surrenderReq");
+		int ccreq = nbt.getInteger(i + "_ceaseReq");
+		int cpreq = nbt.getInteger(i + "_peaceReq");
+		int cnwu = nbt.getInteger(i + "_noWarUntil");
+		int cfanwu = nbt.getInteger(i + "_formerAllyNoWar");
+		c.belowOnlineThresholdSince = nbt.getLong(i + "_belowOnlineSince");
 
 		for (int j = 0; j < count; j++)
 			c.members.put(nbt.getString(i + "_" + j), time());
@@ -1494,6 +1580,22 @@ public class Clowder {
 
 			c.warps.put(name, coord);
 		}
+		for (int j = 0; j < cwar; j++)
+			c.activeWars.add(nbt.getString(i + "_" + j + "_war"));
+		for (int j = 0; j < cdef; j++)
+			c.defendingAllies.add(nbt.getString(i + "_" + j + "_def"));
+		for (int j = 0; j < cdecl; j++)
+			c.warDeclaredAt.put(nbt.getString(i + "_" + j + "_wdecl_n"), nbt.getLong(i + "_" + j + "_wdecl_t"));
+		for (int j = 0; j < csreq; j++)
+			c.surrenderRequests.add(nbt.getString(i + "_" + j + "_sreq"));
+		for (int j = 0; j < ccreq; j++)
+			c.ceasefireRequests.add(nbt.getString(i + "_" + j + "_creq"));
+		for (int j = 0; j < cpreq; j++)
+			c.peaceRequests.add(nbt.getString(i + "_" + j + "_preq"));
+		for (int j = 0; j < cnwu; j++)
+			c.noWarUntil.put(nbt.getString(i + "_" + j + "_nwu_n"), nbt.getLong(i + "_" + j + "_nwu_t"));
+		for (int j = 0; j < cfanwu; j++)
+			c.formerAllyNoWarUntil.put(nbt.getString(i + "_" + j + "_fanwu_n"), nbt.getLong(i + "_" + j + "_fanwu_t"));
 
 		return c;
 	}

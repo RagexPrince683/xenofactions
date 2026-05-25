@@ -141,7 +141,8 @@ public class TileEntityConquerer extends TileEntityMachineBase implements ITerri
 		CoordPair loc = ClowderTerritory.getCoordPair(xCoord, zCoord);
 		TerritoryMeta meta = ClowderTerritory.getMetaFromCoords(loc);
 		
-		if(meta != null && meta.owner.zone == Zone.FACTION && meta.owner.owner != this.owner/* && meta.owner.owner.isRaidable()*/) {
+		if(meta != null && meta.owner.zone == Zone.FACTION && meta.owner.owner != this.owner
+				&& this.owner != null && this.owner.canRaid(meta.owner.owner)) {
 
 			CoordPair loc2 = ClowderTerritory.getCoordPair(meta.flagX, meta.flagZ);
 			
@@ -175,7 +176,9 @@ public class TileEntityConquerer extends TileEntityMachineBase implements ITerri
 
 		CoordPair loc = ClowderTerritory.getCoordPair(x, z);
 		Ownership owner = ClowderTerritory.getOwnerFromCoords(loc);
-		if(owner.zone != Zone.FACTION || owner.owner == this.owner)
+		if(owner.zone != Zone.FACTION || owner.owner == this.owner || this.owner == null)
+			return false;
+		if(!this.owner.canRaid(owner.owner))
 			return false;
 		
 		CoordPair loc1 = ClowderTerritory.getCoordPair(x + 16, z);
