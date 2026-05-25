@@ -1255,23 +1255,7 @@ public class Clowder {
 	}
 
 	public int getPlayersOnline() {
-		//very broken, this just doesn't work
-
-		int online = 0;
-		int members = this.members.size();
-
-		for (String s : this.members.keySet()) {
-
-			Long l = this.members.get(s);
-
-			if (l > System.currentTimeMillis())
-				online++;
-				System.out.println(s + " is online!");
-				System.out.println(members + "members");
-
-		}
-
-		return online;
+		return getOnlineMemberCount();
 	}
 
 	// cohesion my fucking balls

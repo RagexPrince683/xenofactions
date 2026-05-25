@@ -24,6 +24,8 @@ import net.minecraft.util.EnumChatFormatting;
 public class CommandClowderAdmin extends CommandBase {
 
 	public static boolean WARENABLED = false;
+	public static boolean WAR_COOLDOWNS_DISABLED = false;
+	public static boolean WAR_COMMAND_CHECKS_DISABLED = false;
 
 	@Override
 	public String getCommandName() {
@@ -183,6 +185,16 @@ public class CommandClowderAdmin extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(INFO + "War declarations disabled; active wars cleared."));
 			return;
 		}
+		if(cmd.equals("skipwarcooldowns")) {
+			WAR_COOLDOWNS_DISABLED = !WAR_COOLDOWNS_DISABLED;
+			sender.addChatMessage(new ChatComponentText(INFO + "War cooldown skipping is now " + (WAR_COOLDOWNS_DISABLED ? "ENABLED" : "DISABLED") + "."));
+			return;
+		}
+		if(cmd.equals("ignorewarchecks")) {
+			WAR_COMMAND_CHECKS_DISABLED = !WAR_COMMAND_CHECKS_DISABLED;
+			sender.addChatMessage(new ChatComponentText(INFO + "War/peace command checks are now " + (WAR_COMMAND_CHECKS_DISABLED ? "IGNORED" : "ENFORCED") + "."));
+			return;
+		}
 		
 		sender.addChatMessage(new ChatComponentText(ERROR + getCommandUsage(sender)));
 	}
@@ -217,6 +229,8 @@ public class CommandClowderAdmin extends CommandBase {
 			//sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-info" + TITLE + " - Shows info on your faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-warenable" + TITLE + " - Enables war mode"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-wardisable" + TITLE + " - Disables war mode"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-skipwarcooldowns" + TITLE + " - Toggles global war cooldown bypass"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-ignorewarchecks" + TITLE + " - Toggles online/war check bypass for war commands"));
 		}
 	}
 	
