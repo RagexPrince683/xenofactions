@@ -134,7 +134,7 @@ public class CommandClowderAdmin extends CommandBase {
 
 		if (cmd.equals("warenable")) {
 			WARENABLED = true;
-			sender.addChatMessage(new ChatComponentText(INFO + "War mode enabled!"));
+			sender.addChatMessage(new ChatComponentText(INFO + "War declarations enabled!"));
 
 			// Notify and play sound for all players
 			for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
@@ -142,7 +142,7 @@ public class CommandClowderAdmin extends CommandBase {
 					EntityPlayerMP player = (EntityPlayerMP) obj;
 
 					// Broadcast message
-					player.addChatMessage(new ChatComponentText(INFO + "⚔ War mode has been ENABLED!"));
+					player.addChatMessage(new ChatComponentText(INFO + "⚔ War declarations have been ENABLED!"));
 
 					// Play Wither spawn sound at each player’s position
 					player.worldObj.playSoundEffect(
@@ -173,10 +173,14 @@ public class CommandClowderAdmin extends CommandBase {
 							5.0F, // volume
 							0.5F  // pitch
 					);
-					player.addChatMessage(new ChatComponentText(INFO + "⚔ War mode has been DISABLED!"));
+					player.addChatMessage(new ChatComponentText(INFO + "⚔ War declarations have been DISABLED!"));
 				}
 			}
-			sender.addChatMessage(new ChatComponentText(INFO + "War mode disabled!"));
+			for (Clowder c : Clowder.clowders) {
+				c.activeWars.clear();
+				c.defendingAllies.clear();
+			}
+			sender.addChatMessage(new ChatComponentText(INFO + "War declarations disabled; active wars cleared."));
 			return;
 		}
 		
