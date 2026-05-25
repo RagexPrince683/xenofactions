@@ -88,7 +88,7 @@ public class Conquerer extends BlockContainer {
 				((EntityPlayer) player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-You not being in any faction"));
 				((EntityPlayer) player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag not having sky access"));
 				((EntityPlayer) player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag not being in a foreign border chunk"));
-				((EntityPlayer) player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The enemy faction or your faction not being raidable"));
+				((EntityPlayer) player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-No active war with the defending faction, or either side is not raidable"));
 				((EntityPlayer) player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag being too close to another conquest flag"));
 				//give back the flag then, RETARD
 				((EntityPlayer) player).inventory.addItemStackToInventory

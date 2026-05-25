@@ -24,6 +24,8 @@ import net.minecraft.util.EnumChatFormatting;
 public class CommandClowderAdmin extends CommandBase {
 
 	public static boolean WARENABLED = false;
+	public static boolean WAR_COOLDOWNS_DISABLED = false;
+	public static boolean WAR_COMMAND_CHECKS_DISABLED = false;
 
 	@Override
 	public String getCommandName() {
@@ -134,7 +136,7 @@ public class CommandClowderAdmin extends CommandBase {
 
 		if (cmd.equals("warenable")) {
 			WARENABLED = true;
-			sender.addChatMessage(new ChatComponentText(INFO + "War mode enabled!"));
+			sender.addChatMessage(new ChatComponentText(INFO + "War declarations enabled!"));
 
 			// Notify and play sound for all players
 			for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
@@ -142,7 +144,7 @@ public class CommandClowderAdmin extends CommandBase {
 					EntityPlayerMP player = (EntityPlayerMP) obj;
 
 					// Broadcast message
-					player.addChatMessage(new ChatComponentText(INFO + "⚔ War mode has been ENABLED!"));
+					player.addChatMessage(new ChatComponentText(INFO + "⚔ War declarations have been ENABLED!"));
 
 					// Play Wither spawn sound at each player’s position
 					player.worldObj.playSoundEffect(
@@ -173,10 +175,24 @@ public class CommandClowderAdmin extends CommandBase {
 							5.0F, // volume
 							0.5F  // pitch
 					);
-					player.addChatMessage(new ChatComponentText(INFO + "⚔ War mode has been DISABLED!"));
+					player.addChatMessage(new ChatComponentText(INFO + "⚔ War declarations have been DISABLED!"));
 				}
 			}
-			sender.addChatMessage(new ChatComponentText(INFO + "War mode disabled!"));
+			for (Clowder c : Clowder.clowders) {
+				c.activeWars.clear();
+				c.defendingAllies.clear();
+			}
+			sender.addChatMessage(new ChatComponentText(INFO + "War declarations disabled; active wars cleared."));
+			return;
+		}
+		if(cmd.equals("skipwarcooldowns")) {
+			WAR_COOLDOWNS_DISABLED = !WAR_COOLDOWNS_DISABLED;
+			sender.addChatMessage(new ChatComponentText(INFO + "War cooldown skipping is now " + (WAR_COOLDOWNS_DISABLED ? "ENABLED" : "DISABLED") + "."));
+			return;
+		}
+		if(cmd.equals("ignorewarchecks")) {
+			WAR_COMMAND_CHECKS_DISABLED = !WAR_COMMAND_CHECKS_DISABLED;
+			sender.addChatMessage(new ChatComponentText(INFO + "War/peace command checks are now " + (WAR_COMMAND_CHECKS_DISABLED ? "IGNORED" : "ENFORCED") + "."));
 			return;
 		}
 		
@@ -213,6 +229,8 @@ public class CommandClowderAdmin extends CommandBase {
 			//sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-info" + TITLE + " - Shows info on your faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-warenable" + TITLE + " - Enables war mode"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-wardisable" + TITLE + " - Disables war mode"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-skipwarcooldowns" + TITLE + " - Toggles global war cooldown bypass"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-ignorewarchecks" + TITLE + " - Toggles online/war check bypass for war commands"));
 		}
 	}
 	
