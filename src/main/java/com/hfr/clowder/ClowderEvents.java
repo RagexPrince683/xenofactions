@@ -665,15 +665,64 @@ public void handleChatServer(ServerChatEvent event) {
 		player.getEntityData().setString(NBTKEY, name);
 	}
 
+	private static final String BUILD_GRACE_MSG = "buildGraceBorderMsg";
+
 	private void handleBuildGraceMovement(EntityPlayer player) {
+
 		Ownership owner = ClowderTerritory.getOwnerFromInts((int)player.posX, (int)player.posZ);
-		if(owner == null) return;
+
+		if(owner == null)
+			return;
+
 		Clowder movingClowder = Clowder.getClowderFromPlayer(player);
 		Clowder territoryClowder = owner.zone == Zone.FACTION ? owner.owner : null;
-		boolean blocked = Clowder.blocksTerritoryAccessForBuildGrace(movingClowder, territoryClowder, owner.zone == Zone.WILDERNESS);
-		if(blocked) {
-			player.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "Build grace border: territory access is blocked."));
-			player.setPositionAndUpdate(player.prevPosX, player.prevPosY, player.prevPosZ);
+
+		boolean blocked = Clowder.blocksTerritoryAccessForBuildGrace(
+				movingClowder,
+				territoryClowder,
+				owner.zone == Zone.WILDERNESS
+		);
+
+		if(!blocked)
+			return;
+
+		// movement direction
+		double dx = player.posX - player.prevPosX;
+		double dz = player.posZ - player.prevPosZ;
+
+		// normalize
+		double len = Math.sqrt(dx * dx + dz * dz);
+
+		if(len > 0.0D) {
+			dx /= len;
+			dz /= len;
+		}
+
+		// push player back 1.5 blocks opposite movement direction
+		double push = 1.5D;
+
+		double newX = player.posX - (dx * push);
+		double newZ = player.posZ - (dz * push);
+
+		player.setPositionAndUpdate(
+				newX,
+				player.posY,
+				newZ
+		);
+
+		// message cooldown
+		NBTTagCompound data = player.getEntityData();
+
+		long now = System.currentTimeMillis();
+		long nextMessage = data.getLong(BUILD_GRACE_MSG);
+
+		if(now >= nextMessage) {
+
+			player.addChatMessage(new ChatComponentText(
+					CommandClowder.ERROR + "Build grace border: territory access is blocked."
+			));
+
+			data.setLong(BUILD_GRACE_MSG, now + 2000L); // 2 second cooldown
 		}
 	}
 
@@ -826,29 +875,70 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 
 	@SubscribeEvent
 	public void onEntityHurt(LivingAttackEvent event) {
-		
+
 		EntityLivingBase e = event.entityLiving;
 		DamageSource dmg = event.source;
-		
+
 		Ownership owner = ClowderTerritory.getOwner((int)e.posX, (int)e.posZ);
-		
+
 		if(e instanceof EntityPlayer && owner != null && owner.zone == Zone.SAFEZONE)
 			event.setCanceled(true);
+
 		EntityPlayer attacker = event.source.getEntity() instanceof EntityPlayer ? (EntityPlayer)event.source.getEntity() : null;
 		EntityPlayer victim = e instanceof EntityPlayer ? (EntityPlayer)e : null;
+
 		if(attacker != null && victim != null){
+
 			long now = System.currentTimeMillis();
+
 			NBTTagCompound ap = attacker.getEntityData().getCompoundTag(XENO_PROT);
 			NBTTagCompound vp = victim.getEntityData().getCompoundTag(XENO_PROT);
-			if(now < ap.getLong("pvpGraceUntil") || now < vp.getLong("pvpGraceUntil")) {
+
+			long attackerGrace = ap.getLong("pvpGraceUntil");
+			long victimGrace = vp.getLong("pvpGraceUntil");
+
+			if(now < attackerGrace || now < victimGrace) {
+
+				if(now < attackerGrace) {
+					long seconds = (attackerGrace - now) / 1000L;
+
+					attacker.addChatMessage(new ChatComponentText(
+							CommandClowder.ERROR + "You are still under starter PvP protection for " + seconds + " more seconds."
+					));
+				}
+
+				if(now < victimGrace) {
+					long seconds = (victimGrace - now) / 1000L;
+
+					attacker.addChatMessage(new ChatComponentText(
+							CommandClowder.ERROR + victim.getDisplayName() + " is under starter PvP protection for " + seconds + " more seconds."
+					));
+				}
+
 				event.setCanceled(true);
+				return;
 			}
+
 			Clowder ac = Clowder.getClowderFromPlayer(attacker);
 			Clowder vc = Clowder.getClowderFromPlayer(victim);
+
 			if(ac != null && ac == vc && ac.buildGraceUntil > now){
+
+				long seconds = (ac.buildGraceUntil - now) / 1000L;
+
+				attacker.addChatMessage(new ChatComponentText(
+						CommandClowder.ERROR + "You attacked a member of your faction while build grace was active."
+				));
+
+				attacker.addChatMessage(new ChatComponentText(
+						CommandClowder.CRITICAL + "Build grace has ended early! Remaining time: " + seconds + " seconds."
+				));
+
 				ac.buildGraceUntil = 0L;
 				ac.save(attacker.worldObj);
-				ac.notifyAll(attacker.worldObj, new ChatComponentText(CommandClowder.CRITICAL + "Build grace ended because a member attacked a player."));
+
+				ac.notifyAll(attacker.worldObj,
+						new ChatComponentText(CommandClowder.CRITICAL + "Build grace ended because a member attacked a player."));
 			}
 		}
 	}
@@ -1057,8 +1147,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 
 					//System.out.println("POV: I mog you");
 					//10 minutes
-					//long time = 60 * 10 * 1000;
-					//updates the time on the online timer until the player is retreating
+					//w/updates the time on the online timer until the player is retreating
 					//clowder.members.put(player.getDisplayName(), System.currentTimeMillis() + time);
 					
 				} else {
