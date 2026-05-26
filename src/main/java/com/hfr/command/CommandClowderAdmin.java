@@ -8,6 +8,7 @@ import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.CoordPair;
 import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.clowder.ClowderEvents;
+import com.hfr.clowder.PlayerProtectionData;
 import com.hfr.data.ClowderData;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.effect.ClowderFlagPacket;
@@ -195,6 +196,18 @@ public class CommandClowderAdmin extends CommandBase {
 			return;
 		}
 
+		if(cmd.equals("resetnewplayerprotection")) {
+
+			cmdResetNewPlayerProtection(sender);
+			return;
+		}
+
+		if(cmd.equals("endnewplayerprotection")) {
+
+			cmdEndNewPlayerProtection(sender);
+			return;
+		}
+
 		if(cmd.equals("skipwarcooldowns")) {
 			WAR_COOLDOWNS_DISABLED = !WAR_COOLDOWNS_DISABLED;
 			sender.addChatMessage(new ChatComponentText(INFO + "War cooldown skipping is now " + (WAR_COOLDOWNS_DISABLED ? "ENABLED" : "DISABLED") + "."));
@@ -231,6 +244,17 @@ public class CommandClowderAdmin extends CommandBase {
 				WAR_STATE_CHECK_DISABLED = true;
 			}
 			sender.addChatMessage(new ChatComponentText(INFO + "Legacy war mode is now " + (LEGACY_WAR_ENABLED ? "ENABLED" : "DISABLED") + "."));
+			return;
+		}
+		if((cmd.equals("resetbuildgrace") || cmd.equals("rbg")) && args.length > 1) {
+
+			cmdResetBuildGrace(sender, args[1]);
+			return;
+		}
+
+		if((cmd.equals("endbuildgrace") || cmd.equals("ebg")) && args.length > 1) {
+
+			cmdEndBuildGrace(sender, args[1]);
 			return;
 		}
 		
@@ -274,6 +298,8 @@ public class CommandClowderAdmin extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-ignorewarstatecheck" + TITLE + " - Toggles at-war state check bypass"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-enablelegacywar" + TITLE + " - Ignores war checks and disables peace/ceasefire/surrender"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-newplayerprotection" + TITLE + " - Toggles 4h PvP / 24h keep-inventory starter protection"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-resetbuildgrace <name>" + TITLE + " - Resets faction build grace"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-endbuildgrace <name>" + TITLE + " - Immediately ends faction build grace"));
 		}
 	}
 	
@@ -501,6 +527,89 @@ public class CommandClowderAdmin extends CommandBase {
 		} else {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
 		}
+	}
+
+	private void cmdResetBuildGrace(ICommandSender sender, String name) {
+
+		Clowder clowder = Clowder.getClowderFromName(name);
+
+		if(clowder == null) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Faction not found."));
+			return;
+		}
+
+		long now = System.currentTimeMillis();
+
+		// 24 hours
+		clowder.buildGraceUntil = now + (24L * 60L * 60L * 1000L);
+
+		// allow reuse
+		clowder.buildGraceUsed = false;
+
+		clowder.save(sender.getEntityWorld());
+
+		sender.addChatMessage(new ChatComponentText(
+				INFO + "Reset build grace for faction " + clowder.name + "."
+		));
+
+		clowder.notifyAll(sender.getEntityWorld(),
+				new ChatComponentText(
+						CommandClowder.INFO + "Your faction build grace has been reset by an administrator."
+				));
+	}
+
+	private void cmdEndBuildGrace(ICommandSender sender, String name) {
+
+		Clowder clowder = Clowder.getClowderFromName(name);
+
+		if(clowder == null) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Faction not found."));
+			return;
+		}
+
+		clowder.buildGraceUntil = 0L;
+
+		clowder.save(sender.getEntityWorld());
+
+		sender.addChatMessage(new ChatComponentText(
+				INFO + "Ended build grace for faction " + clowder.name + "."
+		));
+
+		clowder.notifyAll(sender.getEntityWorld(),
+				new ChatComponentText(
+						CommandClowder.CRITICAL + "Your faction build grace was ended by an administrator."
+				));
+	}
+	private void cmdResetNewPlayerProtection(ICommandSender sender) {
+
+		long now = System.currentTimeMillis();
+
+		for(PlayerProtectionData.ProtectionEntry entry : PlayerProtectionData.getAll().values()) {
+
+			entry.pvpGraceUntil = now + 4L * 60L * 60L * 1000L;
+			entry.keepInvUntil = now + 24L * 60L * 60L * 1000L;
+		}
+
+		PlayerProtectionData.save();
+
+		sender.addChatMessage(new ChatComponentText(
+				INFO + "Reset new-player protection for all players."
+		));
+	}
+
+	private void cmdEndNewPlayerProtection(ICommandSender sender) {
+
+		for (PlayerProtectionData.ProtectionEntry entry : PlayerProtectionData.getAll().values()) {
+
+			entry.pvpGraceUntil = 0L;
+			entry.keepInvUntil = 0L;
+		}
+
+		PlayerProtectionData.save();
+
+		sender.addChatMessage(new ChatComponentText(
+				INFO + "Ended new-player protection for all players."
+		));
 	}
 	
 	private void cmdRename(ICommandSender sender, String name) {

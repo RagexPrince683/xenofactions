@@ -796,6 +796,7 @@ public class MainRegistry
 		event.registerServerCommand(new CommandKits());
 		event.registerServerCommand(new CommandTeamChange());
 		MarketData.loadMarketData();
+		PlayerProtectionData.load();
 
 		//and now we just pray that the market data does not cope over serverside
 

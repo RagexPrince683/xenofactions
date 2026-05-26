@@ -665,13 +665,15 @@ public void handleChatServer(ServerChatEvent event) {
 		player.getEntityData().setString(NBTKEY, name);
 	}
 
-	private static final String BUILD_GRACE_MSG = "buildGraceBorderMsg";
+
+	private static final String BUILD_GRACE_STUCK_X = "buildGraceStuckX";
+	private static final String BUILD_GRACE_STUCK_Z = "buildGraceStuckZ";
 
 	private void handleBuildGraceMovement(EntityPlayer player) {
 
-		Ownership owner = ClowderTerritory.getOwnerFromInts((int)player.posX, (int)player.posZ);
+		Ownership owner = ClowderTerritory.getOwnerFromInts((int) player.posX, (int) player.posZ);
 
-		if(owner == null)
+		if (owner == null)
 			return;
 
 		Clowder movingClowder = Clowder.getClowderFromPlayer(player);
@@ -683,49 +685,112 @@ public void handleChatServer(ServerChatEvent event) {
 				owner.zone == Zone.WILDERNESS
 		);
 
-		if(!blocked)
+		if (!blocked)
 			return;
 
-		// movement direction
-		double dx = player.posX - player.prevPosX;
-		double dz = player.posZ - player.prevPosZ;
-
-		// normalize
-		double len = Math.sqrt(dx * dx + dz * dz);
-
-		if(len > 0.0D) {
-			dx /= len;
-			dz /= len;
-		}
-
-		// push player back 1.5 blocks opposite movement direction
-		double push = 1.5D;
-
-		double newX = player.posX - (dx * push);
-		double newZ = player.posZ - (dz * push);
-
-		player.setPositionAndUpdate(
-				newX,
-				player.posY,
-				newZ
-		);
-
-		// message cooldown
 		NBTTagCompound data = player.getEntityData();
 
 		long now = System.currentTimeMillis();
-		long nextMessage = data.getLong(BUILD_GRACE_MSG);
 
-		if(now >= nextMessage) {
+		/*
+		 * STUCK PLAYER DETECTION
+		 */
 
-			player.addChatMessage(new ChatComponentText(
-					CommandClowder.ERROR + "Build grace border: territory access is blocked."
-			));
+		long lastCorrection = data.getLong("buildGraceLastCorrection");
+		int corrections = data.getInteger("buildGraceCorrections");
 
-			data.setLong(BUILD_GRACE_MSG, now + 2000L); // 2 second cooldown
+		double stuckX = data.getDouble(BUILD_GRACE_STUCK_X);
+		double stuckZ = data.getDouble(BUILD_GRACE_STUCK_Z);
+
+		// reset correction chain if enough time passed
+		if (now - lastCorrection > 10000L) {
+			corrections = 0;
+
+			data.setDouble(BUILD_GRACE_STUCK_X, player.posX);
+			data.setDouble(BUILD_GRACE_STUCK_Z, player.posZ);
+		}
+
+		// distance from original stuck point
+		double distSq =
+				(player.posX - stuckX) * (player.posX - stuckX) +
+						(player.posZ - stuckZ) * (player.posZ - stuckZ);
+
+		// if player escaped more than 5 blocks away, reset
+		if (distSq > 25.0D) {
+
+			corrections = 0;
+
+			data.setDouble(BUILD_GRACE_STUCK_X, player.posX);
+			data.setDouble(BUILD_GRACE_STUCK_Z, player.posZ);
+		}
+
+		// count this correction
+		corrections++;
+
+		data.setInteger("buildGraceCorrections", corrections);
+		data.setLong("buildGraceLastCorrection", now);
+
+		// only trigger if player is REALLY trapped
+		if (corrections >= 25) {
+
+			Clowder clowder = Clowder.getClowderFromPlayer(player);
+
+			if(clowder != null && clowder.buildGraceUntil > now) {
+
+				player.setPositionAndUpdate(
+						clowder.homeX + 0.5D,
+						clowder.homeY + 1,
+						clowder.homeZ + 0.5D
+				);
+
+				player.motionX = 0;
+				player.motionY = 0;
+				player.motionZ = 0;
+
+				player.addChatMessage(new ChatComponentText(
+						CommandClowder.ERROR + "You were returned to your faction home because you became stuck on a build grace border."
+				));
+
+			} else {
+
+				teleportToSpawn(player);
+
+				player.addChatMessage(new ChatComponentText(
+						CommandClowder.ERROR + "You were moved to spawn because you became stuck on a build grace border."
+				));
+			}
+
+			resetGraceBorderData(data);
+
+			return;
 		}
 	}
 
+	private void teleportToSpawn(EntityPlayer player) {
+
+		World world = player.worldObj;
+
+		ChunkCoordinates spawn = world.getSpawnPoint();
+
+		player.setPositionAndUpdate(
+				spawn.posX + 0.5D,
+				spawn.posY + 1,
+				spawn.posZ + 0.5D
+		);
+
+		player.motionX = 0;
+		player.motionY = 0;
+		player.motionZ = 0;
+	}
+
+	private void resetGraceBorderData(NBTTagCompound data) {
+
+		data.setInteger("buildGraceCorrections", 0);
+		data.setLong("buildGraceLastCorrection", 0L);
+
+		data.setDouble(BUILD_GRACE_STUCK_X, 0D);
+		data.setDouble(BUILD_GRACE_STUCK_Z, 0D);
+	}
 	
 	/**
 	 * Mk.2 of the particle border, now optimized to work server-side!
@@ -851,26 +916,35 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 		}
 	}
 }
-	
-	
 	@SubscribeEvent
 	public void onPlayerLogin(PlayerLoggedInEvent event) {
-		if(!newPlayerProtectionEnabled || event.player == null) return;
-		NBTTagCompound data = event.player.getEntityData();
-		if(!data.hasKey(XENO_PROT)) {
-			NBTTagCompound prot = new NBTTagCompound();
-			long now = System.currentTimeMillis();
-			prot.setLong("pvpGraceUntil", now + 4L*60L*60L*1000L);
-			prot.setLong("keepInvUntil", now + 24L*60L*60L*1000L);
-			data.setTag(XENO_PROT, prot);
-			event.player.addChatMessage(new ChatComponentText(CommandClowder.INFO + "New-player protection enabled: 4h PvP grace, 24h keep-inventory."));
-		}
-	}
 
-	@SubscribeEvent
-	public void onPlayerDrops(PlayerDropsEvent event) {
-		NBTTagCompound prot = event.entityPlayer.getEntityData().getCompoundTag(XENO_PROT);
-		if(prot != null && System.currentTimeMillis() < prot.getLong("keepInvUntil")) event.setCanceled(true);
+		if(!newPlayerProtectionEnabled || event.player == null)
+			return;
+
+		PlayerProtectionData.load();
+
+		UUID uuid = event.player.getUniqueID();
+
+		PlayerProtectionData.ProtectionEntry entry =
+				PlayerProtectionData.get(uuid);
+
+		// first login / no protection data yet
+		if(entry == null) {
+
+			long now = System.currentTimeMillis();
+
+			entry = new PlayerProtectionData.ProtectionEntry(
+					now + 4L * 60L * 60L * 1000L,
+					now + 24L * 60L * 60L * 1000L
+			);
+
+			PlayerProtectionData.set(uuid, entry);
+
+			event.player.addChatMessage(new ChatComponentText(
+					CommandClowder.INFO + "New-player protection enabled: 4h PvP grace, 24h keep-inventory."
+			));
+		}
 	}
 
 	@SubscribeEvent
@@ -891,15 +965,25 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 
 			long now = System.currentTimeMillis();
 
-			NBTTagCompound ap = attacker.getEntityData().getCompoundTag(XENO_PROT);
-			NBTTagCompound vp = victim.getEntityData().getCompoundTag(XENO_PROT);
+			PlayerProtectionData.ProtectionEntry attackerProt =
+					PlayerProtectionData.get(attacker.getUniqueID());
 
-			long attackerGrace = ap.getLong("pvpGraceUntil");
-			long victimGrace = vp.getLong("pvpGraceUntil");
+			PlayerProtectionData.ProtectionEntry victimProt =
+					PlayerProtectionData.get(victim.getUniqueID());
 
-			if(now < attackerGrace || now < victimGrace) {
+			long attackerGrace =
+					attackerProt != null ? attackerProt.pvpGraceUntil : 0L;
 
-				if(now < attackerGrace) {
+			long victimGrace =
+					victimProt != null ? victimProt.pvpGraceUntil : 0L;
+
+			boolean attackerProtected = attackerGrace > now;
+			boolean victimProtected = victimGrace > now;
+
+			if(attackerProtected || victimProtected) {
+
+				if(attackerProtected) {
+
 					long seconds = (attackerGrace - now) / 1000L;
 
 					attacker.addChatMessage(new ChatComponentText(
@@ -907,7 +991,8 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 					));
 				}
 
-				if(now < victimGrace) {
+				if(victimProtected) {
+
 					long seconds = (victimGrace - now) / 1000L;
 
 					attacker.addChatMessage(new ChatComponentText(
