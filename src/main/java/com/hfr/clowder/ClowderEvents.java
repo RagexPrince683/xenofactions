@@ -35,6 +35,7 @@ import cpw.mods.fml.common.eventhandler.Event;
 import cpw.mods.fml.common.eventhandler.Event.Result;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
+import cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.Phase;
 import cpw.mods.fml.common.gameevent.TickEvent.WorldTickEvent;
@@ -64,6 +65,7 @@ import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.entity.player.PlayerDropsEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.Action;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.ExplosionEvent;
@@ -78,6 +80,8 @@ import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
 public class ClowderEvents {
+	public static boolean newPlayerProtectionEnabled = false;
+	private static final String XENO_PROT = "xeno_player_prot";
 
 	// Load MCHeli classes dynamically via ReflectionUtils
 	public static final Class<?> MCH_CONFIG = ReflectionUtils.getClass("mcheli.MCH_Config");
@@ -660,6 +664,18 @@ public void handleChatServer(ServerChatEvent event) {
 		
 		player.getEntityData().setString(NBTKEY, name);
 	}
+
+	private void handleBuildGraceMovement(EntityPlayer player) {
+		Clowder mine = Clowder.getClowderFromPlayer(player);
+		if(mine == null || mine.buildGraceUntil <= System.currentTimeMillis()) return;
+		Ownership owner = ClowderTerritory.getOwnerFromInts((int)player.posX, (int)player.posZ);
+		if(owner == null) return;
+		if(owner.zone == Zone.WILDERNESS || (owner.zone == Zone.FACTION && owner.owner != mine)) {
+			player.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "Build grace active: you cannot enter wilderness/enemy territory."));
+			player.setPositionAndUpdate(player.prevPosX, player.prevPosY, player.prevPosZ);
+		}
+	}
+
 	
 	/**
 	 * Mk.2 of the particle border, now optimized to work server-side!
@@ -787,6 +803,27 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 	}
 }
 	
+	
+	@SubscribeEvent
+	public void onPlayerLogin(PlayerLoggedInEvent event) {
+		if(!newPlayerProtectionEnabled || event.player == null) return;
+		NBTTagCompound data = event.player.getEntityData();
+		if(!data.hasKey(XENO_PROT)) {
+			NBTTagCompound prot = new NBTTagCompound();
+			long now = System.currentTimeMillis();
+			prot.setLong("pvpGraceUntil", now + 4L*60L*60L*1000L);
+			prot.setLong("keepInvUntil", now + 24L*60L*60L*1000L);
+			data.setTag(XENO_PROT, prot);
+			event.player.addChatMessage(new ChatComponentText(CommandClowder.INFO + "New-player protection enabled: 4h PvP grace, 24h keep-inventory."));
+		}
+	}
+
+	@SubscribeEvent
+	public void onPlayerDrops(PlayerDropsEvent event) {
+		NBTTagCompound prot = event.entityPlayer.getEntityData().getCompoundTag(XENO_PROT);
+		if(prot != null && System.currentTimeMillis() < prot.getLong("keepInvUntil")) event.setCanceled(true);
+	}
+
 	@SubscribeEvent
 	public void onEntityHurt(LivingAttackEvent event) {
 		
@@ -797,6 +834,23 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 		
 		if(e instanceof EntityPlayer && owner != null && owner.zone == Zone.SAFEZONE)
 			event.setCanceled(true);
+		EntityPlayer attacker = event.source.getEntity() instanceof EntityPlayer ? (EntityPlayer)event.source.getEntity() : null;
+		EntityPlayer victim = e instanceof EntityPlayer ? (EntityPlayer)e : null;
+		if(attacker != null && victim != null){
+			long now = System.currentTimeMillis();
+			NBTTagCompound ap = attacker.getEntityData().getCompoundTag(XENO_PROT);
+			NBTTagCompound vp = victim.getEntityData().getCompoundTag(XENO_PROT);
+			if(now < ap.getLong("pvpGraceUntil") || now < vp.getLong("pvpGraceUntil")) {
+				event.setCanceled(true);
+			}
+			Clowder ac = Clowder.getClowderFromPlayer(attacker);
+			Clowder vc = Clowder.getClowderFromPlayer(victim);
+			if(ac != null && ac == vc && ac.buildGraceUntil > now){
+				ac.buildGraceUntil = 0L;
+				ac.save(attacker.worldObj);
+				ac.notifyAll(attacker.worldObj, new ChatComponentText(CommandClowder.CRITICAL + "Build grace ended because a member attacked a player."));
+			}
+		}
 	}
 	//todo: test that this works and does not fuck up
 	//third check
