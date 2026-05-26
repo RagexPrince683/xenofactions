@@ -178,6 +178,11 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 
+		if(cmd.equals("gracebuild")) {
+			cmdGraceBuild(sender);
+			return;
+		}
+
 		if(cmd.equals("comrades")) {
 			cmdComrades(sender);
 			return;
@@ -456,6 +461,7 @@ public class CommandClowder extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-delwarp <name>" + TITLE + " - Removes a warp"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-warp <name>" + TITLE + " - Teleports to a warp point"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-warps" + TITLE + " - Lists all warps"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-gracebuild" + TITLE + " - One-time 48h faction build grace"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-list" + TITLE + " - Lists all clowders (page function pending)"));
 			sender.addChatMessage(new ChatComponentText(INFO + "/clowder help 4"));
 		}
@@ -515,7 +521,20 @@ public class CommandClowder extends CommandBase {
 
 	}
 
-	private void cmdCreate(ICommandSender sender, String name) {
+	
+	private void cmdGraceBuild(ICommandSender sender) {
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder clowder = Clowder.getClowderFromPlayer(player);
+		if(clowder == null) { sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!")); return; }
+		if(!clowder.owner(player)) { sender.addChatMessage(new ChatComponentText(ERROR + "Only faction leaders can activate build grace!")); return; }
+		if(clowder.buildGraceUsed) { sender.addChatMessage(new ChatComponentText(ERROR + "This faction already used build grace.")); return; }
+		if(!clowder.activeWars.isEmpty()) { sender.addChatMessage(new ChatComponentText(ERROR + "Cannot activate while in active war.")); return; }
+		clowder.buildGraceUsed = true;
+		clowder.buildGraceUntil = System.currentTimeMillis() + 48L * 60L * 60L * 1000L;
+		clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Build grace activated for 48 hours."));
+		clowder.save(player.worldObj);
+	}
+private void cmdCreate(ICommandSender sender, String name) {
 
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 

@@ -7,6 +7,7 @@ import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.CoordPair;
 import com.hfr.clowder.ClowderTerritory.Zone;
+import com.hfr.clowder.ClowderEvents;
 import com.hfr.data.ClowderData;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.effect.ClowderFlagPacket;
@@ -185,6 +186,13 @@ public class CommandClowderAdmin extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(INFO + "War declarations disabled; active wars cleared."));
 			return;
 		}
+		
+		if(cmd.equals("newplayerprotection")) {
+			ClowderEvents.newPlayerProtectionEnabled = !ClowderEvents.newPlayerProtectionEnabled;
+			sender.addChatMessage(new ChatComponentText(INFO + "New player protection is now " + (ClowderEvents.newPlayerProtectionEnabled ? "enabled" : "disabled") + "."));
+			return;
+		}
+
 		if(cmd.equals("skipwarcooldowns")) {
 			WAR_COOLDOWNS_DISABLED = !WAR_COOLDOWNS_DISABLED;
 			sender.addChatMessage(new ChatComponentText(INFO + "War cooldown skipping is now " + (WAR_COOLDOWNS_DISABLED ? "ENABLED" : "DISABLED") + "."));
@@ -231,6 +239,7 @@ public class CommandClowderAdmin extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-wardisable" + TITLE + " - Disables war mode"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-skipwarcooldowns" + TITLE + " - Toggles global war cooldown bypass"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-ignorewarchecks" + TITLE + " - Toggles online/war check bypass for war commands"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-newplayerprotection" + TITLE + " - Toggles 4h PvP / 24h keep-inventory starter protection"));
 		}
 	}
 	
