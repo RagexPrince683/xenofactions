@@ -722,19 +722,18 @@ public void handleChatServer(ServerChatEvent event) {
 	public void entityInit(EntityJoinWorldEvent event) {
 		Entity entity = event.entity;
 
-		// Check if the entity is relevant using reflection to get classes
-		Class<?> MCH_EntityBaseBullet = ReflectionUtils.getClass("mcheli.weapon.MCH_EntityBaseBullet");
-		Class<?> MCH_EntityBullet = ReflectionUtils.getClass("mcheli.weapon.MCH_EntityBullet");
-		Class<?> MCH_EntityRocket = ReflectionUtils.getClass("mcheli.weapon.MCH_EntityRocket");
+		boolean isRelevantEntity =
+				(MCH_ENTITY_BASE_BULLET != null && MCH_ENTITY_BASE_BULLET.isInstance(entity)) ||
+				(MCH_ENTITY_BULLET != null && MCH_ENTITY_BULLET.isInstance(entity)) ||
+				(MCH_ENTITY_ROCKET != null && MCH_ENTITY_ROCKET.isInstance(entity));
 
-		if (!(MCH_EntityBaseBullet.isInstance(entity) || MCH_EntityBullet.isInstance(entity) || MCH_EntityRocket.isInstance(entity))) {
-			return; // Early exit if not relevant
+		if (!isRelevantEntity) {
+			return;
 		}
 
-		// Check ownership and zone using the existing logic
 		Ownership owner = ClowderTerritory.getOwner((int) entity.posX, (int) entity.posZ);
-		if (owner.zone == Zone.SAFEZONE) {
-			entity.setDead(); // Kill the entity if it's in a safezone
+		if (owner != null && owner.zone == Zone.SAFEZONE) {
+			entity.setDead();
 			event.setCanceled(true);
 		}
 	}
