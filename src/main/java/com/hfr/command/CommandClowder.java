@@ -526,7 +526,7 @@ public class CommandClowder extends CommandBase {
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
 		if(clowder == null) { sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!")); return; }
-		if(!clowder.owner(player)) { sender.addChatMessage(new ChatComponentText(ERROR + "Only faction leaders can activate build grace!")); return; }
+		if(clowder.getPermLevel(player.getDisplayName()) <= 2) { sender.addChatMessage(new ChatComponentText(ERROR + "Only faction leaders can activate build grace!")); return; }
 		if(clowder.buildGraceUsed) { sender.addChatMessage(new ChatComponentText(ERROR + "This faction already used build grace.")); return; }
 		if(!clowder.activeWars.isEmpty()) { sender.addChatMessage(new ChatComponentText(ERROR + "Cannot activate while in active war.")); return; }
 		clowder.buildGraceUsed = true;
