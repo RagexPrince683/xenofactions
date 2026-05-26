@@ -148,6 +148,8 @@ public class Clowder {
 	public int allyWarpX;
 	public int allyWarpY;
 	public int allyWarpZ;
+	public long buildGraceUntil = 0L;
+	public boolean buildGraceUsed = false;
 
 	public static List<Clowder> clowders = new ArrayList();
 	public static HashMap<String, Clowder> inverseMap = new HashMap();
@@ -1319,6 +1321,26 @@ public class Clowder {
 	}
 
 	//war time goes to 10 for retreat bonus level
+	public boolean isBuildGraceActive() {
+		return this.buildGraceUntil > System.currentTimeMillis();
+	}
+
+	public static boolean blocksTerritoryAccessForBuildGrace(Clowder movingClowder, Clowder territoryClowder, boolean isWilderness) {
+		if(movingClowder != null && movingClowder.isBuildGraceActive()) {
+			if(isWilderness)
+				return true;
+			if(territoryClowder != null && territoryClowder != movingClowder)
+				return true;
+		}
+
+		if(territoryClowder != null && territoryClowder.isBuildGraceActive()) {
+			if(movingClowder != territoryClowder)
+				return true;
+		}
+
+		return false;
+	}
+
 	public void freeWarTime(World world) {
 		warTime = 10;
 
@@ -1382,6 +1404,8 @@ public class Clowder {
 		nbt.setInteger(i + "_noWarUntil", this.noWarUntil.size());
 		nbt.setInteger(i + "_formerAllyNoWar", this.formerAllyNoWarUntil.size());
 		nbt.setLong(i + "_belowOnlineSince", this.belowOnlineThresholdSince);
+		nbt.setLong(i + "_buildGraceUntil", this.buildGraceUntil);
+		nbt.setBoolean(i + "_buildGraceUsed", this.buildGraceUsed);
 
 		///poorly coded "treaty" system///
 		//nbt.setString(i + "_treaty1", this.treaty1);
@@ -1546,6 +1570,8 @@ public class Clowder {
 		int cnwu = nbt.getInteger(i + "_noWarUntil");
 		int cfanwu = nbt.getInteger(i + "_formerAllyNoWar");
 		c.belowOnlineThresholdSince = nbt.getLong(i + "_belowOnlineSince");
+		c.buildGraceUntil = nbt.getLong(i + "_buildGraceUntil");
+		c.buildGraceUsed = nbt.getBoolean(i + "_buildGraceUsed");
 
 		for (int j = 0; j < count; j++)
 			c.members.put(nbt.getString(i + "_" + j), time());
