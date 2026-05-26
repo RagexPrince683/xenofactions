@@ -1321,6 +1321,26 @@ public class Clowder {
 	}
 
 	//war time goes to 10 for retreat bonus level
+	public boolean isBuildGraceActive() {
+		return this.buildGraceUntil > System.currentTimeMillis();
+	}
+
+	public static boolean blocksTerritoryAccessForBuildGrace(Clowder movingClowder, Clowder territoryClowder, boolean isWilderness) {
+		if(movingClowder != null && movingClowder.isBuildGraceActive()) {
+			if(isWilderness)
+				return true;
+			if(territoryClowder != null && territoryClowder != movingClowder)
+				return true;
+		}
+
+		if(territoryClowder != null && territoryClowder.isBuildGraceActive()) {
+			if(movingClowder != territoryClowder)
+				return true;
+		}
+
+		return false;
+	}
+
 	public void freeWarTime(World world) {
 		warTime = 10;
 

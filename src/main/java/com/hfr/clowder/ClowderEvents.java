@@ -666,12 +666,13 @@ public void handleChatServer(ServerChatEvent event) {
 	}
 
 	private void handleBuildGraceMovement(EntityPlayer player) {
-		Clowder mine = Clowder.getClowderFromPlayer(player);
-		if(mine == null || mine.buildGraceUntil <= System.currentTimeMillis()) return;
 		Ownership owner = ClowderTerritory.getOwnerFromInts((int)player.posX, (int)player.posZ);
 		if(owner == null) return;
-		if(owner.zone == Zone.WILDERNESS || (owner.zone == Zone.FACTION && owner.owner != mine)) {
-			player.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "Build grace active: you cannot enter wilderness/enemy territory."));
+		Clowder movingClowder = Clowder.getClowderFromPlayer(player);
+		Clowder territoryClowder = owner.zone == Zone.FACTION ? owner.owner : null;
+		boolean blocked = Clowder.blocksTerritoryAccessForBuildGrace(movingClowder, territoryClowder, owner.zone == Zone.WILDERNESS);
+		if(blocked) {
+			player.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "Build grace border: territory access is blocked."));
 			player.setPositionAndUpdate(player.prevPosX, player.prevPosY, player.prevPosZ);
 		}
 	}
@@ -1038,6 +1039,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 
 			Ownership owner = ClowderTerritory.getOwnerFromInts((int)player.posX, (int)player.posZ - 1);
 			flagPopup(player.worldObj, player);
+			handleBuildGraceMovement(player);
 			
 			Clowder clowder = Clowder.getClowderFromPlayer(player);
 			
