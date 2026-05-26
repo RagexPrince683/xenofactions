@@ -168,12 +168,12 @@ public class CommandClowder extends CommandBase {
 		//	return;
 		//}
 
-		if(cmd.equals("merge")) {
+		if(cmd.equals("merge") && args.length > 1) {
 			cmdMerge(sender, args[1]);
 			return;
 		}
 
-		if(cmd.equals("acceptmerge")) {
+		if(cmd.equals("acceptmerge") && args.length > 1) {
 			acceptMerge(sender, args[1]);
 			return;
 		}
@@ -414,7 +414,59 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 
+		if(requiresArgument(cmd)) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Invalid format. Usage: " + getUsageFor(cmd)));
+			return;
+		}
 		sender.addChatMessage(new ChatComponentText(ERROR + getCommandUsage(sender)));
+	}
+
+	private boolean requiresArgument(String cmd) {
+		return cmd.equals("merge") || cmd.equals("acceptmerge") || cmd.equals("color") || cmd.equals("rename")
+				|| cmd.equals("motd") || cmd.equals("owner") || cmd.equals("apply") || cmd.equals("accept")
+				|| cmd.equals("befriend") || cmd.equals("ally") || cmd.equals("acceptfriend") || cmd.equals("acceptally")
+				|| cmd.equals("deny") || cmd.equals("kick") || cmd.equals("unfriend") || cmd.equals("unally")
+				|| cmd.equals("flag") || cmd.equals("allywarp") || cmd.equals("addwarp") || cmd.equals("setwarp")
+				|| cmd.equals("delwarp") || cmd.equals("warp") || cmd.equals("deposit") || cmd.equals("withdraw")
+				|| cmd.equals("promote") || cmd.equals("demote") || cmd.equals("nameclaim")
+				|| cmd.equals("declarewar") || cmd.equals("peace") || cmd.equals("acceptpeace")
+				|| cmd.equals("ceasefire") || cmd.equals("acceptceasefire") || cmd.equals("surrender")
+				|| cmd.equals("acceptsurrender") || cmd.equals("defendally");
+	}
+
+	private String getUsageFor(String cmd) {
+		if(cmd.equals("merge")) return "/c merge <faction>";
+		if(cmd.equals("acceptmerge")) return "/c acceptmerge <faction>";
+		if(cmd.equals("color")) return "/c color <hexadecimal>";
+		if(cmd.equals("rename")) return "/c rename <name>";
+		if(cmd.equals("motd")) return "/c motd <message>";
+		if(cmd.equals("owner")) return "/c owner <player>";
+		if(cmd.equals("apply")) return "/c apply <faction>";
+		if(cmd.equals("accept")) return "/c accept <player>";
+		if(cmd.equals("befriend") || cmd.equals("ally")) return "/c befriend <faction>";
+		if(cmd.equals("acceptfriend") || cmd.equals("acceptally")) return "/c acceptfriend <player>";
+		if(cmd.equals("deny")) return "/c deny <player>";
+		if(cmd.equals("kick")) return "/c kick <player>";
+		if(cmd.equals("unfriend") || cmd.equals("unally")) return "/c unfriend <faction>";
+		if(cmd.equals("flag")) return "/c flag <flag>";
+		if(cmd.equals("allywarp")) return "/c allywarp <faction>";
+		if(cmd.equals("addwarp") || cmd.equals("setwarp")) return "/c setwarp <name>";
+		if(cmd.equals("delwarp")) return "/c delwarp <name>";
+		if(cmd.equals("warp")) return "/c warp <name>";
+		if(cmd.equals("deposit")) return "/c deposit <amount>";
+		if(cmd.equals("withdraw")) return "/c withdraw <amount>";
+		if(cmd.equals("promote")) return "/c promote <player>";
+		if(cmd.equals("demote")) return "/c demote <player>";
+		if(cmd.equals("nameclaim")) return "/c nameclaim <name>";
+		if(cmd.equals("declarewar")) return "/c declarewar <faction>";
+		if(cmd.equals("peace")) return "/c peace <faction>";
+		if(cmd.equals("acceptpeace")) return "/c acceptpeace <faction>";
+		if(cmd.equals("ceasefire")) return "/c ceasefire <faction>";
+		if(cmd.equals("acceptceasefire")) return "/c acceptceasefire <faction>";
+		if(cmd.equals("surrender")) return "/c surrender <faction>";
+		if(cmd.equals("acceptsurrender")) return "/c acceptsurrender <faction>";
+		if(cmd.equals("defendally")) return "/c defendally <ally>";
+		return getCommandUsage(null);
 	}
 
 	private void cmdHelp(ICommandSender sender, String page) {
@@ -444,6 +496,8 @@ public class CommandClowder extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-info {page}" + TITLE + " - Shows info on a faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-list" + TITLE + " - Lists all factions (page functin pending)"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-apply <name>" + TITLE + " - Sends an application to a faction"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-merge <faction>" + TITLE + " - Requests merging your faction into another"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-acceptmerge <faction>" + TITLE + " - Accepts a pending merge request"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-leave" + TITLE + " - Leaves the faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-accept <name>" + TITLE + " - Accepts a player's application"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-deny <name>" + TITLE + " - Denies a player's application"));
@@ -666,37 +720,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		}
 	}
 
-	//alright, that looks like it SHOULD work,
-	// now we need a balkanization/split command that allows a faction to split into two factions,
-	// with the original faction keeping its name and the new faction getting a new name.
-	// The command would be something like /c split <new faction name> <player1> <player2> ... <playerN>, where the players listed are the ones that will be moved to the new faction. The command would only be usable by the faction owner or officers, and it would require confirmation from the owner to prevent accidental splits. The new faction would start with the same territory as the original faction, and the players that were moved would lose access to the original faction's territory and gain access to the new faction's territory. This would allow for more dynamic faction management and give players more options for how they want to organize themselves within the game.
-
-	private void cmdSplit(ICommandSender sender, String name, String[] players) {
-		EntityPlayer player = getCommandSenderAsPlayer(sender);
-		Clowder clowder = Clowder.getClowderFromPlayer(player);
-
-		if(clowder != null) {
-
-			//officers and above can split factions and invite players in the current faction into the new faction using a different command
-			if(clowder.getPermLevel(player.getDisplayName()) > 1) {
-
-				if(Clowder.getClowderFromName(name) == null) {
-					Clowder newClowder = clowder.split(name, players, player.worldObj);
-					sender.addChatMessage(new ChatComponentText(TITLE + "Successfully split into new faction " + name + "!"));
-					sender.addChatMessage(new ChatComponentText(INFO + "The following players were moved to the new faction: " + String.join(", ", players)));
-				} else {
-					sender.addChatMessage(new ChatComponentText(ERROR + "There is already a faction with this name!"));
-				}
-
-			} else {
-				sender.addChatMessage(new ChatComponentText(ERROR + "You do not have permission to split the faction!"));
-			}
-
-		} else {
-			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
-		}
-	}
-
+	
 	private void cmdComrades(ICommandSender sender) {
 
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
@@ -1936,7 +1960,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		Clowder target = Clowder.getClowderFromName(targetName);
 		if (me == null || target == null || me == target) return;
 		if (me.getPermLevel(player.getDisplayName()) < 3) return;
-		if(!CommandClowderAdmin.WAR_COMMAND_CHECKS_DISABLED && target.getOnlineMemberCount() < 2 && !Clowder.forceOnline) {
+		if(!(CommandClowderAdmin.LEGACY_WAR_ENABLED || CommandClowderAdmin.WAR_ONLINE_CHECK_DISABLED) && target.getOnlineMemberCount() < 2 && !Clowder.forceOnline) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You can only declare war on factions that are currently online (2+ members)."));
 			return;
 		}
@@ -1961,6 +1985,10 @@ private void cmdCreate(ICommandSender sender, String name) {
 	}
 
 	private void cmdRequestPeace(ICommandSender sender, String targetName) {
+		if (CommandClowderAdmin.LEGACY_WAR_ENABLED) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Legacy war mode is enabled: peace/ceasefire/surrender mechanics are disabled."));
+			return;
+		}
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
@@ -1970,11 +1998,15 @@ private void cmdCreate(ICommandSender sender, String name) {
 		target.notifyAll(player.worldObj, new ChatComponentText(INFO + me.name + " has offered peace. Use /c acceptpeace " + me.name));
 	}
 	private void cmdAcceptPeace(ICommandSender sender, String targetName) {
+		if (CommandClowderAdmin.LEGACY_WAR_ENABLED) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Legacy war mode is enabled: peace/ceasefire/surrender mechanics are disabled."));
+			return;
+		}
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
 		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 3) return;
-		if(!CommandClowderAdmin.WAR_COMMAND_CHECKS_DISABLED && !me.isAtWarWith(target)) return;
+		if(!(CommandClowderAdmin.LEGACY_WAR_ENABLED || CommandClowderAdmin.WAR_STATE_CHECK_DISABLED) && !me.isAtWarWith(target)) return;
 		if(!target.peaceRequests.contains(me.name)) return;
 		target.peaceRequests.remove(me.name);
 		me.activeWars.remove(target.name); target.activeWars.remove(me.name);
@@ -1985,15 +2017,23 @@ private void cmdCreate(ICommandSender sender, String name) {
 		MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(EnumChatFormatting.GREEN + "[WAR] " + me.name + " and " + target.name + " have agreed to peace."));
 	}
 	private void cmdRequestCeasefire(ICommandSender sender, String targetName) {
+		if (CommandClowderAdmin.LEGACY_WAR_ENABLED) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Legacy war mode is enabled: peace/ceasefire/surrender mechanics are disabled."));
+			return;
+		}
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
 		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 3) return;
-		if(!CommandClowderAdmin.WAR_COMMAND_CHECKS_DISABLED && !me.isAtWarWith(target)) return;
+		if(!(CommandClowderAdmin.LEGACY_WAR_ENABLED || CommandClowderAdmin.WAR_STATE_CHECK_DISABLED) && !me.isAtWarWith(target)) return;
 		me.ceasefireRequests.add(target.name);
 		target.notifyAll(player.worldObj, new ChatComponentText(INFO + me.name + " has proposed a ceasefire. Use /c acceptceasefire " + me.name));
 	}
 	private void cmdAcceptCeasefire(ICommandSender sender, String targetName) {
+		if (CommandClowderAdmin.LEGACY_WAR_ENABLED) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Legacy war mode is enabled: peace/ceasefire/surrender mechanics are disabled."));
+			return;
+		}
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
@@ -2007,15 +2047,23 @@ private void cmdCreate(ICommandSender sender, String name) {
 		}
 	}
 	private void cmdSurrender(ICommandSender sender, String targetName) {
+		if (CommandClowderAdmin.LEGACY_WAR_ENABLED) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Legacy war mode is enabled: peace/ceasefire/surrender mechanics are disabled."));
+			return;
+		}
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
 		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 3) return;
-		if(!CommandClowderAdmin.WAR_COMMAND_CHECKS_DISABLED && !me.isAtWarWith(target)) return;
+		if(!(CommandClowderAdmin.LEGACY_WAR_ENABLED || CommandClowderAdmin.WAR_STATE_CHECK_DISABLED) && !me.isAtWarWith(target)) return;
 		me.surrenderRequests.add(target.name);
 		target.notifyAll(player.worldObj, new ChatComponentText(CRITICAL + me.name + " offers surrender. Use /c acceptsurrender " + me.name + " to accept."));
 	}
 	private void cmdAcceptSurrender(ICommandSender sender, String targetName) {
+		if (CommandClowderAdmin.LEGACY_WAR_ENABLED) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Legacy war mode is enabled: peace/ceasefire/surrender mechanics are disabled."));
+			return;
+		}
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);

@@ -1176,10 +1176,17 @@ public class Clowder {
 		}
 
 		// 7. Merge stats
+		for (ClowderTerritory.TerritoryMeta meta : ClowderTerritory.territories.values()) {
+			if (meta != null && meta.owner != null && meta.owner.zone == ClowderTerritory.Zone.FACTION && meta.owner.owner == this) {
+				meta.owner.owner = target;
+			}
+		}
+
+		// 8. Merge stats
 		target.addPrestige(this.prestige, world);
 		target.addPrestigeGen(this.prestigeGen, world);
 
-		// 8. Notify both sides
+		// 9. Notify both sides
 		target.notifyAll(world, new ChatComponentText(
 				CommandClowder.TITLE + this.name + " merged into " + target.name + "!"
 		));
@@ -1187,10 +1194,10 @@ public class Clowder {
 				CommandClowder.TITLE + "Your faction has merged into " + target.name + "!"
 		));
 
-		// 9. Delete this clowder
+		// 10. Delete this clowder
 		this.disbandClowder(world);
 
-		// 10. Save
+		// 11. Save
 		ClowderData.getData(world).markDirty();
 	}
 

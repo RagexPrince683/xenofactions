@@ -26,7 +26,9 @@ public class CommandClowderAdmin extends CommandBase {
 
 	public static boolean WARENABLED = false;
 	public static boolean WAR_COOLDOWNS_DISABLED = false;
-	public static boolean WAR_COMMAND_CHECKS_DISABLED = false;
+	public static boolean WAR_ONLINE_CHECK_DISABLED = false;
+	public static boolean WAR_STATE_CHECK_DISABLED = false;
+	public static boolean LEGACY_WAR_ENABLED = false;
 
 	@Override
 	public String getCommandName() {
@@ -198,9 +200,37 @@ public class CommandClowderAdmin extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(INFO + "War cooldown skipping is now " + (WAR_COOLDOWNS_DISABLED ? "ENABLED" : "DISABLED") + "."));
 			return;
 		}
-		if(cmd.equals("ignorewarchecks")) {
-			WAR_COMMAND_CHECKS_DISABLED = !WAR_COMMAND_CHECKS_DISABLED;
-			sender.addChatMessage(new ChatComponentText(INFO + "War/peace command checks are now " + (WAR_COMMAND_CHECKS_DISABLED ? "IGNORED" : "ENFORCED") + "."));
+		if(cmd.equals("ignorewarcooldowncheck")) {
+			WAR_COOLDOWNS_DISABLED = !WAR_COOLDOWNS_DISABLED;
+			sender.addChatMessage(new ChatComponentText(INFO + "War cooldown checks are now " + (WAR_COOLDOWNS_DISABLED ? "IGNORED" : "ENFORCED") + "."));
+			return;
+		}
+		if(cmd.equals("ignorewaronlinecheck")) {
+			WAR_ONLINE_CHECK_DISABLED = !WAR_ONLINE_CHECK_DISABLED;
+			sender.addChatMessage(new ChatComponentText(INFO + "War online checks are now " + (WAR_ONLINE_CHECK_DISABLED ? "IGNORED" : "ENFORCED") + "."));
+			return;
+		}
+		if(cmd.equals("ignorewarstatecheck")) {
+			WAR_STATE_CHECK_DISABLED = !WAR_STATE_CHECK_DISABLED;
+			sender.addChatMessage(new ChatComponentText(INFO + "War state checks are now " + (WAR_STATE_CHECK_DISABLED ? "IGNORED" : "ENFORCED") + "."));
+			return;
+		}
+		if(cmd.equals("skipwarcooldown")) {
+			for (Clowder c : Clowder.clowders) {
+				c.noWarUntil.clear();
+				c.formerAllyNoWarUntil.clear();
+			}
+			sender.addChatMessage(new ChatComponentText(INFO + "All faction war cooldowns have been reset to 0."));
+			return;
+		}
+		if(cmd.equals("enablelegacywar")) {
+			LEGACY_WAR_ENABLED = !LEGACY_WAR_ENABLED;
+			if(LEGACY_WAR_ENABLED) {
+				WAR_COOLDOWNS_DISABLED = true;
+				WAR_ONLINE_CHECK_DISABLED = true;
+				WAR_STATE_CHECK_DISABLED = true;
+			}
+			sender.addChatMessage(new ChatComponentText(INFO + "Legacy war mode is now " + (LEGACY_WAR_ENABLED ? "ENABLED" : "DISABLED") + "."));
 			return;
 		}
 		
@@ -238,7 +268,11 @@ public class CommandClowderAdmin extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-warenable" + TITLE + " - Enables war mode"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-wardisable" + TITLE + " - Disables war mode"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-skipwarcooldowns" + TITLE + " - Toggles global war cooldown bypass"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-ignorewarchecks" + TITLE + " - Toggles online/war check bypass for war commands"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-skipwarcooldown" + TITLE + " - Instantly clears all war cooldown timers"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-ignorewarcooldowncheck" + TITLE + " - Toggles cooldown check bypass"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-ignorewaronlinecheck" + TITLE + " - Toggles online member check bypass"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-ignorewarstatecheck" + TITLE + " - Toggles at-war state check bypass"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-enablelegacywar" + TITLE + " - Ignores war checks and disables peace/ceasefire/surrender"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-newplayerprotection" + TITLE + " - Toggles 4h PvP / 24h keep-inventory starter protection"));
 		}
 	}
