@@ -980,7 +980,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(LIST + "Cities: " + ClowderTerritory.getCityClaims(clowder).size()));
 			for(Object cityObj : ClowderTerritory.getCityClaims(clowder)) {
 				TerritoryMeta city = (TerritoryMeta)cityObj;
-				sender.addChatMessage(new ChatComponentText(LIST + " - " + city.cityName + " [" + city.getCityLevel().displayName + "] radius " + city.getCityLevel().radius + " upkeep " + city.getCityLevel().upkeep));
+				sender.addChatMessage(new ChatComponentText(LIST + " - " + city.cityName + " [" + city.getCityLevel().displayName + "] center X:" + city.flagX + " Y:" + city.flagY + " Z:" + city.flagZ + " radius " + city.getCityLevel().radius + " upkeep " + city.getCityLevel().upkeep));
 			}
 
 		} else {
@@ -1004,7 +1004,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(LIST + "Cities: " + ClowderTerritory.getCityClaims(clowder).size()));
 			for(Object cityObj : ClowderTerritory.getCityClaims(clowder)) {
 				TerritoryMeta city = (TerritoryMeta)cityObj;
-				sender.addChatMessage(new ChatComponentText(LIST + " - " + city.cityName + " [" + city.getCityLevel().displayName + "] radius " + city.getCityLevel().radius + " upkeep " + city.getCityLevel().upkeep));
+				sender.addChatMessage(new ChatComponentText(LIST + " - " + city.cityName + " [" + city.getCityLevel().displayName + "] center X:" + city.flagX + " Y:" + city.flagY + " Z:" + city.flagZ + " radius " + city.getCityLevel().radius + " upkeep " + city.getCityLevel().upkeep));
 			}
 
 		} else {
@@ -1831,6 +1831,13 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
+			float foundingCost = CityLevel.SETTLEMENT.upgradeCost;
+			float foundingUpkeep = CityLevel.SETTLEMENT.upkeep;
+			if(clowder.getPrestige() < foundingCost || clowder.getPrestigeReq() + foundingUpkeep > clowder.getPrestige() - foundingCost) {
+				sender.addChatMessage(new ChatComponentText(ERROR + "Founding a City Center requires " + foundingCost + " prestige and " + foundingUpkeep + " upkeep capacity."));
+				return;
+			}
+
 			if(player.inventory.hasItem(Item.getItemFromBlock(ModBlocks.clowder_flag))) {
 				sender.addChatMessage(new ChatComponentText(ERROR + "You already have a flag in your inventory!"));
 				return;
@@ -1842,7 +1849,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			stack.setStackDisplayName("City Center: " + cityName.trim());
 			player.inventory.addItemStackToInventory(stack);
 			player.inventoryContainer.detectAndSendChanges();
-			sender.addChatMessage(new ChatComponentText(INFO + "Place the City Center to found " + cityName.trim() + "."));
+			sender.addChatMessage(new ChatComponentText(INFO + "Place the City Center to found " + cityName.trim() + ". Founding cost is charged on placement."));
 
 		} else {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));

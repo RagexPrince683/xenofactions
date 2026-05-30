@@ -37,76 +37,57 @@ public class GUIFlag extends GuiContainer {
 
 		String name = I18n.format(diFurnace.getInventoryName());
 		this.fontRendererObj.drawString(name, this.xSize / 2 - this.fontRendererObj.getStringWidth(name) / 2, 6, 4210752);
-		this.fontRendererObj.drawString(I18n.format("container.inventory"), 8, this.ySize - 96 + 2, 4210752);
 
 		float prestige = diFurnace.prestige;
 		float prestigeReq = diFurnace.prestigeReq;
+		int color = prestigeReq <= prestige ? 0x008000 : 0xFF0000;
 
-		int color = 0xFF0000;
+		String cityName = diFurnace.name == null || diFurnace.name.isEmpty() ? "Unnamed" : diFurnace.name;
+		String ownerName = diFurnace.owner == null ? "None" : diFurnace.owner.name;
 
-		if(prestigeReq <= prestige)
-			color = 0x008000;
+		this.fontRendererObj.drawString("City: " + this.fontRendererObj.trimStringToWidth(cityName, 92), 50, 20, 4210752);
+		this.fontRendererObj.drawString("Level: " + diFurnace.cityLevel.displayName, 50, 31, 4210752);
+		this.fontRendererObj.drawString("R:" + diFurnace.cityLevel.radius + " Up:" + Clowder.round(diFurnace.cityLevel.upkeep), 50, 42, 4210752);
+		this.fontRendererObj.drawString("Owner: " + this.fontRendererObj.trimStringToWidth(ownerName, 82), 50, 53, 4210752);
+		this.fontRendererObj.drawString("Prestige: " + Clowder.round(prestige), 50, 64, 4210752);
+		this.fontRendererObj.drawString("Required: " + Clowder.round(prestigeReq), 50, 75, color);
 
-		this.fontRendererObj.drawString("Prestige: " + Clowder.round(prestige), 50, 34, 4210752);
-		this.fontRendererObj.drawString("Required: " + Clowder.round(prestigeReq), 50, 46, color);
-		this.fontRendererObj.drawString("City: " + diFurnace.name, 50, 58, 4210752);
-		this.fontRendererObj.drawString("Level: " + diFurnace.cityLevel.displayName, 50, 70, 4210752);
-		this.fontRendererObj.drawString("Radius: " + diFurnace.cityLevel.radius + " Upkeep: " + diFurnace.cityLevel.upkeep, 50, 82, 4210752);
-		this.fontRendererObj.drawString("Owner: " + (diFurnace.owner == null ? "None" : diFurnace.owner.name), 50, 94, 4210752);
-
-
-	if(guiLeft + 25 <= x && guiLeft + 25 + 18 > x && guiTop + 17 < y && guiTop + 17 + 18 >= y) {
-		this.func_146283_a(Arrays.asList(new String[] {"City upgrade handled by /c city upgrade", "Capital max radius: 10 chunks"}), x - guiLeft, y - guiTop);
-	}
-	if(guiLeft + 25 <= x && guiLeft + 25 + 18 > x && guiTop + 35 < y && guiTop + 35 + 18 >= y) {
-		this.func_146283_a(Arrays.asList(new String[] {"City Center", "Claims by city level"}), x - guiLeft, y - guiTop);
-	}
-	if(guiLeft + 25 <= x && guiLeft + 25 + 18 > x && guiTop + 53 < y && guiTop + 53 + 18 >= y) {
-		this.func_146283_a(Arrays.asList(new String[] {"Settlement", "Sequential upgrades only"}), x - guiLeft, y - guiTop);
-	}
-	if(guiLeft + 133 <= x && guiLeft + 133 + 18 > x && guiTop + 52 < y && guiTop + 52 + 18 >= y) {
-
-		if(diFurnace.height < 1.0F )
-						this.func_146283_a(Arrays.asList(new String[] {"Not claimed"}), x - guiLeft, y - guiTop);
-		else if(diFurnace.mode == 0)
-						this.func_146283_a(Arrays.asList(new String[] {"Not active"}), x - guiLeft, y - guiTop);
-		else
-						this.func_146283_a(Arrays.asList(new String[] {"Active"}), x - guiLeft, y - guiTop);
-	}
+		if(guiLeft + 25 <= x && guiLeft + 25 + 18 > x && guiTop + 17 < y && guiTop + 17 + 18 >= y) {
+			this.func_146283_a(Arrays.asList(new String[] {"City Center", "Use /c city upgrade to level up", "Capital max radius: 6 chunks"}), x - guiLeft, y - guiTop);
+		}
+		if(guiLeft + 25 <= x && guiLeft + 25 + 18 > x && guiTop + 35 < y && guiTop + 35 + 18 >= y) {
+			this.func_146283_a(Arrays.asList(new String[] {"Claims are city-based", "Each level adds 1 chunk radius"}), x - guiLeft, y - guiTop);
+		}
+		if(guiLeft + 25 <= x && guiLeft + 25 + 18 > x && guiTop + 53 < y && guiTop + 53 + 18 >= y) {
+			this.func_146283_a(Arrays.asList(new String[] {"Sequential upgrades only", "Founding and upgrades require prestige"}), x - guiLeft, y - guiTop);
+		}
+		if(guiLeft + 133 <= x && guiLeft + 133 + 18 > x && guiTop + 52 < y && guiTop + 52 + 18 >= y) {
+			if(diFurnace.height < 1.0F)
+				this.func_146283_a(Arrays.asList(new String[] {"Not claimed"}), x - guiLeft, y - guiTop);
+			else if(diFurnace.mode == 0)
+				this.func_146283_a(Arrays.asList(new String[] {"Not active"}), x - guiLeft, y - guiTop);
+			else
+				this.func_146283_a(Arrays.asList(new String[] {"Active"}), x - guiLeft, y - guiTop);
+		}
 	}
 
-				protected void mouseClicked(int x, int y, int i) {
-	super.mouseClicked(x, y, i);
+	protected void mouseClicked(int x, int y, int i) {
+		super.mouseClicked(x, y, i);
 
-	//A
-	if(guiLeft + 25 <= x && guiLeft + 25 + 18 > x && guiTop + 17 < y && guiTop + 17 + 18 >= y) {
-
-		PacketDispatcher.wrapper.sendToServer(new AuxButtonPacket(diFurnace.xCoord, diFurnace.yCoord, diFurnace.zCoord, 0, 0));
+		// A/B/C are retained for the existing texture, but city radius now comes from /c city upgrade.
+		if(guiLeft + 25 <= x && guiLeft + 25 + 18 > x && guiTop + 17 < y && guiTop + 17 + 18 >= y) {
+			PacketDispatcher.wrapper.sendToServer(new AuxButtonPacket(diFurnace.xCoord, diFurnace.yCoord, diFurnace.zCoord, 0, 0));
 			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
-	}
-
-	//B
-	if(guiLeft + 25 <= x && guiLeft + 25 + 18 > x && guiTop + 35 < y && guiTop + 35 + 18 >= y) {
-
-		PacketDispatcher.wrapper.sendToServer(new AuxButtonPacket(diFurnace.xCoord, diFurnace.yCoord, diFurnace.zCoord, 0, 1));
+		}
+		if(guiLeft + 25 <= x && guiLeft + 25 + 18 > x && guiTop + 35 < y && guiTop + 35 + 18 >= y) {
+			PacketDispatcher.wrapper.sendToServer(new AuxButtonPacket(diFurnace.xCoord, diFurnace.yCoord, diFurnace.zCoord, 0, 1));
 			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
-	}
-
-	//C
-	if(guiLeft + 25 <= x && guiLeft + 25 + 18 > x && guiTop + 53 < y && guiTop + 53 + 18 >= y) {
-
-		PacketDispatcher.wrapper.sendToServer(new AuxButtonPacket(diFurnace.xCoord, diFurnace.yCoord, diFurnace.zCoord, 0, 2));
+		}
+		if(guiLeft + 25 <= x && guiLeft + 25 + 18 > x && guiTop + 53 < y && guiTop + 53 + 18 >= y) {
+			PacketDispatcher.wrapper.sendToServer(new AuxButtonPacket(diFurnace.xCoord, diFurnace.yCoord, diFurnace.zCoord, 0, 2));
 			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
+		}
 	}
-
-	//CAPTURE
-	/*if(!isPressed() && guiLeft + 133 <= x && guiLeft + 133 + 18 > x && guiTop + 16 < y && guiTop + 16 + 18 >= y) {
-
-		press = System.currentTimeMillis();
-		PacketDispatcher.wrapper.sendToServer(new AuxButtonPacket(diFurnace.xCoord, diFurnace.yCoord, diFurnace.zCoord, 0, 3));
-			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
-	}*/
-				}
 
 	@Override
 	protected void drawGuiContainerBackgroundLayer(float p_146976_1_, int p_146976_2_, int p_146976_3_) {

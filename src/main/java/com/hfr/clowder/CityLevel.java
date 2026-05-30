@@ -2,10 +2,10 @@ package com.hfr.clowder;
 
 public enum CityLevel {
 	SETTLEMENT("Settlement", 2, 1F, 0.05F),
-	TOWN("Town", 4, 2F, 0.10F),
-	CITY("City", 6, 4F, 0.20F),
-	METROPOLIS("Metropolis", 8, 7F, 0.35F),
-	CAPITAL("Capital", 10, 11F, 0.50F);
+	TOWN("Town", 3, 2F, 0.10F),
+	CITY("City", 4, 4F, 0.20F),
+	METROPOLIS("Metropolis", 5, 7F, 0.35F),
+	CAPITAL("Capital", 6, 11F, 0.50F);
 
 	public final String displayName;
 	public final int radius;
