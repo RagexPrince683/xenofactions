@@ -13,9 +13,12 @@ import com.hfr.clowder.ClowderTerritory.Ownership;
 import com.hfr.clowder.ClowderTerritory.TerritoryMeta;
 import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.items.ModItems;
+import com.hfr.packet.PacketDispatcher;
+import com.hfr.packet.tile.CityCenterPacket;
 import com.hfr.main.MainRegistry;
 import com.hfr.tileentity.machine.TileEntityMachineBase;
 
+import cpw.mods.fml.common.network.NetworkRegistry.TargetPoint;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.entity.player.EntityPlayer;
@@ -33,6 +36,7 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	public float speed = 1F / (20F * 30F);
 	public int mode = 0;
 	public String name = "";
+	public String ownerName = "";
 	public CityLevel cityLevel = CityLevel.SETTLEMENT;
 	
 	private int timer = 0;
@@ -191,6 +195,10 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 				//generateClaim();
 			}
 			
+			ownerName = owner == null ? "" : owner.name;
+			if(worldObj.getTotalWorldTime() % 20 == 0)
+				PacketDispatcher.wrapper.sendToAllAround(new CityCenterPacket(xCoord, yCoord, zCoord, name, ownerName), new TargetPoint(this.worldObj.provider.dimensionId, xCoord, yCoord, zCoord, 250));
+
 			if(owner != null) {
 				this.updateGauge(owner.flag.ordinal(), 0, 250);
 				this.updateGauge(owner.color, 1, 250);
@@ -482,6 +490,7 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 		this.mode = nbt.getInteger("mode");
 		this.timer = nbt.getInteger("timer");
 		this.name = nbt.getString("name");
+		this.ownerName = owner == null ? "" : owner.name;
 		this.cityLevel = CityLevel.byOrdinal(nbt.getInteger("cityLevel"));
 		
 		slots = new ItemStack[getSizeInventory()];
