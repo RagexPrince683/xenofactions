@@ -3,6 +3,7 @@ package com.hfr.blocks.clowder;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderTerritory;
+import com.hfr.clowder.ClowderTerritory.CoordPair;
 import com.hfr.clowder.ClowderTerritory.Ownership;
 import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.main.MainRegistry;
@@ -31,22 +32,22 @@ public class Flag extends BlockContainer {
 	public TileEntity createNewTileEntity(World p_149915_1_, int p_149915_2_) {
 		return new TileEntityFlag();
 	}
-	
+
 	@Override
 	public int getRenderType(){
 		return -1;
 	}
-	
+
 	@Override
 	public boolean isOpaqueCube() {
 		return false;
 	}
-	
+
 	@Override
 	public boolean renderAsNormalBlock() {
 		return false;
 	}
-	
+
 	@Override
 	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
 		if(world.isRemote)
@@ -60,12 +61,12 @@ public class Flag extends BlockContainer {
 			return true;
 		}
 	}
-	
+
 	@Override
 	public void onBlockPlacedBy(World world, int x, int y, int z, EntityLivingBase player, ItemStack itemStack) {
-		
+
 		int i = MathHelper.floor_double(player.rotationYaw * 4.0F / 360.0F + 0.5D) & 3;
-		
+
 		if(i == 0)
 		{
 			world.setBlockMetadataWithNotify(x, y, z, 2, 2);
@@ -82,26 +83,42 @@ public class Flag extends BlockContainer {
 		{
 			world.setBlockMetadataWithNotify(x, y, z, 4, 2);
 		}
-		
+
 		if(player instanceof EntityPlayer && !world.isRemote) {
 			TileEntityFlag flag = (TileEntityFlag)world.getTileEntity(x, y, z);
-			
-			Clowder clowder = Clowder.getClowderFromPlayer((EntityPlayer)player);
-			
+			EntityPlayer entityPlayer = (EntityPlayer)player;
+
+			Clowder clowder = Clowder.getClowderFromPlayer(entityPlayer);
+			String cityName = itemStack.hasTagCompound() ? itemStack.stackTagCompound.getString("cityName") : "";
+			CoordPair cityChunk = ClowderTerritory.getCoordPair(x, z);
+			String cityError = ClowderTerritory.getCityPlacementError(cityChunk.x, cityChunk.z);
+
+			if(cityName == null || cityName.trim().isEmpty()) {
+				world.setBlockToAir(x, y, z);
+				entityPlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "City Centers require a name. Use /c claim <city name>."));
+				return;
+			}
+			if(cityError != null) {
+				world.setBlockToAir(x, y, z);
+				entityPlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + cityError));
+				return;
+			}
+
 			if(clowder != null && flag.canSeeSky()) {
+				flag.name = cityName.trim();
 				flag.setOwner(clowder);
-				flag.setMode(3);
+				flag.setMode(1);
 				flag.isClaimed = true;
 				flag.generateClaim();
 			} else {
 				flag.height = 0.0F;
-				((EntityPlayer)player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "You won't be able to raise this flag. This may be due to:"));
-				((EntityPlayer)player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag lacking a solid 5x5 block foundation"));
-				((EntityPlayer)player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag's foundation not having sky access"));
-				((EntityPlayer)player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-You not being in any faction"));
-				((EntityPlayer)player).addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag being below Y:45 or above Y:200"));
+				entityPlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "You won't be able to raise this flag. This may be due to:"));
+				entityPlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag lacking a solid 5x5 block foundation"));
+				entityPlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag's foundation not having sky access"));
+				entityPlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-You not being in any faction"));
+				entityPlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "-The flag being below Y:45 or above Y:200"));
 			}
-			
+
 			flag.markDirty();
 		}
 
@@ -128,7 +145,7 @@ public class Flag extends BlockContainer {
 
 		return true;
 	}
-	
+
 	@Override
 	public void breakBlock(World world, int x, int y, int z, Block b, int i)
 	{
@@ -158,7 +175,7 @@ public class Flag extends BlockContainer {
 			//
 			//}
 		}
-		
+
 		super.breakBlock(world, x, y, z, b, i);
     }
 

@@ -63,6 +63,9 @@ public class ItemMap extends Item {
 				part = "";
 			}
 			
+			TerritoryMeta here = ClowderTerritory.getMetaFromIntCoords((int)player.posX, (int)player.posZ);
+			if(here != null && here.owner != null && here.owner.zone == Zone.FACTION)
+				player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "City: " + here.cityName + " (" + here.getCityLevel().displayName + ") - " + (here.owner.owner == null ? "Unknown" : here.owner.owner.name)));
 			printSep(size, player);
 		}
 		

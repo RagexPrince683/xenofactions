@@ -82,8 +82,8 @@ tile.officer_chest.name=Officer Chest
 
 tile.teleporter.name=Teleporter
 
-tile.clowder_flag.name=Claim Flag
-container.flagPole=Claim Flag
+tile.clowder_flag.name=City Center
+container.flagPole=City Center
 tile.clowder_flag_big.name=Claim Territory Flag
 tile.clowder_cap.name=Claim Cap Point (ALSO DON'T USE THIS ONE AS WELL)
 tile.clowder_conquerer.name=Claim Conquest Flag
