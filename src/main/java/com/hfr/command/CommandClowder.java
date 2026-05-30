@@ -10,6 +10,7 @@ import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.Clowder.ScheduledTeleport;
 import com.hfr.clowder.ClowderFlag;
+import com.hfr.clowder.CityLevel;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.Ownership;
 import com.hfr.clowder.ClowderTerritory.TerritoryMeta;
@@ -21,6 +22,7 @@ import com.hfr.main.MainRegistry;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.effect.ClowderFlagPacket;
 import com.hfr.tileentity.clowder.ITerritoryProvider;
+import com.hfr.tileentity.clowder.TileEntityFlag;
 import com.hfr.tileentity.clowder.TileEntityFlagBig;
 import com.hfr.tileentity.prop.TileEntityProp;
 import com.hfr.util.ParserUtil;
@@ -35,6 +37,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
@@ -356,8 +359,14 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 
-		if(cmd.equals("claim")) {
-			cmdClaim(sender);
+		if(cmd.equals("claim") || cmd.equals("city")) {
+			if(args.length > 1 && args[1].equalsIgnoreCase("upgrade")) {
+				cmdCityUpgrade(sender);
+			} else if(args.length > 1) {
+				cmdClaim(sender, String.join(" ", Arrays.copyOfRange(args, 1, args.length)));
+			} else {
+				sender.addChatMessage(new ChatComponentText(ERROR + "Usage: /c claim <city name> or /c city upgrade"));
+			}
 			return;
 		}
 
@@ -386,7 +395,8 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 		if(cmd.equals("peace") && args.length > 1) {
-			cmdRequestPeace(sender, args[1]);
+			String city = args.length > 2 ? String.join(" ", Arrays.copyOfRange(args, 2, args.length)) : null;
+			cmdRequestPeace(sender, args[1], city);
 			return;
 		}
 		if(cmd.equals("acceptpeace") && args.length > 1) {
@@ -522,7 +532,8 @@ public class CommandClowder extends CommandBase {
 
 		if(p == 4) {
 			//sender.addChatMessage(new ChatComponentText(COMMAND + "-retreat" + TITLE + " - Reatreats after 10 minutes"));
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-claim" + TITLE + " - Creates a new flag"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-claim <city name>" + TITLE + " - Creates a named City Center"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-city upgrade" + TITLE + " - Upgrades the City Center for your current claim"));
 			//todo fix
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-balance" + TITLE + " - Displays how much prestige the faction has"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-deposit <amount>" + TITLE + " - Turns prestige items into digiprestige"));
@@ -966,6 +977,11 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(LIST + " -generating: " + clowder.round(clowder.getPrestigeGen()) + " per hour (x" + clowder.round((float) Math.pow(0.99, clowder.getPrestige())) + ")"));
 			sender.addChatMessage(new ChatComponentText(LIST + " -requires: " + clowder.round(clowder.getPrestigeReq()) + " at all times"));
 			sender.addChatMessage(new ChatComponentText(LIST + "Color: " + Integer.toHexString(clowder.color).toUpperCase()));
+			sender.addChatMessage(new ChatComponentText(LIST + "Cities: " + ClowderTerritory.getCityClaims(clowder).size()));
+			for(Object cityObj : ClowderTerritory.getCityClaims(clowder)) {
+				TerritoryMeta city = (TerritoryMeta)cityObj;
+				sender.addChatMessage(new ChatComponentText(LIST + " - " + city.cityName + " [" + city.getCityLevel().displayName + "] radius " + city.getCityLevel().radius + " upkeep " + city.getCityLevel().upkeep));
+			}
 
 		} else {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
@@ -985,6 +1001,11 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(LIST + "Members: " + clowder.members.size()));
 			sender.addChatMessage(new ChatComponentText(LIST + "Prestige: " + clowder.round(clowder.getPrestige())));
 			sender.addChatMessage(new ChatComponentText(LIST + "Color: " + Integer.toHexString(clowder.color).toUpperCase()));
+			sender.addChatMessage(new ChatComponentText(LIST + "Cities: " + ClowderTerritory.getCityClaims(clowder).size()));
+			for(Object cityObj : ClowderTerritory.getCityClaims(clowder)) {
+				TerritoryMeta city = (TerritoryMeta)cityObj;
+				sender.addChatMessage(new ChatComponentText(LIST + " - " + city.cityName + " [" + city.getCityLevel().displayName + "] radius " + city.getCityLevel().radius + " upkeep " + city.getCityLevel().upkeep));
+			}
 
 		} else {
 			sender.addChatMessage(new ChatComponentText(ERROR + "This faction does not exist!"));
@@ -1730,7 +1751,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		}
 	}
 
-	//private void cmdClaim(ICommandSender sender) {
+	//private void cmdClaim(ICommandSender sender, String cityName) {
 //
 	//	EntityPlayer player = getCommandSenderAsPlayer(sender);
 	//	Clowder clowder = Clowder.getClowderFromPlayer(player);
@@ -1798,24 +1819,15 @@ private void cmdCreate(ICommandSender sender, String name) {
 	//	}
 	//}
 
-	private void cmdClaim(ICommandSender sender) {
+	private void cmdClaim(ICommandSender sender, String cityName) {
 
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
 
-		// Retrieve a unique identifier for the player
-		String playerName = player.getDisplayName();
-
-		// Load the Clowder data
-		ClowderData clowderData = ClowderData.getData(player.getEntityWorld());
-
-		// Check if the player has already claimed a flag
-		if (clowderData.hasPlayerClaimedFlag(playerName)) {
-			sender.addChatMessage(new ChatComponentText(ERROR + "You have already claimed a flag!"));
+		if(cityName == null || cityName.trim().isEmpty()) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Usage: /c claim <city name>"));
 			return;
 		}
-
-
 
 		if(clowder != null) {
 
@@ -1824,16 +1836,51 @@ private void cmdCreate(ICommandSender sender, String name) {
 				return;
 			}
 
-			player.inventory.addItemStackToInventory(new ItemStack(ModBlocks.clowder_flag));
+			ItemStack stack = new ItemStack(ModBlocks.clowder_flag);
+			stack.stackTagCompound = new NBTTagCompound();
+			stack.stackTagCompound.setString("cityName", cityName.trim());
+			stack.setStackDisplayName("City Center: " + cityName.trim());
+			player.inventory.addItemStackToInventory(stack);
 			player.inventoryContainer.detectAndSendChanges();
-			sender.addChatMessage(new ChatComponentText(INFO + "Place the flag to claim new territory!"));
-
-			clowderData.markPlayerClaimedFlag(playerName);
+			sender.addChatMessage(new ChatComponentText(INFO + "Place the City Center to found " + cityName.trim() + "."));
 
 		} else {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
 		}
 	}
+	private void cmdCityUpgrade(ICommandSender sender) {
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder clowder = Clowder.getClowderFromPlayer(player);
+		if(clowder == null) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
+			return;
+		}
+		if(clowder.getPermLevel(player.getDisplayName()) < 2) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions to upgrade cities!"));
+			return;
+		}
+		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords((int)player.posX, (int)player.posZ);
+		if(meta == null || meta.owner == null || meta.owner.owner != clowder) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Stand inside one of your city claims to upgrade it."));
+			return;
+		}
+		TileEntity te = player.worldObj.getTileEntity(meta.flagX, meta.flagY, meta.flagZ);
+		if(!(te instanceof TileEntityFlag)) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "This claim is not attached to a City Center."));
+			return;
+		}
+		TileEntityFlag city = (TileEntityFlag)te;
+		CityLevel next = city.cityLevel.next();
+		if(next == null) {
+			sender.addChatMessage(new ChatComponentText(ERROR + city.name + " is already a Capital."));
+			return;
+		}
+		if(city.upgradeCity())
+			sender.addChatMessage(new ChatComponentText(INFO + city.name + " upgraded to " + city.cityLevel.displayName + " (radius " + city.cityLevel.radius + ", upkeep " + city.cityLevel.upkeep + ")."));
+		else
+			sender.addChatMessage(new ChatComponentText(ERROR + "Upgrade requires " + next.upgradeCost + " prestige and sequential upkeep capacity."));
+	}
+
 	//I have no idea how territories work, but it looks retarded
 
 	//todo here
@@ -1984,7 +2031,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 				EnumChatFormatting.DARK_RED + "[WAR] " + EnumChatFormatting.GOLD + me.name + EnumChatFormatting.RED + " has declared war on " + EnumChatFormatting.GOLD + target.name + EnumChatFormatting.RED + "!"));
 	}
 
-	private void cmdRequestPeace(ICommandSender sender, String targetName) {
+	private void cmdRequestPeace(ICommandSender sender, String targetName, String transferCity) {
 		if (CommandClowderAdmin.LEGACY_WAR_ENABLED) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "Legacy war mode is enabled: peace/ceasefire/surrender mechanics are disabled."));
 			return;
@@ -1995,7 +2042,17 @@ private void cmdCreate(ICommandSender sender, String name) {
 		if (me == null || target == null || me == target) return;
 		if (me.getPermLevel(player.getDisplayName()) < 3) return;
 		me.peaceRequests.add(target.name);
-		target.notifyAll(player.worldObj, new ChatComponentText(INFO + me.name + " has offered peace. Use /c acceptpeace " + me.name));
+		if(transferCity != null && !transferCity.trim().isEmpty()) {
+			TerritoryMeta city = ClowderTerritory.getCityByName(me, transferCity.trim());
+			if(city == null) {
+				sender.addChatMessage(new ChatComponentText(ERROR + "Unknown city: " + transferCity));
+				return;
+			}
+			me.peaceRequests.add(target.name + ":city:" + city.cityName);
+			target.notifyAll(player.worldObj, new ChatComponentText(INFO + me.name + " has offered peace including transfer of " + city.cityName + ". Use /c acceptpeace " + me.name));
+		} else {
+			target.notifyAll(player.worldObj, new ChatComponentText(INFO + me.name + " has offered peace. Use /c acceptpeace " + me.name));
+		}
 	}
 	private void cmdAcceptPeace(ICommandSender sender, String targetName) {
 		if (CommandClowderAdmin.LEGACY_WAR_ENABLED) {
@@ -2009,6 +2066,19 @@ private void cmdCreate(ICommandSender sender, String name) {
 		if(!(CommandClowderAdmin.LEGACY_WAR_ENABLED || CommandClowderAdmin.WAR_STATE_CHECK_DISABLED) && !me.isAtWarWith(target)) return;
 		if(!target.peaceRequests.contains(me.name)) return;
 		target.peaceRequests.remove(me.name);
+		String prefix = me.name + ":city:";
+		for(Object requestObj : new ArrayList(target.peaceRequests)) {
+			String request = (String)requestObj;
+			if(request.startsWith(prefix)) {
+				String cityName = request.substring(prefix.length());
+				TerritoryMeta city = ClowderTerritory.getCityByName(target, cityName);
+				if(city != null) {
+					int chunks = ClowderTerritory.transferCity(player.worldObj, city, me);
+					MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(EnumChatFormatting.GREEN + "[WAR] " + cityName + " transferred to " + me.name + " (" + chunks + " chunks)."));
+				}
+				target.peaceRequests.remove(request);
+			}
+		}
 		me.activeWars.remove(target.name); target.activeWars.remove(me.name);
 		if(!CommandClowderAdmin.WAR_COOLDOWNS_DISABLED) {
 			long until = System.currentTimeMillis() + 84L * 60L * 60L * 1000L;
@@ -2070,6 +2140,10 @@ private void cmdCreate(ICommandSender sender, String name) {
 		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 3) return;
 		if(!target.surrenderRequests.contains(me.name)) return;
 		target.surrenderRequests.remove(me.name);
+		for(Object cityObj : ClowderTerritory.getCityClaims(target)) {
+			TerritoryMeta city = (TerritoryMeta)cityObj;
+			ClowderTerritory.transferCity(player.worldObj, city, me);
+		}
 		me.activeWars.remove(target.name); target.activeWars.remove(me.name);
 		if(!CommandClowderAdmin.WAR_COOLDOWNS_DISABLED) {
 			long until = System.currentTimeMillis() + 84L * 60L * 60L * 1000L;
