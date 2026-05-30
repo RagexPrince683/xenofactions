@@ -47,8 +47,7 @@ public class GUIFlag extends GuiContainer {
 
 		this.fontRendererObj.drawString("City: " + this.fontRendererObj.trimStringToWidth(cityName, 92), 50, 20, 4210752);
 		this.fontRendererObj.drawString("Level: " + diFurnace.cityLevel.displayName, 50, 31, 4210752);
-		this.fontRendererObj.drawString("R:" + diFurnace.cityLevel.radius + " Up:" + Clowder.round(diFurnace.cityLevel.upkeep), 50, 42, 4210752);
-		this.fontRendererObj.drawString("Owner: " + this.fontRendererObj.trimStringToWidth(ownerName, 82), 50, 53, 4210752);
+		this.fontRendererObj.drawString("Rank:" + diFurnace.cityLevel.radius + " Upkeep:" + Clowder.round(diFurnace.cityLevel.upkeep), 50, 42, 4210752);
 		this.fontRendererObj.drawString("Prestige: " + Clowder.round(prestige), 50, 64, 4210752);
 		this.fontRendererObj.drawString("Required: " + Clowder.round(prestigeReq), 50, 75, color);
 
