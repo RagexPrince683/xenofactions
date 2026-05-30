@@ -6,15 +6,19 @@ import java.util.List;
 
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderFlag;
+import com.hfr.clowder.CityLevel;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.CoordPair;
 import com.hfr.clowder.ClowderTerritory.Ownership;
 import com.hfr.clowder.ClowderTerritory.TerritoryMeta;
 import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.items.ModItems;
+import com.hfr.packet.PacketDispatcher;
+import com.hfr.packet.tile.CityCenterPacket;
 import com.hfr.main.MainRegistry;
 import com.hfr.tileentity.machine.TileEntityMachineBase;
 
+import cpw.mods.fml.common.network.NetworkRegistry.TargetPoint;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.entity.player.EntityPlayer;
@@ -32,6 +36,8 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	public float speed = 1F / (20F * 30F);
 	public int mode = 0;
 	public String name = "";
+	public String ownerName = "";
+	public CityLevel cityLevel = CityLevel.SETTLEMENT;
 	
 	private int timer = 0;
 	
@@ -160,7 +166,7 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 				MainRegistry.logger.info("Unlocking flag " + xCoord + " " + yCoord + " " + zCoord + " for being unhoisted! (captured!)");
 				
 				if(owner != null)
-					owner.notifyCapture(worldObj, xCoord, zCoord, "flags");
+					owner.notifyCapture(worldObj, xCoord, zCoord, "City Center " + name);
 			}
 			
 			if(prevC != owner)
@@ -189,11 +195,16 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 				//generateClaim();
 			}
 			
+			ownerName = owner == null ? "" : owner.name;
+			if(worldObj.getTotalWorldTime() % 20 == 0)
+				PacketDispatcher.wrapper.sendToAllAround(new CityCenterPacket(xCoord, yCoord, zCoord, name, ownerName), new TargetPoint(this.worldObj.provider.dimensionId, xCoord, yCoord, zCoord, 250));
+
 			if(owner != null) {
 				this.updateGauge(owner.flag.ordinal(), 0, 250);
 				this.updateGauge(owner.color, 1, 250);
 				this.updateGauge(Float.floatToIntBits(owner.getPrestige()), 4, 20);
 				this.updateGauge(Float.floatToIntBits(owner.getPrestigeReq()), 5, 20);
+				this.updateGauge(cityLevel.ordinal(), 6, 20);
 			} else {
 				this.updateGauge(ClowderFlag.NONE.ordinal(), 0, 250);
 				this.updateGauge(0xFFFFFF, 1, 250);
@@ -228,12 +239,12 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 		case 3: height = val * 0.01F; break;
 		case 4: prestige = Float.intBitsToFloat(val); break;
 		case 5: prestigeReq = Float.intBitsToFloat(val); break;
+		case 6: cityLevel = CityLevel.byOrdinal(val); break;
 		}
 	}
 	
 	public float getGenRate() {
-		
-		return getGenRateFromMode(mode);
+		return owner == null ? 0 : Clowder.flagRate;
 	}
 	
 	public static float getGenRateFromMode(int mode) {
@@ -245,20 +256,11 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	}
 	
 	public float getCost() {
-		
-		return getCostFromMode(mode);
+		return cityLevel.upkeep;
 	}
 	
 	public static float getCostFromMode(int mode) {
-
-		if(mode == 1)
-			return Clowder.flagReq * 3;
-		if(mode == 2)
-			return Clowder.flagReq * 2;
-		if(mode == 3)
-			return Clowder.flagReq * 1;
-		
-		return 0;
+		return CityLevel.SETTLEMENT.upkeep;
 	}
 	
 	public void setOwner(Clowder c) {
@@ -288,34 +290,27 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	}
 	
 	public void setMode(int mode) {
-		
-		//if there's no owner, the mode cannot be set
-		if(owner == null) {
-			this.mode = 0;
-			return;
-		}
-
-		float beforeGen = getGenRateFromMode(this.mode);
-		float afterGen = getGenRateFromMode(mode);
-
-		float beforeCost = getCostFromMode(this.mode);
-		float afterCost = getCostFromMode(mode);
-		
-		//if the new requirement is above the prestige level, the mode will not change
-		if(owner.getPrestigeReq() - beforeCost + afterCost > owner.getPrestige())
-			return;
-
-		//subtract old amounts
-		owner.addPrestigeGen(-beforeGen, worldObj);
-		owner.addPrestigeReq(-beforeCost, worldObj);
-		
-		this.mode = mode;
-		
-		//...and add the new ones
-		owner.addPrestigeGen(afterGen, worldObj);
-		owner.addPrestigeReq(afterCost, worldObj);
-		
+		// City Centers always use the current city level for radius/upkeep.
+		this.mode = owner == null ? 0 : 1;
 		this.markDirty();
+	}
+
+	public boolean upgradeCity() {
+		if(owner == null)
+			return false;
+		CityLevel next = cityLevel.next();
+		if(next == null)
+			return false;
+		float beforeCost = getCost();
+		if(owner.getPrestige() < next.upgradeCost || owner.getPrestigeReq() - beforeCost + next.upkeep > owner.getPrestige() - next.upgradeCost)
+			return false;
+		owner.addPrestige(-next.upgradeCost, worldObj);
+		owner.addPrestigeReq(-beforeCost, worldObj);
+		cityLevel = next;
+		owner.addPrestigeReq(getCost(), worldObj);
+		generateClaim();
+		markDirty();
+		return true;
 	}
 	
 	private boolean consumeToken() {
@@ -344,12 +339,7 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	@Override
 	public int getRadius() {
 		
-		switch(mode) {
-		case 1: return 10;
-		case 2: return 5;
-		case 3: return 2;
-		default: return 0;
-		}
+		return owner == null ? 0 : cityLevel.radius;
 	}
 
 	@Override
@@ -359,10 +349,13 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	
 	public void generateClaim() {
 		
-		int rad = getRadius();
+		int rad = Math.min(getRadius(), CityLevel.maxRadius());
+		String placementError = ClowderTerritory.getCityPlacementError(xCoord >> 4, zCoord >> 4);
+		if(placementError != null && ClowderTerritory.getMetaFromIntCoords(xCoord, zCoord) == null)
+			return;
 		
-		for(int x = -rad; x <= rad; x++) {
-			for(int z = -rad; z <= rad; z++) {
+		for(int x = -CityLevel.maxRadius(); x <= CityLevel.maxRadius(); x++) {
+			for(int z = -CityLevel.maxRadius(); z <= CityLevel.maxRadius(); z++) {
 
 				int posX = xCoord + x * 16;
 				int posZ = zCoord + z * 16;
@@ -370,9 +363,19 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 				
 				TerritoryMeta meta = ClowderTerritory.getMetaFromCoords(loc);
 				
-				if(meta == null || !meta.checkPersistence(worldObj, loc))
-					if(Math.sqrt(Math.pow(x, 2) + Math.pow(z, 2)) < rad)
+				double dist = Math.sqrt(Math.pow(x, 2) + Math.pow(z, 2));
+				if(dist < rad) {
+					if(meta == null || !meta.checkPersistence(worldObj, loc) || (meta.flagX == xCoord && meta.flagY == yCoord && meta.flagZ == zCoord)) {
 						ClowderTerritory.setOwnerForCoord(worldObj, loc, owner, xCoord, yCoord, zCoord, name);
+						TerritoryMeta newMeta = ClowderTerritory.getMetaFromCoords(loc);
+						if(newMeta != null) {
+							newMeta.cityLevel = cityLevel.ordinal();
+							newMeta.cityName = name;
+						}
+					}
+				} else if(meta != null && meta.flagX == xCoord && meta.flagY == yCoord && meta.flagZ == zCoord) {
+					ClowderTerritory.removeZoneForCoord(worldObj, loc);
+				}
 			}
 		}
 	}
@@ -385,7 +388,7 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 		/*int rad = getRadius();
 		
 		for(int x = -rad; x <= rad; x++) {
-			for(int z = -rad; z <= rad; z++) {
+			for(int z = -CityLevel.maxRadius(); z <= CityLevel.maxRadius(); z++) {
 				
 				double dist = Math.sqrt(Math.pow(x, 2) + Math.pow(z, 2));
 				
@@ -487,6 +490,8 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 		this.mode = nbt.getInteger("mode");
 		this.timer = nbt.getInteger("timer");
 		this.name = nbt.getString("name");
+		this.ownerName = owner == null ? "" : owner.name;
+		this.cityLevel = CityLevel.byOrdinal(nbt.getInteger("cityLevel"));
 		
 		slots = new ItemStack[getSizeInventory()];
 		
@@ -517,6 +522,7 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 		nbt.setInteger("mode", mode);
 		nbt.setInteger("timer", timer);
 		nbt.setString("name", name);
+		nbt.setInteger("cityLevel", cityLevel.ordinal());
 		
 		NBTTagList list = new NBTTagList();
 		
