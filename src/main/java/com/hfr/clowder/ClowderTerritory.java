@@ -41,6 +41,73 @@ public class ClowderTerritory {
 		return new CoordPair(x / 16, z / 16);
 	}
 	
+
+	public static boolean canPlaceCityCenter(int chunkX, int chunkZ) {
+		return getCityPlacementError(chunkX, chunkZ) == null;
+	}
+
+	public static String getCityPlacementError(int chunkX, int chunkZ) {
+		for(TerritoryMeta meta : territories.values()) {
+			if(meta != null && meta.owner != null && meta.owner.zone == Zone.FACTION && meta.isCityClaim()) {
+				CoordPair other = getCoordPair(meta.flagX, meta.flagZ);
+				double dist = Math.sqrt(Math.pow(chunkX - other.x, 2) + Math.pow(chunkZ - other.z, 2));
+				int required = CityLevel.maxRadius() * 2 + 10;
+				if(dist < required)
+					return "City Center is too close to " + meta.cityName + ". City centers must be at least " + required + " chunks apart to preserve a 10 chunk border buffer.";
+			}
+		}
+		return null;
+	}
+
+	public static List<TerritoryMeta> getCityClaims(Clowder owner) {
+		HashMap<String, TerritoryMeta> cities = new HashMap();
+		for(TerritoryMeta meta : territories.values()) {
+			if(meta != null && meta.owner != null && meta.owner.zone == Zone.FACTION && meta.owner.owner == owner && meta.isCityClaim())
+				cities.put(meta.cityId, meta);
+		}
+		return new ArrayList(cities.values());
+	}
+
+	public static TerritoryMeta getCityByName(Clowder owner, String cityName) {
+		if(cityName == null)
+			return null;
+		for(TerritoryMeta meta : getCityClaims(owner)) {
+			if(meta.cityName != null && meta.cityName.equalsIgnoreCase(cityName))
+				return meta;
+		}
+		return null;
+	}
+
+	public static int transferCity(World world, TerritoryMeta city, Clowder newOwner) {
+		if(city == null || !city.isCityClaim() || newOwner == null)
+			return 0;
+		String id = city.cityId;
+		int moved = 0;
+		for(TerritoryMeta meta : territories.values()) {
+			if(meta != null && id.equals(meta.cityId) && meta.owner != null && meta.owner.zone == Zone.FACTION) {
+				meta.owner.owner = newOwner;
+				moved++;
+			}
+		}
+		TileEntity te = world.getTileEntity(city.flagX, city.flagY, city.flagZ);
+		if(te instanceof TileEntityFlag) {
+			TileEntityFlag flag = (TileEntityFlag)te;
+			Clowder oldOwner = flag.owner;
+			if(oldOwner != null && oldOwner != newOwner) {
+				oldOwner.addPrestigeGen(-flag.getGenRate(), world);
+				oldOwner.addPrestigeReq(-flag.getCost(), world);
+				oldOwner.flags--;
+			}
+			flag.owner = newOwner;
+			newOwner.addPrestigeGen(flag.getGenRate(), world);
+			newOwner.addPrestigeReq(flag.getCost(), world);
+			newOwner.flags++;
+			flag.markDirty();
+		}
+		ClowderData.getData(world).markDirty();
+		return moved;
+	}
+
 	//sets the owner of a chunk to a clowder
 	public static void setOwnerForCoord(World world, CoordPair coords, Clowder owner, int fX, int fY, int fZ, String name) {
 		
@@ -59,6 +126,8 @@ public class ClowderTerritory {
 		Ownership o = new Ownership(Zone.FACTION, owner);
 		TerritoryMeta metadata = new TerritoryMeta(o, fX, fY, fZ);
 		metadata.name = name;
+		metadata.cityName = name;
+		metadata.cityId = fX + "," + fY + "," + fZ;
 		//fuck this goddamn shithole of a mod
 		TileEntity flag = world.getTileEntity(fX, fY, fZ);
 		if(flag != null) {
@@ -334,6 +403,9 @@ public class ClowderTerritory {
 		public int flagY;
 		public int flagZ;
 		public String name;
+		public String cityId;
+		public String cityName;
+		public int cityLevel;
 		
 		public TerritoryMeta(Ownership owner, int flagX, int flagY, int flagZ) {
 			this.owner = owner;
@@ -341,6 +413,9 @@ public class ClowderTerritory {
 			this.flagY = flagY;
 			this.flagZ = flagZ;
 			this.name = "";
+			this.cityId = flagX + "," + flagY + "," + flagZ;
+			this.cityName = "";
+			this.cityLevel = 0;
 		}
 
 		public TerritoryMeta(Ownership owner, int flagX, int flagY, int flagZ, World world, String name) {
@@ -368,6 +443,9 @@ public class ClowderTerritory {
 			nbt.setInteger(code + "Y",flagY);
 			nbt.setInteger(code + "Z",flagZ);
 			nbt.setString("name_" + code, name);
+			nbt.setString("cityId_" + code, cityId == null ? "" : cityId);
+			nbt.setString("cityName_" + code, cityName == null ? "" : cityName);
+			nbt.setInteger("cityLevel_" + code, cityLevel);
 		}
 		
 		public static TerritoryMeta readFromNBT(NBTTagCompound nbt, String code) {
@@ -377,17 +455,26 @@ public class ClowderTerritory {
 					nbt.getInteger(code + "X"),
 					nbt.getInteger(code + "Y"),
 					nbt.getInteger(code + "Z")
-					//nbt.getInteger("terr_" + code + "_flagX"),
-					//nbt.getInteger("terr_" + code + "_flagY"),
-					//nbt.getInteger("terr_" + code + "_flagZ"),
-					//nbt.getString("name_" + code)
 			);
-
-
-			
+			meta.name = nbt.getString("name_" + code);
+			meta.cityId = nbt.getString("cityId_" + code);
+			if(meta.cityId == null || meta.cityId.isEmpty())
+				meta.cityId = meta.flagX + "," + meta.flagY + "," + meta.flagZ;
+			meta.cityName = nbt.getString("cityName_" + code);
+			if(meta.cityName == null || meta.cityName.isEmpty())
+				meta.cityName = meta.name;
+			meta.cityLevel = nbt.getInteger("cityLevel_" + code);
 			return meta;
 		}
 		
+		public boolean isCityClaim() {
+			return cityId != null && !cityId.isEmpty() && flagY >= 0;
+		}
+
+		public CityLevel getCityLevel() {
+			return CityLevel.byOrdinal(cityLevel);
+		}
+
 		public int getColor() {
 			
 			if(owner != null) {
@@ -424,6 +511,9 @@ public class ClowderTerritory {
 					
 					int r = flag.getRadius();
 					this.name = flag.getClaimName();
+					this.cityName = flag.getClaimName();
+					if(flag instanceof TileEntityFlag)
+						this.cityLevel = ((TileEntityFlag)flag).cityLevel.ordinal();
 					
 					double dist = Math.sqrt(Math.pow(origin.x - claim.x, 2) + Math.pow(origin.z - claim.z, 2));
 					

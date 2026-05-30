@@ -7,6 +7,7 @@ import java.util.Random;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderFlag;
+import com.hfr.clowder.CityLevel;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.CoordPair;
 import com.hfr.clowder.ClowderTerritory.TerritoryMeta;
@@ -178,8 +179,7 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 
 	@Override
 	public int getRadius() {
-		
-		return 1000;
+		return CityLevel.maxRadius();
 	}
 
 	@Override
@@ -194,12 +194,13 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 		int maxX = Math.max(x1, x2);
 		int maxZ = Math.max(z1, z2);
 		
+		CoordPair origin = ClowderTerritory.getCoordPair(xCoord, zCoord);
 		for(int x = minX; x <= maxX; x += 16) {
-			
 			for(int z = minZ; z <= maxZ; z += 16) {
-				
 				CoordPair coord = ClowderTerritory.getCoordPair(x, z);
-				this.claim.add(coord);
+				double dist = Math.sqrt(Math.pow(origin.x - coord.x, 2) + Math.pow(origin.z - coord.z, 2));
+				if(dist < getRadius())
+					this.claim.add(coord);
 			}
 		}
 
