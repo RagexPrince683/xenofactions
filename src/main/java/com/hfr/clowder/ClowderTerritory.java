@@ -113,8 +113,15 @@ public class ClowderTerritory {
 				renamed++;
 			}
 		}
-		if(renamed > 0 && world != null)
-			ClowderData.getData(world).markDirty();
+		if(world != null) {
+			TileEntity te = world.getTileEntity(fX, fY, fZ);
+			if(te instanceof TileEntityFlag) {
+				((TileEntityFlag)te).setClaimName(name);
+				te.markDirty();
+			}
+			if(renamed > 0)
+				ClowderData.getData(world).markDirty();
+		}
 		return renamed;
 	}
 

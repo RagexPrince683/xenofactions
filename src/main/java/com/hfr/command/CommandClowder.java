@@ -20,7 +20,6 @@ import com.hfr.items.ModItems;
 import com.hfr.main.MainRegistry;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.effect.ClowderFlagPacket;
-import com.hfr.tileentity.clowder.ITerritoryProvider;
 import com.hfr.tileentity.clowder.TileEntityFlag;
 import com.hfr.tileentity.clowder.TileEntityFlagBig;
 import com.hfr.tileentity.prop.TileEntityProp;
@@ -1763,19 +1762,19 @@ private void cmdCreate(ICommandSender sender, String name) {
 		}
 
 		if(clowder.getPermLevel(player.getDisplayName()) < 2) {
-			sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions to rename land!"));
+			sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions to rename cities!"));
 			return;
 		}
 
 		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords((int)player.posX, (int)player.posZ);
 
-		if(meta == null || meta.owner == null) {
-			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any claimed land!"));
+		if(meta == null || meta.owner == null || !meta.isCityClaim()) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in a city claim!"));
 			return;
 		}
 
 		if(meta.owner.owner != clowder)  {
-			sender.addChatMessage(new ChatComponentText(ERROR + "You cannot rename foreign land!"));
+			sender.addChatMessage(new ChatComponentText(ERROR + "You cannot rename a foreign city!"));
 			return;
 		}
 
@@ -1785,25 +1784,25 @@ private void cmdCreate(ICommandSender sender, String name) {
 		}
 		name = name.trim();
 
-		ITerritoryProvider flag = (ITerritoryProvider) player.worldObj.getTileEntity(meta.flagX, meta.flagY, meta.flagZ);
+		TileEntity tile = player.worldObj.getTileEntity(meta.flagX, meta.flagY, meta.flagZ);
 
-		if(flag == null) {
-			sender.addChatMessage(new ChatComponentText(ERROR + "The flag that is connected to this claim could not be found! Are the chunks unloaded?"));
+		if(!(tile instanceof TileEntityFlag)) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "The City Center that is connected to this city could not be found! Are the chunks unloaded?"));
 			return;
 		}
 
-		if(flag instanceof TileEntityFlag && !ClowderTerritory.isCityNameAvailable(name, meta)) {
+		if(!ClowderTerritory.isCityNameAvailable(name, meta)) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "A city named " + name + " already exists."));
 			return;
 		}
 
-		flag.setClaimName(name);
-		((TileEntity)flag).markDirty();
-		if(flag instanceof TileEntityFlag)
-			ClowderTerritory.renameClaimsForCity(player.worldObj, meta.flagX, meta.flagY, meta.flagZ, name);
+		int renamed = ClowderTerritory.renameClaimsForCity(player.worldObj, meta.flagX, meta.flagY, meta.flagZ, name);
+		if(renamed <= 0) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "No city claims were found for this City Center."));
+			return;
+		}
 
-		sender.addChatMessage(new ChatComponentText(INFO + "Your claim has been renamed! It might take a few moments for all chunks to assume the new name."));
-		ClowderData.getData(player.worldObj).markDirty();
+		sender.addChatMessage(new ChatComponentText(INFO + "Your city has been renamed! It might take a few moments for all chunks to assume the new name."));
 	}
 
 	private void cmdDeclareWar(ICommandSender sender, String targetName) {

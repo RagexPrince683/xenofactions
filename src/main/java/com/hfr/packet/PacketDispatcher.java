@@ -41,6 +41,8 @@ public class PacketDispatcher {
 		wrapper.registerMessage(SRadarPacket.Handler.class, SRadarPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(AuxGaugePacket.Handler.class, AuxGaugePacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(CityCenterPacket.Handler.class, CityCenterPacket.class, i++, Side.CLIENT);
+		wrapper.registerMessage(CityRenameGuiPacket.Handler.class, CityRenameGuiPacket.class, i++, Side.CLIENT);
+		wrapper.registerMessage(CityRenamePacket.Handler.class, CityRenamePacket.class, i++, Side.SERVER);
 		wrapper.registerMessage(TESRadarPacket.Handler.class, TESRadarPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(RailgunCallbackPacket.Handler.class, RailgunCallbackPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(RailgunFirePacket.Handler.class, RailgunFirePacket.class, i++, Side.CLIENT);
