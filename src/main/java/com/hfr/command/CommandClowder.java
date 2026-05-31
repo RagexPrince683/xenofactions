@@ -1828,6 +1828,11 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "Usage: /c claim <city name>"));
 			return;
 		}
+		cityName = cityName.trim();
+		if(!ClowderTerritory.isCityNameAvailable(cityName, null)) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "A city named " + cityName + " already exists."));
+			return;
+		}
 
 		if(clowder != null) {
 
@@ -1845,11 +1850,11 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 			ItemStack stack = new ItemStack(ModBlocks.clowder_flag);
 			stack.stackTagCompound = new NBTTagCompound();
-			stack.stackTagCompound.setString("cityName", cityName.trim());
-			stack.setStackDisplayName("City Center: " + cityName.trim());
+			stack.stackTagCompound.setString("cityName", cityName);
+			stack.setStackDisplayName("City Center: " + cityName);
 			player.inventory.addItemStackToInventory(stack);
 			player.inventoryContainer.detectAndSendChanges();
-			sender.addChatMessage(new ChatComponentText(INFO + "Place the City Center to found " + cityName.trim() + ". Founding cost is charged on placement."));
+			sender.addChatMessage(new ChatComponentText(INFO + "Place the City Center to found " + cityName + ". Founding cost is charged on placement."));
 
 		} else {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
@@ -1990,6 +1995,12 @@ private void cmdCreate(ICommandSender sender, String name) {
 			return;
 		}
 
+		if(name == null || name.trim().isEmpty()) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Claim names cannot be blank."));
+			return;
+		}
+		name = name.trim();
+
 		ITerritoryProvider flag = (ITerritoryProvider) player.worldObj.getTileEntity(meta.flagX, meta.flagY, meta.flagZ);
 
 		if(flag == null) {
@@ -1997,8 +2008,15 @@ private void cmdCreate(ICommandSender sender, String name) {
 			return;
 		}
 
+		if(flag instanceof TileEntityFlag && !ClowderTerritory.isCityNameAvailable(name, meta)) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "A city named " + name + " already exists."));
+			return;
+		}
+
 		flag.setClaimName(name);
 		((TileEntity)flag).markDirty();
+		if(flag instanceof TileEntityFlag)
+			ClowderTerritory.renameClaimsForCity(player.worldObj, meta.flagX, meta.flagY, meta.flagZ, name);
 
 		sender.addChatMessage(new ChatComponentText(INFO + "Your claim has been renamed! It might take a few moments for all chunks to assume the new name."));
 		ClowderData.getData(player.worldObj).markDirty();
