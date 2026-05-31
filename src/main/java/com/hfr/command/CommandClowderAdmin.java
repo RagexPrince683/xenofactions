@@ -1,6 +1,7 @@
 package com.hfr.command;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.hfr.clowder.Clowder;
@@ -60,83 +61,28 @@ public class CommandClowderAdmin extends CommandBase {
 		if(sender.getEntityWorld().provider.dimensionId != 0) {
 			sender.addChatMessage(new ChatComponentText(CRITICAL + "Critical error: CatFac only works in overworld!!"));
 		}
-		
+
 		if(Clowder.clowders.size() == 0)
 			ClowderData.getData(sender.getEntityWorld());
-		
+
 		if(args.length < 1) {
 			sender.addChatMessage(new ChatComponentText(ERROR + getCommandUsage(sender)));
 			return;
 		}
-		
+
 		String cmd = args[0].toLowerCase();
-		
-		if(cmd.equals("help") || cmd.equals("man")) {
-			
-			if(args.length > 1)
-				cmdHelp(sender, args[1]);
-			else
-				cmdHelp(sender, "1");
-			return;
-		}
-		
-		if((cmd.equals("forcejoin") || cmd.equals("fj")) && args.length > 1) {
-			
-			cmdForcejoin(sender, args[1]);
-			return;
-		}
-		
-		if((cmd.equals("forcedisband") || cmd.equals("fd")) && args.length > 1) {
-			
-			cmdForcedisband(sender, args[1]);
-			return;
-		}
 
-		if((cmd.equals("forcerename") || cmd.equals("fr")) && args.length > 1) {
-
-			cmdForceRename(sender, args[1]);
-			return;
-		}
-		//todo test
-		
-		if(cmd.equals("hijack") || cmd.equals("hi")) {
-			
-			cmdHijack(sender);
-			return;
-		}
-		
-		if(cmd.equals("deletedata") || cmd.equals("deldat")) {
-			
-			cmdDeletedata(sender);
-			return;
-		}
-		
-		if((cmd.equals("setclaim") || cmd.equals("sc")) && args.length > 3) {
-			
-			cmdSetclaim(sender, args[1], args[2], args[3]);
-			return;
-		}
-		
-		if((cmd.equals("addprestige") || cmd.equals("ap")) && args.length > 2) {
-			
-			cmdAddPrestige(sender, args[1], args[2]);
-			return;
-		}
-		
-		//if(cmd.equals("create") && args.length > 1) {
-		//	cmdCreate(sender, args[1]);
-		//	return;
-		//}
-		
-		if(cmd.equals("disband") && args.length > 1) {
-			cmdDisband(sender, args[1]);
-			return;
-		}
-		
-		if(cmd.equals("rename") && args.length > 1) {
-			cmdRename(sender, args[1]);
-			return;
-		}
+		if(cmd.equals("help") || cmd.equals("man")) { cmdHelp(sender, args.length > 1 ? args[1] : "1"); return; }
+		if(cmd.equals("forcejoin") || cmd.equals("fj")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdForcejoin(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("forcekick") || cmd.equals("fk")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdForcekick(sender, args[1]); return; }
+		if(cmd.equals("forcedisband") || cmd.equals("fd")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdForcedisband(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("forcerename") || cmd.equals("fr")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdForceRename(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("hijack") || cmd.equals("hi")) { cmdHijack(sender); return; }
+		if(cmd.equals("deletedata") || cmd.equals("deldat")) { cmdDeletedata(sender); return; }
+		if(cmd.equals("setclaim") || cmd.equals("sc")) { if(!requireArgs(sender, cmd, args, 4)) return; cmdSetclaim(sender, args[1], args[2], args[3]); return; }
+		if(cmd.equals("addprestige") || cmd.equals("ap")) { if(!requireArgs(sender, cmd, args, 3)) return; cmdAddPrestige(sender, args[1], args[2]); return; }
+		if(cmd.equals("disband")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdDisband(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("rename")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdRename(sender, joinArgs(args, 1)); return; }
 
 		if (cmd.equals("warenable")) {
 			WARENABLED = true;
@@ -166,7 +112,6 @@ public class CommandClowderAdmin extends CommandBase {
 		}
 
 		if(cmd.equals("wardisable")) {
-			//ClowderTerritory.WAR_ENABLED = true;
 			WARENABLED = false;
 			for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
 				if (obj instanceof EntityPlayerMP) {
@@ -189,119 +134,106 @@ public class CommandClowderAdmin extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(INFO + "War declarations disabled; active wars cleared."));
 			return;
 		}
-		
-		if(cmd.equals("newplayerprotection")) {
-			ClowderEvents.newPlayerProtectionEnabled = !ClowderEvents.newPlayerProtectionEnabled;
-			sender.addChatMessage(new ChatComponentText(INFO + "New player protection is now " + (ClowderEvents.newPlayerProtectionEnabled ? "enabled" : "disabled") + "."));
-			return;
-		}
 
-		if(cmd.equals("resetnewplayerprotection")) {
-
-			cmdResetNewPlayerProtection(sender);
-			return;
-		}
-
-		if(cmd.equals("endnewplayerprotection")) {
-
-			cmdEndNewPlayerProtection(sender);
-			return;
-		}
-
-		if(cmd.equals("skipwarcooldowns")) {
-			WAR_COOLDOWNS_DISABLED = !WAR_COOLDOWNS_DISABLED;
-			sender.addChatMessage(new ChatComponentText(INFO + "War cooldown skipping is now " + (WAR_COOLDOWNS_DISABLED ? "ENABLED" : "DISABLED") + "."));
-			return;
-		}
-		if(cmd.equals("ignorewarcooldowncheck")) {
-			WAR_COOLDOWNS_DISABLED = !WAR_COOLDOWNS_DISABLED;
-			sender.addChatMessage(new ChatComponentText(INFO + "War cooldown checks are now " + (WAR_COOLDOWNS_DISABLED ? "IGNORED" : "ENFORCED") + "."));
-			return;
-		}
-		if(cmd.equals("ignorewaronlinecheck")) {
-			WAR_ONLINE_CHECK_DISABLED = !WAR_ONLINE_CHECK_DISABLED;
-			sender.addChatMessage(new ChatComponentText(INFO + "War online checks are now " + (WAR_ONLINE_CHECK_DISABLED ? "IGNORED" : "ENFORCED") + "."));
-			return;
-		}
-		if(cmd.equals("ignorewarstatecheck")) {
-			WAR_STATE_CHECK_DISABLED = !WAR_STATE_CHECK_DISABLED;
-			sender.addChatMessage(new ChatComponentText(INFO + "War state checks are now " + (WAR_STATE_CHECK_DISABLED ? "IGNORED" : "ENFORCED") + "."));
-			return;
-		}
+		if(cmd.equals("newplayerprotection")) { ClowderEvents.newPlayerProtectionEnabled = !ClowderEvents.newPlayerProtectionEnabled; sender.addChatMessage(new ChatComponentText(INFO + "New player protection is now " + (ClowderEvents.newPlayerProtectionEnabled ? "enabled" : "disabled") + ".")); return; }
+		if(cmd.equals("resetnewplayerprotection")) { cmdResetNewPlayerProtection(sender); return; }
+		if(cmd.equals("endnewplayerprotection")) { cmdEndNewPlayerProtection(sender); return; }
+		if(cmd.equals("skipwarcooldowns")) { WAR_COOLDOWNS_DISABLED = !WAR_COOLDOWNS_DISABLED; sender.addChatMessage(new ChatComponentText(INFO + "War cooldown skipping is now " + (WAR_COOLDOWNS_DISABLED ? "ENABLED" : "DISABLED") + ".")); return; }
+		if(cmd.equals("ignorewarcooldowncheck")) { WAR_COOLDOWNS_DISABLED = !WAR_COOLDOWNS_DISABLED; sender.addChatMessage(new ChatComponentText(INFO + "War cooldown checks are now " + (WAR_COOLDOWNS_DISABLED ? "IGNORED" : "ENFORCED") + ".")); return; }
+		if(cmd.equals("ignorewaronlinecheck")) { WAR_ONLINE_CHECK_DISABLED = !WAR_ONLINE_CHECK_DISABLED; sender.addChatMessage(new ChatComponentText(INFO + "War online checks are now " + (WAR_ONLINE_CHECK_DISABLED ? "IGNORED" : "ENFORCED") + ".")); return; }
+		if(cmd.equals("ignorewarstatecheck")) { WAR_STATE_CHECK_DISABLED = !WAR_STATE_CHECK_DISABLED; sender.addChatMessage(new ChatComponentText(INFO + "War state checks are now " + (WAR_STATE_CHECK_DISABLED ? "IGNORED" : "ENFORCED") + ".")); return; }
 		if(cmd.equals("skipwarcooldown")) {
-			for (Clowder c : Clowder.clowders) {
-				c.noWarUntil.clear();
-				c.formerAllyNoWarUntil.clear();
-			}
+			for (Clowder c : Clowder.clowders) { c.noWarUntil.clear(); c.formerAllyNoWarUntil.clear(); }
 			sender.addChatMessage(new ChatComponentText(INFO + "All faction war cooldowns have been reset to 0."));
 			return;
 		}
 		if(cmd.equals("enablelegacywar")) {
 			LEGACY_WAR_ENABLED = !LEGACY_WAR_ENABLED;
-			if(LEGACY_WAR_ENABLED) {
-				WAR_COOLDOWNS_DISABLED = true;
-				WAR_ONLINE_CHECK_DISABLED = true;
-				WAR_STATE_CHECK_DISABLED = true;
-			}
+			if(LEGACY_WAR_ENABLED) { WAR_COOLDOWNS_DISABLED = true; WAR_ONLINE_CHECK_DISABLED = true; WAR_STATE_CHECK_DISABLED = true; }
 			sender.addChatMessage(new ChatComponentText(INFO + "Legacy war mode is now " + (LEGACY_WAR_ENABLED ? "ENABLED" : "DISABLED") + "."));
 			return;
 		}
-		if((cmd.equals("resetbuildgrace") || cmd.equals("rbg")) && args.length > 1) {
+		if(cmd.equals("resetbuildgrace") || cmd.equals("rbg")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdResetBuildGrace(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("endbuildgrace") || cmd.equals("ebg")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdEndBuildGrace(sender, joinArgs(args, 1)); return; }
 
-			cmdResetBuildGrace(sender, args[1]);
-			return;
-		}
-
-		if((cmd.equals("endbuildgrace") || cmd.equals("ebg")) && args.length > 1) {
-
-			cmdEndBuildGrace(sender, args[1]);
-			return;
-		}
-		
-		sender.addChatMessage(new ChatComponentText(ERROR + getCommandUsage(sender)));
+		sender.addChatMessage(new ChatComponentText(ERROR + "Unknown command. Usage: " + getCommandUsage(sender)));
 	}
+
+	private boolean requireArgs(ICommandSender sender, String cmd, String[] args, int minArgs) {
+		if(args.length >= minArgs)
+			return true;
+		sender.addChatMessage(new ChatComponentText(ERROR + "Invalid format. Usage: " + getUsageFor(cmd)));
+		return false;
+	}
+
+	private String joinArgs(String[] args, int start) {
+		return String.join(" ", Arrays.copyOfRange(args, start, args.length));
+	}
+
+	private String getUsageFor(String cmd) {
+		if(cmd.equals("forcejoin") || cmd.equals("fj")) return "/xc forcejoin <faction>";
+		if(cmd.equals("forcekick") || cmd.equals("fk")) return "/xc forcekick <player>";
+		if(cmd.equals("forcedisband") || cmd.equals("fd")) return "/xc forcedisband <faction>";
+		if(cmd.equals("forcerename") || cmd.equals("fr")) return "/xc forcerename <name>";
+		if(cmd.equals("setclaim") || cmd.equals("sc")) return "/xc setclaim <wild/safe/war> <s/c> <radius>";
+		if(cmd.equals("addprestige") || cmd.equals("ap")) return "/xc addprestige <faction> <amount>";
+		if(cmd.equals("disband")) return "/xc disband <faction>";
+		if(cmd.equals("rename")) return "/xc rename <name>";
+		if(cmd.equals("resetbuildgrace") || cmd.equals("rbg")) return "/xc resetbuildgrace <faction>";
+		if(cmd.equals("endbuildgrace") || cmd.equals("ebg")) return "/xc endbuildgrace <faction>";
+		return getCommandUsage(null);
+	}
+
 	
 	private void cmdHelp(ICommandSender sender, String page) {
-		
+
 		int p = this.parseInt(sender, page);
-		int pages = 2;
-		
+		int pages = 3;
+
 		if(p < 1 || p > pages)
 			p = 1;
 
-		sender.addChatMessage(new ChatComponentText(HELP + "/clowder [command] <args...> {optional args...}"));
-		sender.addChatMessage(new ChatComponentText(INFO + "Commands [" + p + "/" + pages + "]:"));
-		
+		sender.addChatMessage(new ChatComponentText(HELP + "/xclowder [command] <args...>"));
+		sender.addChatMessage(new ChatComponentText(INFO + "Admin commands [" + p + "/" + pages + "]:"));
+
 		if(p == 1) {
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forcejoin <name>" + TITLE + " - Forcefully joins a faction"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forcekick <name>" + TITLE + " - Forcefully kicks a player from his faction"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forcedisband <name>" + TITLE + " - Forcefully disbands faction"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-hijack" + TITLE + " - Forcefully overrides leadership"));
+			sender.addChatMessage(new ChatComponentText(TITLE + "Faction administration"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forcejoin <faction>" + TITLE + " - Forcefully joins a faction"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forcekick <player>" + TITLE + " - Forcefully kicks a player from their faction"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forcedisband <faction>" + TITLE + " - Forcefully disbands a faction"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forcerename <name>" + TITLE + " - Forcefully renames your faction"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-hijack" + TITLE + " - Forcefully overrides faction leadership"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-deletedata" + TITLE + " - Deletes all clowder data (CAUTION!!)"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-setclaim <wild/safe/war> <s/c> <radius>" + TITLE + " - Claims chunks in a radius (square or circular)"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-addprestige <name> <amount>" + TITLE + " - Adds prestige (neg values to subtract)"));
-			sender.addChatMessage(new ChatComponentText(INFO + "/clowder help 2"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-disband <faction>" + TITLE + " - Disbands your faction with confirmation"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-rename <name>" + TITLE + " - Renames your faction"));
+			sender.addChatMessage(new ChatComponentText(INFO + "/xclowder help 2"));
 		}
 
 		if(p == 2) {
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forcerename <name>" + TITLE + " - Forcefully renames a faction"));
-			//sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-create <name>" + TITLE + " - Creates a faction"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-disband <name>" + TITLE + " - Disbands a faction, name parameter for confirmation"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-rename <name>" + TITLE + " - Renames your faction"));
-			//sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-info" + TITLE + " - Shows info on your faction"));
+			sender.addChatMessage(new ChatComponentText(TITLE + "Claims, prestige & protection"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-setclaim <wild/safe/war> <s/c> <radius>" + TITLE + " - Claims chunks in a radius"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-addprestige <faction> <amount>" + TITLE + " - Adds prestige (negative values subtract)"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-newplayerprotection" + TITLE + " - Toggles starter protection"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-resetnewplayerprotection" + TITLE + " - Resets starter protection timers"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-endnewplayerprotection" + TITLE + " - Ends starter protection timers"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-resetbuildgrace <faction>" + TITLE + " - Resets faction build grace"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-endbuildgrace <faction>" + TITLE + " - Immediately ends faction build grace"));
+			sender.addChatMessage(new ChatComponentText(INFO + "/xclowder help 3"));
+		}
+
+		if(p == 3) {
+			sender.addChatMessage(new ChatComponentText(TITLE + "War controls"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-warenable" + TITLE + " - Enables war mode"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-wardisable" + TITLE + " - Disables war mode"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-wardisable" + TITLE + " - Disables war mode and clears active wars"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-skipwarcooldowns" + TITLE + " - Toggles global war cooldown bypass"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-skipwarcooldown" + TITLE + " - Instantly clears all war cooldown timers"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-skipwarcooldown" + TITLE + " - Clears all war cooldown timers"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-ignorewarcooldowncheck" + TITLE + " - Toggles cooldown check bypass"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-ignorewaronlinecheck" + TITLE + " - Toggles online member check bypass"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-ignorewarstatecheck" + TITLE + " - Toggles at-war state check bypass"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-enablelegacywar" + TITLE + " - Ignores war checks and disables peace/ceasefire/surrender"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-newplayerprotection" + TITLE + " - Toggles 4h PvP / 24h keep-inventory starter protection"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-resetbuildgrace <name>" + TITLE + " - Resets faction build grace"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-endbuildgrace <name>" + TITLE + " - Immediately ends faction build grace"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-enablelegacywar" + TITLE + " - Ignores war checks and disables treaty mechanics"));
 		}
 	}
+
 	
 	private void cmdForcejoin(ICommandSender sender, String name) {
 
@@ -512,7 +444,7 @@ public class CommandClowderAdmin extends CommandBase {
 		
 		if(clowder != null) {
 				
-			if(name.equals(clowder.name)) {
+			if(Clowder.normalizeClowderName(name).equals(Clowder.normalizeClowderName(clowder.name))) {
 				
 				if(clowder.disbandClowder(player)) {
 					sender.addChatMessage(new ChatComponentText(CRITICAL + "Your faction was disbanded!"));
@@ -639,9 +571,40 @@ public class CommandClowderAdmin extends CommandBase {
 	}
 	
 	@Override
-    public List addTabCompletionOptions(ICommandSender p_71516_1_, String[] p_71516_2_) {
-    	return getListOfStringsMatchingLastWord(p_71516_2_, MinecraftServer.getServer().getAllUsernames());
+    public List addTabCompletionOptions(ICommandSender sender, String[] args) {
+		if(args.length == 1)
+			return getListOfStringsMatchingLastWord(args, getAdminCommandNames());
+
+		String cmd = args[0].toLowerCase();
+		if(cmd.equals("forcekick") || cmd.equals("fk"))
+			return getListOfStringsMatchingLastWord(args, MinecraftServer.getServer().getAllUsernames());
+
+		if(isFactionCompletionCommand(cmd))
+			return getListOfStringsMatchingLastWord(args, getFactionCompletionNames());
+
+		return null;
     }
+
+	private String[] getAdminCommandNames() {
+		return new String[] { "help", "forcejoin", "fj", "forcekick", "fk", "forcedisband", "fd", "forcerename", "fr",
+				"hijack", "hi", "deletedata", "deldat", "setclaim", "sc", "addprestige", "ap", "disband", "rename",
+				"warenable", "wardisable", "newplayerprotection", "resetnewplayerprotection", "endnewplayerprotection",
+				"skipwarcooldowns", "ignorewarcooldowncheck", "ignorewaronlinecheck", "ignorewarstatecheck",
+				"skipwarcooldown", "enablelegacywar", "resetbuildgrace", "rbg", "endbuildgrace", "ebg" };
+	}
+
+	private boolean isFactionCompletionCommand(String cmd) {
+		return cmd.equals("forcejoin") || cmd.equals("fj") || cmd.equals("forcedisband") || cmd.equals("fd")
+				|| cmd.equals("addprestige") || cmd.equals("ap") || cmd.equals("disband")
+				|| cmd.equals("resetbuildgrace") || cmd.equals("rbg") || cmd.equals("endbuildgrace") || cmd.equals("ebg");
+	}
+
+	private String[] getFactionCompletionNames() {
+		String[] names = new String[Clowder.clowders.size()];
+		for(int i = 0; i < Clowder.clowders.size(); i++)
+			names[i] = Clowder.clowders.get(i).name.replace(' ', '_');
+		return names;
+	}
 
 	public static final String ERROR = EnumChatFormatting.RED.toString();
 	public static final String CRITICAL = EnumChatFormatting.DARK_RED.toString();
