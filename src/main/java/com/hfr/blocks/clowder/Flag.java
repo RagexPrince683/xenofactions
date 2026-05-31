@@ -5,8 +5,6 @@ import com.hfr.clowder.CityLevel;
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.CoordPair;
-import com.hfr.clowder.ClowderTerritory.Ownership;
-import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.main.MainRegistry;
 import com.hfr.tileentity.clowder.TileEntityFlag;
 
@@ -52,15 +50,23 @@ public class Flag extends BlockContainer {
 	@Override
 	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
 		if(world.isRemote)
-		{
 			return true;
-		} else if(!player.isSneaking())
-		{
+
+		TileEntity tile = world.getTileEntity(x, y, z);
+		if(tile instanceof TileEntityFlag) {
+			TileEntityFlag flag = (TileEntityFlag)tile;
+			if(flag.owner == null || !flag.canSeeSky()) {
+				world.func_147480_a(x, y, z, false);
+				return true;
+			}
+		}
+
+		if(!player.isSneaking()) {
 			FMLNetworkHandler.openGui(player, MainRegistry.instance, ModBlocks.guiID_flag, world, x, y, z);
 			return true;
-		} else {
-			return true;
 		}
+
+		return true;
 	}
 
 	@Override
@@ -99,6 +105,12 @@ public class Flag extends BlockContainer {
 				entityPlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "City Centers require a name. Use /c claim <city name>."));
 				return;
 			}
+			cityName = cityName.trim();
+			if(!ClowderTerritory.isCityNameAvailable(cityName, null)) {
+				world.setBlockToAir(x, y, z);
+				entityPlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "A city named " + cityName + " already exists."));
+				return;
+			}
 			if(cityError != null) {
 				world.setBlockToAir(x, y, z);
 				entityPlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + cityError));
@@ -114,7 +126,7 @@ public class Flag extends BlockContainer {
 					return;
 				}
 				clowder.addPrestige(-foundingCost, world);
-				flag.name = cityName.trim();
+				flag.name = cityName;
 				flag.setOwner(clowder);
 				flag.setMode(1);
 				flag.isClaimed = true;
@@ -158,31 +170,16 @@ public class Flag extends BlockContainer {
 	@Override
 	public void breakBlock(World world, int x, int y, int z, Block b, int i)
 	{
-		Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
+		TileEntity tile = world.getTileEntity(x, y, z);
 
-		if (owner != null && owner.zone == Zone.FACTION) {
-			//break
-			TileEntityFlag flag = (TileEntityFlag) world.getTileEntity(x, y, z);
+		if(tile instanceof TileEntityFlag) {
+			TileEntityFlag flag = (TileEntityFlag)tile;
 
-			if (flag != null && flag.owner != null) {
+			if(flag.owner != null)
 				flag.setOwner(null);
-			}
-		} else {
-			if (owner != null && !noProximity(world, x, y, z)) {
-					TileEntityFlag flag = (TileEntityFlag) world.getTileEntity(x, y, z);
 
-					if (flag != null && flag.owner != null) {
-						flag.setOwner(null);
-					}
-					//if this flag is being broken, and it is close to a conquerer, break it
-				flag.height = 0.0F;
-				super.breakBlock(world, x, y, z, b, i);
-			}
-			//do nothing
-			//else {
-			//	//im having a brain fart here
-			//
-			//}
+			flag.height = 0.0F;
+			ClowderTerritory.removeClaimsForCity(world, x, y, z);
 		}
 
 		super.breakBlock(world, x, y, z, b, i);

@@ -78,6 +78,62 @@ public class ClowderTerritory {
 		return null;
 	}
 
+	public static TerritoryMeta getCityByName(String cityName) {
+		if(cityName == null)
+			return null;
+		String trimmed = cityName.trim();
+		if(trimmed.isEmpty())
+			return null;
+		HashMap<String, TerritoryMeta> cities = new HashMap();
+		for(TerritoryMeta meta : territories.values()) {
+			if(meta != null && meta.owner != null && meta.owner.zone == Zone.FACTION && meta.isCityClaim())
+				cities.put(meta.cityId, meta);
+		}
+		for(TerritoryMeta meta : cities.values()) {
+			if(meta.cityName != null && meta.cityName.equalsIgnoreCase(trimmed))
+				return meta;
+		}
+		return null;
+	}
+
+	public static boolean isCityNameAvailable(String cityName, TerritoryMeta ignoredCity) {
+		TerritoryMeta existing = getCityByName(cityName);
+		if(existing == null)
+			return true;
+		return ignoredCity != null && existing.cityId != null && existing.cityId.equals(ignoredCity.cityId);
+	}
+
+	public static int renameClaimsForCity(World world, int fX, int fY, int fZ, String name) {
+		String id = fX + "," + fY + "," + fZ;
+		int renamed = 0;
+		for(TerritoryMeta meta : territories.values()) {
+			if(meta != null && id.equals(meta.cityId)) {
+				meta.name = name;
+				meta.cityName = name;
+				renamed++;
+			}
+		}
+		if(renamed > 0 && world != null)
+			ClowderData.getData(world).markDirty();
+		return renamed;
+	}
+
+	public static int removeClaimsForCity(World world, int fX, int fY, int fZ) {
+		String id = fX + "," + fY + "," + fZ;
+		int removed = 0;
+		List<Long> claims = new ArrayList(territories.keySet());
+		for(Long code : claims) {
+			TerritoryMeta meta = territories.get(code);
+			if(meta != null && id.equals(meta.cityId)) {
+				territories.remove(code);
+				removed++;
+			}
+		}
+		if(removed > 0 && world != null)
+			ClowderData.getData(world).markDirty();
+		return removed;
+	}
+
 	public static int transferCity(World world, TerritoryMeta city, Clowder newOwner) {
 		if(city == null || !city.isCityClaim() || newOwner == null)
 			return 0;
