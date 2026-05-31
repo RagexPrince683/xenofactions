@@ -1722,14 +1722,22 @@ public class Clowder {
 
 	public static Clowder getClowderFromName(String name) {
 
-		name = name.toLowerCase();
+		String normalizedName = normalizeClowderName(name);
 
 		for (Clowder clowder : clowders) {
-			if (clowder.name.toLowerCase().equals(name))
+			if (normalizeClowderName(clowder.name).equals(normalizedName))
 				return clowder;
 		}
 
 		return null;
+	}
+
+	public static String normalizeClowderName(String name) {
+
+		if (name == null)
+			return "";
+
+		return name.trim().replace('_', ' ').replaceAll("\\s+", " ").toLowerCase();
 	}
 
 	public static Clowder getClowderFromUUID(String uuid) {
