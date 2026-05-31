@@ -80,7 +80,7 @@ public class CommandClowderAdmin extends CommandBase {
 		if(cmd.equals("hijack") || cmd.equals("hi")) { cmdHijack(sender); return; }
 		if(cmd.equals("deletedata") || cmd.equals("deldat")) { cmdDeletedata(sender); return; }
 		if(cmd.equals("setclaim") || cmd.equals("sc")) { if(!requireArgs(sender, cmd, args, 4)) return; cmdSetclaim(sender, args[1], args[2], args[3]); return; }
-		if(cmd.equals("addprestige") || cmd.equals("ap")) { if(!requireArgs(sender, cmd, args, 3)) return; cmdAddPrestige(sender, args[1], args[2]); return; }
+		if(cmd.equals("addprestige") || cmd.equals("ap") || cmd.equals("addprestig")) { if(!requireArgs(sender, cmd, args, 3)) return; cmdAddPrestige(sender, joinArgs(args, 1, args.length - 1), args[args.length - 1]); return; }
 		if(cmd.equals("disband")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdDisband(sender, joinArgs(args, 1)); return; }
 		if(cmd.equals("rename")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdRename(sender, joinArgs(args, 1)); return; }
 
@@ -167,7 +167,11 @@ public class CommandClowderAdmin extends CommandBase {
 	}
 
 	private String joinArgs(String[] args, int start) {
-		return String.join(" ", Arrays.copyOfRange(args, start, args.length));
+		return joinArgs(args, start, args.length);
+	}
+
+	private String joinArgs(String[] args, int start, int end) {
+		return String.join(" ", Arrays.copyOfRange(args, start, end));
 	}
 
 	private String getUsageFor(String cmd) {
@@ -176,7 +180,7 @@ public class CommandClowderAdmin extends CommandBase {
 		if(cmd.equals("forcedisband") || cmd.equals("fd")) return "/xc forcedisband <faction>";
 		if(cmd.equals("forcerename") || cmd.equals("fr")) return "/xc forcerename <name>";
 		if(cmd.equals("setclaim") || cmd.equals("sc")) return "/xc setclaim <wild/safe/war> <s/c> <radius>";
-		if(cmd.equals("addprestige") || cmd.equals("ap")) return "/xc addprestige <faction> <amount>";
+		if(cmd.equals("addprestige") || cmd.equals("ap") || cmd.equals("addprestig")) return "/xc addprestige <faction> <amount>";
 		if(cmd.equals("disband")) return "/xc disband <faction>";
 		if(cmd.equals("rename")) return "/xc rename <name>";
 		if(cmd.equals("resetbuildgrace") || cmd.equals("rbg")) return "/xc resetbuildgrace <faction>";
@@ -299,13 +303,16 @@ public class CommandClowderAdmin extends CommandBase {
 
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
+		String factionName = Clowder.canonicalizeClowderName(name);
+
+		if(factionName.isEmpty()) { sender.addChatMessage(new ChatComponentText(ERROR + "Faction name cannot be empty.")); return; }
 
 		if(clowder != null) {
 
-			if(Clowder.getClowderFromName(name) == null) {
+			if(Clowder.getClowderFromName(factionName) == null) {
 
-				clowder.rename(name, player);
-				sender.addChatMessage(new ChatComponentText(TITLE + "Renamed faction to " + name + "!"));
+				clowder.rename(factionName, player);
+				sender.addChatMessage(new ChatComponentText(TITLE + "Renamed faction to " + factionName + "!"));
 				PacketDispatcher.wrapper.sendTo(new ClowderFlagPacket(clowder, ""), (EntityPlayerMP) player);
 
 			} else {
@@ -548,14 +555,17 @@ public class CommandClowderAdmin extends CommandBase {
 
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
-		
+		String factionName = Clowder.canonicalizeClowderName(name);
+
+		if(factionName.isEmpty()) { sender.addChatMessage(new ChatComponentText(ERROR + "Faction name cannot be empty.")); return; }
+
 		if(clowder != null) {
 				
-			if(Clowder.getClowderFromName(name) == null) {
+			if(Clowder.getClowderFromName(factionName) == null) {
 
 				if(clowder.getPermLevel(player.getDisplayName()) > 1) {
-					clowder.rename(name, player);
-					sender.addChatMessage(new ChatComponentText(TITLE + "Renamed faction to " + name + "!"));
+					clowder.rename(factionName, player);
+					sender.addChatMessage(new ChatComponentText(TITLE + "Renamed faction to " + factionName + "!"));
 					PacketDispatcher.wrapper.sendTo(new ClowderFlagPacket(clowder, ""), (EntityPlayerMP) player);
 				} else {
 					sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions to rename this faction!"));
@@ -595,14 +605,14 @@ public class CommandClowderAdmin extends CommandBase {
 
 	private boolean isFactionCompletionCommand(String cmd) {
 		return cmd.equals("forcejoin") || cmd.equals("fj") || cmd.equals("forcedisband") || cmd.equals("fd")
-				|| cmd.equals("addprestige") || cmd.equals("ap") || cmd.equals("disband")
+				|| cmd.equals("addprestige") || cmd.equals("ap") || cmd.equals("addprestig") || cmd.equals("disband")
 				|| cmd.equals("resetbuildgrace") || cmd.equals("rbg") || cmd.equals("endbuildgrace") || cmd.equals("ebg");
 	}
 
 	private String[] getFactionCompletionNames() {
 		String[] names = new String[Clowder.clowders.size()];
 		for(int i = 0; i < Clowder.clowders.size(); i++)
-			names[i] = Clowder.clowders.get(i).name.replace(' ', '_');
+			names[i] = Clowder.canonicalizeClowderName(Clowder.clowders.get(i).name);
 		return names;
 	}
 

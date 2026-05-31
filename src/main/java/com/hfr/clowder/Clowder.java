@@ -625,7 +625,7 @@ public class Clowder {
 		}
 
 		// Set name (CRITICAL)
-		newClowder.name = name;
+		newClowder.name = canonicalizeClowderName(name);
 
 		// Assign leader
 		newClowder.leader = newLeader;
@@ -1039,7 +1039,7 @@ public class Clowder {
 
 	public void rename(String name, EntityPlayer player) {
 
-		this.name = name;
+		this.name = canonicalizeClowderName(name);
 
 		ClowderData.getData(player.worldObj).markDirty();
 	}
@@ -1498,7 +1498,7 @@ public class Clowder {
 		if (c.uuid.isEmpty())
 			c.uuid = UUID.randomUUID().toString();
 
-		c.name = nbt.getString(i + "_name");
+		c.name = canonicalizeClowderName(nbt.getString(i + "_name"));
 		c.motd = nbt.getString(i + "_motd");
 		c.flag = ClowderFlag.values()[nbt.getInteger(i + "_flag")];
 		c.color = nbt.getInteger(i + "_color");
@@ -1734,10 +1734,19 @@ public class Clowder {
 
 	public static String normalizeClowderName(String name) {
 
+		return canonicalizeClowderName(name).toLowerCase();
+	}
+
+	public static String canonicalizeClowderName(String name) {
+
 		if (name == null)
 			return "";
 
-		return name.trim().replace('_', ' ').replaceAll("\\s+", " ").toLowerCase();
+		String canonical = name.trim();
+		if (canonical.length() >= 2 && ((canonical.startsWith("\"") && canonical.endsWith("\"")) || (canonical.startsWith("'") && canonical.endsWith("'"))))
+			canonical = canonical.substring(1, canonical.length() - 1).trim();
+
+		return canonical.replaceAll("\\s+", "_");
 	}
 
 	public static Clowder getClowderFromUUID(String uuid) {
@@ -1759,7 +1768,7 @@ public class Clowder {
 		Clowder c = new Clowder();
 
 		c.uuid = UUID.randomUUID().toString();
-		c.name = name;
+		c.name = canonicalizeClowderName(name);
 		c.leader = leader;
 		c.members.put(leader, time());
 

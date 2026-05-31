@@ -293,7 +293,7 @@ public class CommandClowder extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-comrades" + TITLE + " - Shows all members of your faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-alliance" + TITLE + " - Shows all allied factions"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-leave" + TITLE + " - Leaves your faction"));
-			sender.addChatMessage(new ChatComponentText(INFO + "Tip: type faction names with spaces or underscores."));
+			sender.addChatMessage(new ChatComponentText(INFO + "Tip: faction spaces are saved as underscores; use underscores in commands."));
 			sender.addChatMessage(new ChatComponentText(INFO + "/clowder help 2"));
 		}
 
@@ -380,12 +380,15 @@ public class CommandClowder extends CommandBase {
 private void cmdCreate(ICommandSender sender, String name) {
 
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		String factionName = Clowder.canonicalizeClowderName(name);
+
+		if(factionName.isEmpty()) { sender.addChatMessage(new ChatComponentText(ERROR + "Faction name cannot be empty.")); return; }
 
 		if(Clowder.getClowderFromPlayer(player) == null) {
 
-			if(Clowder.getClowderFromName(name) == null) {
-				Clowder.createClowder(player, name);
-				sender.addChatMessage(new ChatComponentText(TITLE + "Created faction " + name + "!"));
+			if(Clowder.getClowderFromName(factionName) == null) {
+				Clowder.createClowder(player, factionName);
+				sender.addChatMessage(new ChatComponentText(TITLE + "Created faction " + factionName + "!"));
 				sender.addChatMessage(new ChatComponentText(INFO + "Use /c claim to get started!"));
 				sender.addChatMessage(new ChatComponentText(INFO + "and use /c sethome to set a faction home!"));
 			} else {
@@ -794,14 +797,17 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
+		String factionName = Clowder.canonicalizeClowderName(name);
+
+		if(factionName.isEmpty()) { sender.addChatMessage(new ChatComponentText(ERROR + "Faction name cannot be empty.")); return; }
 
 		if(clowder != null) {
 
-			if(Clowder.getClowderFromName(name) == null) {
+			if(Clowder.getClowderFromName(factionName) == null) {
 
 				if(clowder.getPermLevel(player.getDisplayName()) > 1) {
-					clowder.rename(name, player);
-					sender.addChatMessage(new ChatComponentText(TITLE + "Renamed faction to " + name + "!"));
+					clowder.rename(factionName, player);
+					sender.addChatMessage(new ChatComponentText(TITLE + "Renamed faction to " + factionName + "!"));
 					PacketDispatcher.wrapper.sendTo(new ClowderFlagPacket(clowder, ""), (EntityPlayerMP) player);
 				} else {
 					sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions to rename this faction!"));
@@ -2019,7 +2025,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 	private String[] getFactionCompletionNames() {
 		String[] names = new String[Clowder.clowders.size()];
 		for(int i = 0; i < Clowder.clowders.size(); i++)
-			names[i] = Clowder.clowders.get(i).name.replace(' ', '_');
+			names[i] = Clowder.canonicalizeClowderName(Clowder.clowders.get(i).name);
 		return names;
 	}
 
