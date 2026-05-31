@@ -3,8 +3,7 @@ package com.hfr.blocks.clowder;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderTerritory;
-import com.hfr.clowder.ClowderTerritory.Ownership;
-import com.hfr.clowder.ClowderTerritory.Zone;
+import com.hfr.clowder.ClowderTerritory.TerritoryMeta;
 import com.hfr.command.CommandClowderAdmin;
 import com.hfr.tileentity.clowder.TileEntityConquerer;
 import com.hfr.tileentity.clowder.TileEntityFlag;
@@ -80,7 +79,8 @@ public class Conquerer extends BlockContainer {
 				flag.markDirty();
 				MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(
 						EnumChatFormatting.RED + "[WAR] " + EnumChatFormatting.GOLD + clowder.name +
-						EnumChatFormatting.YELLOW + " placed a claim flag at " + EnumChatFormatting.AQUA + "(" + x + ", " + y + ", " + z + ")"
+						EnumChatFormatting.YELLOW + " placed a claim flag for " + getTargetCityName(x, z) +
+						EnumChatFormatting.YELLOW + " at " + EnumChatFormatting.AQUA + "(" + x + ", " + y + ", " + z + ")"
 				));
 			} else {
 				flag.owner = null;
@@ -112,6 +112,19 @@ public class Conquerer extends BlockContainer {
 
 	}
 	
+	private String getTargetCityName(int x, int z) {
+		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords(x, z);
+		if(meta != null) {
+			String cityName = meta.cityName != null && !meta.cityName.trim().isEmpty() ? meta.cityName : meta.name;
+			if(cityName != null && !cityName.trim().isEmpty()) {
+				String ownerName = meta.owner != null && meta.owner.owner != null ? meta.owner.owner.name + "'s " : "";
+				return EnumChatFormatting.AQUA + ownerName + "city " + cityName.trim();
+			}
+		}
+
+		return EnumChatFormatting.AQUA + "the city at X:" + x + " / Z:" + z;
+	}
+
 	public boolean noProximity(World world, int x, int y, int z) {
 		
 		int range = 4;
