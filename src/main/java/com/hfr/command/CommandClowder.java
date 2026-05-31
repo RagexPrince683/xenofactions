@@ -3,7 +3,6 @@ package com.hfr.command;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import com.hfr.blocks.BlockDummyable;
 import com.hfr.blocks.ModBlocks;
@@ -133,318 +132,113 @@ public class CommandClowder extends CommandBase {
 		String cmd = args[0].toLowerCase();
 
 		if(cmd.equals("help") || cmd.equals("man")) {
-
-			if(args.length > 1)
-				cmdHelp(sender, args[1]);
-			else
-				cmdHelp(sender, "1");
+			cmdHelp(sender, args.length > 1 ? args[1] : "1");
 			return;
 		}
 
-		//the command for creating a faction.
-		//todone this bugs out if you use a name with spaces in it? I know it bugs out when sanitizing the word rape as a faction name which is regexified to haiiii :3
-		// maybe just replace spaces with underscores or something, or idk maybe allow spaces but handle it properly? maybe just use the args array to reconstruct the name instead of just taking args[1]?
-		if (cmd.equals("create") && args.length > 1) {
-			//prevent censored faction names from being made
-			String rawName = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+		if(cmd.equals("create")) {
+			if(!requireArgs(sender, cmd, args, 2)) return;
+			String rawName = joinArgs(args, 1);
 
-			if (containsBannedWord(rawName)) {
+			if(containsBannedWord(rawName)) {
 				sender.addChatMessage(new ChatComponentText(ERROR + "That faction name is not allowed."));
 				return;
 			}
 
 			cmdCreate(sender, rawName);
-
 			return;
 		}
 
-
-
-
-
-
-
-
-		//todo readd disband command, but also maybe add a merge command that allows a faction to merge into another faction with the consent of both parties. This would be useful for smaller factions that want to join forces with larger ones, or for factions that want to combine their resources and territories. The disband command could be used as a last resort for factions that are no longer active or have been abandoned by their members. It would require confirmation from the faction owner to prevent accidental disbanding.
-		//if(cmd.equals("disband") && args.length > 1) {
-		//	cmdDisband(sender, args[1]);
-		//	return;
-		//}
-
-		if(cmd.equals("merge") && args.length > 1) {
-			cmdMerge(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("acceptmerge") && args.length > 1) {
-			acceptMerge(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("gracebuild")) {
-			cmdGraceBuild(sender);
-			return;
-		}
-
-		if(cmd.equals("comrades")) {
-			cmdComrades(sender);
-			return;
-		}
-
-		if(cmd.equals("alliance")) {
-			cmdAlliance(sender);
-			return;
-		}
-
-		if(cmd.equals("color") && args.length > 1) {
-			cmdColor(sender, args[1]);
-			return;
-		}
+		if(cmd.equals("merge")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdMerge(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("acceptmerge")) { if(!requireArgs(sender, cmd, args, 2)) return; acceptMerge(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("gracebuild")) { cmdGraceBuild(sender); return; }
+		if(cmd.equals("comrades")) { cmdComrades(sender); return; }
+		if(cmd.equals("alliance")) { cmdAlliance(sender); return; }
+		if(cmd.equals("color")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdColor(sender, args[1]); return; }
 
 		if(cmd.equals("info")) {
-
-			if(args.length > 1)
-				cmdInfo(sender, args[1]);
-			else
-				cmdInfo(sender, null);
-
+			cmdInfo(sender, args.length > 1 ? joinArgs(args, 1) : null);
 			return;
 		}
 
-		if(cmd.equals("rename") && args.length > 1) {
-			cmdRename(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("list")) {
-			cmdList(sender);
-			return;
-		}
-
-		if(cmd.equals("motd") && args.length > 1) {
-			cmdMOTD(sender, args);
-			return;
-		}
-
-		if(cmd.equals("owner") && args.length > 1) {
-			cmdOwner(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("apply") && args.length > 1) {
-			cmdApply(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("leave")) {
-			cmdLeave(sender);
-			return;
-		}
-
-		if(cmd.equals("accept") && args.length > 1) {
-			cmdAccept(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("befriend") || cmd.equals("ally") && args.length > 1) {
-			cmdBefriend(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("acceptfriend") || cmd.equals("acceptally") && args.length > 1) { //|| cmd.equals("ally")
-			cmdAcceptFriend(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("deny") && args.length > 1) {
-			cmdDeny(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("applicants")) {
-			cmdApplicants(sender);
-			return;
-		}
-
-		if(cmd.equals("kick") && args.length > 1) {
-			cmdKick(sender, args[1]);
-			return;
-		}
-
-		if (cmd.equals("unfriend") || cmd.equals("unally") && args.length > 1) {
-			cmdUnfriend(sender, args[1]);
-			return;
-		}
+		if(cmd.equals("rename")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdRename(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("list")) { cmdList(sender); return; }
+		if(cmd.equals("motd")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdMOTD(sender, args); return; }
+		if(cmd.equals("owner")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdOwner(sender, args[1]); return; }
+		if(cmd.equals("apply")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdApply(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("leave")) { cmdLeave(sender); return; }
+		if(cmd.equals("accept")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdAccept(sender, args[1]); return; }
+		if(cmd.equals("befriend") || cmd.equals("ally")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdBefriend(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("acceptfriend") || cmd.equals("acceptally")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdAcceptFriend(sender, args[1]); return; }
+		if(cmd.equals("deny")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdDeny(sender, args[1]); return; }
+		if(cmd.equals("applicants")) { cmdApplicants(sender); return; }
+		if(cmd.equals("kick")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdKick(sender, args[1]); return; }
+		if(cmd.equals("unfriend") || cmd.equals("unally")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdUnfriend(sender, joinArgs(args, 1)); return; }
 
 		if(cmd.equals("listflags")) {
-
-			if(args.length > 1)
-				cmdListflags(sender, args[1]);
-			else
-				cmdListflags(sender, "1");
-
+			cmdListflags(sender, args.length > 1 ? args[1] : "1");
 			return;
 		}
 
-		if(cmd.equals("flag") && args.length > 1) {
-			cmdFlag(sender, args[1]);
-			return;
-		}
-
-		/*if(cmd.equals("admin")) {
-
-            MinecraftServer server = MinecraftServer.getServer();
-            server.initiateShutdown();
-		}*/
-
-		if(cmd.equals("retreat")) {
-			cmdRetreat(sender);
-			return;
-		}
-
-		if(cmd.equals("sethome")) {
-			cmdSethome(sender);
-			return;
-		}
-
-		if(cmd.equals("setallywarp")) {
-			cmdSetAllyWarp(sender);
-			return;
-		}
-
-		if(cmd.equals("home")) {
-			cmdHome(sender);
-			return;
-		}
-
-		if(cmd.equals("allywarp") && args.length > 1) {
-			cmdAllyWarp(sender, args[1]);
-			return;
-		}
-
-		if((cmd.equals("addwarp") || cmd.equals("setwarp")) && args.length > 1) {
-			cmdAddWarp(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("delwarp") && args.length > 1) {
-			cmdDelWarp(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("warp") && args.length > 1) {
-			cmdWarp(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("warps")) {
-			cmdWarps(sender);
-			return;
-		}
-
-		if(cmd.equals("balance")) {
-			cmdBalance(sender);
-			return;
-		}
-
-		if(cmd.equals("deposit") && args.length > 1) {
-			//sender.addChatMessage(new ChatComponentText(CRITICAL + "This command is currently disabled!"));
-			cmdDeposit(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("withdraw") && args.length > 1) {
-			sender.addChatMessage(new ChatComponentText(CRITICAL + "This command is currently disabled!"));
-			//cmdWithdraw(sender, args[1]);
-			return;
-		}
+		if(cmd.equals("flag")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdFlag(sender, args[1]); return; }
+		if(cmd.equals("retreat")) { cmdRetreat(sender); return; }
+		if(cmd.equals("sethome")) { cmdSethome(sender); return; }
+		if(cmd.equals("setallywarp")) { cmdSetAllyWarp(sender); return; }
+		if(cmd.equals("home")) { cmdHome(sender); return; }
+		if(cmd.equals("allywarp")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdAllyWarp(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("addwarp") || cmd.equals("setwarp")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdAddWarp(sender, args[1]); return; }
+		if(cmd.equals("delwarp")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdDelWarp(sender, args[1]); return; }
+		if(cmd.equals("warp")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdWarp(sender, args[1]); return; }
+		if(cmd.equals("warps")) { cmdWarps(sender); return; }
+		if(cmd.equals("balance")) { cmdBalance(sender); return; }
+		if(cmd.equals("deposit")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdDeposit(sender, args[1]); return; }
+		if(cmd.equals("withdraw")) { if(!requireArgs(sender, cmd, args, 2)) return; sender.addChatMessage(new ChatComponentText(CRITICAL + "This command is currently disabled!")); return; }
 
 		if(cmd.equals("claim") || cmd.equals("city")) {
 			if(args.length > 1 && args[1].equalsIgnoreCase("upgrade")) {
 				cmdCityUpgrade(sender);
 			} else if(args.length > 1) {
-				cmdClaim(sender, String.join(" ", Arrays.copyOfRange(args, 1, args.length)));
+				cmdClaim(sender, joinArgs(args, 1));
 			} else {
-				sender.addChatMessage(new ChatComponentText(ERROR + "Usage: /c claim <city name> or /c city upgrade"));
+				sender.addChatMessage(new ChatComponentText(ERROR + "Invalid format. Usage: /c claim <city name> or /c city upgrade"));
 			}
 			return;
 		}
 
-		//if(cmd.equals("unclaim")) {
-		//	cmdUnclaim(sender);
-		//	return;
-		//}
-		//todo maybe?
-
-		if(cmd.equals("promote") && args.length > 1) {
-			cmdPromote(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("demote") && args.length > 1) {
-			cmdDemote(sender, args[1]);
-			return;
-		}
-
-		if(cmd.equals("nameclaim") && args.length > 1) {
-			cmdNameClaim(sender, args[1]);
-			return;
-		}
-		if(cmd.equals("declarewar") && args.length > 1) {
-			cmdDeclareWar(sender, args[1]);
-			return;
-		}
-		if(cmd.equals("peace") && args.length > 1) {
-			String city = args.length > 2 ? String.join(" ", Arrays.copyOfRange(args, 2, args.length)) : null;
+		if(cmd.equals("promote")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdPromote(sender, args[1]); return; }
+		if(cmd.equals("demote")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdDemote(sender, args[1]); return; }
+		if(cmd.equals("nameclaim")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdNameClaim(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("declarewar")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdDeclareWar(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("peace")) {
+			if(!requireArgs(sender, cmd, args, 2)) return;
+			// Faction names containing spaces should be written with underscores when a transfer city is supplied.
+			String city = args.length > 2 ? joinArgs(args, 2) : null;
 			cmdRequestPeace(sender, args[1], city);
 			return;
 		}
-		if(cmd.equals("acceptpeace") && args.length > 1) {
-			cmdAcceptPeace(sender, args[1]);
-			return;
-		}
-		if(cmd.equals("ceasefire") && args.length > 1) {
-			cmdRequestCeasefire(sender, args[1]);
-			return;
-		}
-		if(cmd.equals("acceptceasefire") && args.length > 1) {
-			cmdAcceptCeasefire(sender, args[1]);
-			return;
-		}
-		if(cmd.equals("surrender") && args.length > 1) {
-			cmdSurrender(sender, args[1]);
-			return;
-		}
-		if(cmd.equals("acceptsurrender") && args.length > 1) {
-			cmdAcceptSurrender(sender, args[1]);
-			return;
-		}
-		if(cmd.equals("defendally") && args.length > 1) {
-			cmdDefendAlly(sender, args[1]);
-			return;
-		}
+		if(cmd.equals("acceptpeace")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdAcceptPeace(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("ceasefire")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdRequestCeasefire(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("acceptceasefire")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdAcceptCeasefire(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("surrender")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdSurrender(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("acceptsurrender")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdAcceptSurrender(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("defendally")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdDefendAlly(sender, joinArgs(args, 1)); return; }
 
-		if(requiresArgument(cmd)) {
-			sender.addChatMessage(new ChatComponentText(ERROR + "Invalid format. Usage: " + getUsageFor(cmd)));
-			return;
-		}
-		sender.addChatMessage(new ChatComponentText(ERROR + getCommandUsage(sender)));
+		sender.addChatMessage(new ChatComponentText(ERROR + "Unknown command. Usage: " + getCommandUsage(sender)));
 	}
 
-	private boolean requiresArgument(String cmd) {
-		return cmd.equals("merge") || cmd.equals("acceptmerge") || cmd.equals("color") || cmd.equals("rename")
-				|| cmd.equals("motd") || cmd.equals("owner") || cmd.equals("apply") || cmd.equals("accept")
-				|| cmd.equals("befriend") || cmd.equals("ally") || cmd.equals("acceptfriend") || cmd.equals("acceptally")
-				|| cmd.equals("deny") || cmd.equals("kick") || cmd.equals("unfriend") || cmd.equals("unally")
-				|| cmd.equals("flag") || cmd.equals("allywarp") || cmd.equals("addwarp") || cmd.equals("setwarp")
-				|| cmd.equals("delwarp") || cmd.equals("warp") || cmd.equals("deposit") || cmd.equals("withdraw")
-				|| cmd.equals("promote") || cmd.equals("demote") || cmd.equals("nameclaim")
-				|| cmd.equals("declarewar") || cmd.equals("peace") || cmd.equals("acceptpeace")
-				|| cmd.equals("ceasefire") || cmd.equals("acceptceasefire") || cmd.equals("surrender")
-				|| cmd.equals("acceptsurrender") || cmd.equals("defendally");
+	private boolean requireArgs(ICommandSender sender, String cmd, String[] args, int minArgs) {
+		if(args.length >= minArgs)
+			return true;
+		sender.addChatMessage(new ChatComponentText(ERROR + "Invalid format. Usage: " + getUsageFor(cmd)));
+		return false;
+	}
+
+	private String joinArgs(String[] args, int start) {
+		return String.join(" ", Arrays.copyOfRange(args, start, args.length));
 	}
 
 	private String getUsageFor(String cmd) {
+		if(cmd.equals("create")) return "/c create <name>";
 		if(cmd.equals("merge")) return "/c merge <faction>";
 		if(cmd.equals("acceptmerge")) return "/c acceptmerge <faction>";
 		if(cmd.equals("color")) return "/c color <hexadecimal>";
@@ -469,7 +263,7 @@ public class CommandClowder extends CommandBase {
 		if(cmd.equals("demote")) return "/c demote <player>";
 		if(cmd.equals("nameclaim")) return "/c nameclaim <name>";
 		if(cmd.equals("declarewar")) return "/c declarewar <faction>";
-		if(cmd.equals("peace")) return "/c peace <faction>";
+		if(cmd.equals("peace")) return "/c peace <faction> {city}";
 		if(cmd.equals("acceptpeace")) return "/c acceptpeace <faction>";
 		if(cmd.equals("ceasefire")) return "/c ceasefire <faction>";
 		if(cmd.equals("acceptceasefire")) return "/c acceptceasefire <faction>";
@@ -482,7 +276,7 @@ public class CommandClowder extends CommandBase {
 	private void cmdHelp(ICommandSender sender, String page) {
 
 		int p = this.parseInt(sender, page);
-		int pages = 5;
+		int pages = 6;
 
 		if(p < 1 || p > pages)
 			p = 1;
@@ -491,99 +285,83 @@ public class CommandClowder extends CommandBase {
 		sender.addChatMessage(new ChatComponentText(INFO + "Commands [" + p + "/" + pages + "]:"));
 
 		if(p == 1) {
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-help {page}" + TITLE + " - The thing you just used"));
+			sender.addChatMessage(new ChatComponentText(TITLE + "Basics & faction info"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-help {page}" + TITLE + " - Shows these help pages"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-create <name>" + TITLE + " - Creates a faction"));
-			//sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-disband <name>" + TITLE + " - Disbands a faction, name parameter for confirmation"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-owner <player>" + TITLE + " - Transfers faction ownership"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-info {faction}" + TITLE + " - Shows info on your faction or another faction"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-list" + TITLE + " - Lists all factions"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-comrades" + TITLE + " - Shows all members of your faction"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-color <hexadecimal>" + TITLE + " - Sets the faction's color"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-motd <MotD>" + TITLE + " - Sets the faction's MotD"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-rename <name>" + TITLE + " - Renames your faction"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-alliance" + TITLE + " - Shows all allied factions"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-leave" + TITLE + " - Leaves your faction"));
+			sender.addChatMessage(new ChatComponentText(INFO + "Tip: faction spaces are saved as underscores; use underscores in commands."));
 			sender.addChatMessage(new ChatComponentText(INFO + "/clowder help 2"));
 		}
 
 		if(p == 2) {
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-info {page}" + TITLE + " - Shows info on a faction"));
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-list" + TITLE + " - Lists all factions (page functin pending)"));
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-apply <name>" + TITLE + " - Sends an application to a faction"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-merge <faction>" + TITLE + " - Requests merging your faction into another"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-acceptmerge <faction>" + TITLE + " - Accepts a pending merge request"));
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-leave" + TITLE + " - Leaves the faction"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-accept <name>" + TITLE + " - Accepts a player's application"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-deny <name>" + TITLE + " - Denies a player's application"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-applicants" + TITLE + " - Lists applying players"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-kick <player>" + TITLE + " - Removes player from faction"));
+			sender.addChatMessage(new ChatComponentText(TITLE + "Joining & member management"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-apply <faction>" + TITLE + " - Applies to join a faction"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-applicants" + TITLE + " - Lists faction applications"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-accept <player>" + TITLE + " - Accepts a player's application"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-deny <player>" + TITLE + " - Denies a player's application"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-kick <player>" + TITLE + " - Kicks a member"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-promote <player>" + TITLE + " - Promotes a member to officer"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-demote <player>" + TITLE + " - Demotes an officer to member"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-owner <player>" + TITLE + " - Transfers faction ownership"));
 			sender.addChatMessage(new ChatComponentText(INFO + "/clowder help 3"));
 		}
 
 		if(p == 3) {
-			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-flag <flag>" + TITLE + " - Changes faction flag"));
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-listflags" + TITLE + " - Lists availible flags"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-sethome" + TITLE + " - Sets the clowder's home point"));
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-home" + TITLE + " - Teleports to the clowder's home"));
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-setwarp <name>" + TITLE + " - Creates a warp"));
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-delwarp <name>" + TITLE + " - Removes a warp"));
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-warp <name>" + TITLE + " - Teleports to a warp point"));
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-warps" + TITLE + " - Lists all warps"));
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-gracebuild" + TITLE + " - One-time 48h faction build grace"));
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-list" + TITLE + " - Lists all clowders (page function pending)"));
+			sender.addChatMessage(new ChatComponentText(TITLE + "Faction settings & appearance"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-rename <name>" + TITLE + " - Renames your faction"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-color <hexadecimal>" + TITLE + " - Sets the faction color"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-motd <message>" + TITLE + " - Sets the faction MotD"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-listflags {page}" + TITLE + " - Lists available flags"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-flag <flag>" + TITLE + " - Sets the faction flag"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-gracebuild" + TITLE + " - Activates one-time 48h faction build grace"));
 			sender.addChatMessage(new ChatComponentText(INFO + "/clowder help 4"));
 		}
 
 		if(p == 4) {
-			//sender.addChatMessage(new ChatComponentText(COMMAND + "-retreat" + TITLE + " - Reatreats after 10 minutes"));
+			sender.addChatMessage(new ChatComponentText(TITLE + "Homes, warps & cities"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-sethome" + TITLE + " - Sets the faction home"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-home" + TITLE + " - Teleports to the faction home"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-setwarp <name>" + TITLE + " - Creates a faction warp"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-delwarp <name>" + TITLE + " - Removes a faction warp"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-warp <name>" + TITLE + " - Teleports to a faction warp"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-warps" + TITLE + " - Lists faction warps"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-claim <city name>" + TITLE + " - Creates a named City Center"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-city upgrade" + TITLE + " - Upgrades the City Center for your current claim"));
-			//todo fix
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-balance" + TITLE + " - Displays how much prestige the faction has"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-nameclaim <name>" + TITLE + " - Renames the current territory"));
+			sender.addChatMessage(new ChatComponentText(INFO + "/clowder help 5"));
+		}
+
+		if(p == 5) {
+			sender.addChatMessage(new ChatComponentText(TITLE + "Prestige, alliances & merges"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-balance" + TITLE + " - Shows faction prestige"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-deposit <amount>" + TITLE + " - Turns prestige items into digiprestige"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-withdraw <amount>" + TITLE + " - Withdraws digiprestige as prestige items"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-promote <amount>" + TITLE + " - Promotes a member to officer"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-demote <amount>" + TITLE + " - Demotes an officer to member"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-nameclaim <name>" + TITLE + " - Renames the territory"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-befriend <faction>" + TITLE + " - Sends an alliance offer"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-acceptfriend <player>" + TITLE + " - Accepts an alliance offer"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-unfriend <faction>" + TITLE + " - Cancels an alliance"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-setallywarp" + TITLE + " - Sets the alliance rally point"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-allywarp <faction>" + TITLE + " - Teleports to an ally rally point"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-merge <faction>" + TITLE + " - Requests to merge into another faction"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-acceptmerge <faction>" + TITLE + " - Accepts a merge request"));
+			sender.addChatMessage(new ChatComponentText(INFO + "/clowder help 6"));
 		}
 
-		if (p == 5) {
-			sender.addChatMessage(new ChatComponentText(
-					COMMAND_LEADER + "-befriend <name>" + TITLE + " - Sends an alliance offer to a clowder"));
-			sender.addChatMessage(new ChatComponentText(
-					COMMAND_LEADER + "-acceptfriend <playername>" + TITLE + " - Accepts a player's alliance offer and signs a treaty"));
-			sender.addChatMessage(new ChatComponentText(
-					COMMAND_LEADER + "-unfriend <name>" + TITLE + " - Cancels an alliance with a clowder"));
-			sender.addChatMessage(
-					new ChatComponentText(COMMAND_LEADER + "-setallywarp" + TITLE + " - Sets the clowder's alliance rally-point"));
-			sender.addChatMessage(
-					new ChatComponentText(COMMAND + "-allywarp <name>" + TITLE + " - Teleports to an ally rally-point"));
-			sender.addChatMessage(
-					new ChatComponentText(COMMAND + "-alliance" + TITLE + " - Shows name of all allied clowders"));
-			sender.addChatMessage(
-					new ChatComponentText(COMMAND_LEADER + "-declarewar <faction>" + TITLE + " - Declares war on another faction"));
-			sender.addChatMessage(
-					new ChatComponentText(COMMAND_LEADER + "-peace <faction>" + TITLE + " - Ends war with another faction"));
-			sender.addChatMessage(
-					new ChatComponentText(COMMAND_LEADER + "-acceptpeace <faction>" + TITLE + " - Accepts peace proposal"));
-			sender.addChatMessage(
-					new ChatComponentText(COMMAND_LEADER + "-ceasefire <faction>" + TITLE + " - Proposes ceasefire"));
-			sender.addChatMessage(
-					new ChatComponentText(COMMAND_LEADER + "-acceptceasefire <faction>" + TITLE + " - Accepts ceasefire"));
-			sender.addChatMessage(
-					new ChatComponentText(COMMAND_LEADER + "-surrender <faction>" + TITLE + " - Offers surrender"));
-			sender.addChatMessage(
-					new ChatComponentText(COMMAND_LEADER + "-acceptsurrender <faction>" + TITLE + " - Accepts enemy surrender"));
-			sender.addChatMessage(
-					new ChatComponentText(COMMAND_LEADER + "-defendally <ally>" + TITLE + " - Joins an ally's active wars"));
-			sender.addChatMessage(
-					new ChatComponentText(INFO + "/xmap to get a claim map!")
-			);
-			sender.addChatMessage(
-					new ChatComponentText(INFO + "/xflags to get conquest flags! WAR MODE ENABLED ONLY!")
-			);
-			sender.addChatMessage(
-					new ChatComponentText(INFO + "/xmulti to get a multitool!")
-			);
-
+		if(p == 6) {
+			sender.addChatMessage(new ChatComponentText(TITLE + "War & related utility commands"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-declarewar <faction>" + TITLE + " - Declares war on another faction"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-peace <faction> {city}" + TITLE + " - Proposes peace, optionally transferring a city"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-acceptpeace <faction>" + TITLE + " - Accepts a peace proposal"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-ceasefire <faction>" + TITLE + " - Proposes a ceasefire"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-acceptceasefire <faction>" + TITLE + " - Accepts a ceasefire"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-surrender <faction>" + TITLE + " - Offers surrender"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-acceptsurrender <faction>" + TITLE + " - Accepts enemy surrender"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-defendally <ally>" + TITLE + " - Joins an ally's active wars"));
+			sender.addChatMessage(new ChatComponentText(INFO + "/xmap for a claim map, /xflags for conquest flags, /xmulti for a multitool."));
 		}
-
 	}
 
 	
@@ -602,12 +380,15 @@ public class CommandClowder extends CommandBase {
 private void cmdCreate(ICommandSender sender, String name) {
 
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		String factionName = Clowder.canonicalizeClowderName(name);
+
+		if(factionName.isEmpty()) { sender.addChatMessage(new ChatComponentText(ERROR + "Faction name cannot be empty.")); return; }
 
 		if(Clowder.getClowderFromPlayer(player) == null) {
 
-			if(Clowder.getClowderFromName(name) == null) {
-				Clowder.createClowder(player, name);
-				sender.addChatMessage(new ChatComponentText(TITLE + "Created faction " + name + "!"));
+			if(Clowder.getClowderFromName(factionName) == null) {
+				Clowder.createClowder(player, factionName);
+				sender.addChatMessage(new ChatComponentText(TITLE + "Created faction " + factionName + "!"));
 				sender.addChatMessage(new ChatComponentText(INFO + "Use /c claim to get started!"));
 				sender.addChatMessage(new ChatComponentText(INFO + "and use /c sethome to set a faction home!"));
 			} else {
@@ -628,7 +409,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
-			if(name.equals(clowder.name)) {
+			if(Clowder.normalizeClowderName(name).equals(Clowder.normalizeClowderName(clowder.name))) {
 
 				if(clowder.disbandClowder(player)) {
 					//wait ten minutes before allowing the player to create a new faction, or maybe just prevent them from creating a new one for a while. This is to prevent abuse of the disband command.
@@ -1016,14 +797,17 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
+		String factionName = Clowder.canonicalizeClowderName(name);
+
+		if(factionName.isEmpty()) { sender.addChatMessage(new ChatComponentText(ERROR + "Faction name cannot be empty.")); return; }
 
 		if(clowder != null) {
 
-			if(Clowder.getClowderFromName(name) == null) {
+			if(Clowder.getClowderFromName(factionName) == null) {
 
 				if(clowder.getPermLevel(player.getDisplayName()) > 1) {
-					clowder.rename(name, player);
-					sender.addChatMessage(new ChatComponentText(TITLE + "Renamed faction to " + name + "!"));
+					clowder.rename(factionName, player);
+					sender.addChatMessage(new ChatComponentText(TITLE + "Renamed faction to " + factionName + "!"));
 					PacketDispatcher.wrapper.sendTo(new ClowderFlagPacket(clowder, ""), (EntityPlayerMP) player);
 				} else {
 					sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions to rename this faction!"));
@@ -2199,8 +1983,58 @@ private void cmdCreate(ICommandSender sender, String name) {
 	}
 
 	@Override
-	public List addTabCompletionOptions(ICommandSender p_71516_1_, String[] p_71516_2_) {
-		return getListOfStringsMatchingLastWord(p_71516_2_, MinecraftServer.getServer().getAllUsernames());
+	public List addTabCompletionOptions(ICommandSender sender, String[] args) {
+		if(args.length == 1)
+			return getListOfStringsMatchingLastWord(args, getPlayerCommandNames());
+
+		String cmd = args[0].toLowerCase();
+		if(isPlayerCompletionCommand(cmd))
+			return getListOfStringsMatchingLastWord(args, MinecraftServer.getServer().getAllUsernames());
+
+		if(isFactionCompletionCommand(cmd))
+			return getListOfStringsMatchingLastWord(args, getFactionCompletionNames());
+
+		if(cmd.equals("flag"))
+			return getListOfStringsMatchingLastWord(args, getFlagCompletionNames());
+
+		return null;
+	}
+
+	private String[] getPlayerCommandNames() {
+		return new String[] { "help", "create", "info", "list", "comrades", "alliance", "leave", "apply",
+				"applicants", "accept", "deny", "kick", "owner", "promote", "demote", "rename", "color", "motd",
+				"listflags", "flag", "gracebuild", "sethome", "home", "setwarp", "addwarp", "delwarp", "warp", "warps",
+				"claim", "city", "nameclaim", "balance", "deposit", "withdraw", "befriend", "ally", "acceptfriend",
+				"acceptally", "unfriend", "unally", "setallywarp", "allywarp", "merge", "acceptmerge", "declarewar",
+				"peace", "acceptpeace", "ceasefire", "acceptceasefire", "surrender", "acceptsurrender", "defendally" };
+	}
+
+	private boolean isPlayerCompletionCommand(String cmd) {
+		return cmd.equals("owner") || cmd.equals("accept") || cmd.equals("acceptfriend") || cmd.equals("acceptally")
+				|| cmd.equals("deny") || cmd.equals("kick") || cmd.equals("promote") || cmd.equals("demote");
+	}
+
+	private boolean isFactionCompletionCommand(String cmd) {
+		return cmd.equals("info") || cmd.equals("apply") || cmd.equals("befriend") || cmd.equals("ally")
+				|| cmd.equals("unfriend") || cmd.equals("unally") || cmd.equals("allywarp") || cmd.equals("merge")
+				|| cmd.equals("acceptmerge") || cmd.equals("declarewar") || cmd.equals("peace") || cmd.equals("acceptpeace")
+				|| cmd.equals("ceasefire") || cmd.equals("acceptceasefire") || cmd.equals("surrender")
+				|| cmd.equals("acceptsurrender") || cmd.equals("defendally");
+	}
+
+	private String[] getFactionCompletionNames() {
+		String[] names = new String[Clowder.clowders.size()];
+		for(int i = 0; i < Clowder.clowders.size(); i++)
+			names[i] = Clowder.canonicalizeClowderName(Clowder.clowders.get(i).name);
+		return names;
+	}
+
+	private String[] getFlagCompletionNames() {
+		ClowderFlag[] flags = ClowderFlag.values();
+		String[] names = new String[flags.length];
+		for(int i = 0; i < flags.length; i++)
+			names[i] = flags[i].name;
+		return names;
 	}
 
 	public static final String ERROR = EnumChatFormatting.RED.toString();
