@@ -517,11 +517,9 @@ public class MainRegistry
 		sub.put(regexify("flans"), "-4 tps");
 		//sub.put(regexify("mute "), "I'm probably bitching about something");
 		//will conflict with /c mute...?
-		sub.put(regexify("rping"), "9000th chat filter bypass");
 		sub.put(regexify("white power"), "I'm probably american and fat");
 		sub.put(regexify("aryan"), "indian");
 		sub.put(regexify("ngger"), "african american");
-		sub.put(regexify("ngr"), "african american");
 		//sub.put(regexify("server"), "I'm complaining");
 		//possibly
 		sub.put(regexify("nig "), "african american");

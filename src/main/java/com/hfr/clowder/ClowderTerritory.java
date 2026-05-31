@@ -51,9 +51,9 @@ public class ClowderTerritory {
 			if(meta != null && meta.owner != null && meta.owner.zone == Zone.FACTION && meta.isCityClaim()) {
 				CoordPair other = getCoordPair(meta.flagX, meta.flagZ);
 				double dist = Math.sqrt(Math.pow(chunkX - other.x, 2) + Math.pow(chunkZ - other.z, 2));
-				int required = CityLevel.maxRadius() * 2;
+				int required = CityLevel.maxRadius() * 2 + 1;
 				if(dist < required)
-					return "City Center is too close to " + meta.cityName + ". City centers must be at least " + required + " chunks apart to preserve a 10 chunk border buffer.";
+					return "City Center is too close to " + meta.cityName + ". City centers must be at least " + required + " chunks apart to make sure claims do not overlap.";
 			}
 		}
 		return null;
