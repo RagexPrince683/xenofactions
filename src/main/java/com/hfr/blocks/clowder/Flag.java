@@ -50,15 +50,23 @@ public class Flag extends BlockContainer {
 	@Override
 	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
 		if(world.isRemote)
-		{
 			return true;
-		} else if(!player.isSneaking())
-		{
+
+		TileEntity tile = world.getTileEntity(x, y, z);
+		if(tile instanceof TileEntityFlag) {
+			TileEntityFlag flag = (TileEntityFlag)tile;
+			if(flag.owner == null || !flag.canSeeSky()) {
+				world.func_147480_a(x, y, z, false);
+				return true;
+			}
+		}
+
+		if(!player.isSneaking()) {
 			FMLNetworkHandler.openGui(player, MainRegistry.instance, ModBlocks.guiID_flag, world, x, y, z);
 			return true;
-		} else {
-			return true;
 		}
+
+		return true;
 	}
 
 	@Override

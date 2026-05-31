@@ -48,6 +48,23 @@ public class Conquerer extends BlockContainer {
 	}
 	
 	@Override
+	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
+		if(world.isRemote)
+			return true;
+
+		TileEntity tile = world.getTileEntity(x, y, z);
+		if(tile instanceof TileEntityConquerer) {
+			TileEntityConquerer flag = (TileEntityConquerer)tile;
+			if(flag.owner == null || !CommandClowderAdmin.WARENABLED || !flag.canSeeSky() || !flag.checkBorder(x, z) || !noProximity(world, x, y, z)) {
+				world.func_147480_a(x, y, z, false);
+				return true;
+			}
+		}
+
+		return true;
+	}
+
+	@Override
 	public void onBlockPlacedBy(World world, int x, int y, int z, EntityLivingBase player, ItemStack itemStack) {
 
 		if (CommandClowderAdmin.WARENABLED) {
