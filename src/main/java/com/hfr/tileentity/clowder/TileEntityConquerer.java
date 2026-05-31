@@ -12,11 +12,14 @@ import com.hfr.clowder.ClowderTerritory.Ownership;
 import com.hfr.clowder.ClowderTerritory.TerritoryMeta;
 import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.main.MainRegistry;
+import com.hfr.packet.PacketDispatcher;
+import com.hfr.packet.client.CityRenameGuiPacket;
 import com.hfr.tileentity.machine.TileEntityMachineBase;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
@@ -159,6 +162,7 @@ public class TileEntityConquerer extends TileEntityMachineBase implements ITerri
 					TileEntityFlag city = (TileEntityFlag)te;
 					city.setOwner(owner);
 					city.generateClaim();
+					promptCityRename(city);
 					worldObj.func_147480_a(xCoord, yCoord, zCoord, false);
 					
 				} else if(te instanceof TileEntityConquerer) {
@@ -174,6 +178,23 @@ public class TileEntityConquerer extends TileEntityMachineBase implements ITerri
 		}
 	}
 	
+	private void promptCityRename(TileEntityFlag city) {
+		int range = 32;
+		List<EntityPlayer> entities = worldObj.getEntitiesWithinAABB(EntityPlayer.class,
+				AxisAlignedBB.getBoundingBox(
+						xCoord + 0.5 - range,
+						yCoord - 2,
+						zCoord + 0.5 - range,
+						xCoord + 0.5 + range,
+						yCoord + 4,
+						zCoord + 0.5 + range));
+
+		for(EntityPlayer player : entities) {
+			if(player instanceof EntityPlayerMP && Clowder.getClowderFromPlayer(player) == owner && owner.getPermLevel(player.getDisplayName()) >= 2)
+				PacketDispatcher.wrapper.sendTo(new CityRenameGuiPacket(city.xCoord, city.yCoord, city.zCoord, city.name), (EntityPlayerMP)player);
+		}
+	}
+
 	public boolean checkBorder(int x, int z) {
 
 		CoordPair loc = ClowderTerritory.getCoordPair(x, z);
