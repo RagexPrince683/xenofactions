@@ -156,7 +156,9 @@ public class TileEntityConquerer extends TileEntityMachineBase implements ITerri
 					worldObj.func_147480_a(xCoord, yCoord, zCoord, false);
 					
 				} else if(te instanceof TileEntityFlag) {
-					((TileEntityFlag)te).setOwner(owner);
+					TileEntityFlag city = (TileEntityFlag)te;
+					city.setOwner(owner);
+					city.generateClaim();
 					worldObj.func_147480_a(xCoord, yCoord, zCoord, false);
 					
 				} else if(te instanceof TileEntityConquerer) {
