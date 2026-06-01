@@ -118,7 +118,7 @@ public class Flag extends BlockContainer {
 			}
 
 			if(clowder != null && flag.canSeeSky()) {
-				float foundingCost = CityLevel.SETTLEMENT.upgradeCost;
+				float foundingCost = clowder.getCityFoundingCost();
 				float foundingUpkeep = CityLevel.SETTLEMENT.upkeep;
 				if(clowder.getPrestige() < foundingCost || clowder.getPrestigeReq() + foundingUpkeep > clowder.getPrestige() - foundingCost) {
 					world.setBlockToAir(x, y, z);
@@ -126,6 +126,7 @@ public class Flag extends BlockContainer {
 					return;
 				}
 				clowder.addPrestige(-foundingCost, world);
+				clowder.markCityFounded(world);
 				flag.name = cityName;
 				flag.setOwner(clowder);
 				flag.setMode(1);
