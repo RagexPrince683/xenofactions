@@ -1702,13 +1702,13 @@ private void cmdCreate(ICommandSender sender, String name) {
 		if(confirmUntil == null || confirmUntil < now) {
 			CITY_UPGRADE_CONFIRMATIONS.put(confirmKey, now + 10000L);
 			sender.addChatMessage(new ChatComponentText(INFO + "Upgrade " + city.name + " to " + next.displayName + " for " + next.upgradeCost + " prestige."));
-			sender.addChatMessage(new ChatComponentText(INFO + "New city level will be " + next.radius + " with " + next.upkeep + " upkeep. Run /c city upgrade again within 10 seconds to confirm."));
+			sender.addChatMessage(new ChatComponentText(INFO + "New city level will be " + next.level() + " with radius " + next.radius + " and " + next.upkeep + " upkeep. Run /c city upgrade again within 10 seconds to confirm."));
 			return;
 		}
 
 		CITY_UPGRADE_CONFIRMATIONS.remove(confirmKey);
 		if(city.upgradeCity())
-			sender.addChatMessage(new ChatComponentText(INFO + city.name + " upgraded to " + city.cityLevel.displayName + " (level " + city.cityLevel.radius + ", upkeep " + city.cityLevel.upkeep + ")."));
+			sender.addChatMessage(new ChatComponentText(INFO + city.name + " upgraded to " + city.cityLevel.displayName + " (level " + city.cityLevel.level() + ", radius " + city.cityLevel.radius + ", upkeep " + city.cityLevel.upkeep + ")."));
 		else
 			sender.addChatMessage(new ChatComponentText(ERROR + "Upgrade requires " + next.upgradeCost + " prestige and sequential upkeep capacity."));
 	}
