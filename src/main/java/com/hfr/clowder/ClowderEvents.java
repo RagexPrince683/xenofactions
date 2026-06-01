@@ -383,6 +383,23 @@ public void handleChatServer(ServerChatEvent event) {
 
 		if(owner.zone == Zone.FACTION) {
 
+			if(b == ModBlocks.clowder_flag) {
+				if(clowder != owner.owner) {
+					player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Enemy City Centers cannot be broken directly."));
+					return false;
+				}
+
+				if(clowder.getPermLevel(player.getDisplayName()) < 3) {
+					player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Only the faction leader can break City Centers."));
+					return false;
+				}
+
+				if(!owner.owner.activeWars.isEmpty()) {
+					player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "City Centers cannot be broken while your faction is at war."));
+					return false;
+				}
+			}
+
 			if(clowder == owner.owner && owner.owner.isInfrastructureDisabled()) {
 				player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Your faction is a Fallen Nation; breaking blocks in claimed land is disabled."));
 				return false;
