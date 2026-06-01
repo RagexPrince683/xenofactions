@@ -1227,6 +1227,11 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
+			if(clowder.areWarpsDisabled()) {
+				sender.addChatMessage(new ChatComponentText(ERROR + "Warps are disabled while your faction is in " + clowder.getBankruptcyStageName() + "."));
+				return;
+			}
+
 			Ownership owner = ClowderTerritory.getOwnerFromInts((int)player.posX, (int)player.posZ);
 
 			if(owner != null && (owner.zone == Zone.WARZONE || (owner.zone == Zone.FACTION && (owner.owner != clowder && clowder.allies.get(owner.owner) == null) ) ) ) { //allow warp from allied territory
@@ -1251,7 +1256,15 @@ private void cmdCreate(ICommandSender sender, String name) {
 		Clowder ally = Clowder.getClowderFromName(name);
 
 		if (clowder != null) {
+			if(clowder.areAllyWarpsDisabled()) {
+				sender.addChatMessage(new ChatComponentText(ERROR + "Ally warps are disabled while your faction is in " + clowder.getBankruptcyStageName() + "."));
+				return;
+			}
 			if (ally != null) {
+				if(ally.areAllyWarpsDisabled()) {
+					sender.addChatMessage(new ChatComponentText(ERROR + ally.name + " cannot receive ally warps while in " + ally.getBankruptcyStageName() + "."));
+					return;
+				}
 
 				Ownership owner = ClowderTerritory.getOwnerFromInts((int) player.posX, (int) player.posZ);
 
@@ -1299,6 +1312,11 @@ private void cmdCreate(ICommandSender sender, String name) {
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
 
 		if(clowder != null) {
+
+			if(clowder.areWarpsDisabled()) {
+				sender.addChatMessage(new ChatComponentText(ERROR + "Warps are disabled while your faction is in " + clowder.getBankruptcyStageName() + "."));
+				return;
+			}
 
 			if(clowder.warps.containsKey(name)) {
 				sender.addChatMessage(new ChatComponentText(ERROR + "This warp already exists!"));
@@ -1353,6 +1371,11 @@ private void cmdCreate(ICommandSender sender, String name) {
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
 
 		if (clowder != null) {
+
+			if(clowder.areWarpsDisabled()) {
+				sender.addChatMessage(new ChatComponentText(ERROR + "Warps are disabled while your faction is in " + clowder.getBankruptcyStageName() + "."));
+				return;
+			}
 
 			if (clowder.warps.containsKey(name)) {
 
@@ -1448,10 +1471,9 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
-			if(clowder.getPrestige() > 0)
-				sender.addChatMessage(new ChatComponentText(INFO + "Current prestige balance: " + LIST + clowder.getPrestige()));
-			else
-				sender.addChatMessage(new ChatComponentText(INFO + "It seems like you're bankrupt."));
+			sender.addChatMessage(new ChatComponentText(INFO + "Current prestige balance: " + LIST + Clowder.round(clowder.getPrestige()) + TITLE + " (" + clowder.getBankruptcyStageName() + ")"));
+			sender.addChatMessage(new ChatComponentText(INFO + "Generation: " + LIST + Clowder.round(clowder.getPrestigeGen()) + "/h" + TITLE + ", upkeep: " + LIST + Clowder.round(clowder.getHourlyUpkeepCost()) + "/h" + TITLE + ", war: " + LIST + Clowder.round(clowder.getHourlyWarCost()) + "/h"));
+			sender.addChatMessage(new ChatComponentText(INFO + "Net prestige: " + LIST + Clowder.round(clowder.getHourlyNetPrestige()) + "/h"));
 
 		} else {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
@@ -1830,6 +1852,12 @@ private void cmdCreate(ICommandSender sender, String name) {
 			Long allyCd = me.formerAllyNoWarUntil.get(target.name);
 			if (allyCd != null && allyCd > now) return;
 		}
+		if(me.isInfrastructureDisabled()) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Fallen Nations cannot declare war."));
+			return;
+		}
+		me.addPrestige(-Clowder.WAR_DECLARATION_COST, player.worldObj);
+		sender.addChatMessage(new ChatComponentText(CRITICAL + "Declaring war cost " + Clowder.WAR_DECLARATION_COST + " prestige. Each active war costs " + Clowder.WAR_UPKEEP + " prestige per hour."));
 		me.activeWars.add(target.name);
 		target.activeWars.add(me.name);
 		me.warDeclaredAt.put(target.name, now);
@@ -1887,7 +1915,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 				target.peaceRequests.remove(request);
 			}
 		}
-		me.activeWars.remove(target.name); target.activeWars.remove(me.name);
+		me.clearWarStateWith(target); target.clearWarStateWith(me);
 		if(!CommandClowderAdmin.WAR_COOLDOWNS_DISABLED) {
 			long until = System.currentTimeMillis() + 84L * 60L * 60L * 1000L;
 			me.noWarUntil.put(target.name, until); target.noWarUntil.put(me.name, until);
@@ -1918,7 +1946,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 3) return;
 		if(!target.ceasefireRequests.contains(me.name)) return;
 		target.ceasefireRequests.remove(me.name);
-		me.activeWars.remove(target.name); target.activeWars.remove(me.name);
+		me.clearWarStateWith(target); target.clearWarStateWith(me);
 		if(!CommandClowderAdmin.WAR_COOLDOWNS_DISABLED) {
 			long until = System.currentTimeMillis() + 24L * 60L * 60L * 1000L;
 			me.noWarUntil.put(target.name, until); target.noWarUntil.put(me.name, until);
@@ -1952,12 +1980,13 @@ private void cmdCreate(ICommandSender sender, String name) {
 			TerritoryMeta city = (TerritoryMeta)cityObj;
 			ClowderTerritory.transferCity(player.worldObj, city, me);
 		}
-		me.activeWars.remove(target.name); target.activeWars.remove(me.name);
+		target.beginSurrenderTribute(me, player.worldObj);
+		me.clearWarStateWith(target); target.clearWarStateWith(me);
 		if(!CommandClowderAdmin.WAR_COOLDOWNS_DISABLED) {
 			long until = System.currentTimeMillis() + 84L * 60L * 60L * 1000L;
 			me.noWarUntil.put(target.name, until); target.noWarUntil.put(me.name, until);
 		}
-		MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(EnumChatFormatting.GREEN + "[WAR] " + me.name + " accepted " + target.name + "'s surrender."));
+		MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(EnumChatFormatting.GREEN + "[WAR] " + me.name + " accepted " + target.name + "'s surrender. " + target.name + " will pay 50% of prestige generation to " + me.name + " for 84 hours."));
 	}
 
 	private void cmdDefendAlly(ICommandSender sender, String allyName) {
@@ -1971,8 +2000,12 @@ private void cmdCreate(ICommandSender sender, String name) {
 		for (String enemyName : ally.activeWars) {
 			if (!enemyName.equals(me.name)) {
 				me.activeWars.add(enemyName);
+				me.warDeclaredAt.put(enemyName, System.currentTimeMillis());
 				Clowder enemy = Clowder.getClowderFromName(enemyName);
-				if (enemy != null) enemy.activeWars.add(me.name);
+				if (enemy != null) {
+					enemy.activeWars.add(me.name);
+					enemy.warDeclaredAt.put(me.name, System.currentTimeMillis());
+				}
 				joined++;
 			}
 		}

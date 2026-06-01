@@ -211,7 +211,7 @@ public class MainRegistry
 	public static boolean enableStocks = true;
 	public static boolean enableRadar = false;
 
-	public static int warpCost = 25;
+	public static int warpCost = 125;
 	public static int territoryDelay = 5;
 	public static int territoryAmount = 50;
 	public static int prestigeDelay = 60 * 60 * 20;
@@ -1478,7 +1478,7 @@ public class MainRegistry
     	EnumHelper.addEnum(ClowderFlag.class, "GETTY", new Class[] { String.class, boolean.class }, new Object[] {"getty", false} );
     	EnumHelper.addEnum(ClowderFlag.class, "COMRADES", new Class[] { String.class, boolean.class }, new Object[] {"comrades", false} );
 
-        warpCost = createConfigInt(config, "CLOWDER", "warpCost", "How much prestige a warp point costs to create", 25);
+        warpCost = createConfigInt(config, "CLOWDER", "warpCost", "How much prestige a warp point costs to create", 125);
         territoryDelay = createConfigInt(config, "CLOWDER", "territoryDelay", "How many ticks inbetween territory validation operations", 5);
         territoryAmount = createConfigInt(config, "CLOWDER", "territoryAmount", "How many chunks are checked each operation", 50);
         prestigeDelay = createConfigInt(config, "CLOWDER", "prestigeDelay", "How many ticks inbetween prestige updates (1h per default)", 60 * 60 * 20);
