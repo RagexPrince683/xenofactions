@@ -48,6 +48,7 @@ public class PropTent extends BlockDummyable {
 			
 			if(owner != null && owner.zone == Zone.FACTION) {
 
+				float prestigeRate = this == ModBlocks.med_tent ? Clowder.medTentRate : Clowder.tentRate;
 				TileEntityProp tent = (TileEntityProp)world.getTileEntity(x, y, z);
 				
 				if(this == ModBlocks.tp_tent) {
@@ -58,8 +59,8 @@ public class PropTent extends BlockDummyable {
 					}
 				}
 				
-				if(tent.operational())
-					owner.owner.addPrestigeGen(-Clowder.tentRate, world);
+				if(tent != null && tent.operational())
+					owner.owner.addPrestigeGen(-prestigeRate, world);
 			}
 		}
 		

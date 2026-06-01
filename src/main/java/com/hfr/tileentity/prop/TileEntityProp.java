@@ -92,37 +92,30 @@ public class TileEntityProp extends TileEntity {
 			//FOR TENTS RETARD
 			if(this.getBlockType() == ModBlocks.tp_tent || this.getBlockType() == ModBlocks.med_tent) {
 				
+				float prestigeRate = this.getBlockType() == ModBlocks.med_tent ? Clowder.medTentRate : Clowder.tentRate;
+
 				if(this.operational()) {
-					
-					if(owner != o.owner) {
-						
+
+					Clowder currentOwner = o != null && o.zone == Zone.FACTION ? o.owner : null;
+					if(owner != currentOwner) {
+
 						if(owner != null) {
-							
 							//doesn't need a call of the save method because it will always save in the statements below
 							owner.warps.remove(warp);
 							warp = "";
+							owner.addPrestigeGen(-prestigeRate, worldObj);
 						}
-						
-						if(o != null && o.zone == Zone.FACTION) {
-							if(owner != null)
-								owner.addPrestigeGen(-Clowder.tentRate, worldObj);
-							owner = o.owner;
-							owner.addPrestigeGen(Clowder.tentRate, worldObj);
-							
-						} else {
-							
-							if(owner != null)
-								owner.addPrestigeGen(-Clowder.tentRate, worldObj);
-							
-							owner = null;
-						}
-						
+
+						owner = currentOwner;
+						if(owner != null)
+							owner.addPrestigeGen(prestigeRate, worldObj);
+
 						this.markDirty();
 					}
 				} else {
 					
 					if(owner != null) {
-						owner.addPrestigeGen(-Clowder.tentRate, worldObj);
+						owner.addPrestigeGen(-prestigeRate, worldObj);
 						owner = null;
 						
 						this.markDirty();
