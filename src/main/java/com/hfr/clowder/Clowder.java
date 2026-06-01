@@ -35,8 +35,8 @@ public class Clowder {
 
 	public static HashSet<Integer> colours = new HashSet<Integer>();
 
-	private static float prestigeCap = 1000F;
-	private static float prestigeGenCap = 500F;
+	private static float prestigeCap = 10000F;
+	private static float prestigeGenCap = 2500F;
 
 	public String uuid;
 	public String name;
@@ -150,6 +150,9 @@ public class Clowder {
 	public int allyWarpZ;
 	public long buildGraceUntil = 0L;
 	public boolean buildGraceUsed = false;
+	public String surrenderTributeTo = "";
+	public long surrenderTributeUntil = 0L;
+	private int lastBankruptcyStage = 0;
 
 	public static List<Clowder> clowders = new ArrayList();
 	public static HashMap<String, Clowder> inverseMap = new HashMap();
@@ -166,14 +169,25 @@ public class Clowder {
 	private float canDeclareTime = 0;
 	private float warTime = 0;
 
-	public static final float tentRate = -0.8F;
-	public static final float BlastRate = 0.3F;
-	public static final float GrainRate = 0.2F;
-	public static final float UniRate = 0.6F;
-	public static final float FedRate = 0.2F;
-	public static final float statueRate = 0.5F;
-	public static final float flagRate = 0.1F;
-	public static final float flagReq = 1.0F;
+	public static final float STARTING_PRESTIGE = 250F;
+	public static final float BASE_PRESTIGE_GEN = 25F;
+	public static final float WAR_DECLARATION_COST = 150F;
+	public static final float WAR_UPKEEP = 75F;
+	public static final float SURRENDER_TRIBUTE_RATE = 0.50F;
+	public static final long SURRENDER_TRIBUTE_TIME = 84L * 60L * 60L * 1000L;
+	public static final float FINANCIAL_CRISIS_UPKEEP_MULT = 1.25F;
+	public static final float NATIONAL_COLLAPSE_UPKEEP_MULT = 1.50F;
+	public static final float FALLEN_NATION_UPKEEP_MULT = 2.00F;
+	public static final float tentRate = -20F;
+	public static final float medTentRate = 10F;
+	public static final float BlastRate = 20F;
+	public static final float GrainRate = 15F;
+	public static final float UniRate = 60F;
+	public static final float FedRate = 30F;
+	public static final float TempleRate = 90F;
+	public static final float statueRate = 40F;
+	public static final float flagRate = 0F;
+	public static final float flagReq = 10F;
 
 	//this mod is so fucking retarded I guarantee you theres like 16 different ways this shit can be exploited
 	//or is just SHIT coding. and that's coming from a MCHELI developer.
@@ -1288,12 +1302,7 @@ public class Clowder {
 
 	public void addPrestige(float f, World world) {
 
-
-			prestige += f;
-
-			if (prestige < 0)
-				prestige = 0F;
-
+		prestige += f;
 		prestige = Math.min(prestige, prestigeCap);
 		this.save(world);
 	}
@@ -1321,11 +1330,127 @@ public class Clowder {
 		prestige *= f;
 		prestige = (float)(Math.floor(prestige * 10D) / 10D);
 
-		if(prestige < 0)
-			prestige = 0;
-
 		this.save(world);
 	}
+
+	public int getBankruptcyStage() {
+		if(prestige < -1000F)
+			return 3;
+		if(prestige < -500F)
+			return 2;
+		if(prestige < 0F)
+			return 1;
+		return 0;
+	}
+
+	public String getBankruptcyStageName() {
+		switch(getBankruptcyStage()) {
+		case 3: return "Fallen Nation";
+		case 2: return "National Collapse";
+		case 1: return "Financial Crisis";
+		default: return "Stable Nation";
+		}
+	}
+
+	public boolean isInFinancialCrisis() {
+		return getBankruptcyStage() >= 1;
+	}
+
+	public boolean areWarpsDisabled() {
+		return getBankruptcyStage() >= 2;
+	}
+
+	public boolean areAllyWarpsDisabled() {
+		return getBankruptcyStage() >= 1;
+	}
+
+	public boolean isInfrastructureDisabled() {
+		return getBankruptcyStage() >= 3;
+	}
+
+	public float getUpkeepMultiplier() {
+		switch(getBankruptcyStage()) {
+		case 3: return FALLEN_NATION_UPKEEP_MULT;
+		case 2: return NATIONAL_COLLAPSE_UPKEEP_MULT;
+		case 1: return FINANCIAL_CRISIS_UPKEEP_MULT;
+		default: return 1F;
+		}
+	}
+
+	public float getHourlyWarCost() {
+		return activeWars.size() * WAR_UPKEEP;
+	}
+
+	public float getHourlyUpkeepCost() {
+		return prestigeReq * getUpkeepMultiplier();
+	}
+
+	public float getHourlyNetPrestige() {
+		float effectiveGeneration = isInfrastructureDisabled() ? 0F : prestigeGen;
+		return effectiveGeneration - getHourlyUpkeepCost() - getHourlyWarCost();
+	}
+
+	public void beginSurrenderTribute(Clowder winner, World world) {
+		if(winner == null)
+			return;
+		surrenderTributeTo = winner.name;
+		surrenderTributeUntil = System.currentTimeMillis() + SURRENDER_TRIBUTE_TIME;
+		save(world);
+	}
+
+	public Clowder getSurrenderTributeTarget() {
+		if(surrenderTributeTo == null || surrenderTributeTo.isEmpty() || surrenderTributeUntil <= System.currentTimeMillis())
+			return null;
+		return getClowderFromName(surrenderTributeTo);
+	}
+
+	private void notifyBankruptcyStage(World world, int oldStage, int newStage) {
+		if(oldStage == newStage)
+			return;
+
+		String status = getBankruptcyStageName();
+		notifyAll(world, new ChatComponentText(CommandClowder.CRITICAL + "Prestige status changed to " + status + " (" + round(prestige) + " prestige)."));
+
+		if(newStage >= 1)
+			notifyAll(world, new ChatComponentText(CommandClowder.ERROR + "Financial Crisis: ally warps are disabled and upkeep costs are increased."));
+		if(newStage >= 2)
+			MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(EnumChatFormatting.DARK_RED + "[PRESTIGE] " + name + " has entered National Collapse. Warps are disabled."));
+		if(newStage >= 3)
+			MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(EnumChatFormatting.DARK_RED + "[PRESTIGE] " + name + " has become a Fallen Nation. Infrastructure and claim building are disabled."));
+	}
+
+	public void updatePrestigeEconomy(World world) {
+		int oldStage = lastBankruptcyStage;
+		float net = getHourlyNetPrestige();
+		Clowder tributeTarget = getSurrenderTributeTarget();
+
+		if(tributeTarget != null) {
+			float tribute = Math.max(0F, isInfrastructureDisabled() ? 0F : prestigeGen) * SURRENDER_TRIBUTE_RATE;
+			net -= tribute;
+			tributeTarget.addPrestige(tribute, world);
+		} else if(surrenderTributeUntil > 0L && surrenderTributeUntil <= System.currentTimeMillis()) {
+			surrenderTributeTo = "";
+			surrenderTributeUntil = 0L;
+		}
+
+		addPrestige(net, world);
+		lastBankruptcyStage = getBankruptcyStage();
+		notifyBankruptcyStage(world, oldStage, lastBankruptcyStage);
+
+		if(lastBankruptcyStage == 1)
+			notifyAll(world, new ChatComponentText(CommandClowder.ERROR + "Prestige warning: net prestige is " + round(getHourlyNetPrestige()) + "/h. Reduce upkeep or end wars before collapse."));
+	}
+
+	public void clearWarStateWith(Clowder target) {
+		if(target == null)
+			return;
+		activeWars.remove(target.name);
+		warDeclaredAt.remove(target.name);
+		peaceRequests.remove(target.name);
+		ceasefireRequests.remove(target.name);
+		surrenderRequests.remove(target.name);
+	}
+
 
 	//war time goes to 10 for retreat bonus level
 	public boolean isBuildGraceActive() {
@@ -1413,6 +1538,9 @@ public class Clowder {
 		nbt.setLong(i + "_belowOnlineSince", this.belowOnlineThresholdSince);
 		nbt.setLong(i + "_buildGraceUntil", this.buildGraceUntil);
 		nbt.setBoolean(i + "_buildGraceUsed", this.buildGraceUsed);
+		nbt.setString(i + "_surrenderTributeTo", this.surrenderTributeTo == null ? "" : this.surrenderTributeTo);
+		nbt.setLong(i + "_surrenderTributeUntil", this.surrenderTributeUntil);
+		nbt.setInteger(i + "_lastBankruptcyStage", this.lastBankruptcyStage);
 
 		///poorly coded "treaty" system///
 		//nbt.setString(i + "_treaty1", this.treaty1);
@@ -1510,11 +1638,11 @@ public class Clowder {
 		c.allyWarpX = nbt.getInteger(i + "_allyWarpX");
 		c.allyWarpY = nbt.getInteger(i + "_allyWarpY");
 		c.allyWarpZ = nbt.getInteger(i + "_allyWarpZ");
-		c.prestige = Math.max(nbt.getFloat(i + "_prestige"), 1F);
+		c.prestige = nbt.getFloat(i + "_prestige");
 		c.canDeclareTime = Math.max(nbt.getFloat(i + "_canDeclareTime"), 0F);
 		c.fabricateTime = Math.max(nbt.getFloat(i + "_fabricateTime"), 0F);
 		c.warTime = Math.max(nbt.getFloat(i + "_warTime"), 0F);
-		c.prestigeGen = Math.max(nbt.getFloat(i + "_prestigeGen"), 0F);
+		c.prestigeGen = nbt.getFloat(i + "_prestigeGen");
 		c.prestigeReq = Math.max(nbt.getFloat(i + "_prestigeReq"), 0F);
 		//c.peaceTreaty = Math.max(nbt.getFloat(i + "_peaceTreaty"), 0F);
 		c.flags = nbt.getInteger(i + "_flags");
@@ -1579,6 +1707,9 @@ public class Clowder {
 		c.belowOnlineThresholdSince = nbt.getLong(i + "_belowOnlineSince");
 		c.buildGraceUntil = nbt.getLong(i + "_buildGraceUntil");
 		c.buildGraceUsed = nbt.getBoolean(i + "_buildGraceUsed");
+		c.surrenderTributeTo = nbt.getString(i + "_surrenderTributeTo");
+		c.surrenderTributeUntil = nbt.getLong(i + "_surrenderTributeUntil");
+		c.lastBankruptcyStage = nbt.hasKey(i + "_lastBankruptcyStage") ? nbt.getInteger(i + "_lastBankruptcyStage") : c.getBankruptcyStage();
 
 		for (int j = 0; j < count; j++)
 			c.members.put(nbt.getString(i + "_" + j), time());
@@ -1786,8 +1917,8 @@ public class Clowder {
 		c.motd = "Message of the day!";
 		c.flag = ClowderFlag.TRICOLOR;
 
-		c.prestige = 25;
-		c.addPrestigeGen(3, player.worldObj);
+		c.prestige = STARTING_PRESTIGE;
+		c.addPrestigeGen(BASE_PRESTIGE_GEN, player.worldObj);
 
 		clowders.add(c);
 		inverseMap.put(leader, c);
@@ -1802,7 +1933,7 @@ public class Clowder {
 		for (Clowder clowder : clowders) {
 			if (clowder.valid()) {
 				//if (clowder.getPrestigeGen() > 0 && clowder.getPrestige() < clowder.getPrestigeReq()) {
-				clowder.addPrestige(clowder.getPrestigeGen(), world);
+				clowder.updatePrestigeEconomy(world);
 				//}
 				// ... prestige math ...
 			}

@@ -92,7 +92,7 @@ public class Conquerer extends BlockContainer {
 
 			if (clowder != null && flag.checkBorder(x, z) && flag.canSeeSky() && noProximity(world, x, y, z)) {
 
-				flag.owner.addPrestigeReq(0.2F, world);
+				flag.owner.addPrestigeReq(Clowder.flagReq, world);
 				flag.markDirty();
 				MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(
 						EnumChatFormatting.RED + "[WAR] " + EnumChatFormatting.GOLD + clowder.name +
@@ -168,7 +168,7 @@ public class Conquerer extends BlockContainer {
     {
 		TileEntityConquerer flag = (TileEntityConquerer)world.getTileEntity(x, y, z);
 		if(flag != null && flag.owner != null) {
-			flag.owner.addPrestigeReq(-0.2F, world);
+			flag.owner.addPrestigeReq(-Clowder.flagReq, world);
 		}
 		
 		super.breakBlock(world, x, y, z, b, i);
