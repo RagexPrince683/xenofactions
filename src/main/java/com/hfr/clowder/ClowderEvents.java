@@ -374,12 +374,37 @@ public void handleChatServer(ServerChatEvent event) {
 		if(player.inventory.hasItem(ModItems.debug))
 			return true;
 
+		if(owner == null)
+			return true;
+
 		if(owner.zone == Zone.SAFEZONE || owner.zone == Zone.WARZONE)
 			return false;
 
 
 		if(owner.zone == Zone.FACTION) {
-			
+
+			if(b == ModBlocks.clowder_flag) {
+				if(clowder != owner.owner) {
+					player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Enemy City Centers cannot be broken directly."));
+					return false;
+				}
+
+				if(clowder.getPermLevel(player.getDisplayName()) < 3) {
+					player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Only the faction leader can break City Centers."));
+					return false;
+				}
+
+				if(!owner.owner.activeWars.isEmpty()) {
+					player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "City Centers cannot be broken while your faction is at war."));
+					return false;
+				}
+			}
+
+			if(clowder == owner.owner && owner.owner.isInfrastructureDisabled()) {
+				player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Your faction is a Fallen Nation; breaking blocks in claimed land is disabled."));
+				return false;
+			}
+
 			if(clowder != owner.owner) {
 				if(clowder != null && !clowder.isRaidable())
 					return false;
@@ -422,15 +447,23 @@ public void handleChatServer(ServerChatEvent event) {
 		if(player.inventory.hasItem(ModItems.debug))
 			return true;
 
+		if(owner == null)
+			return true;
+
 		if(owner.zone == Zone.SAFEZONE || owner.zone == Zone.WARZONE)
 			return false;
 		
 		if(owner.zone == Zone.FACTION) {
-			
+
+			if(clowder == owner.owner && owner.owner.isInfrastructureDisabled()) {
+				player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Your faction is a Fallen Nation; placing blocks in claimed land is disabled."));
+				return false;
+			}
+
 			if(ItemMace.placeOverride.contains(b))
 				return true;
 			
-			if(clowder != owner.owner && !clowder.isRaidable())
+			if(clowder != owner.owner && (clowder == null || !clowder.isRaidable()))
 				return false;
 
 			if (player.worldObj.getBlock(x, y, z) != ModBlocks.clowder_flag) {
@@ -563,7 +596,13 @@ public void handleChatServer(ServerChatEvent event) {
 		
 		if(player.inventory.hasItem(ModItems.debug))
 			return true;
-		
+
+		if(owner == null)
+			return true;
+
+		if(owner.zone == Zone.FACTION && clowder == owner.owner && owner.owner.isInfrastructureDisabled())
+			return false;
+
 		if(owner.zone == Zone.FACTION && clowder != owner.owner) {
 			
 			if(clowder == null || !clowder.isRaidable() || !owner.owner.isRaidable())

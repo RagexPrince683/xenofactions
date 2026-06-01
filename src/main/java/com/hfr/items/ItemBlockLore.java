@@ -95,6 +95,10 @@ public class ItemBlockLore extends ItemBlock {
 			list.add("Smelts iron ingots and ore into steel");
 			list.add(Clowder.BlastRate + " prestige gen / hour");
 		}
+		if(field_150939_a == ModBlocks.machine_temple) {
+			list.add("Generates scrolls over time");
+			list.add(Clowder.TempleRate + " prestige gen / hour");
+		}
 		if(field_150939_a == ModBlocks.machine_coalmine) {
 			list.add("Requires sky access and foundation");
 			list.add("Uses miners and supplies to generate coal");
@@ -126,7 +130,7 @@ public class ItemBlockLore extends ItemBlock {
 		if(field_150939_a == ModBlocks.med_tent) {
 			list.add("Requires sky access and foundation");
 			list.add("Generates healing aura");
-			list.add("+0.1 prestige gen / hour");
+			list.add(Clowder.medTentRate + " prestige gen / hour");
 		}
 		if(field_150939_a == ModBlocks.tp_tent) {
 			list.add("Requires sky access and foundation");
