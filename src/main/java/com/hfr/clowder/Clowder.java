@@ -152,6 +152,7 @@ public class Clowder {
 	public boolean buildGraceUsed = false;
 	public String surrenderTributeTo = "";
 	public long surrenderTributeUntil = 0L;
+	public int citiesFounded = 0;
 	private int lastBankruptcyStage = 0;
 
 	public static List<Clowder> clowders = new ArrayList();
@@ -172,20 +173,24 @@ public class Clowder {
 	public static final float STARTING_PRESTIGE = 250F;
 	public static final float BASE_PRESTIGE_GEN = 25F;
 	public static final float WAR_DECLARATION_COST = 150F;
+	public static final float WAR_DECLARATION_TARGET_PRESTIGE_FACTOR = 0.15F;
 	public static final float WAR_UPKEEP = 75F;
+	public static final float WAR_UPKEEP_HOURLY_GROWTH = 0.25F;
+	public static final float WAR_UPKEEP_HOURLY_GROWTH_SQUARED = 0.05F;
+	public static final float CITY_FOUNDING_COST_GROWTH = 0.50F;
 	public static final float SURRENDER_TRIBUTE_RATE = 0.50F;
 	public static final long SURRENDER_TRIBUTE_TIME = 84L * 60L * 60L * 1000L;
 	public static final float FINANCIAL_CRISIS_UPKEEP_MULT = 1.25F;
 	public static final float NATIONAL_COLLAPSE_UPKEEP_MULT = 1.50F;
 	public static final float FALLEN_NATION_UPKEEP_MULT = 2.00F;
-	public static final float tentRate = -20F;
-	public static final float medTentRate = 10F;
-	public static final float BlastRate = 20F;
-	public static final float GrainRate = 15F;
+	public static final float tentRate = -75F;
+	public static final float medTentRate = -5F;
+	public static final float BlastRate = 5F;
+	public static final float GrainRate = 3F;
 	public static final float UniRate = 60F;
 	public static final float FedRate = 30F;
 	public static final float TempleRate = 90F;
-	public static final float statueRate = 40F;
+	public static final float statueRate = 15F;
 	public static final float flagRate = 0F;
 	public static final float flagReq = 10F;
 
@@ -796,31 +801,28 @@ public class Clowder {
 	public String getDecoratedName() {
 
 		String n = this.name.replace("_", " ").trim();
+		float p = getPrestige();
 
-		if(getPrestige() < 25)
+		if(p < 0)
+			n += " - Bankrupt State";
+		else if(p < 100)
 			n += " - Unorganized Mob";
-		else if(getPrestige() < 50)
+		else if(p < 250)
 			n += " - Clan";
-		else if(getPrestige() < 75)
+		else if(p < 500)
 			n += " - Tribe";
-		else if(getPrestige() < 100)
+		else if(p < 1000)
 			n += " - Chiefdom";
-		else if(getPrestige() < 125)
+		else if(p < 1750)
 			n += " - City-State";
-		else if(getPrestige() < 150)
+		else if(p < 2750)
 			n += " - Sheikhdom";
-		else if(getPrestige() < 250)
+		else if(p < 4000)
 			n += " - Emirate";
-		else if(getPrestige() < 500)
+		else if(p < 6000)
 			n += " - Sultanate";
-		else if(getPrestige() < 750)
+		else if(p < 8500)
 			n += " - Empire";
-		/*
-		else if(getPrestige() < 1000)
-			n += " - Caliphate";
-		else if(getPrestige() < 10000)
-			n += " - Caliphate";
-		*/
 		else
 			n += " - Caliphate";
 
@@ -1377,8 +1379,32 @@ public class Clowder {
 		}
 	}
 
+	public float getWarDeclarationCost(Clowder target) {
+		float targetPrestige = target == null ? 0F : Math.max(0F, target.getPrestige());
+		return WAR_DECLARATION_COST + targetPrestige * WAR_DECLARATION_TARGET_PRESTIGE_FACTOR;
+	}
+
+	public float getCityFoundingCost() {
+		return CityLevel.SETTLEMENT.upgradeCost * (1F + Math.max(0, citiesFounded) * CITY_FOUNDING_COST_GROWTH);
+	}
+
+	public void markCityFounded(World world) {
+		citiesFounded++;
+		save(world);
+	}
+
 	public float getHourlyWarCost() {
-		return activeWars.size() * WAR_UPKEEP;
+		float cost = 0F;
+		long now = System.currentTimeMillis();
+
+		for(String enemyName : activeWars) {
+			Long declaredAt = warDeclaredAt.get(enemyName);
+			long hours = declaredAt == null ? 0L : Math.max(0L, (now - declaredAt) / (60L * 60L * 1000L));
+			float multiplier = 1F + hours * WAR_UPKEEP_HOURLY_GROWTH + hours * hours * WAR_UPKEEP_HOURLY_GROWTH_SQUARED;
+			cost += WAR_UPKEEP * multiplier;
+		}
+
+		return cost;
 	}
 
 	public float getHourlyUpkeepCost() {
@@ -1541,6 +1567,7 @@ public class Clowder {
 		nbt.setString(i + "_surrenderTributeTo", this.surrenderTributeTo == null ? "" : this.surrenderTributeTo);
 		nbt.setLong(i + "_surrenderTributeUntil", this.surrenderTributeUntil);
 		nbt.setInteger(i + "_lastBankruptcyStage", this.lastBankruptcyStage);
+		nbt.setInteger(i + "_citiesFounded", this.citiesFounded);
 
 		///poorly coded "treaty" system///
 		//nbt.setString(i + "_treaty1", this.treaty1);
@@ -1710,6 +1737,7 @@ public class Clowder {
 		c.surrenderTributeTo = nbt.getString(i + "_surrenderTributeTo");
 		c.surrenderTributeUntil = nbt.getLong(i + "_surrenderTributeUntil");
 		c.lastBankruptcyStage = nbt.hasKey(i + "_lastBankruptcyStage") ? nbt.getInteger(i + "_lastBankruptcyStage") : c.getBankruptcyStage();
+		c.citiesFounded = Math.max(nbt.getInteger(i + "_citiesFounded"), 0);
 
 		for (int j = 0; j < count; j++)
 			c.members.put(nbt.getString(i + "_" + j), time());

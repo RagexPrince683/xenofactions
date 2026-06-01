@@ -2,6 +2,7 @@ package com.hfr.command;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import com.hfr.blocks.BlockDummyable;
@@ -49,6 +50,8 @@ import net.minecraftforge.common.util.ForgeDirection;
 import static com.hfr.main.MainRegistry.sub;
 
 public class CommandClowder extends CommandBase {
+
+	private static final HashMap<String, Long> CITY_UPGRADE_CONFIRMATIONS = new HashMap();
 
 
 	//private static final CoordPair wbpospos = new CoordPair(4274, 1335);
@@ -1641,7 +1644,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
-			float foundingCost = CityLevel.SETTLEMENT.upgradeCost;
+			float foundingCost = clowder.getCityFoundingCost();
 			float foundingUpkeep = CityLevel.SETTLEMENT.upkeep;
 			if(clowder.getPrestige() < foundingCost || clowder.getPrestigeReq() + foundingUpkeep > clowder.getPrestige() - foundingCost) {
 				sender.addChatMessage(new ChatComponentText(ERROR + "Founding a City Center requires " + foundingCost + " prestige and " + foundingUpkeep + " upkeep capacity."));
@@ -1659,7 +1662,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			stack.setStackDisplayName("City Center: " + cityName);
 			player.inventory.addItemStackToInventory(stack);
 			player.inventoryContainer.detectAndSendChanges();
-			sender.addChatMessage(new ChatComponentText(INFO + "Place the City Center to found " + cityName + ". Founding cost is charged on placement."));
+			sender.addChatMessage(new ChatComponentText(INFO + "Place the City Center to found " + cityName + ". Founding cost is " + foundingCost + " prestige and " + foundingUpkeep + " upkeep capacity."));
 
 		} else {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
@@ -1692,8 +1695,20 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(ERROR + city.name + " is already a Capital."));
 			return;
 		}
+
+		String confirmKey = player.getDisplayName() + ":" + meta.flagX + ":" + meta.flagY + ":" + meta.flagZ + ":" + next.ordinal();
+		Long confirmUntil = CITY_UPGRADE_CONFIRMATIONS.get(confirmKey);
+		long now = System.currentTimeMillis();
+		if(confirmUntil == null || confirmUntil < now) {
+			CITY_UPGRADE_CONFIRMATIONS.put(confirmKey, now + 10000L);
+			sender.addChatMessage(new ChatComponentText(INFO + "Upgrade " + city.name + " to " + next.displayName + " for " + next.upgradeCost + " prestige."));
+			sender.addChatMessage(new ChatComponentText(INFO + "New city level will be " + next.radius + " with " + next.upkeep + " upkeep. Run /c city upgrade again within 10 seconds to confirm."));
+			return;
+		}
+
+		CITY_UPGRADE_CONFIRMATIONS.remove(confirmKey);
 		if(city.upgradeCity())
-			sender.addChatMessage(new ChatComponentText(INFO + city.name + " upgraded to " + city.cityLevel.displayName + " (radius " + city.cityLevel.radius + ", upkeep " + city.cityLevel.upkeep + ")."));
+			sender.addChatMessage(new ChatComponentText(INFO + city.name + " upgraded to " + city.cityLevel.displayName + " (level " + city.cityLevel.radius + ", upkeep " + city.cityLevel.upkeep + ")."));
 		else
 			sender.addChatMessage(new ChatComponentText(ERROR + "Upgrade requires " + next.upgradeCost + " prestige and sequential upkeep capacity."));
 	}
@@ -1856,8 +1871,9 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "Fallen Nations cannot declare war."));
 			return;
 		}
-		me.addPrestige(-Clowder.WAR_DECLARATION_COST, player.worldObj);
-		sender.addChatMessage(new ChatComponentText(CRITICAL + "Declaring war cost " + Clowder.WAR_DECLARATION_COST + " prestige. Each active war costs " + Clowder.WAR_UPKEEP + " prestige per hour."));
+		float declarationCost = me.getWarDeclarationCost(target);
+		me.addPrestige(-declarationCost, player.worldObj);
+		sender.addChatMessage(new ChatComponentText(CRITICAL + "Declaring war on " + target.name + " cost " + Clowder.round(declarationCost) + " prestige. War upkeep starts at " + Clowder.WAR_UPKEEP + " prestige per hour and rises every hour."));
 		me.activeWars.add(target.name);
 		target.activeWars.add(me.name);
 		me.warDeclaredAt.put(target.name, now);
