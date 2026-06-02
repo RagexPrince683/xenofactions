@@ -660,7 +660,7 @@ public class TDMManager {
         Team team = getOrAssignPlayerTeam(player);
         String mapName = getSelectedMap(player.worldObj);
         if (TDMKitManager.getKitCount(mapName, team) <= 0) {
-            player.addChatMessage(new net.minecraft.util.ChatComponentText("No TDM kits have been saved for " + team.name + " on map " + (mapName.length() == 0 ? "global" : mapName) + ". Ask an admin to use /kit " + team.name + " [map]."));
+            player.addChatMessage(new net.minecraft.util.ChatComponentText("No TDM kits have been saved for " + team.name + " on map " + (mapName.length() == 0 ? "global" : mapName) + ". Ask an admin to use /tdm kit add " + team.name + " [map]."));
             return;
         }
 
