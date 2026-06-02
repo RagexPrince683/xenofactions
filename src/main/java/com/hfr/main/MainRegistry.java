@@ -793,9 +793,6 @@ public class MainRegistry
 		event.registerServerCommand(new CommandXMulti());
 		event.registerServerCommand(new CommandInvSee());
 		event.registerServerCommand(new CommandTDM());
-		event.registerServerCommand(new CommandKit());
-		event.registerServerCommand(new CommandKits());
-		event.registerServerCommand(new CommandTeamChange());
 		MarketData.loadMarketData();
 		PlayerProtectionData.load();
 
