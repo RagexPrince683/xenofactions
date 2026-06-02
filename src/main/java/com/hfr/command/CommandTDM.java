@@ -12,10 +12,15 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.world.World;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class CommandTDM extends CommandBase {
+
+    private static final int TEAM_CHANGE_COOLDOWN_TICKS = 120 * 20;
+    private final Map<String, Long> nextTeamChangeTick = new HashMap<String, Long>();
 
     @Override
     public String getCommandName() {
