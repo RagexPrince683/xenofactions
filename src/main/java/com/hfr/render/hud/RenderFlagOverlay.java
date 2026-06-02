@@ -16,6 +16,8 @@ public class RenderFlagOverlay {
 	public static String title = "";
 	public static String zone = "";
 	public static int color = 0xFF0000;
+	public static boolean tintFlag = true;
+	public static String customFlagName = "";
 	public static long startingTime;
 	public static int ttl = 5000;
     private static ScaledResolution res = null;
@@ -59,7 +61,10 @@ public class RenderFlagOverlay {
 
 			if(flag != null) {
 				minecraft.getTextureManager().bindTexture(flag);
-				GL11.glColor4b(r, g, b, (byte)(alpha / 2));
+				if(tintFlag)
+					GL11.glColor4b(r, g, b, (byte)(alpha / 2));
+				else
+					GL11.glColor4b((byte)127, (byte)127, (byte)127, (byte)(alpha / 2));
 				drawRectangle(0, 0);
 			}
 

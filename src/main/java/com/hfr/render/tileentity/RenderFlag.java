@@ -69,7 +69,10 @@ public class RenderFlag extends TileEntitySpecialRenderer {
         if(hasCustomFlag)
             FactionFlagTextureManager.handleMetadata(flagpole.ownerName, flagpole.customFlagHash);
         bindTexture(hasCustomFlag ? FactionFlagTextureManager.getFlagTexture(flagpole.ownerName) : flag.getFlag());
-        GL11.glColor3b((byte)r, (byte)g, (byte)b);
+        if(hasCustomFlag)
+            GL11.glColor3b((byte)127, (byte)127, (byte)127);
+        else
+            GL11.glColor3b((byte)r, (byte)g, (byte)b);
         ResourceManager.flag.renderOnly("Flag");
 
         if(!hasCustomFlag) {

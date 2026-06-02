@@ -13,6 +13,7 @@ import javax.imageio.ImageIO;
 import com.hfr.clowder.Clowder;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.effect.FactionFlagMetadataPacket;
+import com.hfr.render.hud.RenderFlagOverlay;
 
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.relauncher.Side;
@@ -122,6 +123,11 @@ public class FactionFlagTextureManager {
 		DynamicTexture dynamic = new DynamicTexture(image);
 		ResourceLocation location = Minecraft.getMinecraft().getTextureManager().getDynamicTextureLocation("xenofactions_flag_" + safe(factionName), dynamic);
 		TEXTURES.put(factionName, location);
+		if(factionName != null && factionName.equals(RenderFlagOverlay.customFlagName)) {
+			RenderFlagOverlay.flag = location;
+			RenderFlagOverlay.overlay = null;
+			RenderFlagOverlay.tintFlag = false;
+		}
 	}
 
 	private static File getCacheDir() {
