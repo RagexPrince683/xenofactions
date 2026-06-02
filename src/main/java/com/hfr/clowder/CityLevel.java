@@ -1,5 +1,6 @@
 package com.hfr.clowder;
 
+
 public enum CityLevel {
 	SETTLEMENT("Settlement", 2, 75F, 10F),
 	TOWN("Town", 3, 150F, 25F),

@@ -51,7 +51,7 @@ public class MachineTemple extends BlockDummyable {
 			if(owner != null && owner.zone == Zone.FACTION && entity instanceof TileEntityMachineTemple) {
 				TileEntityMachineTemple temple = (TileEntityMachineTemple)entity;
 				if(temple.owner != null)
-					temple.owner.addPrestigeGen(-Clowder.TempleRate, world);
+					temple.owner.addPrestigeGen(-Clowder.TempleRate(), world);
 			}
 		}
 		super.breakBlock(world, x, y, z, block, meta);
