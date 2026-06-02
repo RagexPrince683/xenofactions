@@ -122,6 +122,8 @@ public class ClowderTerritory {
 			if(renamed > 0)
 				ClowderData.getData(world).markDirty();
 		}
+		if(renamed > 0)
+			com.hfr.dynmap.XFDynmapIntegration.markDirty();
 		return renamed;
 	}
 
@@ -138,6 +140,8 @@ public class ClowderTerritory {
 		}
 		if(removed > 0 && world != null)
 			ClowderData.getData(world).markDirty();
+		if(removed > 0)
+			com.hfr.dynmap.XFDynmapIntegration.markDirty();
 		return removed;
 	}
 
@@ -168,6 +172,8 @@ public class ClowderTerritory {
 			flag.markDirty();
 		}
 		ClowderData.getData(world).markDirty();
+		if(moved > 0)
+			com.hfr.dynmap.XFDynmapIntegration.markDirty();
 		return moved;
 	}
 
@@ -202,6 +208,7 @@ public class ClowderTerritory {
 		
 		territories.put(code, metadata);
 		ClowderData.getData(world).markDirty();
+		com.hfr.dynmap.XFDynmapIntegration.markDirty();
 	}
 	
 	//sets the owner of a chunk to a special zone
@@ -225,6 +232,7 @@ public class ClowderTerritory {
 			territories.put(code, metadata);
 		}
 		ClowderData.getData(world).markDirty();
+		com.hfr.dynmap.XFDynmapIntegration.markDirty();
 	}
 	
 	//removes territory metadata
@@ -240,6 +248,7 @@ public class ClowderTerritory {
 		territories.remove(code);
 		
 		ClowderData.getData(world).markDirty();
+		com.hfr.dynmap.XFDynmapIntegration.markDirty();
 	}
 	
 	//returns the ownership information of the chunk
@@ -656,6 +665,7 @@ public class ClowderTerritory {
 			if(meta != null && meta.owner.zone != Zone.WILDERNESS) //todo here
 				territories.put(code, meta);
 		}
+		com.hfr.dynmap.XFDynmapIntegration.markDirty();
 	}
 	
 	public static void writeToNBT(NBTTagCompound nbt) {

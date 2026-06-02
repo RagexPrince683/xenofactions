@@ -51,6 +51,7 @@ import com.hfr.blocks.machine.MachineMarket.TileEntityMarket;
 import com.hfr.clowder.*;
 import com.hfr.command.*;
 import com.hfr.data.*;
+import com.hfr.dynmap.XFDynmapIntegration;
 import com.hfr.data.StockData.Stock;
 //import com.hfr.dim.WorldGeneratorMoon;
 //import com.hfr.dim.WorldProviderMoon;
@@ -667,10 +668,12 @@ public class MainRegistry
 
 		CommonEventHandler handler = new CommonEventHandler();
 		ClowderEvents clowder = new ClowderEvents();
+		XFDynmapIntegration dynmap = new XFDynmapIntegration();
 		//WorldController pon4 = new WorldController();
 		
 		FMLCommonHandler.instance().bus().register(handler);
 		FMLCommonHandler.instance().bus().register(clowder);
+		FMLCommonHandler.instance().bus().register(dynmap);
 		//FMLCommonHandler.instance().bus().register(pon4);
 		MinecraftForge.EVENT_BUS.register(handler);
 		MinecraftForge.EVENT_BUS.register(clowder);

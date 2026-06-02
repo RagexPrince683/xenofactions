@@ -1058,6 +1058,7 @@ public class Clowder {
 		this.name = canonicalizeClowderName(name);
 
 		ClowderData.getData(player.worldObj).markDirty();
+		com.hfr.dynmap.XFDynmapIntegration.markDirty();
 	}
 
 	public void setMotd(String motd, EntityPlayer player) {
@@ -1072,6 +1073,7 @@ public class Clowder {
 		this.color = color;
 
 		ClowderData.getData(player.worldObj).markDirty();
+		com.hfr.dynmap.XFDynmapIntegration.markDirty();
 	}
 
 	public void save(World world) {
