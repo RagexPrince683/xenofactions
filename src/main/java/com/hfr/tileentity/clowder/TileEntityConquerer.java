@@ -35,6 +35,10 @@ public class TileEntityConquerer extends TileEntityMachineBase implements ITerri
 	public ClowderFlag flag;
 	@SideOnly(Side.CLIENT)
 	public int color;
+	@SideOnly(Side.CLIENT)
+	public String ownerName = "";
+	@SideOnly(Side.CLIENT)
+	public String customFlagHash = "";
 
 	public TileEntityConquerer() {
 		super(0);
@@ -112,6 +116,8 @@ public class TileEntityConquerer extends TileEntityMachineBase implements ITerri
 			
 			this.updateGauge(owner.flag.ordinal(), 0, 250);
 			this.updateGauge(owner.color, 1, 250);
+			ownerName = owner.name;
+			customFlagHash = owner.customFlagHash;
 			this.updateGauge((int) (height * 100F), 2, 100);
 		}
 	}

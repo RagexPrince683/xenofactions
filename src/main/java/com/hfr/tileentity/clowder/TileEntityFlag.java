@@ -49,6 +49,8 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	public float prestige;
 	@SideOnly(Side.CLIENT)
 	public float prestigeReq;
+	@SideOnly(Side.CLIENT)
+	public String customFlagHash = "";
 
 	public TileEntityFlag() {
 		super(0);
@@ -197,7 +199,11 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 			
 			ownerName = owner == null ? "" : owner.name;
 			if(worldObj.getTotalWorldTime() % 20 == 0)
-				PacketDispatcher.wrapper.sendToAllAround(new CityCenterPacket(xCoord, yCoord, zCoord, name, ownerName), new TargetPoint(this.worldObj.provider.dimensionId, xCoord, yCoord, zCoord, 250));
+				{
+					CityCenterPacket packet = new CityCenterPacket(xCoord, yCoord, zCoord, name, ownerName);
+					packet.flagHash = owner == null ? "" : owner.customFlagHash;
+					PacketDispatcher.wrapper.sendToAllAround(packet, new TargetPoint(this.worldObj.provider.dimensionId, xCoord, yCoord, zCoord, 250));
+				}
 
 			if(owner != null) {
 				this.updateGauge(owner.flag.ordinal(), 0, 250);

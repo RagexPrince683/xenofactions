@@ -56,6 +56,9 @@ public class PacketDispatcher {
 		wrapper.registerMessage(SLBMCommandPacket.Handler.class, SLBMCommandPacket.class, i++, Side.SERVER);
 		wrapper.registerMessage(SLBMOfferPacket.Handler.class, SLBMOfferPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(ClowderFlagPacket.Handler.class, ClowderFlagPacket.class, i++, Side.CLIENT);
+		wrapper.registerMessage(FactionFlagMetadataPacket.ClientHandler.class, FactionFlagMetadataPacket.class, i++, Side.CLIENT);
+		wrapper.registerMessage(FactionFlagMetadataPacket.ServerHandler.class, FactionFlagMetadataPacket.class, i++, Side.SERVER);
+		wrapper.registerMessage(FactionFlagBytesPacket.Handler.class, FactionFlagBytesPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(ClowderBorderPacket.Handler.class, ClowderBorderPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(ExplosionSoundPacket.Handler.class, ExplosionSoundPacket.class, i++, Side.CLIENT);
 		//wrapper.registerMessage(OfferPacket.Handler.class, OfferPacket.class, i++, Side.CLIENT);

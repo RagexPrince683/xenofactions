@@ -45,6 +45,7 @@ public class Clowder {
 	public int color;
 	public boolean canChangeColour = true;
 	public boolean canDisband = false;
+	public String customFlagHash = "";
 
 	public int homeX;
 	public int homeY;
@@ -1515,6 +1516,7 @@ public class Clowder {
 		nbt.setInteger(i + "_color", this.color);
 		nbt.setBoolean(i + "_canChange", canChangeColour);
 		nbt.setBoolean(i + "_canDisband", canDisband);
+		nbt.setString(i + "_customFlagHash", this.customFlagHash == null ? "" : this.customFlagHash);
 		nbt.setInteger(i + "_homeX", this.homeX);
 		nbt.setInteger(i + "_homeY", this.homeY);
 		nbt.setInteger(i + "_homeZ", this.homeZ);
@@ -1661,6 +1663,7 @@ public class Clowder {
 		c.color = nbt.getInteger(i + "_color");
 		c.canChangeColour = nbt.getBoolean(i + "_canChange");
 		c.canDisband = nbt.getBoolean(i + "_canDisband");
+		c.customFlagHash = nbt.getString(i + "_customFlagHash");
 		c.homeX = nbt.getInteger(i + "_homeX");
 		c.homeY = nbt.getInteger(i + "_homeY");
 		c.homeZ = nbt.getInteger(i + "_homeZ");
@@ -1915,7 +1918,7 @@ public class Clowder {
 		uuid = uuid.toLowerCase();
 
 		for (Clowder clowder : clowders) {
-			if (clowder.uuid.toLowerCase().equals(uuid))
+			if (clowder.uuid != null && clowder.uuid.toLowerCase().equals(uuid))
 				return clowder;
 		}
 

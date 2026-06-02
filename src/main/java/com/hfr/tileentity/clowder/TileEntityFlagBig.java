@@ -41,6 +41,10 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 	public ClowderFlag flag;
 	@SideOnly(Side.CLIENT)
 	public int color;
+	@SideOnly(Side.CLIENT)
+	public String ownerName = "";
+	@SideOnly(Side.CLIENT)
+	public String customFlagHash = "";
 	public String provinceName = "";
 
 	public TileEntityFlagBig() {
@@ -145,9 +149,13 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 			if(owner != null) {
 				this.updateGauge(owner.flag.ordinal(), 0, 100);
 				this.updateGauge(owner.color, 1, 100);
+				ownerName = owner.name;
+				customFlagHash = owner.customFlagHash;
 			} else {
 				this.updateGauge(ClowderFlag.NONE.ordinal(), 0, 100);
 				this.updateGauge(0xFFFFFF, 1, 100);
+				ownerName = "";
+				customFlagHash = "";
 			}
 			
 		} else {
