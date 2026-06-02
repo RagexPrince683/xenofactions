@@ -7,6 +7,7 @@ import java.util.List;
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderFlag;
 import com.hfr.clowder.CityLevel;
+import com.hfr.config.XFConfig;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.CoordPair;
 import com.hfr.clowder.ClowderTerritory.Ownership;
@@ -262,11 +263,11 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	}
 	
 	public float getCost() {
-		return cityLevel.configuredUpkeep();
+		return XFConfig.cityUpkeep(cityLevel);
 	}
 	
 	public static float getCostFromMode(int mode) {
-		return CityLevel.SETTLEMENT.configuredUpkeep();
+		return XFConfig.cityUpkeep(CityLevel.SETTLEMENT);
 	}
 	
 	public void setOwner(Clowder c) {
@@ -308,9 +309,9 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 		if(next == null)
 			return false;
 		float beforeCost = getCost();
-		if(owner.getPrestige() < next.configuredUpgradeCost() || owner.getPrestigeReq() - beforeCost + next.configuredUpkeep() > owner.getPrestige() - next.configuredUpgradeCost())
+		if(owner.getPrestige() < XFConfig.cityUpgradeCost(next) || owner.getPrestigeReq() - beforeCost + XFConfig.cityUpkeep(next) > owner.getPrestige() - XFConfig.cityUpgradeCost(next))
 			return false;
-		owner.addPrestige(-next.configuredUpgradeCost(), worldObj);
+		owner.addPrestige(-XFConfig.cityUpgradeCost(next), worldObj);
 		owner.addPrestigeReq(-beforeCost, worldObj);
 		cityLevel = next;
 		owner.addPrestigeReq(getCost(), worldObj);
@@ -345,7 +346,7 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	@Override
 	public int getRadius() {
 		
-		return owner == null ? 0 : cityLevel.configuredRadius();
+		return owner == null ? 0 : XFConfig.cityRadius(cityLevel);
 	}
 
 	@Override

@@ -2,6 +2,7 @@ package com.hfr.blocks.clowder;
 
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.CityLevel;
+import com.hfr.config.XFConfig;
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.CoordPair;
@@ -119,7 +120,7 @@ public class Flag extends BlockContainer {
 
 			if(clowder != null && flag.canSeeSky()) {
 				float foundingCost = clowder.getCityFoundingCost();
-				float foundingUpkeep = CityLevel.SETTLEMENT.configuredUpkeep();
+				float foundingUpkeep = XFConfig.cityUpkeep(CityLevel.SETTLEMENT);
 				if(clowder.getPrestige() < foundingCost || clowder.getPrestigeReq() + foundingUpkeep > clowder.getPrestige() - foundingCost) {
 					world.setBlockToAir(x, y, z);
 					entityPlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Founding a City Center requires " + foundingCost + " prestige and " + foundingUpkeep + " upkeep capacity."));

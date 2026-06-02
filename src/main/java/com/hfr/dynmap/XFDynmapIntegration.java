@@ -276,7 +276,7 @@ public class XFDynmapIntegration {
 		if(XFConfig.dynmapShowClaimDetails)
 			label += "<br/><b>Level:</b> " + escapeHtml(meta.getCityLevel().displayName) + "<br/><b>Chunk:</b> " + coords.x + ", " + coords.z;
 		if(XFConfig.dynmapShowPrestigeDetails)
-			label += "<br/><b>Upkeep:</b> " + meta.getCityLevel().configuredUpkeep();
+			label += "<br/><b>Upkeep:</b> " + XFConfig.cityUpkeep(meta.getCityLevel());
 		return label;
 	}
 
@@ -285,7 +285,7 @@ public class XFDynmapIntegration {
 		if(XFConfig.dynmapShowClaimDetails)
 			label += "<br/><b>Level:</b> " + escapeHtml(meta.getCityLevel().displayName) + "<br/><b>Claims:</b> " + claimCount;
 		if(XFConfig.dynmapShowPrestigeDetails)
-			label += "<br/><b>Upkeep:</b> " + meta.getCityLevel().configuredUpkeep();
+			label += "<br/><b>Upkeep:</b> " + XFConfig.cityUpkeep(meta.getCityLevel());
 		label += "<br/><b>Faction Color:</b> #" + String.format("%06X", owner.color & 0xFFFFFF);
 		return label;
 	}

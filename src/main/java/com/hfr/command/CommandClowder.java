@@ -767,7 +767,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(LIST + "Cities: " + ClowderTerritory.getCityClaims(clowder).size()));
 			for(Object cityObj : ClowderTerritory.getCityClaims(clowder)) {
 				TerritoryMeta city = (TerritoryMeta)cityObj;
-				sender.addChatMessage(new ChatComponentText(LIST + " - " + city.cityName + " [" + city.getCityLevel().displayName + "] center X:" + city.flagX + " Y:" + city.flagY + " Z:" + city.flagZ + " radius " + city.getCityLevel().configuredRadius() + " upkeep " + city.getCityLevel().configuredUpkeep()));
+				sender.addChatMessage(new ChatComponentText(LIST + " - " + city.cityName + " [" + city.getCityLevel().displayName + "] center X:" + city.flagX + " Y:" + city.flagY + " Z:" + city.flagZ + " radius " + XFConfig.cityRadius(city.getCityLevel()) + " upkeep " + XFConfig.cityUpkeep(city.getCityLevel())));
 			}
 
 		} else {
@@ -791,7 +791,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(LIST + "Cities: " + ClowderTerritory.getCityClaims(clowder).size()));
 			for(Object cityObj : ClowderTerritory.getCityClaims(clowder)) {
 				TerritoryMeta city = (TerritoryMeta)cityObj;
-				sender.addChatMessage(new ChatComponentText(LIST + " - " + city.cityName + " [" + city.getCityLevel().displayName + "] center X:" + city.flagX + " Y:" + city.flagY + " Z:" + city.flagZ + " radius " + city.getCityLevel().configuredRadius() + " upkeep " + city.getCityLevel().configuredUpkeep()));
+				sender.addChatMessage(new ChatComponentText(LIST + " - " + city.cityName + " [" + city.getCityLevel().displayName + "] center X:" + city.flagX + " Y:" + city.flagY + " Z:" + city.flagZ + " radius " + XFConfig.cityRadius(city.getCityLevel()) + " upkeep " + XFConfig.cityUpkeep(city.getCityLevel())));
 			}
 
 		} else {
@@ -1721,16 +1721,16 @@ private void cmdCreate(ICommandSender sender, String name) {
 		long now = System.currentTimeMillis();
 		if(confirmUntil == null || confirmUntil < now) {
 			CITY_UPGRADE_CONFIRMATIONS.put(confirmKey, now + 10000L);
-			sender.addChatMessage(new ChatComponentText(INFO + "Upgrade " + city.name + " to " + next.displayName + " for " + next.configuredUpgradeCost() + " prestige."));
-			sender.addChatMessage(new ChatComponentText(INFO + "New city level will be " + next.level() + " with radius " + next.configuredRadius() + " and " + next.configuredUpkeep() + " upkeep. Run /c city upgrade again within 10 seconds to confirm."));
+			sender.addChatMessage(new ChatComponentText(INFO + "Upgrade " + city.name + " to " + next.displayName + " for " + XFConfig.cityUpgradeCost(next) + " prestige."));
+			sender.addChatMessage(new ChatComponentText(INFO + "New city level will be " + next.level() + " with radius " + XFConfig.cityRadius(next) + " and " + XFConfig.cityUpkeep(next) + " upkeep. Run /c city upgrade again within 10 seconds to confirm."));
 			return;
 		}
 
 		CITY_UPGRADE_CONFIRMATIONS.remove(confirmKey);
 		if(city.upgradeCity())
-			sender.addChatMessage(new ChatComponentText(INFO + city.name + " upgraded to " + city.cityLevel.displayName + " (level " + city.cityLevel.level() + ", radius " + city.cityLevel.configuredRadius() + ", upkeep " + city.cityLevel.configuredUpkeep() + ")."));
+			sender.addChatMessage(new ChatComponentText(INFO + city.name + " upgraded to " + city.cityLevel.displayName + " (level " + city.cityLevel.level() + ", radius " + XFConfig.cityRadius(city.cityLevel) + ", upkeep " + XFConfig.cityUpkeep(city.cityLevel) + ")."));
 		else
-			sender.addChatMessage(new ChatComponentText(ERROR + "Upgrade requires " + next.configuredUpgradeCost() + " prestige and sequential upkeep capacity."));
+			sender.addChatMessage(new ChatComponentText(ERROR + "Upgrade requires " + XFConfig.cityUpgradeCost(next) + " prestige and sequential upkeep capacity."));
 	}
 
 	//I have no idea how territories work, but it looks retarded

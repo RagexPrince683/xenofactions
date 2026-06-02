@@ -1,6 +1,5 @@
 package com.hfr.clowder;
 
-import com.hfr.config.XFConfig;
 
 public enum CityLevel {
 	SETTLEMENT("Settlement", 2, 75F, 10F),
