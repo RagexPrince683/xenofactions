@@ -152,7 +152,7 @@ public class MachineUni extends BlockDummyable {
 				TileEntityMachineUni statue = (TileEntityMachineUni)world.getTileEntity(x, y, z);
 				
 				if(statue.operational())
-					owner.owner.addPrestigeGen(-Clowder.UniRate, world);
+					owner.owner.addPrestigeGen(-Clowder.UniRate(), world);
 			}
 		}
 

@@ -13,6 +13,7 @@ import com.hfr.clowder.ClowderTerritory.CoordPair;
 import com.hfr.clowder.ClowderTerritory.TerritoryMeta;
 import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.clowder.events.RegionOwnershipChangedEvent;
+import com.hfr.config.XFConfig;
 import com.hfr.data.ClowderData;
 import com.hfr.items.ModItems;
 import com.hfr.tileentity.machine.TileEntityMachineBase;
@@ -53,7 +54,7 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 	}
 
 	public int getCost() {
-		return claim.size() / 150 + 1;
+		return Math.max(0, Math.round((claim.size() / 150 + 1) * XFConfig.claimFlagUpkeep));
 	}
 
 	@Override

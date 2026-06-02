@@ -119,7 +119,7 @@ public class Flag extends BlockContainer {
 
 			if(clowder != null && flag.canSeeSky()) {
 				float foundingCost = clowder.getCityFoundingCost();
-				float foundingUpkeep = CityLevel.SETTLEMENT.upkeep;
+				float foundingUpkeep = CityLevel.SETTLEMENT.configuredUpkeep();
 				if(clowder.getPrestige() < foundingCost || clowder.getPrestigeReq() + foundingUpkeep > clowder.getPrestige() - foundingCost) {
 					world.setBlockToAir(x, y, z);
 					entityPlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Founding a City Center requires " + foundingCost + " prestige and " + foundingUpkeep + " upkeep capacity."));

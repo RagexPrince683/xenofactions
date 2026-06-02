@@ -49,7 +49,7 @@ public class GUIFlag extends GuiContainer {
 		drawTextBackground(45, 16, 132, 70);
 		this.fontRendererObj.drawString("City: " + this.fontRendererObj.trimStringToWidth(cityName, 92), 50, 20, 0xFFFFFF);
 		this.fontRendererObj.drawString("Level: " + diFurnace.cityLevel.displayName, 50, 31, 0xFFFFFF);
-		this.fontRendererObj.drawString("Radius: " + diFurnace.cityLevel.radius + " Upkeep: " + Clowder.round(diFurnace.cityLevel.upkeep), 50, 42, 0xFFFFFF);
+		this.fontRendererObj.drawString("Radius: " + diFurnace.cityLevel.configuredRadius() + " Upkeep: " + Clowder.round(diFurnace.cityLevel.configuredUpkeep()), 50, 42, 0xFFFFFF);
 		this.fontRendererObj.drawString("Owner: " + this.fontRendererObj.trimStringToWidth(ownerName, 82), 50, 53, 0xFFFFFF);
 		this.fontRendererObj.drawString("Prestige: " + Clowder.round(prestige), 50, 64, 0xFFFFFF);
 		this.fontRendererObj.drawString("Required: " + Clowder.round(prestigeReq), 50, 75, color);

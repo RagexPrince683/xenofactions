@@ -45,14 +45,14 @@ public class TileEntityMachineFederalReserve extends TileEntityMachineBase {
 
                     if(o != null && o.zone == Zone.FACTION) {
                         if(owner != null)
-                            owner.addPrestigeGen(-Clowder.FedRate, worldObj);
+                            owner.addPrestigeGen(-Clowder.FedRate(), worldObj);
                         owner = o.owner;
-                        owner.addPrestigeGen(Clowder.FedRate, worldObj);
+                        owner.addPrestigeGen(Clowder.FedRate(), worldObj);
 
                     } else {
 
                         if(owner != null)
-                            owner.addPrestigeGen(-Clowder.FedRate, worldObj);
+                            owner.addPrestigeGen(-Clowder.FedRate(), worldObj);
 
                         owner = null;
                     }
@@ -90,7 +90,7 @@ public class TileEntityMachineFederalReserve extends TileEntityMachineBase {
             } else {
 
                 if(owner != null) {
-                    owner.addPrestigeGen(-Clowder.FedRate, worldObj);
+                    owner.addPrestigeGen(-Clowder.FedRate(), worldObj);
                     owner = null;
                 }
             }

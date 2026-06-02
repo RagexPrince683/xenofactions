@@ -11,6 +11,7 @@ import com.hfr.clowder.Clowder;
 import com.hfr.clowder.Clowder.ScheduledTeleport;
 import com.hfr.clowder.ClowderFlag;
 import com.hfr.clowder.flag.CustomFlagService;
+import com.hfr.config.XFConfig;
 import com.hfr.clowder.CityLevel;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.Ownership;
@@ -374,11 +375,12 @@ public class CommandClowder extends CommandBase {
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
 		if(clowder == null) { sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!")); return; }
 		if(clowder.getPermLevel(player.getDisplayName()) <= 2) { sender.addChatMessage(new ChatComponentText(ERROR + "Only faction leaders can activate build grace!")); return; }
-		if(clowder.buildGraceUsed) { sender.addChatMessage(new ChatComponentText(ERROR + "This faction already used build grace.")); return; }
+		if(!XFConfig.graceBuildEnabled) { sender.addChatMessage(new ChatComponentText(ERROR + "Build grace is disabled on this server.")); return; }
+		if(XFConfig.graceBuildOneTimeUse && clowder.buildGraceUsed) { sender.addChatMessage(new ChatComponentText(ERROR + "This faction already used build grace.")); return; }
 		if(!clowder.activeWars.isEmpty()) { sender.addChatMessage(new ChatComponentText(ERROR + "Cannot activate while in active war.")); return; }
 		clowder.buildGraceUsed = true;
-		clowder.buildGraceUntil = System.currentTimeMillis() + 48L * 60L * 60L * 1000L;
-		clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Build grace activated for 48 hours."));
+		clowder.buildGraceUntil = System.currentTimeMillis() + XFConfig.graceBuildDurationMs;
+		clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Build grace activated for " + (XFConfig.graceBuildDurationMs / (60L * 60L * 1000L)) + " hours."));
 		clowder.save(player.worldObj);
 	}
 private void cmdCreate(ICommandSender sender, String name) {
@@ -693,7 +695,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 							formerFriend.notifyAll(player.worldObj, new ChatComponentText(INFO + clowder.name + " has cancelled our alliance!"));
 							clowder.removeAlly(player.worldObj, kickee);
 							formerFriend.removeAlly(player.worldObj, clowder.name);
-							long until = System.currentTimeMillis() + 24L * 60L * 60L * 1000L;
+							long until = System.currentTimeMillis() + XFConfig.allianceBreakCooldownMs;
 							clowder.formerAllyNoWarUntil.put(formerFriend.name, until);
 							formerFriend.formerAllyNoWarUntil.put(clowder.name, until);
 							// modid instead of modname
@@ -765,7 +767,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(LIST + "Cities: " + ClowderTerritory.getCityClaims(clowder).size()));
 			for(Object cityObj : ClowderTerritory.getCityClaims(clowder)) {
 				TerritoryMeta city = (TerritoryMeta)cityObj;
-				sender.addChatMessage(new ChatComponentText(LIST + " - " + city.cityName + " [" + city.getCityLevel().displayName + "] center X:" + city.flagX + " Y:" + city.flagY + " Z:" + city.flagZ + " radius " + city.getCityLevel().radius + " upkeep " + city.getCityLevel().upkeep));
+				sender.addChatMessage(new ChatComponentText(LIST + " - " + city.cityName + " [" + city.getCityLevel().displayName + "] center X:" + city.flagX + " Y:" + city.flagY + " Z:" + city.flagZ + " radius " + city.getCityLevel().configuredRadius() + " upkeep " + city.getCityLevel().configuredUpkeep()));
 			}
 
 		} else {
@@ -789,7 +791,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(LIST + "Cities: " + ClowderTerritory.getCityClaims(clowder).size()));
 			for(Object cityObj : ClowderTerritory.getCityClaims(clowder)) {
 				TerritoryMeta city = (TerritoryMeta)cityObj;
-				sender.addChatMessage(new ChatComponentText(LIST + " - " + city.cityName + " [" + city.getCityLevel().displayName + "] center X:" + city.flagX + " Y:" + city.flagY + " Z:" + city.flagZ + " radius " + city.getCityLevel().radius + " upkeep " + city.getCityLevel().upkeep));
+				sender.addChatMessage(new ChatComponentText(LIST + " - " + city.cityName + " [" + city.getCityLevel().displayName + "] center X:" + city.flagX + " Y:" + city.flagY + " Z:" + city.flagZ + " radius " + city.getCityLevel().configuredRadius() + " upkeep " + city.getCityLevel().configuredUpkeep()));
 			}
 
 		} else {
@@ -1103,11 +1105,12 @@ private void cmdCreate(ICommandSender sender, String name) {
 					if(args.length < 3) { sender.addChatMessage(new ChatComponentText(ERROR + "Invalid format. Usage: /c flag seturl <https://i.postimg.cc/...>")); return; }
 					// Clients must never load arbitrary remote URLs directly. The server imports, validates, strips metadata,
 					// caches and syncs sanitized PNG bytes so malicious URLs cannot target every client.
+					if(!XFConfig.enableCustomFactionFlags) { sender.addChatMessage(new ChatComponentText(ERROR + "Custom faction flags are disabled on this server.")); return; }
 					CustomFlagService.importUrl((EntityPlayerMP)player, clowder, args[2]);
 					return;
 				}
-				if(flag.equalsIgnoreCase("clear")) { CustomFlagService.clearFlag((EntityPlayerMP)player, clowder); return; }
-				if(flag.equalsIgnoreCase("reload")) { CustomFlagService.reloadFlag((EntityPlayerMP)player, clowder); return; }
+				if(flag.equalsIgnoreCase("clear")) { if(!XFConfig.enableCustomFactionFlags) { sender.addChatMessage(new ChatComponentText(ERROR + "Custom faction flags are disabled on this server.")); return; } CustomFlagService.clearFlag((EntityPlayerMP)player, clowder); return; }
+				if(flag.equalsIgnoreCase("reload")) { if(!XFConfig.enableCustomFactionFlags) { sender.addChatMessage(new ChatComponentText(ERROR + "Custom faction flags are disabled on this server.")); return; } CustomFlagService.reloadFlag((EntityPlayerMP)player, clowder); return; }
 
 				ClowderFlag f = ClowderFlag.getFromName(flag.toLowerCase());
 
@@ -1339,8 +1342,8 @@ private void cmdCreate(ICommandSender sender, String name) {
 				return;
 			}
 
-			if(clowder.getPrestige() < MainRegistry.warpCost) {
-				sender.addChatMessage(new ChatComponentText(ERROR + "You need at least " + MainRegistry.warpCost + " prestige to create a warp!"));
+			if(clowder.getPrestige() < XFConfig.warpCost) {
+				sender.addChatMessage(new ChatComponentText(ERROR + "You need at least " + Clowder.round(XFConfig.warpCost) + " prestige to create a warp!"));
 				return;
 			}
 
@@ -1348,7 +1351,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 			if(code == 0) {
 				clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Created warp " + name + "!"));
-				clowder.addPrestige(-MainRegistry.warpCost, player.worldObj);
+				clowder.addPrestige(-XFConfig.warpCost, player.worldObj);
 				clowder.save(player.worldObj);
 			} else if(code == 1) {
 				sender.addChatMessage(new ChatComponentText(ERROR + "Cannot create warp outside of your territory!"));
@@ -1650,7 +1653,11 @@ private void cmdCreate(ICommandSender sender, String name) {
 			return;
 		}
 		cityName = cityName.trim();
-		if(!ClowderTerritory.isCityNameAvailable(cityName, null)) {
+		if(cityName.length() < XFConfig.claimNameMinLength || cityName.length() > XFConfig.claimNameMaxLength) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "City names must be " + XFConfig.claimNameMinLength + "-" + XFConfig.claimNameMaxLength + " characters."));
+			return;
+		}
+		if(XFConfig.claimNameRequireUnique && !ClowderTerritory.isCityNameAvailable(cityName, null)) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "A city named " + cityName + " already exists."));
 			return;
 		}
@@ -1658,7 +1665,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		if(clowder != null) {
 
 			float foundingCost = clowder.getCityFoundingCost();
-			float foundingUpkeep = CityLevel.SETTLEMENT.upkeep;
+			float foundingUpkeep = XFConfig.cityUpkeep(CityLevel.SETTLEMENT);
 			if(clowder.getPrestige() < foundingCost || clowder.getPrestigeReq() + foundingUpkeep > clowder.getPrestige() - foundingCost) {
 				sender.addChatMessage(new ChatComponentText(ERROR + "Founding a City Center requires " + foundingCost + " prestige and " + foundingUpkeep + " upkeep capacity."));
 				return;
@@ -1714,16 +1721,16 @@ private void cmdCreate(ICommandSender sender, String name) {
 		long now = System.currentTimeMillis();
 		if(confirmUntil == null || confirmUntil < now) {
 			CITY_UPGRADE_CONFIRMATIONS.put(confirmKey, now + 10000L);
-			sender.addChatMessage(new ChatComponentText(INFO + "Upgrade " + city.name + " to " + next.displayName + " for " + next.upgradeCost + " prestige."));
-			sender.addChatMessage(new ChatComponentText(INFO + "New city level will be " + next.level() + " with radius " + next.radius + " and " + next.upkeep + " upkeep. Run /c city upgrade again within 10 seconds to confirm."));
+			sender.addChatMessage(new ChatComponentText(INFO + "Upgrade " + city.name + " to " + next.displayName + " for " + next.configuredUpgradeCost() + " prestige."));
+			sender.addChatMessage(new ChatComponentText(INFO + "New city level will be " + next.level() + " with radius " + next.configuredRadius() + " and " + next.configuredUpkeep() + " upkeep. Run /c city upgrade again within 10 seconds to confirm."));
 			return;
 		}
 
 		CITY_UPGRADE_CONFIRMATIONS.remove(confirmKey);
 		if(city.upgradeCity())
-			sender.addChatMessage(new ChatComponentText(INFO + city.name + " upgraded to " + city.cityLevel.displayName + " (level " + city.cityLevel.level() + ", radius " + city.cityLevel.radius + ", upkeep " + city.cityLevel.upkeep + ")."));
+			sender.addChatMessage(new ChatComponentText(INFO + city.name + " upgraded to " + city.cityLevel.displayName + " (level " + city.cityLevel.level() + ", radius " + city.cityLevel.configuredRadius() + ", upkeep " + city.cityLevel.configuredUpkeep() + ")."));
 		else
-			sender.addChatMessage(new ChatComponentText(ERROR + "Upgrade requires " + next.upgradeCost + " prestige and sequential upkeep capacity."));
+			sender.addChatMessage(new ChatComponentText(ERROR + "Upgrade requires " + next.configuredUpgradeCost() + " prestige and sequential upkeep capacity."));
 	}
 
 	//I have no idea how territories work, but it looks retarded
@@ -1811,7 +1818,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			return;
 		}
 
-		if(clowder.getPermLevel(player.getDisplayName()) < 2) {
+		if(clowder.getPermLevel(player.getDisplayName()) < (XFConfig.claimRenameOfficersAllowed ? 2 : 3)) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions to rename cities!"));
 			return;
 		}
@@ -1833,6 +1840,10 @@ private void cmdCreate(ICommandSender sender, String name) {
 			return;
 		}
 		name = name.trim();
+		if(name.length() < XFConfig.claimNameMinLength || name.length() > XFConfig.claimNameMaxLength) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Claim names must be " + XFConfig.claimNameMinLength + "-" + XFConfig.claimNameMaxLength + " characters."));
+			return;
+		}
 
 		TileEntity tile = player.worldObj.getTileEntity(meta.flagX, meta.flagY, meta.flagZ);
 
@@ -1841,7 +1852,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			return;
 		}
 
-		if(!ClowderTerritory.isCityNameAvailable(name, meta)) {
+		if(XFConfig.claimNameRequireUnique && !ClowderTerritory.isCityNameAvailable(name, meta)) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "A city named " + name + " already exists."));
 			return;
 		}
@@ -1865,11 +1876,11 @@ private void cmdCreate(ICommandSender sender, String name) {
 		Clowder target = Clowder.getClowderFromName(targetName);
 		if (me == null || target == null || me == target) return;
 		if (me.getPermLevel(player.getDisplayName()) < 3) return;
-		if(!(CommandClowderAdmin.LEGACY_WAR_ENABLED || CommandClowderAdmin.WAR_ONLINE_CHECK_DISABLED) && target.getOnlineMemberCount() < 2 && !Clowder.forceOnline) {
-			sender.addChatMessage(new ChatComponentText(ERROR + "You can only declare war on factions that are currently online (2+ members)."));
+		if(!(CommandClowderAdmin.LEGACY_WAR_ENABLED || CommandClowderAdmin.WAR_ONLINE_CHECK_DISABLED) && target.getOnlineMemberCount() < XFConfig.warOnlinePlayerThreshold && !Clowder.forceOnline) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You can only declare war on factions that are currently online (" + XFConfig.warOnlinePlayerThreshold + "+ members)."));
 			return;
 		}
-		if (me.allies.containsKey(target)) {
+		if (!XFConfig.alliesCanDeclareWarOnEachOther && me.allies.containsKey(target)) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You can not declare war on an ally."));
 			return;
 		}
@@ -1886,7 +1897,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		}
 		float declarationCost = me.getWarDeclarationCost(target);
 		me.addPrestige(-declarationCost, player.worldObj);
-		sender.addChatMessage(new ChatComponentText(CRITICAL + "Declaring war on " + target.name + " cost " + Clowder.round(declarationCost) + " prestige. War upkeep starts at " + Clowder.WAR_UPKEEP + " prestige per hour and rises every hour."));
+		sender.addChatMessage(new ChatComponentText(CRITICAL + "Declaring war on " + target.name + " cost " + Clowder.round(declarationCost) + " prestige. War upkeep starts at " + Clowder.round(XFConfig.activeWarUpkeep) + " prestige per hour and rises every hour."));
 		me.activeWars.add(target.name);
 		target.activeWars.add(me.name);
 		me.warDeclaredAt.put(target.name, now);
@@ -1908,6 +1919,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		if (me.getPermLevel(player.getDisplayName()) < 3) return;
 		me.peaceRequests.add(target.name);
 		if(transferCity != null && !transferCity.trim().isEmpty()) {
+			if(!XFConfig.peaceCityTransfersEnabled) { sender.addChatMessage(new ChatComponentText(ERROR + "Peace city transfers are disabled on this server.")); return; }
 			TerritoryMeta city = ClowderTerritory.getCityByName(me, transferCity.trim());
 			if(city == null) {
 				sender.addChatMessage(new ChatComponentText(ERROR + "Unknown city: " + transferCity));
@@ -1935,6 +1947,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		for(Object requestObj : new ArrayList(target.peaceRequests)) {
 			String request = (String)requestObj;
 			if(request.startsWith(prefix)) {
+				if(!XFConfig.peaceCityTransfersEnabled) { target.peaceRequests.remove(request); continue; }
 				String cityName = request.substring(prefix.length());
 				TerritoryMeta city = ClowderTerritory.getCityByName(target, cityName);
 				if(city != null) {
@@ -1946,7 +1959,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		}
 		me.clearWarStateWith(target); target.clearWarStateWith(me);
 		if(!CommandClowderAdmin.WAR_COOLDOWNS_DISABLED) {
-			long until = System.currentTimeMillis() + 84L * 60L * 60L * 1000L;
+			long until = System.currentTimeMillis() + XFConfig.peaceCooldownMs;
 			me.noWarUntil.put(target.name, until); target.noWarUntil.put(me.name, until);
 		}
 		MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(EnumChatFormatting.GREEN + "[WAR] " + me.name + " and " + target.name + " have agreed to peace."));
@@ -1977,7 +1990,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		target.ceasefireRequests.remove(me.name);
 		me.clearWarStateWith(target); target.clearWarStateWith(me);
 		if(!CommandClowderAdmin.WAR_COOLDOWNS_DISABLED) {
-			long until = System.currentTimeMillis() + 24L * 60L * 60L * 1000L;
+			long until = System.currentTimeMillis() + XFConfig.ceasefireCooldownMs;
 			me.noWarUntil.put(target.name, until); target.noWarUntil.put(me.name, until);
 		}
 	}
@@ -2005,20 +2018,23 @@ private void cmdCreate(ICommandSender sender, String name) {
 		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 3) return;
 		if(!target.surrenderRequests.contains(me.name)) return;
 		target.surrenderRequests.remove(me.name);
-		for(Object cityObj : ClowderTerritory.getCityClaims(target)) {
-			TerritoryMeta city = (TerritoryMeta)cityObj;
-			ClowderTerritory.transferCity(player.worldObj, city, me);
+		if(XFConfig.surrenderTransfersCities) {
+			for(Object cityObj : ClowderTerritory.getCityClaims(target)) {
+				TerritoryMeta city = (TerritoryMeta)cityObj;
+				ClowderTerritory.transferCity(player.worldObj, city, me);
+			}
 		}
 		target.beginSurrenderTribute(me, player.worldObj);
 		me.clearWarStateWith(target); target.clearWarStateWith(me);
 		if(!CommandClowderAdmin.WAR_COOLDOWNS_DISABLED) {
-			long until = System.currentTimeMillis() + 84L * 60L * 60L * 1000L;
+			long until = System.currentTimeMillis() + XFConfig.surrenderCooldownMs;
 			me.noWarUntil.put(target.name, until); target.noWarUntil.put(me.name, until);
 		}
-		MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(EnumChatFormatting.GREEN + "[WAR] " + me.name + " accepted " + target.name + "'s surrender. " + target.name + " will pay 50% of prestige generation to " + me.name + " for 84 hours."));
+		MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(EnumChatFormatting.GREEN + "[WAR] " + me.name + " accepted " + target.name + "'s surrender. " + target.name + " will pay " + Math.round(XFConfig.surrenderPrestigeTransferPercent * 100F) + "% of prestige generation to " + me.name + " for " + (XFConfig.surrenderTributeDurationMs / (60L * 60L * 1000L)) + " hours."));
 	}
 
 	private void cmdDefendAlly(ICommandSender sender, String allyName) {
+		if(!XFConfig.alliesCanJoinWars) { sender.addChatMessage(new ChatComponentText(ERROR + "Allies joining wars is disabled on this server.")); return; }
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder ally = Clowder.getClowderFromName(allyName);
