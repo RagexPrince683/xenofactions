@@ -32,13 +32,13 @@ public class TileEntityMachineTemple extends TileEntityMachineBase {
 			if(o != null && o.zone == Zone.FACTION) {
 				if(owner != o.owner) {
 					if(owner != null)
-						owner.addPrestigeGen(-Clowder.TempleRate, worldObj);
+						owner.addPrestigeGen(-Clowder.TempleRate(), worldObj);
 					owner = o.owner;
-					owner.addPrestigeGen(Clowder.TempleRate, worldObj);
+					owner.addPrestigeGen(Clowder.TempleRate(), worldObj);
 					this.markDirty();
 				}
 			} else if(owner != null) {
-				owner.addPrestigeGen(-Clowder.TempleRate, worldObj);
+				owner.addPrestigeGen(-Clowder.TempleRate(), worldObj);
 				owner = null;
 				this.markDirty();
 			}

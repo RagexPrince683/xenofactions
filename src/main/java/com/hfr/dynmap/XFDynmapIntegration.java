@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.hfr.clowder.Clowder;
+import com.hfr.config.XFConfig;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.CoordPair;
 import com.hfr.clowder.ClowderTerritory.TerritoryMeta;
@@ -56,7 +57,7 @@ public class XFDynmapIntegration {
 			return;
 
 		tickCounter++;
-		if(tickCounter < UPDATE_INTERVAL_TICKS)
+		if(tickCounter < XFConfig.dynmapUpdateIntervalTicks)
 			return;
 
 		tickCounter = 0;
@@ -66,6 +67,8 @@ public class XFDynmapIntegration {
 
 	public static void updateMarkers() {
 		try {
+			if(!XFConfig.enableDynmapIntegration)
+				return;
 			Object markerApi = getMarkerApi();
 			if(markerApi == null)
 				return;
@@ -117,13 +120,13 @@ public class XFDynmapIntegration {
 
 	private static Object getOrCreateMarkerSet(Object markerApi) throws Exception {
 		Method getMarkerSet = markerApi.getClass().getMethod("getMarkerSet", String.class);
-		Object set = getMarkerSet.invoke(markerApi, MARKER_SET_ID);
+		Object set = getMarkerSet.invoke(markerApi, XFConfig.dynmapMarkerSetId);
 		if(set == null) {
 			Method createMarkerSet = markerApi.getClass().getMethod("createMarkerSet", String.class, String.class, Set.class, boolean.class);
-			set = createMarkerSet.invoke(markerApi, MARKER_SET_ID, MARKER_SET_LABEL, null, false);
+			set = createMarkerSet.invoke(markerApi, XFConfig.dynmapMarkerSetId, XFConfig.dynmapMarkerSetLabel, null, false);
 		}
 		if(set != null) {
-			callIfPresent(set, "setMarkerSetLabel", new Class[] { String.class }, new Object[] { MARKER_SET_LABEL });
+			callIfPresent(set, "setMarkerSetLabel", new Class[] { String.class }, new Object[] { XFConfig.dynmapMarkerSetLabel });
 			callIfPresent(set, "setLayerPriority", new Class[] { int.class }, new Object[] { Integer.valueOf(10) });
 			callIfPresent(set, "setHideByDefault", new Class[] { boolean.class }, new Object[] { Boolean.FALSE });
 		}
@@ -194,8 +197,8 @@ public class XFDynmapIntegration {
 					setRangeYMethod = area.getClass().getMethod("setRangeY", double.class, double.class);
 					setRangeYMethod.setAccessible(true);
 				}
-				setLineStyleMethod.invoke(area, Integer.valueOf(CLAIM_LINE_WEIGHT), Double.valueOf(CLAIM_LINE_OPACITY), Integer.valueOf(color));
-				setFillStyleMethod.invoke(area, Double.valueOf(CLAIM_FILL_OPACITY), Integer.valueOf(color));
+				setLineStyleMethod.invoke(area, Integer.valueOf(XFConfig.dynmapClaimLineWeight), Double.valueOf(XFConfig.dynmapClaimLineOpacity), Integer.valueOf(color));
+				setFillStyleMethod.invoke(area, Double.valueOf(XFConfig.dynmapClaimFillOpacity), Integer.valueOf(color));
 				setRangeYMethod.invoke(area, Double.valueOf(64.0D), Double.valueOf(64.0D));
 			}
 
@@ -210,7 +213,8 @@ public class XFDynmapIntegration {
 
 		for(CitySummary city : cities.values()) {
 			createCityBorders(worldName, city);
-			createCityCenterMarker(worldName, city);
+			if(XFConfig.dynmapShowCityCenterMarkers)
+				createCityCenterMarker(worldName, city);
 		}
 	}
 
@@ -240,7 +244,7 @@ public class XFDynmapIntegration {
 		if(line != null) {
 			Method setLineStyle = line.getClass().getMethod("setLineStyle", int.class, double.class, int.class);
 			setLineStyle.setAccessible(true);
-			setLineStyle.invoke(line, Integer.valueOf(3), Double.valueOf(0.9D), Integer.valueOf(city.owner.color & 0xFFFFFF));
+			setLineStyle.invoke(line, Integer.valueOf(XFConfig.dynmapBorderLineWeight), Double.valueOf(XFConfig.dynmapBorderLineOpacity), Integer.valueOf(city.owner.color & 0xFFFFFF));
 		}
 	}
 
@@ -268,18 +272,22 @@ public class XFDynmapIntegration {
 
 	private static String buildClaimLabel(TerritoryMeta meta, Clowder owner, CoordPair coords) {
 		String cityName = displayCityName(meta);
-		return "<b>" + escapeHtml(cityName) + "</b>"
-				+ "<br/><b>Faction:</b> " + escapeHtml(owner.name)
-				+ "<br/><b>Level:</b> " + escapeHtml(meta.getCityLevel().displayName)
-				+ "<br/><b>Chunk:</b> " + coords.x + ", " + coords.z;
+		String label = "<b>" + escapeHtml(cityName) + "</b>" + "<br/><b>Faction:</b> " + escapeHtml(owner.name);
+		if(XFConfig.dynmapShowClaimDetails)
+			label += "<br/><b>Level:</b> " + escapeHtml(meta.getCityLevel().displayName) + "<br/><b>Chunk:</b> " + coords.x + ", " + coords.z;
+		if(XFConfig.dynmapShowPrestigeDetails)
+			label += "<br/><b>Upkeep:</b> " + meta.getCityLevel().configuredUpkeep();
+		return label;
 	}
 
 	private static String buildCityLabel(TerritoryMeta meta, Clowder owner, int claimCount) {
-		return "<b>City Center: " + escapeHtml(displayCityName(meta)) + "</b>"
-				+ "<br/><b>Faction:</b> " + escapeHtml(owner.name)
-				+ "<br/><b>Level:</b> " + escapeHtml(meta.getCityLevel().displayName)
-				+ "<br/><b>Claims:</b> " + claimCount
-				+ "<br/><b>Faction Color:</b> #" + String.format("%06X", owner.color & 0xFFFFFF);
+		String label = "<b>City Center: " + escapeHtml(displayCityName(meta)) + "</b>" + "<br/><b>Faction:</b> " + escapeHtml(owner.name);
+		if(XFConfig.dynmapShowClaimDetails)
+			label += "<br/><b>Level:</b> " + escapeHtml(meta.getCityLevel().displayName) + "<br/><b>Claims:</b> " + claimCount;
+		if(XFConfig.dynmapShowPrestigeDetails)
+			label += "<br/><b>Upkeep:</b> " + meta.getCityLevel().configuredUpkeep();
+		label += "<br/><b>Faction Color:</b> #" + String.format("%06X", owner.color & 0xFFFFFF);
+		return label;
 	}
 
 	private static String displayCityName(TerritoryMeta meta) {

@@ -10,6 +10,7 @@ import com.hfr.clowder.ClowderTerritory.CoordPair;
 import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.clowder.ClowderEvents;
 import com.hfr.clowder.PlayerProtectionData;
+import com.hfr.config.XFConfig;
 import com.hfr.data.ClowderData;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.effect.ClowderFlagPacket;
@@ -135,7 +136,7 @@ public class CommandClowderAdmin extends CommandBase {
 			return;
 		}
 
-		if(cmd.equals("newplayerprotection")) { ClowderEvents.newPlayerProtectionEnabled = !ClowderEvents.newPlayerProtectionEnabled; sender.addChatMessage(new ChatComponentText(INFO + "New player protection is now " + (ClowderEvents.newPlayerProtectionEnabled ? "enabled" : "disabled") + ".")); return; }
+		if(cmd.equals("newplayerprotection")) { if(!XFConfig.enableNewPlayerProtection) { sender.addChatMessage(new ChatComponentText(ERROR + "New-player protection module is disabled in the config.")); return; } ClowderEvents.newPlayerProtectionEnabled = !ClowderEvents.newPlayerProtectionEnabled; sender.addChatMessage(new ChatComponentText(INFO + "New player protection is now " + (ClowderEvents.newPlayerProtectionEnabled ? "enabled" : "disabled") + ".")); return; }
 		if(cmd.equals("resetnewplayerprotection")) { cmdResetNewPlayerProtection(sender); return; }
 		if(cmd.equals("endnewplayerprotection")) { cmdEndNewPlayerProtection(sender); return; }
 		if(cmd.equals("skipwarcooldowns")) { WAR_COOLDOWNS_DISABLED = !WAR_COOLDOWNS_DISABLED; sender.addChatMessage(new ChatComponentText(INFO + "War cooldown skipping is now " + (WAR_COOLDOWNS_DISABLED ? "ENABLED" : "DISABLED") + ".")); return; }
@@ -525,8 +526,8 @@ public class CommandClowderAdmin extends CommandBase {
 
 		for(PlayerProtectionData.ProtectionEntry entry : PlayerProtectionData.getAll().values()) {
 
-			entry.pvpGraceUntil = now + 4L * 60L * 60L * 1000L;
-			entry.keepInvUntil = now + 24L * 60L * 60L * 1000L;
+			entry.pvpGraceUntil = now + XFConfig.pvpGraceDurationMs;
+			entry.keepInvUntil = now + XFConfig.keepInventoryDurationMs;
 		}
 
 		PlayerProtectionData.save();

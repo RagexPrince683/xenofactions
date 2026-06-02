@@ -250,23 +250,23 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	}
 	
 	public float getGenRate() {
-		return owner == null ? 0 : Clowder.flagRate;
+		return owner == null ? 0 : Clowder.flagRate();
 	}
 	
 	public static float getGenRateFromMode(int mode) {
 		
 		if(mode != 0)
-			return Clowder.flagRate;
+			return Clowder.flagRate();
 		
 		return 0;
 	}
 	
 	public float getCost() {
-		return cityLevel.upkeep;
+		return cityLevel.configuredUpkeep();
 	}
 	
 	public static float getCostFromMode(int mode) {
-		return CityLevel.SETTLEMENT.upkeep;
+		return CityLevel.SETTLEMENT.configuredUpkeep();
 	}
 	
 	public void setOwner(Clowder c) {
@@ -308,9 +308,9 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 		if(next == null)
 			return false;
 		float beforeCost = getCost();
-		if(owner.getPrestige() < next.upgradeCost || owner.getPrestigeReq() - beforeCost + next.upkeep > owner.getPrestige() - next.upgradeCost)
+		if(owner.getPrestige() < next.configuredUpgradeCost() || owner.getPrestigeReq() - beforeCost + next.configuredUpkeep() > owner.getPrestige() - next.configuredUpgradeCost())
 			return false;
-		owner.addPrestige(-next.upgradeCost, worldObj);
+		owner.addPrestige(-next.configuredUpgradeCost(), worldObj);
 		owner.addPrestigeReq(-beforeCost, worldObj);
 		cityLevel = next;
 		owner.addPrestigeReq(getCost(), worldObj);
@@ -345,7 +345,7 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	@Override
 	public int getRadius() {
 		
-		return owner == null ? 0 : cityLevel.radius;
+		return owner == null ? 0 : cityLevel.configuredRadius();
 	}
 
 	@Override

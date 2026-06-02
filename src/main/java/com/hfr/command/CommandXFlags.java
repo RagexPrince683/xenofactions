@@ -1,6 +1,7 @@
 package com.hfr.command;
 
 import com.hfr.blocks.ModBlocks;
+import com.hfr.config.XFConfig;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -34,7 +35,7 @@ public class CommandXFlags extends CommandBase {
 
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
-        if (sender instanceof EntityPlayerMP && CommandClowderAdmin.WARENABLED ) { // declaration system enabled
+        if (sender instanceof EntityPlayerMP && XFConfig.enableConquestFlagsCommand && CommandClowderAdmin.WARENABLED ) { // declaration system enabled
             EntityPlayerMP player = (EntityPlayerMP) sender;
             ItemStack map = new ItemStack(ModBlocks.clowder_conquerer, 64);
             player.inventory.addItemStackToInventory(map);

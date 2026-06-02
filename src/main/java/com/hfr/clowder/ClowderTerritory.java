@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import com.hfr.config.XFConfig;
 import com.hfr.data.ClowderData;
 import com.hfr.main.MainRegistry;
 import com.hfr.tileentity.clowder.ITerritoryProvider;
@@ -51,7 +52,7 @@ public class ClowderTerritory {
 			if(meta != null && meta.owner != null && meta.owner.zone == Zone.FACTION && meta.isCityClaim()) {
 				CoordPair other = getCoordPair(meta.flagX, meta.flagZ);
 				double dist = Math.sqrt(Math.pow(chunkX - other.x, 2) + Math.pow(chunkZ - other.z, 2));
-				int required = CityLevel.maxRadius() * 2 + 1;
+				int required = XFConfig.minCitySpacingChunks;
 				if(dist < required)
 					return "City Center is too close to " + meta.cityName + ". City centers must be at least " + required + " chunks apart to make sure claims do not overlap.";
 			}

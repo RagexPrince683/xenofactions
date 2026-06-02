@@ -92,7 +92,7 @@ public class TileEntityProp extends TileEntity {
 			//FOR TENTS RETARD
 			if(this.getBlockType() == ModBlocks.tp_tent || this.getBlockType() == ModBlocks.med_tent) {
 				
-				float prestigeRate = this.getBlockType() == ModBlocks.med_tent ? Clowder.medTentRate : Clowder.tentRate;
+				float prestigeRate = this.getBlockType() == ModBlocks.med_tent ? Clowder.medTentRate() : Clowder.tentRate();
 
 				if(this.operational()) {
 
