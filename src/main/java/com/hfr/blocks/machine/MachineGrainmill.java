@@ -143,7 +143,7 @@ public class MachineGrainmill extends BlockDummyable {
 				TileEntityMachineGrainmill statue = (TileEntityMachineGrainmill)world.getTileEntity(x, y, z);
 				
 				if(statue.operational())
-					owner.owner.addPrestigeGen(-Clowder.GrainRate, world);
+					owner.owner.addPrestigeGen(-Clowder.GrainRate(), world);
 			}
 		}
 

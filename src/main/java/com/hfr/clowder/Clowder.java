@@ -10,6 +10,7 @@ import java.util.UUID;
 import com.hfr.blocks.BlockDummyable;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.command.CommandClowder;
+import com.hfr.config.XFConfig;
 import com.hfr.data.ClowderData;
 //import com.hfr.data.MarketData.Offer;
 import com.hfr.main.MainRegistry;
@@ -194,6 +195,17 @@ public class Clowder {
 	public static final float statueRate = 15F;
 	public static final float flagRate = 0F;
 	public static final float flagReq = 10F;
+
+	public static float tentRate() { return -XFConfig.warpTentUpkeep; }
+	public static float medTentRate() { return -XFConfig.medTentUpkeep; }
+	public static float BlastRate() { return XFConfig.blastFurnacePrestige; }
+	public static float GrainRate() { return XFConfig.grainmillPrestige; }
+	public static float UniRate() { return XFConfig.universityPrestige; }
+	public static float FedRate() { return XFConfig.federalReservePrestige; }
+	public static float TempleRate() { return XFConfig.templePrestige; }
+	public static float statueRate() { return XFConfig.statuePrestige; }
+	public static float flagRate() { return XFConfig.cityCenterPrestige; }
+	public static float flagReq() { return XFConfig.cityClaimUpkeep; }
 
 	//this mod is so fucking retarded I guarantee you theres like 16 different ways this shit can be exploited
 	//or is just SHIT coding. and that's coming from a MCHELI developer.
@@ -895,13 +907,13 @@ public class Clowder {
 	public boolean isRaidableAgainst(Clowder aggressor) {
 		long now = System.currentTimeMillis();
 		int online = getOnlineMemberCount();
-		if (online >= 2) {
+		if (online >= XFConfig.warOnlinePlayerThreshold) {
 			belowOnlineThresholdSince = 0L;
 			return true;
 		}
 		if (belowOnlineThresholdSince <= 0L)
 			belowOnlineThresholdSince = now;
-		if (now - belowOnlineThresholdSince <= 30L * 60L * 1000L)
+		if (now - belowOnlineThresholdSince <= XFConfig.raidGraceAfterOnlineDropMs)
 			return true;
 
 		if(aggressor != null) {
@@ -1263,13 +1275,13 @@ public class Clowder {
 			return true;
 
 		int online = getOnlineMemberCount();
-		if (online >= 2) {
+		if (online >= XFConfig.warOnlinePlayerThreshold) {
 			belowOnlineThresholdSince = 0L;
 			return true;
 		}
 		if (belowOnlineThresholdSince <= 0L)
 			belowOnlineThresholdSince = System.currentTimeMillis();
-		return System.currentTimeMillis() - belowOnlineThresholdSince <= 30L * 60L * 1000L;
+		return System.currentTimeMillis() - belowOnlineThresholdSince <= XFConfig.raidGraceAfterOnlineDropMs;
 	}
 
 	public int getOnlineMemberCount() {
@@ -1318,7 +1330,7 @@ public class Clowder {
 		if (prestigeGen < 0)
 			prestigeGen = 0F;
 
-		prestigeGen = Math.min(prestigeGen, prestigeGenCap);
+		prestigeGen = Math.min(prestigeGen, XFConfig.prestigeGenCap);
 		this.save(world);
 	}
 
@@ -1339,11 +1351,13 @@ public class Clowder {
 	}
 
 	public int getBankruptcyStage() {
-		if(prestige < -1000F)
+		if(!XFConfig.enableNegativePrestigePenalties)
+			return 0;
+		if(prestige < XFConfig.fallenNationThreshold)
 			return 3;
-		if(prestige < -500F)
+		if(prestige < XFConfig.nationalCollapseThreshold)
 			return 2;
-		if(prestige < 0F)
+		if(prestige < XFConfig.financialCrisisThreshold)
 			return 1;
 		return 0;
 	}
@@ -1375,20 +1389,20 @@ public class Clowder {
 
 	public float getUpkeepMultiplier() {
 		switch(getBankruptcyStage()) {
-		case 3: return FALLEN_NATION_UPKEEP_MULT;
-		case 2: return NATIONAL_COLLAPSE_UPKEEP_MULT;
-		case 1: return FINANCIAL_CRISIS_UPKEEP_MULT;
+		case 3: return XFConfig.fallenNationUpkeepMult;
+		case 2: return XFConfig.nationalCollapseUpkeepMult;
+		case 1: return XFConfig.financialCrisisUpkeepMult;
 		default: return 1F;
 		}
 	}
 
 	public float getWarDeclarationCost(Clowder target) {
 		float targetPrestige = target == null ? 0F : Math.max(0F, target.getPrestige());
-		return WAR_DECLARATION_COST + targetPrestige * WAR_DECLARATION_TARGET_PRESTIGE_FACTOR;
+		return XFConfig.warDeclarationBaseCost + targetPrestige * XFConfig.warDeclarationTargetPrestigeFactor;
 	}
 
 	public float getCityFoundingCost() {
-		return CityLevel.SETTLEMENT.upgradeCost * (1F + Math.max(0, citiesFounded) * CITY_FOUNDING_COST_GROWTH);
+		return XFConfig.cityUpgradeCost(CityLevel.SETTLEMENT) * (1F + Math.max(0, citiesFounded) * XFConfig.cityFoundingCostGrowth);
 	}
 
 	public void markCityFounded(World world) {
@@ -1403,8 +1417,8 @@ public class Clowder {
 		for(String enemyName : activeWars) {
 			Long declaredAt = warDeclaredAt.get(enemyName);
 			long hours = declaredAt == null ? 0L : Math.max(0L, (now - declaredAt) / (60L * 60L * 1000L));
-			float multiplier = 1F + hours * WAR_UPKEEP_HOURLY_GROWTH + hours * hours * WAR_UPKEEP_HOURLY_GROWTH_SQUARED;
-			cost += WAR_UPKEEP * multiplier;
+			float multiplier = 1F + hours * XFConfig.warUpkeepHourlyGrowth + hours * hours * XFConfig.warUpkeepHourlyGrowthSquared;
+			cost += XFConfig.activeWarUpkeep * multiplier;
 		}
 
 		return cost;
@@ -1423,7 +1437,7 @@ public class Clowder {
 		if(winner == null)
 			return;
 		surrenderTributeTo = winner.name;
-		surrenderTributeUntil = System.currentTimeMillis() + SURRENDER_TRIBUTE_TIME;
+		surrenderTributeUntil = System.currentTimeMillis() + XFConfig.surrenderTributeDurationMs;
 		save(world);
 	}
 
@@ -1454,7 +1468,7 @@ public class Clowder {
 		Clowder tributeTarget = getSurrenderTributeTarget();
 
 		if(tributeTarget != null) {
-			float tribute = Math.max(0F, isInfrastructureDisabled() ? 0F : prestigeGen) * SURRENDER_TRIBUTE_RATE;
+			float tribute = Math.max(0F, isInfrastructureDisabled() ? 0F : prestigeGen) * XFConfig.surrenderPrestigeTransferPercent;
 			net -= tribute;
 			tributeTarget.addPrestige(tribute, world);
 		} else if(surrenderTributeUntil > 0L && surrenderTributeUntil <= System.currentTimeMillis()) {
@@ -1950,8 +1964,8 @@ public class Clowder {
 		c.motd = "Message of the day!";
 		c.flag = ClowderFlag.TRICOLOR;
 
-		c.prestige = STARTING_PRESTIGE;
-		c.addPrestigeGen(BASE_PRESTIGE_GEN, player.worldObj);
+		c.prestige = XFConfig.startingPrestige;
+		c.addPrestigeGen(XFConfig.basePrestigeGen, player.worldObj);
 
 		clowders.add(c);
 		inverseMap.put(leader, c);

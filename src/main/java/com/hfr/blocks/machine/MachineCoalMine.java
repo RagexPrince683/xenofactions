@@ -139,7 +139,7 @@ public class MachineCoalMine extends BlockDummyable {
 				TileEntityMachineBlastFurnace statue = (TileEntityMachineBlastFurnace)world.getTileEntity(x, y, z);
 				
 				if(statue.operational())
-					owner.owner.addPrestigeGen(-Clowder.tentRate, world);
+					owner.owner.addPrestigeGen(-Clowder.tentRate(), world);
 			}
 		}*/
 

@@ -50,6 +50,7 @@ import com.hfr.blocks.*;
 import com.hfr.blocks.machine.MachineMarket.TileEntityMarket;
 import com.hfr.clowder.*;
 import com.hfr.command.*;
+import com.hfr.config.XFConfig;
 import com.hfr.data.*;
 import com.hfr.dynmap.XFDynmapIntegration;
 import com.hfr.data.StockData.Stock;
@@ -372,10 +373,12 @@ public class MainRegistry
 		FluidHandler.init();
 		HFRPotion.init();
 		MainRegistry.loadCustomDrops();
-		TDMManager.init();
-		TDMHandler tdmHandler = new TDMHandler();
-		MinecraftForge.EVENT_BUS.register(tdmHandler);
-		FMLCommonHandler.instance().bus().register(tdmHandler);
+		if(XFConfig.enableTDM) {
+			TDMManager.init();
+			TDMHandler tdmHandler = new TDMHandler();
+			MinecraftForge.EVENT_BUS.register(tdmHandler);
+			FMLCommonHandler.instance().bus().register(tdmHandler);
+		}
 
 
 		//todone: make chat filter apply to faction names so we don't have edgelords putting swastikas and shit in their fac names
@@ -673,7 +676,8 @@ public class MainRegistry
 		
 		FMLCommonHandler.instance().bus().register(handler);
 		FMLCommonHandler.instance().bus().register(clowder);
-		FMLCommonHandler.instance().bus().register(dynmap);
+		if(XFConfig.enableDynmapIntegration)
+			FMLCommonHandler.instance().bus().register(dynmap);
 		//FMLCommonHandler.instance().bus().register(pon4);
 		MinecraftForge.EVENT_BUS.register(handler);
 		MinecraftForge.EVENT_BUS.register(clowder);
@@ -783,7 +787,8 @@ public class MainRegistry
 		event.registerServerCommand(new CommandXMarket());
 		event.registerServerCommand(new CommandStoneDrop());
 		MuteManager.init();
-		TDMKitManager.init();
+		if(XFConfig.enableTDM)
+			TDMKitManager.init();
 		IgnoreManager.init();
 		event.registerServerCommand(new CommandMute());
 		event.registerServerCommand(new CommandUnmute());
@@ -792,7 +797,8 @@ public class MainRegistry
 		event.registerServerCommand(new CommandXFlags());
 		event.registerServerCommand(new CommandXMulti());
 		event.registerServerCommand(new CommandInvSee());
-		event.registerServerCommand(new CommandTDM());
+		if(XFConfig.enableTDM)
+			event.registerServerCommand(new CommandTDM());
 		MarketData.loadMarketData();
 		PlayerProtectionData.load();
 
@@ -875,6 +881,7 @@ public class MainRegistry
 		jsonDir = config.getConfigFile().getAbsolutePath().replace("cfg", "json");
 		
 		config.load();
+		XFConfig.load(config);
 		
 		Property propRadarRange = config.get("RADAR", "radarRange", 1000);
         propRadarRange.comment = "Range of the radar, 50 will result in 100x100 block area covered";
