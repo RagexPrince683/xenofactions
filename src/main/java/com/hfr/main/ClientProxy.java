@@ -375,6 +375,8 @@ public class ClientProxy extends ServerProxy
 		RenderFlagOverlay.flag = flag;
 		RenderFlagOverlay.overlay = overlay;
 		RenderFlagOverlay.color = color;
+		RenderFlagOverlay.tintFlag = true;
+		RenderFlagOverlay.customFlagName = "";
 		RenderFlagOverlay.title = name;
 		RenderFlagOverlay.zone = title;
 		RenderFlagOverlay.startingTime = System.currentTimeMillis();

@@ -2,6 +2,7 @@ package com.hfr.render.tileentity;
 
 import org.lwjgl.opengl.GL11;
 
+import com.hfr.client.flag.FactionFlagTextureManager;
 import com.hfr.clowder.ClowderFlag;
 import com.hfr.main.ResourceManager;
 import com.hfr.tileentity.clowder.TileEntityFlag;
@@ -64,13 +65,21 @@ public class RenderFlag extends TileEntitySpecialRenderer {
         OpenGlHelper.glBlendFunc(770, 771, 1, 0);
         GL11.glDisable(GL11.GL_ALPHA_TEST);
         
-        bindTexture(flag.getFlag());
-        GL11.glColor3b((byte)r, (byte)g, (byte)b);
+        boolean hasCustomFlag = flagpole.customFlagHash != null && flagpole.customFlagHash.length() > 0;
+        if(hasCustomFlag)
+            FactionFlagTextureManager.handleMetadata(flagpole.ownerName, flagpole.customFlagHash);
+        bindTexture(hasCustomFlag ? FactionFlagTextureManager.getFlagTexture(flagpole.ownerName) : flag.getFlag());
+        if(hasCustomFlag)
+            GL11.glColor3b((byte)127, (byte)127, (byte)127);
+        else
+            GL11.glColor3b((byte)r, (byte)g, (byte)b);
         ResourceManager.flag.renderOnly("Flag");
 
-	    bindTexture(flag.getFlagOverlay());
-	    GL11.glColor3b((byte)127, (byte)127, (byte)127);
-	    ResourceManager.flag.renderOnly("Flag");
+        if(!hasCustomFlag) {
+            bindTexture(flag.getFlagOverlay());
+            GL11.glColor3b((byte)127, (byte)127, (byte)127);
+            ResourceManager.flag.renderOnly("Flag");
+        }
 	    
         GL11.glEnable(GL11.GL_ALPHA_TEST);
         GL11.glDisable(GL11.GL_BLEND);

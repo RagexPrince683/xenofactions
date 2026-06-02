@@ -16,6 +16,7 @@ import com.hfr.command.CommandClowderChat;
 import com.hfr.command.IgnoreManager;
 import com.hfr.command.Mute;
 import com.hfr.command.MuteManager;
+import com.hfr.clowder.flag.CustomFlagService;
 import com.hfr.data.AntiMobData;
 import com.hfr.data.OutOfBoundsData;
 import com.hfr.data.CBTData;
@@ -678,6 +679,7 @@ public class CommonEventHandler {
 		if (event.phase != Phase.START) return;      // run once per tick (start)
 
 		World world = event.world;
+		CustomFlagService.tickMainThread();
 		handleOutOfBoundsRegions(world);
 
 		// --------------------

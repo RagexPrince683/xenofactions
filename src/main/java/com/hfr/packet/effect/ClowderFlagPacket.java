@@ -1,10 +1,12 @@
 package com.hfr.packet.effect;
 
+import com.hfr.client.flag.FactionFlagTextureManager;
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderFlag;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.main.MainRegistry;
+import com.hfr.render.hud.RenderFlagOverlay;
 
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -22,10 +24,14 @@ public class ClowderFlagPacket implements IMessage {
 	int color;
 	String name;
 	String title;
+	String customFlagName;
+	String customFlagHash;
 
 	public ClowderFlagPacket()
 	{
 		title = " ";
+		customFlagName = "";
+		customFlagHash = "";
 	}
 
 	public ClowderFlagPacket(Clowder clowder, String title) {
@@ -33,9 +39,11 @@ public class ClowderFlagPacket implements IMessage {
 		this.color = clowder.color;
 		this.name = clowder.getDecoratedName();
 		this.title = title;
+		this.customFlagName = clowder.name;
+		this.customFlagHash = clowder.customFlagHash == null ? "" : clowder.customFlagHash;
 		
-		if(title == null)
-			title = " ";
+		if(this.title == null)
+			this.title = " ";
 	}
 
 	public ClowderFlagPacket(ClowderFlag flag, int color, String name, String title) {
@@ -43,6 +51,8 @@ public class ClowderFlagPacket implements IMessage {
 		this.color = color;
 		this.name = name;
 		this.title = " ";
+		this.customFlagName = "";
+		this.customFlagHash = "";
 	}
 
 	public ClowderFlagPacket(String special) {
@@ -65,6 +75,8 @@ public class ClowderFlagPacket implements IMessage {
 		
 		if(title == null)
 			title = " ";
+		customFlagName = "";
+		customFlagHash = "";
 	}
 
 	@Override
@@ -73,6 +85,8 @@ public class ClowderFlagPacket implements IMessage {
 		color = buf.readInt();
 		name = ByteBufUtils.readUTF8String(buf);
 		title = ByteBufUtils.readUTF8String(buf);
+		customFlagName = ByteBufUtils.readUTF8String(buf);
+		customFlagHash = ByteBufUtils.readUTF8String(buf);
 	}
 
 	@Override
@@ -81,6 +95,8 @@ public class ClowderFlagPacket implements IMessage {
 		buf.writeInt(color);
 		ByteBufUtils.writeUTF8String(buf, name);
 		ByteBufUtils.writeUTF8String(buf, title);
+		ByteBufUtils.writeUTF8String(buf, customFlagName == null ? "" : customFlagName);
+		ByteBufUtils.writeUTF8String(buf, customFlagHash == null ? "" : customFlagHash);
 	}
 
 	public static class Handler implements IMessageHandler<ClowderFlagPacket, IMessage> {
@@ -89,8 +105,15 @@ public class ClowderFlagPacket implements IMessage {
 		public IMessage onMessage(ClowderFlagPacket m, MessageContext ctx) {
 			
 			if(m.flag > 0) {
-				ClowderFlag flag = ClowderFlag.values()[m.flag];
-				MainRegistry.proxy.updateFlag(flag.getFlag(), flag.getFlagOverlay(), m.color, m.name, m.title);
+				if(m.customFlagHash != null && m.customFlagHash.length() > 0 && m.customFlagName != null && m.customFlagName.length() > 0) {
+					FactionFlagTextureManager.handleMetadata(m.customFlagName, m.customFlagHash);
+					MainRegistry.proxy.updateFlag(FactionFlagTextureManager.getFlagTexture(m.customFlagName), null, m.color, m.name, m.title);
+					RenderFlagOverlay.tintFlag = false;
+					RenderFlagOverlay.customFlagName = m.customFlagName;
+				} else {
+					ClowderFlag flag = ClowderFlag.values()[m.flag];
+					MainRegistry.proxy.updateFlag(flag.getFlag(), flag.getFlagOverlay(), m.color, m.name, m.title);
+				}
 			} else {
 				//TODO ensure this is overlayed on TOP of everything else because HMG gun renderer makes territory displays disappear
 				MainRegistry.proxy.updateFlag(null, m.flag == -3 ? ClowderFlag.WARZONE : m.flag == -2 ? ClowderFlag.SAFEZONE : ClowderFlag.WILDERNESS, m.color, m.name, m.title);

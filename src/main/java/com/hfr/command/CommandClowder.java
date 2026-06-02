@@ -10,6 +10,7 @@ import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.Clowder.ScheduledTeleport;
 import com.hfr.clowder.ClowderFlag;
+import com.hfr.clowder.flag.CustomFlagService;
 import com.hfr.clowder.CityLevel;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.Ownership;
@@ -182,7 +183,7 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 
-		if(cmd.equals("flag")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdFlag(sender, args[1]); return; }
+		if(cmd.equals("flag")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdFlag(sender, args); return; }
 		if(cmd.equals("retreat")) { cmdRetreat(sender); return; }
 		if(cmd.equals("sethome")) { cmdSethome(sender); return; }
 		if(cmd.equals("setallywarp")) { cmdSetAllyWarp(sender); return; }
@@ -254,7 +255,7 @@ public class CommandClowder extends CommandBase {
 		if(cmd.equals("deny")) return "/c deny <player>";
 		if(cmd.equals("kick")) return "/c kick <player>";
 		if(cmd.equals("unfriend") || cmd.equals("unally")) return "/c unfriend <faction>";
-		if(cmd.equals("flag")) return "/c flag <flag>";
+		if(cmd.equals("flag")) return "/c flag <flag>|seturl <postimages URL>|clear|reload";
 		if(cmd.equals("allywarp")) return "/c allywarp <faction>";
 		if(cmd.equals("addwarp") || cmd.equals("setwarp")) return "/c setwarp <name>";
 		if(cmd.equals("delwarp")) return "/c delwarp <name>";
@@ -319,6 +320,7 @@ public class CommandClowder extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-motd <message>" + TITLE + " - Sets the faction MotD"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-listflags {page}" + TITLE + " - Lists available flags"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-flag <flag>" + TITLE + " - Sets the faction flag"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-flag seturl <postimages URL>" + TITLE + " - Imports a safe custom faction flag"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-gracebuild" + TITLE + " - Activates one-time 48h faction build grace"));
 			sender.addChatMessage(new ChatComponentText(INFO + "/clowder help 4"));
 		}
@@ -1087,14 +1089,25 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 	}
 
-	private void cmdFlag(ICommandSender sender, String flag) {
+	private void cmdFlag(ICommandSender sender, String[] args) {
 
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
 
 		if(clowder != null) {
 
-			if(clowder.getPermLevel(player.getDisplayName()) > 1) {
+			if(clowder.getPermLevel(player.getDisplayName()) > 1 || canUseCommand(sender)) {
+
+				String flag = args[1];
+				if(flag.equalsIgnoreCase("seturl")) {
+					if(args.length < 3) { sender.addChatMessage(new ChatComponentText(ERROR + "Invalid format. Usage: /c flag seturl <https://i.postimg.cc/...>")); return; }
+					// Clients must never load arbitrary remote URLs directly. The server imports, validates, strips metadata,
+					// caches and syncs sanitized PNG bytes so malicious URLs cannot target every client.
+					CustomFlagService.importUrl((EntityPlayerMP)player, clowder, args[2]);
+					return;
+				}
+				if(flag.equalsIgnoreCase("clear")) { CustomFlagService.clearFlag((EntityPlayerMP)player, clowder); return; }
+				if(flag.equalsIgnoreCase("reload")) { CustomFlagService.reloadFlag((EntityPlayerMP)player, clowder); return; }
 
 				ClowderFlag f = ClowderFlag.getFromName(flag.toLowerCase());
 
