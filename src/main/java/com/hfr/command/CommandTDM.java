@@ -1,11 +1,15 @@
 package com.hfr.command;
 
+import com.hfr.packet.PacketDispatcher;
+import com.hfr.packet.effect.TDMMenuDataPacket;
 import com.hfr.tdm.TDMKitManager;
 import com.hfr.tdm.TDMManager;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.world.World;
 
 import java.util.HashMap;
@@ -61,6 +65,11 @@ public class CommandTDM extends CommandBase {
         }
 
         if (!isAdmin(sender)) {
+            if (args[0].equalsIgnoreCase("menu") || args[0].equalsIgnoreCase("openmenu")) {
+                openMenu(sender);
+                return;
+            }
+
             if (args[0].equalsIgnoreCase("teamchange") || args[0].equalsIgnoreCase("team") || args[0].equalsIgnoreCase("switchteam")) {
                 processTeamChangeCommand(sender);
                 return;
@@ -68,6 +77,11 @@ public class CommandTDM extends CommandBase {
 
             sender.addChatMessage(new ChatComponentText("Unknown or admin-only TDM command: " + args[0]));
             sender.addChatMessage(new ChatComponentText("Use /tdm help for player commands."));
+            return;
+        }
+
+        if (args[0].equalsIgnoreCase("menu") || args[0].equalsIgnoreCase("openmenu")) {
+            openMenu(sender);
             return;
         }
 
@@ -216,29 +230,48 @@ public class CommandTDM extends CommandBase {
     }
 
     private void sendHelp(ICommandSender sender) {
-        sender.addChatMessage(new ChatComponentText("=== TDM commands ==="));
-        sender.addChatMessage(new ChatComponentText("Players:"));
-        sender.addChatMessage(new ChatComponentText("  /tdm maps - list playable maps and current votes"));
-        sender.addChatMessage(new ChatComponentText("  /tdm vote <map> - vote during an active map vote"));
-        sender.addChatMessage(new ChatComponentText("  /tdm teamchange - switch to the other team, then respawn and pick a kit"));
+        sender.addChatMessage(new ChatComponentText(HELP + "/tdm [command] <args...>"));
+        sender.addChatMessage(new ChatComponentText(INFO + "TDM commands:"));
+        sender.addChatMessage(new ChatComponentText(TITLE + "Player commands"));
+        sender.addChatMessage(new ChatComponentText(COMMAND + "-maps" + TITLE + " - Lists playable maps and current votes"));
+        sender.addChatMessage(new ChatComponentText(COMMAND + "-vote <map>" + TITLE + " - Votes during an active map vote"));
+        sender.addChatMessage(new ChatComponentText(COMMAND + "-menu" + TITLE + " - Opens the TDM menu to swap teams"));
+        sender.addChatMessage(new ChatComponentText(COMMAND + "-teamchange" + TITLE + " - Fallback team swap with a 120s cooldown"));
         if (!isAdmin(sender)) {
-            sender.addChatMessage(new ChatComponentText("Admins can use more commands. Ask an admin to run /tdm help."));
+            sender.addChatMessage(new ChatComponentText(INFO + "Tip: open the TDM menu from the HUD/keybind to change teams."));
             return;
         }
 
-        sender.addChatMessage(new ChatComponentText("Admin setup:"));
-        sender.addChatMessage(new ChatComponentText("  /tdm toggle - enable or disable TDM"));
-        sender.addChatMessage(new ChatComponentText("  /tdm map create <map> | delete <map> | select <map> | list"));
-        sender.addChatMessage(new ChatComponentText("  /tdm map addspawn <map> <red|blue> - add your position as a map spawn"));
-        sender.addChatMessage(new ChatComponentText("  /tdm kit add <red|blue> [map|global] - save your inventory as a kit"));
-        sender.addChatMessage(new ChatComponentText("  /tdm kit list [map|global] - list saved kits"));
-        sender.addChatMessage(new ChatComponentText("  /tdm kit remove <red|blue> <number> [map|global] - delete a kit"));
-        sender.addChatMessage(new ChatComponentText("Admin match controls:"));
-        sender.addChatMessage(new ChatComponentText("  /tdm forcemapvote - start a 30 second map vote"));
-        sender.addChatMessage(new ChatComponentText("  /tdm friendlyfire <on|off>"));
-        sender.addChatMessage(new ChatComponentText("  /tdm autobalance <on|off|now>"));
-        sender.addChatMessage(new ChatComponentText("  /tdm setteam <player> <red|blue>"));
-        sender.addChatMessage(new ChatComponentText("Legacy spawn tools: /tdm addspawn <red|blue>, /tdm clear"));
+        sender.addChatMessage(new ChatComponentText(TITLE + "Admin setup"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-toggle" + TITLE + " - Enables or disables TDM"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map create <map>" + TITLE + " - Creates a playable map"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map delete <map>" + TITLE + " - Deletes a playable map"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map select <map>" + TITLE + " - Selects the current map"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map addspawn <map> <red|blue>" + TITLE + " - Adds your position as a map spawn"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-kit add <red|blue> [map|global]" + TITLE + " - Saves your inventory as a kit"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-kit list [map|global]" + TITLE + " - Lists saved kits"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-kit remove <red|blue> <number> [map|global]" + TITLE + " - Deletes a kit"));
+        sender.addChatMessage(new ChatComponentText(TITLE + "Match controls"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forcemapvote" + TITLE + " - Starts a 30 second map vote"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-friendlyfire <on|off>" + TITLE + " - Toggles friendly fire"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-autobalance <on|off|now>" + TITLE + " - Configures or runs auto balance"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-setteam <player> <red|blue>" + TITLE + " - Moves a player to a team"));
+        sender.addChatMessage(new ChatComponentText(INFO + "Legacy spawn tools: /tdm addspawn <red|blue>, /tdm clear"));
+    }
+
+    private void openMenu(ICommandSender sender) {
+        EntityPlayer player = getCommandSenderAsPlayer(sender);
+        if (!TDMManager.isEnabled(player.worldObj)) {
+            sender.addChatMessage(new ChatComponentText("TDM is not enabled."));
+            return;
+        }
+
+        if (!(player instanceof EntityPlayerMP)) {
+            sender.addChatMessage(new ChatComponentText("Only players can open the TDM menu."));
+            return;
+        }
+
+        PacketDispatcher.wrapper.sendTo(new TDMMenuDataPacket((EntityPlayerMP) player, TDMManager.getTeamChangeCooldownSeconds(player)), (EntityPlayerMP) player);
     }
 
     private String[] prependArg(String first, String[] args) {
@@ -252,31 +285,7 @@ public class CommandTDM extends CommandBase {
     }
 
     private void processTeamChangeCommand(ICommandSender sender) {
-        EntityPlayer player = getCommandSenderAsPlayer(sender);
-        if (!TDMManager.isEnabled(player.worldObj)) {
-            sender.addChatMessage(new ChatComponentText("TDM is not enabled."));
-            return;
-        }
-
-        String playerKey = player.getCommandSenderName().toLowerCase();
-        long worldTime = player.worldObj.getTotalWorldTime();
-        Long nextAllowedTick = nextTeamChangeTick.get(playerKey);
-        if (nextAllowedTick != null && worldTime < nextAllowedTick.longValue()) {
-            int secondsLeft = (int) ((nextAllowedTick.longValue() - worldTime + 19) / 20);
-            sender.addChatMessage(new ChatComponentText("You can change teams again in " + secondsLeft + " seconds."));
-            return;
-        }
-
-        TDMManager.Team currentTeam = TDMManager.getOrAssignPlayerTeam(player);
-        TDMManager.Team newTeam = currentTeam == TDMManager.Team.RED ? TDMManager.Team.BLUE : TDMManager.Team.RED;
-        TDMManager.setPlayerTeam(player.worldObj, player.getCommandSenderName(), newTeam);
-        nextTeamChangeTick.put(playerKey, Long.valueOf(worldTime + TEAM_CHANGE_COOLDOWN_TICKS));
-        sender.addChatMessage(new ChatComponentText("You changed to the " + newTeam.name + " TDM team."));
-
-        if (!TDMManager.respawnPlayer(player, new Random())) {
-            sender.addChatMessage(new ChatComponentText("No spawn is available for your new team on this map."));
-        }
-        TDMManager.promptForKit(player);
+        TDMManager.changePlayerTeamWithCooldown(getCommandSenderAsPlayer(sender));
     }
 
     private void processKitCommand(ICommandSender sender, String[] args) {
@@ -553,4 +562,11 @@ public class CommandTDM extends CommandBase {
     public boolean canCommandSenderUseCommand(ICommandSender sender) {
         return true;
     }
+
+    public static final String ERROR = EnumChatFormatting.RED.toString();
+    public static final String TITLE = EnumChatFormatting.GOLD.toString();
+    public static final String HELP = EnumChatFormatting.DARK_GREEN.toString();
+    public static final String INFO = EnumChatFormatting.GREEN.toString();
+    public static final String COMMAND = EnumChatFormatting.RED.toString();
+    public static final String COMMAND_ADMIN = EnumChatFormatting.DARK_PURPLE.toString();
 }

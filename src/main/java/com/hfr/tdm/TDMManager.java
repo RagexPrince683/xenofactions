@@ -27,7 +27,9 @@ public class TDMManager {
     public static final int MAP_VOTE_TICKS = 30 * 20;
     public static final int SCORE_LIMIT = 10000;
     public static final int POINTS_PER_KILL = 100;
+    public static final int TEAM_CHANGE_COOLDOWN_TICKS = 120 * 20;
     private static final Set<String> pendingKitSelection = new HashSet<String>();
+    private static final Map<String, Long> nextTeamChangeTick = new HashMap<String, Long>();
 
     public enum Team {
         RED("red"),
@@ -80,6 +82,7 @@ public class TDMManager {
     public static void init() {
         tdmEnabled = false;
         pendingKitSelection.clear();
+        nextTeamChangeTick.clear();
     }
 
     public static boolean isEnabled(World world) {
@@ -519,6 +522,47 @@ public class TDMManager {
             }
         }
         return count;
+    }
+
+
+    public static boolean changePlayerTeamWithCooldown(EntityPlayer player) {
+        if (!isEnabled(player.worldObj)) {
+            player.addChatMessage(new ChatComponentText("TDM is not enabled."));
+            return false;
+        }
+
+        int secondsLeft = getTeamChangeCooldownSeconds(player);
+        if (secondsLeft > 0) {
+            player.addChatMessage(new ChatComponentText("You can change teams again in " + secondsLeft + " seconds."));
+            return false;
+        }
+
+        Team currentTeam = getOrAssignPlayerTeam(player);
+        Team newTeam = currentTeam == Team.RED ? Team.BLUE : Team.RED;
+        setPlayerTeam(player.worldObj, player.getCommandSenderName(), newTeam);
+        nextTeamChangeTick.put(getPlayerKey(player), Long.valueOf(player.worldObj.getTotalWorldTime() + TEAM_CHANGE_COOLDOWN_TICKS));
+        pendingKitSelection.remove(getPlayerKey(player));
+        player.addChatMessage(new ChatComponentText("You changed to the " + newTeam.name + " TDM team."));
+
+        if (!respawnPlayer(player, new Random())) {
+            player.addChatMessage(new ChatComponentText("No spawn is available for your new team on this map."));
+        }
+        promptForKit(player);
+        return true;
+    }
+
+    public static int getTeamChangeCooldownSeconds(EntityPlayer player) {
+        Long nextAllowedTick = nextTeamChangeTick.get(getPlayerKey(player));
+        if (nextAllowedTick == null) {
+            return 0;
+        }
+
+        long ticksLeft = nextAllowedTick.longValue() - player.worldObj.getTotalWorldTime();
+        if (ticksLeft <= 0) {
+            return 0;
+        }
+
+        return (int) ((ticksLeft + 19) / 20);
     }
 
     public static void setPlayerTeam(World world, String playerName, Team team) {
