@@ -1096,7 +1096,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
-			if(clowder.getPermLevel(player.getDisplayName()) > 1 || canUseCommand(sender)) {
+			if(clowder.getPermLevel(player.getDisplayName()) > 2 ) {
 
 				String flag = args[1];
 				if(flag.equalsIgnoreCase("seturl")) {
