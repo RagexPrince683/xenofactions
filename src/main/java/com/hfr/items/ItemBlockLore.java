@@ -78,26 +78,26 @@ public class ItemBlockLore extends ItemBlock {
 		if(field_150939_a == ModBlocks.machine_uni) {
 			list.add("Requires sky access and foundation");
 			list.add("Generates research points over time");
-			list.add(Clowder.UniRate +" prestige gen / hour");
+			list.add(Clowder.UniRate() +" prestige gen / hour");
 		}
 		if(field_150939_a == ModBlocks.machine_reserve) {
 			list.add("Requires sky access and foundation");
 			list.add("Generates research points over time");
-			list.add(Clowder.FedRate +" prestige gen / hour");
+			list.add(Clowder.FedRate() +" prestige gen / hour");
 		}
 		if(field_150939_a == ModBlocks.machine_grainmill) {
 			list.add("Requires sky access and foundation");
 			list.add("Grinds wheat into flour");
-			list.add(Clowder.GrainRate + " prestige gen / hour");
+			list.add(Clowder.GrainRate() + " prestige gen / hour");
 		}
 		if(field_150939_a == ModBlocks.machine_blastfurnace) {
 			list.add("Requires foundation but no sky access");
 			list.add("Smelts iron ingots and ore into steel");
-			list.add(Clowder.BlastRate + " prestige gen / hour");
+			list.add(Clowder.BlastRate() + " prestige gen / hour");
 		}
 		if(field_150939_a == ModBlocks.machine_temple) {
 			list.add("Generates scrolls over time");
-			list.add(Clowder.TempleRate + " prestige gen / hour");
+			list.add(Clowder.TempleRate() + " prestige gen / hour");
 		}
 		if(field_150939_a == ModBlocks.machine_coalmine) {
 			list.add("Requires sky access and foundation");
@@ -130,18 +130,18 @@ public class ItemBlockLore extends ItemBlock {
 		if(field_150939_a == ModBlocks.med_tent) {
 			list.add("Requires sky access and foundation");
 			list.add("Generates healing aura");
-			list.add(Clowder.medTentRate + " prestige gen / hour");
+			list.add(Clowder.medTentRate() + " prestige gen / hour");
 		}
 		if(field_150939_a == ModBlocks.tp_tent) {
 			list.add("Requires sky access and foundation");
 			list.add("Allows to create faction teleport/TP/waypoints nearby");
-			list.add(Clowder.tentRate + " prestige gen / hour");
+			list.add(Clowder.tentRate() + " prestige gen / hour");
 			//retard alert!
 		}
 		if(field_150939_a == ModBlocks.statue) {
 			list.add("Requires sky access and foundation");
 			list.add("Low-level prestige generator");
-			list.add(Clowder.statueRate + " prestige gen / hour");
+			list.add(Clowder.statueRate() + " prestige gen / hour");
 		}
 
 		if(field_150939_a == ModBlocks.machine_coalgen) {

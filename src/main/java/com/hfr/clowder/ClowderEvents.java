@@ -17,6 +17,7 @@ import com.hfr.command.CommandClowderChat;
 import com.hfr.command.Mute;
 import com.hfr.command.MuteManager;
 import com.hfr.command.*;
+import com.hfr.config.XFConfig;
 import com.hfr.data.ClowderData;
 import com.hfr.handler.BobbyBreaker;
 import com.hfr.handler.ExplosionSound;
@@ -958,7 +959,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 	@SubscribeEvent
 	public void onPlayerLogin(PlayerLoggedInEvent event) {
 
-		if(!newPlayerProtectionEnabled || event.player == null)
+		if(!XFConfig.enableNewPlayerProtection || !newPlayerProtectionEnabled || event.player == null)
 			return;
 
 		PlayerProtectionData.load();
@@ -974,14 +975,14 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 			long now = System.currentTimeMillis();
 
 			entry = new PlayerProtectionData.ProtectionEntry(
-					now + 4L * 60L * 60L * 1000L,
-					now + 24L * 60L * 60L * 1000L
+					now + XFConfig.pvpGraceDurationMs,
+					now + XFConfig.keepInventoryDurationMs
 			);
 
 			PlayerProtectionData.set(uuid, entry);
 
 			event.player.addChatMessage(new ChatComponentText(
-					CommandClowder.INFO + "New-player protection enabled: 4h PvP grace, 24h keep-inventory."
+					CommandClowder.INFO + "New-player protection enabled: " + (XFConfig.pvpGraceDurationMs / (60L * 60L * 1000L)) + "h PvP grace, " + (XFConfig.keepInventoryDurationMs / (60L * 60L * 1000L)) + "h keep-inventory."
 			));
 		}
 	}
@@ -1000,7 +1001,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 		EntityPlayer attacker = event.source.getEntity() instanceof EntityPlayer ? (EntityPlayer)event.source.getEntity() : null;
 		EntityPlayer victim = e instanceof EntityPlayer ? (EntityPlayer)e : null;
 
-		if(attacker != null && victim != null){
+		if(XFConfig.enableNewPlayerProtection && newPlayerProtectionEnabled && attacker != null && victim != null){
 
 			long now = System.currentTimeMillis();
 

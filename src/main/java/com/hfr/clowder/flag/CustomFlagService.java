@@ -28,6 +28,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 import com.hfr.clowder.Clowder;
 import com.hfr.command.CommandClowder;
+import com.hfr.config.XFConfig;
 import com.hfr.data.ClowderData;
 import com.hfr.main.MainRegistry;
 import com.hfr.packet.PacketDispatcher;
@@ -81,12 +82,16 @@ public class CustomFlagService {
 	public static void importUrl(final EntityPlayerMP player, final Clowder clowder, final String urlText) {
 		final String key = getFactionFileKey(clowder) + ":" + player.getDisplayName();
 		long now = System.currentTimeMillis();
+		if(!XFConfig.enableCustomFactionFlags) {
+			player.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "Custom faction flags are disabled on this server."));
+			return;
+		}
 		Long next = RATE_LIMITS.get(key);
 		if(next != null && next.longValue() > now) {
 			player.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "Please wait before importing another faction flag."));
 			return;
 		}
-		RATE_LIMITS.put(key, Long.valueOf(now + RATE_LIMIT_MS));
+		RATE_LIMITS.put(key, Long.valueOf(now + XFConfig.customFlagRateLimitMs));
 		player.addChatMessage(new ChatComponentText(CommandClowder.INFO + "Importing faction flag from HTTPS. The server will validate and cache it first."));
 
 		EXECUTOR.submit(new Runnable() {
@@ -140,7 +145,8 @@ public class CustomFlagService {
 		try {
 			File file = getFlagFile(clowder);
 			if(!file.exists()) {
-				clowder.customFlagHash = "";
+				if(XFConfig.customFlagReloadMissingClearsMetadata)
+					clowder.customFlagHash = "";
 			} else {
 				clowder.customFlagHash = sha256(readFile(file));
 			}
@@ -181,7 +187,7 @@ public class CustomFlagService {
 		BufferedImage input = ImageIO.read(new ByteArrayInputStream(downloaded));
 		if(input == null)
 			return new ImportResult("failed to decode image", null, null);
-		if(input.getWidth() > MAX_DIMENSION || input.getHeight() > MAX_DIMENSION)
+		if(input.getWidth() > XFConfig.customFlagMaxWidth || input.getHeight() > XFConfig.customFlagMaxHeight)
 			return new ImportResult("image too large", null, null);
 		BufferedImage output = resizeToFlag(input);
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -226,13 +232,13 @@ public class CustomFlagService {
 		if(!(conn instanceof HttpsURLConnection))
 			throw new FlagImportException("invalid URL");
 		conn.setInstanceFollowRedirects(false);
-		conn.setConnectTimeout(TIMEOUT_MS);
-		conn.setReadTimeout(TIMEOUT_MS);
+		conn.setConnectTimeout(XFConfig.customFlagTimeoutMs);
+		conn.setReadTimeout(XFConfig.customFlagTimeoutMs);
 		conn.setRequestProperty("User-Agent", "XenofactionsFlagImporter/1.0");
 		try {
 			int code = conn.getResponseCode();
 			if(code >= 300 && code <= 399) {
-				if(redirects >= MAX_REDIRECTS)
+				if(redirects >= XFConfig.customFlagMaxRedirects)
 					throw new FlagImportException("invalid URL");
 				String location = conn.getHeaderField("Location");
 				if(location == null)
@@ -251,9 +257,9 @@ public class CustomFlagService {
 			if(code < 200 || code >= 300)
 				throw new FlagImportException("invalid URL");
 			int length = conn.getContentLength();
-			if(length > MAX_DOWNLOAD)
+			if(length > XFConfig.customFlagMaxFileSizeBytes)
 				throw new FlagImportException("image too large");
-			return readLimited(conn.getInputStream(), MAX_DOWNLOAD);
+			return readLimited(conn.getInputStream(), XFConfig.customFlagMaxFileSizeBytes);
 		} catch(java.net.SocketTimeoutException e) {
 			throw new FlagImportException("download timed out");
 		} catch(FlagImportException e) {
@@ -271,11 +277,7 @@ public class CustomFlagService {
 		String normalized = host.toLowerCase();
 		if(normalized.endsWith("."))
 			normalized = normalized.substring(0, normalized.length() - 1);
-		for(int i = 0; i < ALLOWED_HOSTS.length; i++) {
-			if(ALLOWED_HOSTS[i].equals(normalized))
-				return true;
-		}
-		return false;
+		return XFConfig.customFlagAllowedHostSet.contains(normalized);
 	}
 
 	private static void validateHost(String host) throws Exception {
@@ -316,11 +318,11 @@ public class CustomFlagService {
 	}
 
 	private static byte[] readFile(File file) throws IOException {
-		if(file.length() > MAX_DOWNLOAD)
+		if(file.length() > XFConfig.customFlagMaxFileSizeBytes)
 			throw new EOFException("flag file too large");
 		FileInputStream in = new FileInputStream(file);
 		try {
-			return readLimited(in, MAX_DOWNLOAD);
+			return readLimited(in, XFConfig.customFlagMaxFileSizeBytes);
 		} finally {
 			in.close();
 		}

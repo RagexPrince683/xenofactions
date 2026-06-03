@@ -50,7 +50,7 @@ public class PropStatue extends BlockDummyable {
 				TileEntityStatue statue = (TileEntityStatue)world.getTileEntity(x, y, z);
 				
 				if(statue.operational())
-					owner.owner.addPrestigeGen(-Clowder.statueRate, world);
+					owner.owner.addPrestigeGen(-Clowder.statueRate(), world);
 			}
 		}
 		
