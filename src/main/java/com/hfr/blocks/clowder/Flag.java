@@ -93,10 +93,22 @@ public class Flag extends BlockContainer {
 		}
 
 		if(player instanceof EntityPlayer && !world.isRemote) {
-			TileEntityFlag flag = (TileEntityFlag)world.getTileEntity(x, y, z);
+			TileEntity tile = world.getTileEntity(x, y, z);
+			if(!(tile instanceof TileEntityFlag)) {
+				world.setBlockToAir(x, y, z);
+				return;
+			}
+
+			TileEntityFlag flag = (TileEntityFlag)tile;
 			EntityPlayer entityPlayer = (EntityPlayer)player;
 
 			Clowder clowder = Clowder.getClowderFromPlayer(entityPlayer);
+			if(clowder == null) {
+				world.setBlockToAir(x, y, z);
+				entityPlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "City Centers require a faction. Use /c create first, then /c claim <city name>."));
+				return;
+			}
+
 			String cityName = itemStack.hasTagCompound() ? itemStack.stackTagCompound.getString("cityName") : "";
 			CoordPair cityChunk = ClowderTerritory.getCoordPair(x, z);
 			String cityError = ClowderTerritory.getCityPlacementError(cityChunk.x, cityChunk.z);
@@ -118,7 +130,7 @@ public class Flag extends BlockContainer {
 				return;
 			}
 
-			if(clowder != null && flag.canSeeSky()) {
+			if(flag.canSeeSky()) {
 				float foundingCost = clowder.getCityFoundingCost();
 				float foundingUpkeep = XFConfig.cityUpkeep(CityLevel.SETTLEMENT);
 				if(clowder.getPrestige() < foundingCost || clowder.getPrestigeReq() + foundingUpkeep > clowder.getPrestige() - foundingCost) {

@@ -50,7 +50,6 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	public float prestige;
 	@SideOnly(Side.CLIENT)
 	public float prestigeReq;
-	@SideOnly(Side.CLIENT)
 	public String customFlagHash = "";
 
 	public TileEntityFlag() {
