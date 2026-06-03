@@ -144,18 +144,22 @@ public class CustomFlagService {
 	public static void reloadFlag(EntityPlayerMP player, Clowder clowder) {
 		try {
 			File file = getFlagFile(clowder);
+
 			if(!file.exists()) {
 				if(XFConfig.customFlagReloadMissingClearsMetadata)
 					clowder.customFlagHash = "";
 			} else {
 				clowder.customFlagHash = sha256(readFile(file));
 			}
+
 			clowder.save(player.worldObj);
 			broadcastMetadata(clowder);
+
 			player.addChatMessage(new ChatComponentText(CommandClowder.INFO + "Custom faction flag metadata reloaded."));
-		} catch(IOException e) {
-			player.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "failed to decode image"));
-			MainRegistry.logger.warn("Could not reload faction flag: " + e.getMessage());
+
+		} catch(Exception e) {
+			player.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "Failed to reload custom faction flag."));
+			MainRegistry.logger.warn("Could not reload faction flag", e);
 		}
 	}
 
