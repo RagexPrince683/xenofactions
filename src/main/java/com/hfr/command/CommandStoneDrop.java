@@ -5,10 +5,17 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EnumChatFormatting;
 import com.hfr.main.MainRegistry;
 import java.util.List;
 
 public class CommandStoneDrop extends CommandBase {
+
+    private static final String ERROR = EnumChatFormatting.RED.toString();
+    private static final String TITLE = EnumChatFormatting.GOLD.toString();
+    private static final String HELP = EnumChatFormatting.DARK_GREEN.toString();
+    private static final String INFO = EnumChatFormatting.GREEN.toString();
+    private static final String COMMAND = EnumChatFormatting.RED.toString();
 
     @Override
     public String getCommandName() {
@@ -98,7 +105,7 @@ public class CommandStoneDrop extends CommandBase {
         try {
             rarity = Double.parseDouble(args[0]);
         } catch (NumberFormatException e) {
-            sender.addChatMessage(new ChatComponentText("Invalid rarity. Must be a number, e.g. 0.25"));
+            sender.addChatMessage(new ChatComponentText(ERROR + "Invalid rarity. Must be a number, e.g. 0.25"));
             sendUsage(sender);
             return;
         }
@@ -111,13 +118,13 @@ public class CommandStoneDrop extends CommandBase {
                 minY = Integer.valueOf(args[1]);
                 maxY = Integer.valueOf(args[2]);
             } catch (NumberFormatException e) {
-                sender.addChatMessage(new ChatComponentText("Invalid Y levels. minY and maxY must be whole numbers, e.g. 5 30"));
+                sender.addChatMessage(new ChatComponentText(ERROR + "Invalid Y levels. minY and maxY must be whole numbers, e.g. 5 30"));
                 sendUsage(sender);
                 return;
             }
 
             if (minY.intValue() > maxY.intValue()) {
-                sender.addChatMessage(new ChatComponentText("Invalid Y range. minY must be less than or equal to maxY."));
+                sender.addChatMessage(new ChatComponentText(ERROR + "Invalid Y range. minY must be less than or equal to maxY."));
                 return;
             }
         }
@@ -149,9 +156,11 @@ public class CommandStoneDrop extends CommandBase {
     }
 
     private void sendUsage(ICommandSender sender) {
-        sender.addChatMessage(new ChatComponentText("Usage: " + getCommandUsage(sender)));
-        sender.addChatMessage(new ChatComponentText("Hold the item/block you want to drop, then run /stonedrop <rarity> to allow it at any Y level."));
-        sender.addChatMessage(new ChatComponentText("To limit it to a Y range, run /stonedrop <rarity> <minY> <maxY>, e.g. /stonedrop 0.02 5 30."));
+        sender.addChatMessage(new ChatComponentText(TITLE + "Stone Drop Usage"));
+        sender.addChatMessage(new ChatComponentText(COMMAND + "/stonedrop <rarity>" + INFO + " - add your held item/block as a drop at any Y level."));
+        sender.addChatMessage(new ChatComponentText(COMMAND + "/stonedrop <rarity> <minY> <maxY>" + INFO + " - add your held item/block only between those Y levels."));
+        sender.addChatMessage(new ChatComponentText(HELP + "Example: " + COMMAND + "/stonedrop 0.02 5 30" + INFO + " drops between Y 5 and Y 30."));
+        sender.addChatMessage(new ChatComponentText(COMMAND + "/stonedrop list" + INFO + " - show configured chances and Y ranges."));
     }
 
     private String formatYRange(Integer minY, Integer maxY) {
