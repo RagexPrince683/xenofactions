@@ -20,15 +20,24 @@ public final class XFConfig {
 
 	private XFConfig() { }
 
-	private static final String CAT_MODULES = "XENOFACTIONS_01_MODULES";
-	private static final String CAT_PRESTIGE_GENERATION = "XENOFACTIONS_02_PRESTIGE_GENERATION";
-	private static final String CAT_PRESTIGE_COSTS = "XENOFACTIONS_03_PRESTIGE_COSTS_UPKEEP";
-	private static final String CAT_BANKRUPTCY = "XENOFACTIONS_04_BANKRUPTCY";
-	private static final String CAT_CLAIMS = "XENOFACTIONS_05_CLAIMS_CITIES";
-	private static final String CAT_WAR = "XENOFACTIONS_06_WAR_DIPLOMACY";
-	private static final String CAT_PROTECTION = "XENOFACTIONS_07_NEW_PLAYER_PROTECTION";
-	private static final String CAT_CUSTOM_FLAGS = "XENOFACTIONS_08_CUSTOM_FLAGS";
-	private static final String CAT_DYNMAP = "XENOFACTIONS_09_DYNMAP";
+	public static final String CAT_MODULES = "XENOFACTIONS_01_MODULES";
+	public static final String CAT_PRESTIGE_GENERATION = "XENOFACTIONS_02_PRESTIGE_GENERATION";
+	public static final String CAT_PRESTIGE_COSTS = "XENOFACTIONS_03_PRESTIGE_COSTS_UPKEEP";
+	public static final String CAT_BANKRUPTCY = "XENOFACTIONS_04_BANKRUPTCY";
+	public static final String CAT_CLAIMS = "XENOFACTIONS_05_CLAIMS_CITIES";
+	public static final String CAT_WAR = "XENOFACTIONS_06_WAR_DIPLOMACY";
+	public static final String CAT_PROTECTION = "XENOFACTIONS_07_NEW_PLAYER_PROTECTION";
+	public static final String CAT_CUSTOM_FLAGS = "XENOFACTIONS_08_CUSTOM_FLAGS";
+	public static final String CAT_DYNMAP = "XENOFACTIONS_09_DYNMAP";
+
+	public static final String CAT_LEGACY_MACHINES = "XENOFACTIONS_10_MACHINES_POWER";
+	public static final String CAT_LEGACY_DEFENSE = "XENOFACTIONS_11_RADAR_FORCEFIELD";
+	public static final String CAT_LEGACY_WEAPONS = "XENOFACTIONS_12_WEAPONS_EXPLOSIVES";
+	public static final String CAT_LEGACY_WORLD = "XENOFACTIONS_13_WORLD_MOBS_BORDER";
+	public static final String CAT_LEGACY_MARKET = "XENOFACTIONS_14_STOCK_MARKET";
+	public static final String CAT_LEGACY_CHAT = "XENOFACTIONS_15_CHAT_FILTER";
+	public static final String CAT_LEGACY_GENERAL = "XENOFACTIONS_16_GENERAL_LEGACY";
+	public static final String CAT_LEGACY_DEBUG = "XENOFACTIONS_17_DEBUG_LOGGING";
 
 	public static boolean enableDynmapIntegration = true;
 	public static boolean enableTDM = true;
@@ -224,6 +233,14 @@ public final class XFConfig {
 		config.addCustomCategoryComment(CAT_PROTECTION, "07 - Starter player protection and faction build-grace settings.");
 		config.addCustomCategoryComment(CAT_CUSTOM_FLAGS, "08 - Custom faction flag import safety limits and cache/reload behaviour.");
 		config.addCustomCategoryComment(CAT_DYNMAP, "09 - Optional Dynmap marker styling, labels, and refresh timing.");
+		config.addCustomCategoryComment(CAT_LEGACY_MACHINES, "10 - Legacy machine and power settings moved under the Xenofactions category flow.");
+		config.addCustomCategoryComment(CAT_LEGACY_DEFENSE, "11 - Legacy radar and forcefield settings.");
+		config.addCustomCategoryComment(CAT_LEGACY_WEAPONS, "12 - Legacy missile, nuke, railgun, and explosive weapon settings.");
+		config.addCustomCategoryComment(CAT_LEGACY_WORLD, "13 - Legacy world generation, entity control, mob, and world border settings.");
+		config.addCustomCategoryComment(CAT_LEGACY_MARKET, "14 - Legacy stock market settings and market broadcast text.");
+		config.addCustomCategoryComment(CAT_LEGACY_CHAT, "15 - Legacy chat filter settings.");
+		config.addCustomCategoryComment(CAT_LEGACY_GENERAL, "16 - Miscellaneous legacy settings that do not belong to a specific subsystem.");
+		config.addCustomCategoryComment(CAT_LEGACY_DEBUG, "17 - Legacy debug, logging, and precision-calculation settings.");
 	}
 
 	public static int cityRadius(CityLevel level) { return cityRadii[index(level)]; }

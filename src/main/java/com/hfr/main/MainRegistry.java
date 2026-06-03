@@ -883,183 +883,183 @@ public class MainRegistry
 		config.load();
 		XFConfig.load(config);
 		
-		Property propRadarRange = config.get("RADAR", "radarRange", 1000);
+		Property propRadarRange = config.get(XFConfig.CAT_LEGACY_DEFENSE, "radarRange", 1000);
         propRadarRange.comment = "Range of the radar, 50 will result in 100x100 block area covered";
         radarRange = propRadarRange.getInt();
         
-        Property propRadarBuffer = config.get("RADAR", "radarBuffer", 30);
+        Property propRadarBuffer = config.get(XFConfig.CAT_LEGACY_DEFENSE, "radarBuffer", 30);
         propRadarBuffer.comment = "How high entities have to be above the radar to be detected";
         radarBuffer = propRadarBuffer.getInt();
         
-        Property propRadarAltitude = config.get("RADAR", "radarAltitude", 55);
+        Property propRadarAltitude = config.get(XFConfig.CAT_LEGACY_DEFENSE, "radarAltitude", 55);
         propRadarAltitude.comment = "Y height required for the radar to work";
         radarAltitude = propRadarAltitude.getInt();
         
-        Property propRadarConsumption = config.get("RADAR", "radarConsumptionNew", 2000);
+        Property propRadarConsumption = config.get(XFConfig.CAT_LEGACY_DEFENSE, "radarConsumptionNew", 2000);
         propRadarConsumption.comment = "Amount of RF per tick required for the radar to work";
         radarConsumption = propRadarConsumption.getInt();
         
-        Property pFPlaneAltitude = config.get("RADAR", "FxR_planeAltitude", 40);
+        Property pFPlaneAltitude = config.get(XFConfig.CAT_LEGACY_DEFENSE, "FxR_planeAltitude", 40);
         pFPlaneAltitude.comment = "Minimum altitude for flans planes' radars to work";
         fPlaneAltitude = pFPlaneAltitude.getInt();
         
-        Property pFTankAltitude = config.get("RADAR", "FxR_tankAltitude", 30);
+        Property pFTankAltitude = config.get(XFConfig.CAT_LEGACY_DEFENSE, "FxR_tankAltitude", 30);
         pFTankAltitude.comment = "Minimum altitude for flans non-planes' radars to work";
         fTankAltitude = pFTankAltitude.getInt();
         //??? what the hell even is this and why does it break MCH_sound bs???
-        enableRadar = this.createConfigBool(config, "RADAR", "FxR_enableRadar", "Whether FMU+ radars should be enabled (disable to fix retarded crashes with McHeli)", false);
+        enableRadar = this.createConfigBool(config, XFConfig.CAT_LEGACY_DEFENSE, "FxR_enableRadar", "Whether FMU+ radars should be enabled (disable to fix retarded crashes with McHeli)", false);
         
-        Property pFOffset = config.get("RADAR", "FxR_radarYOffset", 2);
+        Property pFOffset = config.get(XFConfig.CAT_LEGACY_DEFENSE, "FxR_radarYOffset", 2);
         pFOffset.comment = "Y-axis offset from where the \"is below roof\" measurement is taken (to avoid ship radars from breaking)";
         fOffset = pFOffset.getInt();
         
-        Property propCrafting = config.get(Configuration.CATEGORY_GENERAL, "craftingDifficulty", 0);
+        Property propCrafting = config.get(XFConfig.CAT_LEGACY_GENERAL, "craftingDifficulty", 0);
         propCrafting.comment = "How difficult the crafting recipes are, from 0 - 2 (very easy to hard), values outside this range make most stuff uncraftable";
         crafting = propCrafting.getInt();
         
-        mudrate = createConfigInt(config, Configuration.CATEGORY_GENERAL, "mudRate", "How many mud-checks are done per tick, 0 turns mud off", 10);
+        mudrate = createConfigInt(config, XFConfig.CAT_LEGACY_GENERAL, "mudRate", "How many mud-checks are done per tick, 0 turns mud off", 10);
         
-        Property propFree = config.get(Configuration.CATEGORY_GENERAL, "freeRadar", false).setDefaultValue(false);
+        Property propFree = config.get(XFConfig.CAT_LEGACY_GENERAL, "freeRadar", false).setDefaultValue(false);
         propFree.comment = "Whether or not the radar and shield are free to use, i.e. do not require RF";
         freeRadar = propFree.getBoolean();
         
-        Property propSound = config.get("RADAR", "radarPing", true).setDefaultValue(true);
+        Property propSound = config.get(XFConfig.CAT_LEGACY_DEFENSE, "radarPing", true).setDefaultValue(true);
         propSound.comment = "Whether or not the radar makes frequent pinging sounds";
         sound = propSound.getBoolean();
         
-        Property propComp = config.get("RADAR", "comparatorOutput", false).setDefaultValue(false);
+        Property propComp = config.get(XFConfig.CAT_LEGACY_DEFENSE, "comparatorOutput", false).setDefaultValue(false);
         propComp.comment = "Whether or not the radar uses a comparator to output it's signal, will directly output otherwise";
         comparator = propComp.getBoolean();
         
-        Property propFB = config.get("FORCEFIELD", "fieldBaseConsumption", 100);
+        Property propFB = config.get(XFConfig.CAT_LEGACY_DEFENSE, "fieldBaseConsumption", 100);
         propFB.comment = "Amount of RF per tick required for the forcefield to work";
         fieldBase = propFB.getInt();
         
-        Property propFR = config.get("FORCEFIELD", "fieldRangeConsumption", 50);
+        Property propFR = config.get(XFConfig.CAT_LEGACY_DEFENSE, "fieldRangeConsumption", 50);
         propFR.comment = "Amount of RF per tick per forcefield range upgrade";
         fieldRange = propFR.getInt();
         
-        Property propFH = config.get("FORCEFIELD", "fieldHealthConsumption", 25);
+        Property propFH = config.get(XFConfig.CAT_LEGACY_DEFENSE, "fieldHealthConsumption", 25);
         propFH.comment = "Amount of RF per tick per forcefield shield upgrade";
         fieldHealth = propFH.getInt();
         
-        Property propER = config.get("FORCEFIELD", "fieldRangeUpgradeEffect", 16);
+        Property propER = config.get(XFConfig.CAT_LEGACY_DEFENSE, "fieldRangeUpgradeEffect", 16);
         propER.comment = "The radius increase per forcefield range upgrade";
         upRange = propER.getInt();
         
-        Property propEH = config.get("FORCEFIELD", "fieldHealthUpgradeEffect", 50);
+        Property propEH = config.get(XFConfig.CAT_LEGACY_DEFENSE, "fieldHealthUpgradeEffect", 50);
         propEH.comment = "The HP increase per forcefield shield upgrade";
         upHealth = propEH.getInt();
         
-        Property propMS = config.get("FORCEFIELD", "fieldSpeedImpactExponent", 100);
+        Property propMS = config.get(XFConfig.CAT_LEGACY_DEFENSE, "fieldSpeedImpactExponent", 100);
         propMS.comment = "The exponent of the projectile's speed in the damage equation (100 -> ^1)";
         exSpeed = propMS.getInt() * 0.01;
         
-        Property propMM = config.get("FORCEFIELD", "fieldMassImpactExponent", 200);
+        Property propMM = config.get(XFConfig.CAT_LEGACY_DEFENSE, "fieldMassImpactExponent", 200);
         propMM.comment = "The exponent of the projectile's mass (hitbox size) in the damage equation (200 -> ^2)";
         exWeight = propMM.getInt() * 0.01;
         
-        Property propM = config.get("FORCEFIELD", "fieldImpactMultiplier", 100);
+        Property propM = config.get(XFConfig.CAT_LEGACY_DEFENSE, "fieldImpactMultiplier", 100);
         propM.comment = "The general multiplier of the damage equation (hitbox size ^ massExp * entity speed ^ speedExp * mult)";
         mult = propM.getInt();
         
-        Property propFLAN = config.get("FORCEFIELD", "fieldImpactFlanMultiplier", 100);
+        Property propFLAN = config.get(XFConfig.CAT_LEGACY_DEFENSE, "fieldImpactFlanMultiplier", 100);
         propFLAN.comment = "The damage multiplier of flan's mod projectiles. 100 is the normal damage it would do to a player, 200 is double damage, etc.";
         flanmult = propFLAN.getInt() * 0.01;
         
-        Property propDet = config.get("FORCEFIELD", "fieldEntityDetectionRange", 25);
+        Property propDet = config.get(XFConfig.CAT_LEGACY_DEFENSE, "fieldEntityDetectionRange", 25);
         propDet.comment = "Padding of the entity detection range (effective range is this + shield radius), may requires to be increased to detect VERY fast projectiles";
         fieldDet = propDet.getInt();
         
-        Property propAF = config.get("FORCEFIELD", "useFlanSpecialCase", true).setDefaultValue(true);
+        Property propAF = config.get(XFConfig.CAT_LEGACY_DEFENSE, "useFlanSpecialCase", true).setDefaultValue(true);
         propAF.comment = "Whether or not the forcefield should use a special function to pull the damage value out of flan's mod projectiles. Utilizes the worst code and the shittiest programming techniques in the universe, but flan's bullets may not behave as expected if this option is turned off";
         flancalc = propAF.getBoolean();
         
-        Property propBC = config.get("FORCEFIELD", "fieldBaseCooldown", 300);
+        Property propBC = config.get(XFConfig.CAT_LEGACY_DEFENSE, "fieldBaseCooldown", 300);
         propBC.comment = "Duration of the base cooldown in ticks after the forcefield has been broken";
         baseCooldown = propBC.getInt();
         
-        Property propRC = config.get("FORCEFIELD", "fieldRangeCooldown", 3);
+        Property propRC = config.get(XFConfig.CAT_LEGACY_DEFENSE, "fieldRangeCooldown", 3);
         propRC.comment = "Duration of the additional cooldown in ticks per block of radius. Standard radius is 16, the additional cooldown duraion is therefore 48 ticks, or 348 in total. Values below 5 are recommended.";
         rangeCooldown = propRC.getInt();
         
-        Property propABDelay = config.get("MISSILE", "antiBallisticDelay", 40);
+        Property propABDelay = config.get(XFConfig.CAT_LEGACY_WEAPONS, "antiBallisticDelay", 40);
         propABDelay.comment = "Targeting delay of the AB missile in ticks. The AB will fly straight up ignoring missiles until this much time has passed.";
         abDelay = propABDelay.getInt();
         
-        Property propABRadius = config.get("MISSILE", "antiBallisticRange", 500);
+        Property propABRadius = config.get(XFConfig.CAT_LEGACY_WEAPONS, "antiBallisticRange", 500);
         propABRadius.comment = "The detection range of the AB missile.";
         abRange = propABRadius.getInt();
         
-        Property propABSpeed = config.get("MISSILE", "antiBallisticSpeed", 0.125D);
+        Property propABSpeed = config.get(XFConfig.CAT_LEGACY_WEAPONS, "antiBallisticSpeed", 0.125D);
         propABSpeed.comment = "The speed of an AB after a target has been found";
         abSpeed = propABSpeed.getDouble();
         
-        Property propEMPDura = config.get("MISSILE", "empDuration", 5*60*20);
+        Property propEMPDura = config.get(XFConfig.CAT_LEGACY_WEAPONS, "empDuration", 5*60*20);
         propEMPDura.comment = "How long machines will stay disabled after EMP strike";
         empDuration = propEMPDura.getInt();
         
-        Property propEMPRange = config.get("MISSILE", "empRange", 100);
+        Property propEMPRange = config.get(XFConfig.CAT_LEGACY_WEAPONS, "empRange", 100);
         propEMPRange.comment = "The radius of the EMP effect";
         empRadius = propEMPRange.getInt();
         
-        Property propEMPPart = config.get("MISSILE", "empParticleDelay", 20);
+        Property propEMPPart = config.get(XFConfig.CAT_LEGACY_WEAPONS, "empParticleDelay", 20);
         propEMPPart.comment = "The average delay between spark particles of disabled machines. Should be above 10. 0 will crash the game, so don't do that.";
         empParticle = propEMPPart.getInt();
         
-        Property empSpecialP = config.get("MISSILE", "empHFSpecialFunction", true);
+        Property empSpecialP = config.get(XFConfig.CAT_LEGACY_WEAPONS, "empHFSpecialFunction", true);
         empSpecialP.comment = "Whether or not the EMP should use a special function to properly set all machine's RF to 0";
         empSpecial = empSpecialP.getBoolean();
         
-        Property padBuf = config.get("MISSILE", "launchPadStorage", 100*1000*1000);
+        Property padBuf = config.get(XFConfig.CAT_LEGACY_WEAPONS, "launchPadStorage", 100*1000*1000);
         padBuf.comment = "The amount of RF the launch pad can hold.";
         padBuffer = padBuf.getInt();
         
-        Property padUseP = config.get("MISSILE", "launchPadRequirement", 50*1000*1000);
+        Property padUseP = config.get(XFConfig.CAT_LEGACY_WEAPONS, "launchPadRequirement", 50*1000*1000);
         padUseP.comment = "How much RF is required for a rocket launch. Has to be smaller or equal to the buffer size.";
         padUse = padUseP.getInt();
         
-        Property mushLifeP = config.get("MISSILE", "fireballLife", 15 * 20);
+        Property mushLifeP = config.get(XFConfig.CAT_LEGACY_WEAPONS, "fireballLife", 15 * 20);
         mushLifeP.comment = "How many ticks the mushroom cloud will persist";
         mushLife = mushLifeP.getInt();
         
-        Property mushScaleP = config.get("MISSILE", "fireballScale", 80);
+        Property mushScaleP = config.get(XFConfig.CAT_LEGACY_WEAPONS, "fireballScale", 80);
         mushScaleP.comment = "Scale of the mushroom cloud";
         mushScale = mushScaleP.getInt();
         
-        Property fireDurationP = config.get("MISSILE", "fireDuration", 4 * 20);
+        Property fireDurationP = config.get(XFConfig.CAT_LEGACY_WEAPONS, "fireDuration", 4 * 20);
         fireDurationP.comment = "How long the fire blast will last";
         fireDuration = fireDurationP.getInt();
         
-        Property t1blastP = config.get("MISSILE", "tier1Blast", 50);
+        Property t1blastP = config.get(XFConfig.CAT_LEGACY_WEAPONS, "tier1Blast", 50);
         t1blastP.comment = "Blast radius(c) of tier 1 missiles";
         t1blast = t1blastP.getInt();
         
-        Property t2blastP = config.get("MISSILE", "tier2Blast", 100);
+        Property t2blastP = config.get(XFConfig.CAT_LEGACY_WEAPONS, "tier2Blast", 100);
         t2blastP.comment = "Blast radius(c) of tier 2 missiles";
         t2blast = t2blastP.getInt();
         
-        Property t3blastP = config.get("MISSILE", "tier3Blast", 150);
+        Property t3blastP = config.get(XFConfig.CAT_LEGACY_WEAPONS, "tier3Blast", 150);
         t3blastP.comment = "Blast radius(c) of tier 3 missiles";
         t3blast = t3blastP.getInt();
 
-        t1Damage = createConfigInt(config, "MISSILE", "tier1Damage", "How much damage a tier 1 death blast does per tick", 100);
-        t2Damage = createConfigInt(config, "MISSILE", "tier2Damage", "How much damage a tier 2 death blast does per tick", 100);
-        t3Damage = createConfigInt(config, "MISSILE", "tier3Damage", "How much damage a tier 3 death blast does per tick", 1000);
+        t1Damage = createConfigInt(config, XFConfig.CAT_LEGACY_WEAPONS, "tier1Damage", "How much damage a tier 1 death blast does per tick", 100);
+        t2Damage = createConfigInt(config, XFConfig.CAT_LEGACY_WEAPONS, "tier2Damage", "How much damage a tier 2 death blast does per tick", 100);
+        t3Damage = createConfigInt(config, XFConfig.CAT_LEGACY_WEAPONS, "tier3Damage", "How much damage a tier 3 death blast does per tick", 1000);
         
-        Property mHealthP = config.get("MISSILE", "missileHealth", 15);
+        Property mHealthP = config.get(XFConfig.CAT_LEGACY_WEAPONS, "missileHealth", 15);
         mHealthP.comment = "How much beating a missile can take before it goes to commit unlive.";
         mHealth = mHealthP.getInt();
         
-        Property mDespawnP = config.get("MISSILE", "simpleMissileDespawn", 5000);
+        Property mDespawnP = config.get(XFConfig.CAT_LEGACY_WEAPONS, "simpleMissileDespawn", 5000);
         mDespawnP.comment = "Altitude at which cheapo missiles despawn and teleport to the target";
         mDespawn = mDespawnP.getInt();
         
-        Property mSpawnP = config.get("MISSILE", "simpleMissileSpawn", 6000);
+        Property mSpawnP = config.get(XFConfig.CAT_LEGACY_WEAPONS, "simpleMissileSpawn", 6000);
         mSpawnP.comment = "Altitude at which cheapo missiles spawn in when teleporting";
         mSpawn = mSpawnP.getInt();
         
-        Property drywall = config.get("MISSILE", "blastShields", new String[] {
+        Property drywall = config.get(XFConfig.CAT_LEGACY_WEAPONS, "blastShields", new String[] {
         		"" + Block.getIdFromBlock(Blocks.obsidian)
         		});
         drywall.comment = "What blocks can block fire blasts (default: obsidian, concrete, concrete bricks, vault door, vault door dummy)";
@@ -1073,105 +1073,105 @@ public class MainRegistry
         		t2Buffer.add(i);
         }
         
-        Property nukeRadiusP = config.get("NUKE", "nukeRadius", 100);
+        Property nukeRadiusP = config.get(XFConfig.CAT_LEGACY_WEAPONS, "nukeRadius", 100);
         nukeRadiusP.comment = "Maximum radius of a nuclear explosion";
         nukeRadius = nukeRadiusP.getInt();
         
-        Property nukeKillP = config.get("NUKE", "nukeKillRadius", 250);
+        Property nukeKillP = config.get(XFConfig.CAT_LEGACY_WEAPONS, "nukeKillRadius", 250);
         nukeKillP.comment = "Radius of a nuke's death blast effect";
         nukeKill = nukeKillP.getInt();
         
-        Property nukeStrengthP = config.get("NUKE", "nukeStrength", 5F);
+        Property nukeStrengthP = config.get(XFConfig.CAT_LEGACY_WEAPONS, "nukeStrength", 5F);
         nukeStrengthP.comment = "Maximum radius of a nuclear explosion";
         nukeStrength = (float)nukeStrengthP.getDouble();
         
-        Property nukeDistP = config.get("NUKE", "nukeSpacing", 5);
+        Property nukeDistP = config.get(XFConfig.CAT_LEGACY_WEAPONS, "nukeSpacing", 5);
         nukeDistP.comment = "How many blocks between explosions per destruction ring";
         nukeDist = nukeDistP.getInt();
         
-        Property nukeStepP = config.get("NUKE", "nukeStep", 5);
+        Property nukeStepP = config.get(XFConfig.CAT_LEGACY_WEAPONS, "nukeStep", 5);
         nukeStepP.comment = "How many blocks between destruction rings";
         nukeStep = nukeStepP.getInt();
         
-        Property nukeSimpleP = config.get("NUKE", "nukeSimple", false);
+        Property nukeSimpleP = config.get(XFConfig.CAT_LEGACY_WEAPONS, "nukeSimple", false);
         nukeSimpleP.comment = "Simple mode causes the explosion to be totally flat, saving on CPU power";
         nukeSimple = nukeSimpleP.getBoolean();
         
-        nukeDamage = createConfigInt(config, "NUKE", "nukeDamage", "How much damage a nuclear death blast does per tick", 1000);
+        nukeDamage = createConfigInt(config, XFConfig.CAT_LEGACY_WEAPONS, "nukeDamage", "How much damage a nuclear death blast does per tick", 1000);
         
-        Property dBufferP = config.get("DERRICK", "derrickBuffer", 100000);
+        Property dBufferP = config.get(XFConfig.CAT_LEGACY_MACHINES, "derrickBuffer", 100000);
         dBufferP.comment = "How much energy the derrick can store";
         derrickBuffer = dBufferP.getInt();
         
-        Property dUseP = config.get("DERRICK", "derrickConsumption", 1000);
+        Property dUseP = config.get(XFConfig.CAT_LEGACY_MACHINES, "derrickConsumption", 1000);
         dUseP.comment = "How much energy the derrick uses per tick";
         derrickUse = dUseP.getInt();
         
-        Property dLimP = config.get("DERRICK", "derrickLimiter", 250);
+        Property dLimP = config.get(XFConfig.CAT_LEGACY_MACHINES, "derrickLimiter", 250);
         dLimP.comment = "How many steps a derrick can take (large numbers can crash the game)";
         derrickLimiter = dLimP.getInt();
         
-        derrickTimer = createConfigInt(config, "DERRICK", "derrickPumpDelay", "How many ticks inbetween each derrick operation (pump and drill)", 50);
+        derrickTimer = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "derrickPumpDelay", "How many ticks inbetween each derrick operation (pump and drill)", 50);
         
-        Property rBufferP = config.get("REFINERY", "refineryBuffer", 100000);
+        Property rBufferP = config.get(XFConfig.CAT_LEGACY_MACHINES, "refineryBuffer", 100000);
         rBufferP.comment = "How much energy the refinery can store";
         refineryBuffer = rBufferP.getInt();
         
-        Property rUseP = config.get("REFINERY", "refineryConsumption", 1000);
+        Property rUseP = config.get(XFConfig.CAT_LEGACY_MACHINES, "refineryConsumption", 1000);
         rUseP.comment = "How much energy the refinery uses per tick";
         refineryUse = rUseP.getInt();
 
-        refOil = createConfigInt(config, "REFINERY", "refineryOilConsumption", "How much crude oil the refinery consumes per tick", 50);
-        refHeavy = createConfigInt(config, "REFINERY", "refineryOil_Heavy", "How much bunker fuel the refinery creates per tick", 20);
-        refNaph = createConfigInt(config, "REFINERY", "refineryOil_Diesel", "How much diesel the refinery creates per tick", 15);
-        refLight = createConfigInt(config, "REFINERY", "refineryOil_Kerosene", "How much kerosene the refinery creates per tick", 10);
-        refPetro = createConfigInt(config, "REFINERY", "refineryOil_Petroleum", "How much petroleum the refinery creates per tick", 5);
+        refOil = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "refineryOilConsumption", "How much crude oil the refinery consumes per tick", 50);
+        refHeavy = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "refineryOil_Heavy", "How much bunker fuel the refinery creates per tick", 20);
+        refNaph = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "refineryOil_Diesel", "How much diesel the refinery creates per tick", 15);
+        refLight = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "refineryOil_Kerosene", "How much kerosene the refinery creates per tick", 10);
+        refPetro = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "refineryOil_Petroleum", "How much petroleum the refinery creates per tick", 5);
 
-        navalDamage = createConfigInt(config, "RAILGUN", "navalDamage", "How much damage a naval cannon death blast does per tick", 100);
-        railgunDamage = createConfigInt(config, "RAILGUN", "railgunDamage", "How much damage a railgun death blast does per tick", 1000);
-        railgunBuffer = createConfigInt(config, "RAILGUN", "railgunBuffer", "How much RF the railgun can store", 500000000);
-        railgunUse = createConfigInt(config, "RAILGUN", "railgunConsumption", "How much RF the railgun requires per shot", 250000000);
+        navalDamage = createConfigInt(config, XFConfig.CAT_LEGACY_WEAPONS, "navalDamage", "How much damage a naval cannon death blast does per tick", 100);
+        railgunDamage = createConfigInt(config, XFConfig.CAT_LEGACY_WEAPONS, "railgunDamage", "How much damage a railgun death blast does per tick", 1000);
+        railgunBuffer = createConfigInt(config, XFConfig.CAT_LEGACY_WEAPONS, "railgunBuffer", "How much RF the railgun can store", 500000000);
+        railgunUse = createConfigInt(config, XFConfig.CAT_LEGACY_WEAPONS, "railgunConsumption", "How much RF the railgun requires per shot", 250000000);
 
-        superFishrate = createConfigInt(config, "FISHING", "superFishrate", "Average amount of seconds for fish in oceans", 20);
-        goodFishrate = createConfigInt(config, "FISHING", "goodFishrate", "Average amount of seconds for fish in rivers", 40);
-        averageFishrate = createConfigInt(config, "FISHING", "averageFishrate", "Average amount of seconds for fish in most biomes", 60);
-        crapFishrate = createConfigInt(config, "FISHING", "crapFishrate", "Average amount of seconds for fish in hills, deserts and savannas", 1000000);
-        jamRate = createConfigInt(config, "FISHING", "jamRate", "Average amount of seconds for net to get jammed", 15 * 60);
-        whaleChance = createConfigInt(config, "FISHING", "whaleChance", "Chance in percent of chatching whale meat", 5);
+        superFishrate = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "superFishrate", "Average amount of seconds for fish in oceans", 20);
+        goodFishrate = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "goodFishrate", "Average amount of seconds for fish in rivers", 40);
+        averageFishrate = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "averageFishrate", "Average amount of seconds for fish in most biomes", 60);
+        crapFishrate = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "crapFishrate", "Average amount of seconds for fish in hills, deserts and savannas", 1000000);
+        jamRate = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "jamRate", "Average amount of seconds for net to get jammed", 15 * 60);
+        whaleChance = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "whaleChance", "Chance in percent of chatching whale meat", 5);
 
-        uniRate = createConfigInt(config, "UNIVERSITY", "uniRate", "Average amount of seconds for uni to generate research", 60 * 3);
-        uniJamRate = createConfigInt(config, "UNIVERSITY", "uniJamRate", "Average amount of seconds for uni to get jammed", 60 * 15);
+        uniRate = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "uniRate", "Average amount of seconds for uni to generate research", 60 * 3);
+        uniJamRate = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "uniJamRate", "Average amount of seconds for uni to get jammed", 60 * 15);
 
-        temple = createConfigInt(config, "TEMPLE", "templeRate", "Average amount of seconds for temple to generate scrolls", 10 * 60 * 3);
+        temple = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "templeRate", "Average amount of seconds for temple to generate scrolls", 10 * 60 * 3);
         
-        factoryRate = createConfigInt(config, "FACTORY", "factoryRate", "Average amount of seconds for factory to generate cogs", 60 * 3);
-        factoryConsumption = createConfigInt(config, "FACTORY", "factoryConsumption", "How much RF a factory needs per tick to operate", 300);
-        factoryJamRate = createConfigInt(config, "FACTORY", "factoryJamRate", "Average amount of seconds for actory to get jammed", 60 * 15);
+        factoryRate = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "factoryRate", "Average amount of seconds for factory to generate cogs", 60 * 3);
+        factoryConsumption = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "factoryConsumption", "How much RF a factory needs per tick to operate", 300);
+        factoryJamRate = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "factoryJamRate", "Average amount of seconds for actory to get jammed", 60 * 15);
 
-        coalRate = createConfigInt(config, "COALMINE", "coalRate", "Average amount of seconds for mine to generate coal", 60);
-        coalJamRate = createConfigInt(config, "COALMINE", "accidentRate", "Average amount of seconds for mine to have an accident", 60 * 30);
+        coalRate = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "coalRate", "Average amount of seconds for mine to generate coal", 60);
+        coalJamRate = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "accidentRate", "Average amount of seconds for mine to have an accident", 60 * 30);
         
-        coalgenProduction = createConfigInt(config, "COALGEN", "coalgenProduction", "How much RF the coal generator produces per tick", 200);
-        windmillProduction = createConfigInt(config, "WINDTURBINE", "windturbineProduction", "How much RF the wind turbine produces per tick", 500);
-        waterwheelProduction = createConfigInt(config, "WATERMILL", "watermillProduction", "How much RF the water mill produces per tick", 100);
-        dieselProduction = createConfigInt(config, "DIESELGEN", "dieselProduction", "How much RF the diesel generator produces per tick", 1000);
+        coalgenProduction = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "coalgenProduction", "How much RF the coal generator produces per tick", 200);
+        windmillProduction = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "windturbineProduction", "How much RF the wind turbine produces per tick", 500);
+        waterwheelProduction = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "watermillProduction", "How much RF the water mill produces per tick", 100);
+        dieselProduction = createConfigInt(config, XFConfig.CAT_LEGACY_MACHINES, "dieselProduction", "How much RF the diesel generator produces per tick", 1000);
         
-        Property pAids = config.get("SKELETON", "explosiveArrows", false).setDefaultValue(false);
+        Property pAids = config.get(XFConfig.CAT_LEGACY_WORLD, "explosiveArrows", false).setDefaultValue(false);
         pAids.comment = "Whether or not skeleton arrows should be explosive";
         skeletonAIDS = pAids.getBoolean();
         
-        Property pHiv = config.get("SKELETON", "arrowStrength", 1.5).setDefaultValue(1.5);
+        Property pHiv = config.get(XFConfig.CAT_LEGACY_WORLD, "arrowStrength", 1.5).setDefaultValue(1.5);
         pHiv.comment = "How powerful exploding arrows are";
         skeletonHIV = (float)pHiv.getDouble();
         
         /////////////////////////////////////////////////////////////////////////
-        Property zombgrief = config.get("ZOMBIE", "griefableBlacklist", new String[] { "dirt", "grass", "planks", "cobblestone" });
+        Property zombgrief = config.get(XFConfig.CAT_LEGACY_WORLD, "griefableBlacklist", new String[] { "dirt", "grass", "planks", "cobblestone" });
         zombgrief.comment = "What blocks can't be griefed by zomberts (syntax: [shortname])";
         //rather than being processed instantly (and by doing so, missing out half the blocks), the config data is being loaded into a string-based buffer
         twilightBuffer = zombgrief.getStringList();
         /////////////////////////////////////////////////////////////////////////
         
-        Property entcontrol = config.get("ENTITYCONTROL", "entityRestrictions", new String[] { "" });
+        Property entcontrol = config.get(XFConfig.CAT_LEGACY_WORLD, "entityRestrictions", new String[] { "" });
         entcontrol.comment = "What entities should be regulated (syntax: [entity name]:[new spawn chance])";
         String[] ec = entcontrol.getStringList();
         
@@ -1189,7 +1189,7 @@ public class MainRegistry
         	}
         }
         /////////////////////////////////////////////////////////////////////////
-        Property entfx = config.get("ENTITYCONTROL", "entityEffects", new String[] { "" });
+        Property entfx = config.get(XFConfig.CAT_LEGACY_WORLD, "entityEffects", new String[] { "" });
         entfx.comment = "What entities should receive effects (syntax: [entity name]:[potion id]:[level, 0=I, 1=II, 2=III, etc.]:[duration])";
         String[] fx = entfx.getStringList();
         
@@ -1209,7 +1209,7 @@ public class MainRegistry
         	}
         }
         /////////////////////////////////////////////////////////////////////////
-        Property entimm = config.get("ENTITYCONTROL", "entityImmunity", new String[] { "" });
+        Property entimm = config.get(XFConfig.CAT_LEGACY_WORLD, "entityImmunity", new String[] { "" });
         entimm.comment = "What entities should receive damage immunity (syntax: [entity name]:[damage source name])";
         String[] imm = entimm.getStringList();
         
@@ -1227,7 +1227,7 @@ public class MainRegistry
         	}
         }
         /////////////////////////////////////////////////////////////////////////
-        Property stocks = config.get("STOCKMARKET", "stocks", new String[] {
+        Property stocks = config.get(XFConfig.CAT_LEGACY_MARKET, "stocks", new String[] {
         		"Bobcum Motors:CUM:50:2.5:7.5:10:7.5:2.5",
         		"Bingus International:BIN:50:2.5:7.5:10:7.5:2.5",
         		"Spark Corporation:SPK:50:2.5:7.5:10:7.5:2.5",
@@ -1258,7 +1258,7 @@ public class MainRegistry
         	}
         }
         /////////////////////////////////////////////////////////////////////////
-        String[] u2 = createConfigStringList(config, "STOCKMARKET", "u2messages", "Broadcast for econ boosts, %s replaces company short", new String[] { "%s's newest product proved to be a smash hit!", "%s is doing very well this quarter!" } );
+        String[] u2 = createConfigStringList(config, XFConfig.CAT_LEGACY_MARKET, "u2messages", "Broadcast for econ boosts, %s replaces company short", new String[] { "%s's newest product proved to be a smash hit!", "%s is doing very well this quarter!" } );
         
         for(String val : u2) {
         	
@@ -1268,7 +1268,7 @@ public class MainRegistry
         		logger.error("Invalid config entry '" + val + "'");
         }
         
-        String[] u1 = createConfigStringList(config, "STOCKMARKET", "u1messages", "Broadcast for small econ boosts, %s replaces company short", new String[] { "%s's newest product was featured in a famous television show!", "Customer ratings for %s's services are on the rise!" } );
+        String[] u1 = createConfigStringList(config, XFConfig.CAT_LEGACY_MARKET, "u1messages", "Broadcast for small econ boosts, %s replaces company short", new String[] { "%s's newest product was featured in a famous television show!", "Customer ratings for %s's services are on the rise!" } );
         
         for(String val : u1) {
         	
@@ -1278,7 +1278,7 @@ public class MainRegistry
         		logger.error("Invalid config entry '" + val + "'");
         }
         
-        String[] d1 = createConfigStringList(config, "STOCKMARKET", "d1messages", "Broadcast for small econ falls, %s replaces company short", new String[] { "%s's newest product was poorly received.", "%s lost a lawsuit over a faulty product." } );
+        String[] d1 = createConfigStringList(config, XFConfig.CAT_LEGACY_MARKET, "d1messages", "Broadcast for small econ falls, %s replaces company short", new String[] { "%s's newest product was poorly received.", "%s lost a lawsuit over a faulty product." } );
         
         for(String val : d1) {
         	
@@ -1288,7 +1288,7 @@ public class MainRegistry
         		logger.error("Invalid config entry '" + val + "'");
         }
         
-        String[] d2 = createConfigStringList(config, "STOCKMARKET", "d2messages", "Broadcast for econ falls, %s replaces company short", new String[] { "%s's newest product was an utter flop.", "Public outrage after a poor advertising campaign made by %s." } );
+        String[] d2 = createConfigStringList(config, XFConfig.CAT_LEGACY_MARKET, "d2messages", "Broadcast for econ falls, %s replaces company short", new String[] { "%s's newest product was an utter flop.", "Public outrage after a poor advertising campaign made by %s." } );
         
         for(String val : d2) {
         	
@@ -1298,7 +1298,7 @@ public class MainRegistry
         		logger.error("Invalid config entry '" + val + "'");
         }
         
-        String[] flags = createConfigStringList(config, "CLOWDER", "flags", "[name of the flag]:[whether it's shown in the listing]:[whether it has a tintable base]:[whether it has a static overlay]",
+        String[] flags = createConfigStringList(config, XFConfig.CAT_CLAIMS, "flags", "[name of the flag]:[whether it's shown in the listing]:[whether it has a tintable base]:[whether it has a static overlay]",
 				new String[] {
 						"AFR-1:true:true:true",
 						"AFR-2EGY:true:true:true",
@@ -1485,55 +1485,55 @@ public class MainRegistry
     	EnumHelper.addEnum(ClowderFlag.class, "GETTY", new Class[] { String.class, boolean.class }, new Object[] {"getty", false} );
     	EnumHelper.addEnum(ClowderFlag.class, "COMRADES", new Class[] { String.class, boolean.class }, new Object[] {"comrades", false} );
 
-        warpCost = createConfigInt(config, "CLOWDER", "warpCost", "How much prestige a warp point costs to create", 125);
-        territoryDelay = createConfigInt(config, "CLOWDER", "territoryDelay", "How many ticks inbetween territory validation operations", 5);
-        territoryAmount = createConfigInt(config, "CLOWDER", "territoryAmount", "How many chunks are checked each operation", 50);
-        prestigeDelay = createConfigInt(config, "CLOWDER", "prestigeDelay", "How many ticks inbetween prestige updates (1h per default)", 60 * 60 * 20);
-        disableChests = createConfigBool(config, "CLOWDER", "disableChests", "Whether chests should not be placable outside of claims", true);
-        mold = createConfigInt(config, "CLOWDER", "mold", "How many ticks cardboard boxes can remain loaded until rotting (5h by default)", 5 * 60 * 60 * 20);
-        freeRaid = createConfigBool(config, "CLOWDER", "freeRaid", "Enabling this will cause all raidability checks to be ignored, everyone will alway be raidable", true);
+        warpCost = createConfigInt(config, XFConfig.CAT_CLAIMS, "warpCost", "How much prestige a warp point costs to create", 125);
+        territoryDelay = createConfigInt(config, XFConfig.CAT_CLAIMS, "territoryDelay", "How many ticks inbetween territory validation operations", 5);
+        territoryAmount = createConfigInt(config, XFConfig.CAT_CLAIMS, "territoryAmount", "How many chunks are checked each operation", 50);
+        prestigeDelay = createConfigInt(config, XFConfig.CAT_CLAIMS, "prestigeDelay", "How many ticks inbetween prestige updates (1h per default)", 60 * 60 * 20);
+        disableChests = createConfigBool(config, XFConfig.CAT_CLAIMS, "disableChests", "Whether chests should not be placable outside of claims", true);
+        mold = createConfigInt(config, XFConfig.CAT_CLAIMS, "mold", "How many ticks cardboard boxes can remain loaded until rotting (5h by default)", 5 * 60 * 60 * 20);
+        freeRaid = createConfigBool(config, XFConfig.CAT_CLAIMS, "freeRaid", "Enabling this will cause all raidability checks to be ignored, everyone will alway be raidable", true);
 
-        bb_rng = createConfigBool(config, "BOBBYBREAKER", "enableFineCalc", "Whether or not BB uses exact position values or rounded ones, exact values simulate RNG due to bomb spread and highly varying damage", false);
+        bb_rng = createConfigBool(config, XFConfig.CAT_LEGACY_DEBUG, "enableFineCalc", "Whether or not BB uses exact position values or rounded ones, exact values simulate RNG due to bomb spread and highly varying damage", false);
 
-        Property prop_chatfilter = config.get("CHATFILTER", "enableChatFilter", true);
+        Property prop_chatfilter = config.get(XFConfig.CAT_LEGACY_CHAT, "enableChatFilter", true);
         prop_chatfilter.comment = "Enables the swear filter for chat";
         prop_chatfilter.setRequiresMcRestart(false);
         prop_chatfilter.setRequiresWorldRestart(false);
         chatfilter = prop_chatfilter.getBoolean(true);
 		//sometimes it doesn't like being turned off for some reason (I think)
         
-        u2en = createConfigBool(config, "STOCKMARKET", "u2enable", "Whether econ boost messages should be broadcasted", false);
-        u1en = createConfigBool(config, "STOCKMARKET", "u1enable", "Whether small econ boost messages should be broadcasted", false);
-        d1en = createConfigBool(config, "STOCKMARKET", "d1enable", "Whether small econ fall messages should be broadcasted", false);
-        d2en = createConfigBool(config, "STOCKMARKET", "d2enable", "Whether econ fall messages should be broadcasted", false);
-        updateInterval = createConfigInt(config, "STOCKMARKET", "updateInterval", "Time in seconds between market updates", 10 * 60);
-        stockCap = createConfigInt(config, "STOCKMARKET", "stockCap", "How many shares a player can own per stock", 50);
+        u2en = createConfigBool(config, XFConfig.CAT_LEGACY_MARKET, "u2enable", "Whether econ boost messages should be broadcasted", false);
+        u1en = createConfigBool(config, XFConfig.CAT_LEGACY_MARKET, "u1enable", "Whether small econ boost messages should be broadcasted", false);
+        d1en = createConfigBool(config, XFConfig.CAT_LEGACY_MARKET, "d1enable", "Whether small econ fall messages should be broadcasted", false);
+        d2en = createConfigBool(config, XFConfig.CAT_LEGACY_MARKET, "d2enable", "Whether econ fall messages should be broadcasted", false);
+        updateInterval = createConfigInt(config, XFConfig.CAT_LEGACY_MARKET, "updateInterval", "Time in seconds between market updates", 10 * 60);
+        stockCap = createConfigInt(config, XFConfig.CAT_LEGACY_MARKET, "stockCap", "How many shares a player can own per stock", 50);
 		//there shouldn't be a cap lol wtf??
         
-        enableStocks = createConfigBool(config, "STOCKMARKET", "enableStocks", "Enables the stock market", true);
+        enableStocks = createConfigBool(config, XFConfig.CAT_LEGACY_MARKET, "enableStocks", "Enables the stock market", true);
         
         /////////////////////////////////////////////////////////////////////////
         
-        mlpf = createConfigInt(config, "ENTITYCONTROL", "MLPF", "How far the multi-layered pathfinder for zombs and creeps reaches", 100);
-        caveCap = createConfigInt(config, "ENTITYCONTROL", "caveCap_New", "Sets the maximum Y-coord where cave sickness kick in", -20);
+        mlpf = createConfigInt(config, XFConfig.CAT_LEGACY_WORLD, "MLPF", "How far the multi-layered pathfinder for zombs and creeps reaches", 100);
+        caveCap = createConfigInt(config, XFConfig.CAT_LEGACY_WORLD, "caveCap_New", "Sets the maximum Y-coord where cave sickness kick in", -20);
 
-        zombAI = createConfigBool(config, "ENTITYCONTROL", "zombAI", "Enables advanced zombert AI", false);
-        creepAI = createConfigBool(config, "ENTITYCONTROL", "creepAI", "Enables advanced creeper AI", false);
-		surfaceMobs = createConfigBool(config, "ENTITYCONTROL", "surfaceMobs", "Prevents mobs from spawning underground", false);
-        zombMiningMult = createConfigDouble(config, "ENTITYCONTROL", "zombMiningMult", "Multiplier for mining shit", 1.0);
+        zombAI = createConfigBool(config, XFConfig.CAT_LEGACY_WORLD, "zombAI", "Enables advanced zombert AI", false);
+        creepAI = createConfigBool(config, XFConfig.CAT_LEGACY_WORLD, "creepAI", "Enables advanced creeper AI", false);
+		surfaceMobs = createConfigBool(config, XFConfig.CAT_LEGACY_WORLD, "surfaceMobs", "Prevents mobs from spawning underground", false);
+        zombMiningMult = createConfigDouble(config, XFConfig.CAT_LEGACY_WORLD, "zombMiningMult", "Multiplier for mining shit", 1.0);
 
-        border = createConfigBool(config, "WORLDBORDER", "enableBorder", "Toggles the world border", false);
-        borderBuffer = createConfigInt(config, "WORLDBORDER", "borderBuffer", "The width of the warning area", 100);
-        borderPosX = createConfigInt(config, "WORLDBORDER", "borderPosX", "World border in the positive X direction", 10000);
-        borderNegX = createConfigInt(config, "WORLDBORDER", "borderNegX", "World border in the negative X direction", -10000);
-        borderPosZ = createConfigInt(config, "WORLDBORDER", "borderPosZ", "World border in the positive Z direction", 10000);
-        borderNegZ = createConfigInt(config, "WORLDBORDER", "borderNegZ", "World border in the negative Z direction", -10000);
+        border = createConfigBool(config, XFConfig.CAT_LEGACY_WORLD, "enableBorder", "Toggles the world border", false);
+        borderBuffer = createConfigInt(config, XFConfig.CAT_LEGACY_WORLD, "borderBuffer", "The width of the warning area", 100);
+        borderPosX = createConfigInt(config, XFConfig.CAT_LEGACY_WORLD, "borderPosX", "World border in the positive X direction", 10000);
+        borderNegX = createConfigInt(config, XFConfig.CAT_LEGACY_WORLD, "borderNegX", "World border in the negative X direction", -10000);
+        borderPosZ = createConfigInt(config, XFConfig.CAT_LEGACY_WORLD, "borderPosZ", "World border in the positive Z direction", 10000);
+        borderNegZ = createConfigInt(config, XFConfig.CAT_LEGACY_WORLD, "borderNegZ", "World border in the negative Z direction", -10000);
 
-        coalChance = createConfigDouble(config, "WORLD", "coalChance", "Chance for coal when stone is mined", 0.04);
-        ironChance = createConfigDouble(config, "WORLD", "ironChance", "Chance for iron when stone is mined", 0.05);
-        goldChance = createConfigDouble(config, "WORLD", "goldChance", "Chance for gold when stone is mined", 0.01);
+        coalChance = createConfigDouble(config, XFConfig.CAT_LEGACY_WORLD, "coalChance", "Chance for coal when stone is mined", 0.04);
+        ironChance = createConfigDouble(config, XFConfig.CAT_LEGACY_WORLD, "ironChance", "Chance for iron when stone is mined", 0.05);
+        goldChance = createConfigDouble(config, XFConfig.CAT_LEGACY_WORLD, "goldChance", "Chance for gold when stone is mined", 0.01);
         
-        hfr_powerlog = createConfigBool(config, "LOGGING", "hfrExtendedLogging", "Enables the HFR powerlogging(tm) feature which prints a shitton of debugging information", false);
+        hfr_powerlog = createConfigBool(config, XFConfig.CAT_LEGACY_DEBUG, "hfrExtendedLogging", "Enables the HFR powerlogging(tm) feature which prints a shitton of debugging information", false);
         
         config.save();
         
