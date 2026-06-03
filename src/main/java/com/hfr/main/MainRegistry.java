@@ -104,6 +104,8 @@ public class MainRegistry
 	public static ItemStack customDropStack = null;
 	public static final List<ItemStack> customDrops = new ArrayList<ItemStack>();
 	public static final List<Double> customDropChances = new ArrayList<Double>();
+	public static final List<Integer> customDropMinYs = new ArrayList<Integer>();
+	public static final List<Integer> customDropMaxYs = new ArrayList<Integer>();
 	
 	//public static WorldGeneratorMoon worldGenMoon = new WorldGeneratorMoon();
 	
@@ -271,11 +273,13 @@ public class MainRegistry
 				int metadata = stack.getItemDamage(); // Store metadata (subtype)
 				int count = stack.stackSize; // Store count
 				double chance = MainRegistry.customDropChances.get(i);
+				Integer minY = MainRegistry.customDropMinYs.get(i);
+				Integer maxY = MainRegistry.customDropMaxYs.get(i);
 
 				// Convert NBT to a string format for saving
 				String nbtData = stack.hasTagCompound() ? stack.getTagCompound().toString() : null;
 
-				entries.add(new DropEntry(itemName, metadata, count, chance, nbtData));
+				entries.add(new DropEntry(itemName, metadata, count, chance, nbtData, minY, maxY));
 			}
 
 			GSON.toJson(entries, writer);
@@ -306,6 +310,8 @@ public class MainRegistry
 
 			MainRegistry.customDrops.clear();
 			MainRegistry.customDropChances.clear();
+			MainRegistry.customDropMinYs.clear();
+			MainRegistry.customDropMaxYs.clear();
 
 			for (DropEntry entry : entries) {
 				Item item = (Item) Item.itemRegistry.getObject(entry.itemName);
@@ -324,6 +330,8 @@ public class MainRegistry
 
 					MainRegistry.customDrops.add(stack);
 					MainRegistry.customDropChances.add(entry.chance);
+					MainRegistry.customDropMinYs.add(entry.minY);
+					MainRegistry.customDropMaxYs.add(entry.maxY);
 				} else {
 					System.err.println("Item not found: " + entry.itemName);
 				}
@@ -348,13 +356,17 @@ public class MainRegistry
 		int count;
 		double chance;
 		String nbtData; // Store NBT as a string
+		Integer minY;
+		Integer maxY;
 
-		DropEntry(String itemName, int metadata, int count, double chance, String nbtData) {
+		DropEntry(String itemName, int metadata, int count, double chance, String nbtData, Integer minY, Integer maxY) {
 			this.itemName = itemName;
 			this.metadata = metadata;
 			this.count = count;
 			this.chance = chance;
 			this.nbtData = nbtData;
+			this.minY = minY;
+			this.maxY = maxY;
 		}
 	}
 
