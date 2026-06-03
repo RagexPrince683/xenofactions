@@ -42,9 +42,7 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 	public ClowderFlag flag;
 	@SideOnly(Side.CLIENT)
 	public int color;
-	@SideOnly(Side.CLIENT)
 	public String ownerName = "";
-	@SideOnly(Side.CLIENT)
 	public String customFlagHash = "";
 	public String provinceName = "";
 

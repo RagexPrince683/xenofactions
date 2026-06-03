@@ -35,9 +35,7 @@ public class TileEntityConquerer extends TileEntityMachineBase implements ITerri
 	public ClowderFlag flag;
 	@SideOnly(Side.CLIENT)
 	public int color;
-	@SideOnly(Side.CLIENT)
 	public String ownerName = "";
-	@SideOnly(Side.CLIENT)
 	public String customFlagHash = "";
 
 	public TileEntityConquerer() {
