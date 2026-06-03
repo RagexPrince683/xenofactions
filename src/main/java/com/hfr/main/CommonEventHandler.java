@@ -936,6 +936,10 @@ public class CommonEventHandler {
 		}
 	}
 	
+	private boolean isWithinCustomDropYRange(int y, Integer minY, Integer maxY) {
+		return minY == null || maxY == null || (y >= minY.intValue() && y <= maxY.intValue());
+	}
+
 	@SubscribeEvent
 	public void onEntityDropEvent(LivingDropsEvent event) {
 		
@@ -982,8 +986,10 @@ public class CommonEventHandler {
 			for (int i = 0; i < MainRegistry.customDrops.size(); i++) {
 				ItemStack drop = MainRegistry.customDrops.get(i);
 				double chance = MainRegistry.customDropChances.get(i);
+				Integer minY = MainRegistry.customDropMinYs.get(i);
+				Integer maxY = MainRegistry.customDropMaxYs.get(i);
 
-				if (world.rand.nextDouble() < chance) {
+				if (isWithinCustomDropYRange(event.y, minY, maxY) && world.rand.nextDouble() < chance) {
 					// Spawn the item from the list
 					ItemStack toDrop = drop.copy();
 					EntityItem entityItem = new EntityItem(world,
