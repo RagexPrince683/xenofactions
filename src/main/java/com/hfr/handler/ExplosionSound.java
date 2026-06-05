@@ -20,7 +20,7 @@ public class ExplosionSound {
 		if(explosion == null)
 			return;
 
-		handleExplosion(world, explosion.explosionX, explosion.explosionY, explosion.explosionZ, explosion.explosionSize);
+		handleExplosion(world, explosion.explosionX, explosion.explosionY, explosion.explosionZ, explosion.explosionSize, true);
 	}
 
 	/**
@@ -32,6 +32,10 @@ public class ExplosionSound {
 	 *
 	 * Add this call in MCH_Explosion after doExplosionB(true):
 	 * ExplosionSound.handleMCHeliExplosion(w, exp);
+	 *
+	 * This sends only the far explosion sound packet. It intentionally skips
+	 * Xenofactions' AuxParticlePacketNT because MCHeli already spawns its own
+	 * explosion particles.
 	 */
 	public static void handleMCHeliExplosion(World world, Explosion explosion) {
 		if(explosion == null)
@@ -43,7 +47,7 @@ public class ExplosionSound {
 		if(!isMCHeliExplosionSoundEnabled(explosion))
 			return;
 
-		handleExplosion(world, explosion);
+		handleExplosion(world, explosion.explosionX, explosion.explosionY, explosion.explosionZ, explosion.explosionSize, false);
 	}
 
 	/**
@@ -51,10 +55,10 @@ public class ExplosionSound {
 	 * want to expose the Explosion instance.
 	 */
 	public static void handleMCHeliExplosion(World world, double x, double y, double z, float pow) {
-		handleExplosion(world, x, y, z, pow);
+		handleExplosion(world, x, y, z, pow, false);
 	}
 
-	private static void handleExplosion(World world, double x, double y, double z, float pow) {
+	private static void handleExplosion(World world, double x, double y, double z, float pow, boolean spawnParticles) {
 
 		if(world == null || world.isRemote)
 			return;
@@ -68,10 +72,12 @@ public class ExplosionSound {
 		double farRange = 1000D * pow / max;
 		PacketDispatcher.wrapper.sendToAllAround(new ExplosionSoundPacket((int)x, (int)y, (int)z, pow), new TargetPoint(world.provider.dimensionId, x, y, z, farRange));
 
-		NBTTagCompound data = new NBTTagCompound();
-		data.setString("type", "explosion");
-		data.setFloat("strength", pow);
-		PacketDispatcher.wrapper.sendToAllAround(new AuxParticlePacketNT(data, x, y, z), new TargetPoint(world.provider.dimensionId, x, y, z, 150));
+		if(spawnParticles) {
+			NBTTagCompound data = new NBTTagCompound();
+			data.setString("type", "explosion");
+			data.setFloat("strength", pow);
+			PacketDispatcher.wrapper.sendToAllAround(new AuxParticlePacketNT(data, x, y, z), new TargetPoint(world.provider.dimensionId, x, y, z, 150));
+		}
 	}
 
 	private static boolean isMCHeliExplosionSoundEnabled(Explosion explosion) {
