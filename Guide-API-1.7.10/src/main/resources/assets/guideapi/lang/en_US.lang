@@ -1,0 +1,23 @@
+#Creative Tab
+itemGroup.guideapi.creativeTab=Guide-API
+
+#Item
+item.GuideBook.name=Guide-API Default Book
+item.LostPage.name=Lost Page
+
+#Button hovering text
+button.back.name=Back
+button.next.name=Next
+button.prev.name=Previous
+
+#Text to draw
+text.shaped.crafting=Shaped Crafting
+text.shapeless.crafting=Shapeless Crafting
+text.furnace.smelting=Smelting
+text.furnace.error=Error in the recipe
+text.book.warning=[WARNING] Delete this item, it has no associated book!
+text.book.creative=Creative Book
+text.book=Book: %s
+text.category=Category: %s
+text.entry=Entry: %s
+text.page=Page: %s
