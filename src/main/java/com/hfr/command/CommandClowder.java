@@ -12,7 +12,6 @@ import com.hfr.clowder.Clowder.ScheduledTeleport;
 import com.hfr.clowder.ClowderFlag;
 import com.hfr.clowder.flag.CustomFlagService;
 import com.hfr.config.XFConfig;
-import com.hfr.guide.XFGuideIntegration;
 import com.hfr.clowder.CityLevel;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.Ownership;
@@ -141,11 +140,6 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 
-		if(cmd.equals("guide") || cmd.equals("handbook") || cmd.equals("book")) {
-			cmdHandbook(sender);
-			return;
-		}
-
 		if(cmd.equals("create")) {
 			if(!requireArgs(sender, cmd, args, 2)) return;
 			String rawName = joinArgs(args, 1);
@@ -218,7 +212,7 @@ public class CommandClowder extends CommandBase {
 		if(cmd.equals("promote")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdPromote(sender, args[1]); return; }
 		if(cmd.equals("demote")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdDemote(sender, args[1]); return; }
 		if(cmd.equals("nameclaim")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdNameClaim(sender, joinArgs(args, 1)); return; }
-		if(cmd.equals("declarewar") || cmd.equals("war")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdDeclareWar(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("declarewar")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdDeclareWar(sender, joinArgs(args, 1)); return; }
 		if(cmd.equals("peace")) {
 			if(!requireArgs(sender, cmd, args, 2)) return;
 			// Faction names containing spaces should be written with underscores when a transfer city is supplied.
@@ -272,7 +266,7 @@ public class CommandClowder extends CommandBase {
 		if(cmd.equals("promote")) return "/c promote <player>";
 		if(cmd.equals("demote")) return "/c demote <player>";
 		if(cmd.equals("nameclaim")) return "/c nameclaim <name>";
-		if(cmd.equals("declarewar") || cmd.equals("war")) return "/c war <faction>";
+		if(cmd.equals("declarewar")) return "/c declarewar <faction>";
 		if(cmd.equals("peace")) return "/c peace <faction> {city}";
 		if(cmd.equals("acceptpeace")) return "/c acceptpeace <faction>";
 		if(cmd.equals("ceasefire")) return "/c ceasefire <faction>";
@@ -280,7 +274,6 @@ public class CommandClowder extends CommandBase {
 		if(cmd.equals("surrender")) return "/c surrender <faction>";
 		if(cmd.equals("acceptsurrender")) return "/c acceptsurrender <faction>";
 		if(cmd.equals("defendally")) return "/c defendally <ally>";
-		if(cmd.equals("guide") || cmd.equals("handbook") || cmd.equals("book")) return "/c guide";
 		return getCommandUsage(null);
 	}
 
@@ -298,7 +291,6 @@ public class CommandClowder extends CommandBase {
 		if(p == 1) {
 			sender.addChatMessage(new ChatComponentText(TITLE + "Basics & faction info"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-help {page}" + TITLE + " - Shows these help pages"));
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-guide" + TITLE + " - Gets the handbook or explains how to enable it"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-create <name>" + TITLE + " - Creates a faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-info {faction}" + TITLE + " - Shows info on your faction or another faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-list" + TITLE + " - Lists all factions"));
@@ -365,7 +357,7 @@ public class CommandClowder extends CommandBase {
 
 		if(p == 6) {
 			sender.addChatMessage(new ChatComponentText(TITLE + "War & related utility commands"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-war <faction>" + TITLE + " - Declares war on another faction"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-declarewar <faction>" + TITLE + " - Declares war on another faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-peace <faction> {city}" + TITLE + " - Proposes peace, optionally transferring a city"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-acceptpeace <faction>" + TITLE + " - Accepts a peace proposal"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-ceasefire <faction>" + TITLE + " - Proposes a ceasefire"));
@@ -374,23 +366,6 @@ public class CommandClowder extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-acceptsurrender <faction>" + TITLE + " - Accepts enemy surrender"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-defendally <ally>" + TITLE + " - Joins an ally's active wars"));
 			sender.addChatMessage(new ChatComponentText(INFO + "/xmap for a claim map, /xflags for conquest flags, /xmulti for a multitool."));
-		}
-	}
-
-
-	private void cmdHandbook(ICommandSender sender) {
-		if(XFGuideIntegration.isHandbookAvailable()) {
-			try {
-				EntityPlayer player = getCommandSenderAsPlayer(sender);
-				ItemStack handbook = XFGuideIntegration.getHandbookStack();
-				if(handbook != null && !player.inventory.addItemStackToInventory(handbook))
-					player.dropPlayerItemWithRandomChoice(handbook, false);
-				sender.addChatMessage(new ChatComponentText(INFO + XFGuideIntegration.translate("guide.xenofactions.command.added")));
-			} catch(Exception e) {
-				sender.addChatMessage(new ChatComponentText(INFO + XFGuideIntegration.getFallbackHelpMessage()));
-			}
-		} else {
-			sender.addChatMessage(new ChatComponentText(INFO + XFGuideIntegration.getFallbackHelpMessage()));
 		}
 	}
 
@@ -2103,11 +2078,11 @@ private void cmdCreate(ICommandSender sender, String name) {
 	}
 
 	private String[] getPlayerCommandNames() {
-		return new String[] { "help", "guide", "handbook", "book", "create", "info", "list", "comrades", "alliance", "leave", "apply",
+		return new String[] { "help", "create", "info", "list", "comrades", "alliance", "leave", "apply",
 				"applicants", "accept", "deny", "kick", "owner", "promote", "demote", "rename", "color", "motd",
 				"listflags", "flag", "gracebuild", "sethome", "home", "setwarp", "addwarp", "delwarp", "warp", "warps",
 				"claim", "city", "nameclaim", "balance", "deposit", "withdraw", "befriend", "ally", "acceptfriend",
-				"acceptally", "unfriend", "unally", "setallywarp", "allywarp", "merge", "acceptmerge", "declarewar", "war",
+				"acceptally", "unfriend", "unally", "setallywarp", "allywarp", "merge", "acceptmerge", "declarewar",
 				"peace", "acceptpeace", "ceasefire", "acceptceasefire", "surrender", "acceptsurrender", "defendally" };
 	}
 
@@ -2119,7 +2094,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 	private boolean isFactionCompletionCommand(String cmd) {
 		return cmd.equals("info") || cmd.equals("apply") || cmd.equals("befriend") || cmd.equals("ally")
 				|| cmd.equals("unfriend") || cmd.equals("unally") || cmd.equals("allywarp") || cmd.equals("merge")
-				|| cmd.equals("acceptmerge") || cmd.equals("declarewar") || cmd.equals("war") || cmd.equals("peace") || cmd.equals("acceptpeace")
+				|| cmd.equals("acceptmerge") || cmd.equals("declarewar") || cmd.equals("peace") || cmd.equals("acceptpeace")
 				|| cmd.equals("ceasefire") || cmd.equals("acceptceasefire") || cmd.equals("surrender")
 				|| cmd.equals("acceptsurrender") || cmd.equals("defendally");
 	}
