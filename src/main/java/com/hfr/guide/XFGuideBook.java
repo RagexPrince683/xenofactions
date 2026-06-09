@@ -11,6 +11,9 @@ import com.hfr.lib.RefStrings;
 import com.hfr.main.MainRegistry;
 
 import cpw.mods.fml.common.Loader;
+import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.StatCollector;
 
 /**
@@ -98,26 +101,26 @@ public final class XFGuideBook {
 
 	private static List createCategories() throws Exception {
 		List categories = new ArrayList();
-		categories.add(category("getting_started", entry("getting_started", "getting_started"), entry("first_commands", "first_commands")));
-		categories.add(category("factions_commands", entry("faction_lifecycle", "faction_lifecycle"), entry("member_commands", "member_commands")));
-		categories.add(category("city_claims", entry("city_centers", "city_centers"), entry("claims", "claims", configText("claims_config"))));
-		categories.add(category("prestige_upkeep", entry("prestige", "prestige", configText("prestige_config")), entry("upkeep", "upkeep", configText("upkeep_config"))));
-		categories.add(category("grace", entry("new_player_grace", "new_player_grace", configText("new_player_grace_config")), entry("build_grace", "build_grace", configText("build_grace_config"))));
-		categories.add(category("diplomacy", entry("allies", "allies"), entry("diplomacy_commands", "diplomacy_commands", configText("diplomacy_config"))));
-		categories.add(category("war", entry("war_raiding", "war_raiding", configText("war_config")), entry("peace", "peace", configText("peace_config"))));
-		categories.add(category("admin", entry("admin_notes", "admin_notes"), entry("server_owner", "server_owner")));
-		categories.add(category("faq", entry("troubleshooting", "troubleshooting"), entry("quick_reference", "quick_reference")));
+		categories.add(category("getting_started", new ItemStack(Items.book), entry("getting_started", "getting_started"), entry("first_commands", "first_commands")));
+		categories.add(category("factions_commands", new ItemStack(Items.paper), entry("faction_lifecycle", "faction_lifecycle"), entry("member_commands", "member_commands")));
+		categories.add(category("city_claims", new ItemStack(Blocks.beacon), entry("city_centers", "city_centers"), entry("claims", "claims", configText("claims_config"))));
+		categories.add(category("prestige_upkeep", new ItemStack(Items.gold_ingot), entry("prestige", "prestige", configText("prestige_config")), entry("upkeep", "upkeep", configText("upkeep_config"))));
+		categories.add(category("grace", new ItemStack(Items.golden_apple), entry("new_player_grace", "new_player_grace", configText("new_player_grace_config")), entry("build_grace", "build_grace", configText("build_grace_config"))));
+		categories.add(category("diplomacy", new ItemStack(Items.emerald), entry("allies", "allies"), entry("diplomacy_commands", "diplomacy_commands", configText("diplomacy_config"))));
+		categories.add(category("war", new ItemStack(Items.iron_sword), entry("war_raiding", "war_raiding", configText("war_config")), entry("peace", "peace", configText("peace_config"))));
+		categories.add(category("admin", new ItemStack(Blocks.command_block), entry("admin_notes", "admin_notes"), entry("server_owner", "server_owner")));
+		categories.add(category("faq", new ItemStack(Items.map), entry("troubleshooting", "troubleshooting"), entry("quick_reference", "quick_reference")));
 		return categories;
 	}
 
-	private static Object category(String key, Object... entries) throws Exception {
+	private static Object category(String key, ItemStack icon, Object... entries) throws Exception {
 		List entryList = new ArrayList();
 		for(int i = 0; i < entries.length; i++)
 			entryList.add(entries[i]);
 
-		Class categoryClass = Class.forName("amerifrance.guideapi.api.base.CategoryBase");
-		Constructor constructor = categoryClass.getConstructor(List.class, String.class);
-		return constructor.newInstance(entryList, CATEGORY_KEY + key);
+		Class categoryClass = Class.forName("amerifrance.guideapi.categories.CategoryItemStack");
+		Constructor constructor = categoryClass.getConstructor(List.class, String.class, ItemStack.class);
+		return constructor.newInstance(entryList, CATEGORY_KEY + key, icon);
 	}
 
 	private static Object entry(String entryKey, String pageKey) throws Exception {
