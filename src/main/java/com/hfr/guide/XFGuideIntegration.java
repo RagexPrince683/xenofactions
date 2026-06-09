@@ -157,25 +157,14 @@ public final class XFGuideIntegration {
 	}
 
 	private static final class Reflection {
-		private final Class bookClass;
-		private final Class registryClass;
-		private final Constructor bookCtor;
-		private final Constructor categoryCtor;
-		private final Constructor entryCtor;
-		private final Constructor pageTextCtor;
-		private final Method registerBook;
-		private final Method getItemStackForBook;
-
-		private Reflection() throws Exception {
-			bookClass = Class.forName("amerifrance.guideapi.api.base.Book");
-			registryClass = Class.forName("amerifrance.guideapi.api.GuideRegistry");
-			bookCtor = bookClass.getConstructor(List.class, String.class, String.class, String.class, Color.class, boolean.class);
-			categoryCtor = Class.forName("amerifrance.guideapi.categories.CategoryItemStack").getConstructor(List.class, String.class, ItemStack.class);
-			entryCtor = Class.forName("amerifrance.guideapi.entries.EntryItemStack").getConstructor(List.class, String.class, ItemStack.class);
-			pageTextCtor = Class.forName("amerifrance.guideapi.pages.PageText").getConstructor(String.class);
-			registerBook = registryClass.getMethod("registerBook", bookClass);
-			getItemStackForBook = registryClass.getMethod("getItemStackForBook", bookClass);
-		}
+		private final Class bookClass = Class.forName("amerifrance.guideapi.api.base.Book");
+		private final Class registryClass = Class.forName("amerifrance.guideapi.api.GuideRegistry");
+		private final Constructor bookCtor = bookClass.getConstructor(List.class, String.class, String.class, String.class, Color.class, boolean.class);
+		private final Constructor categoryCtor = Class.forName("amerifrance.guideapi.categories.CategoryItemStack").getConstructor(List.class, String.class, ItemStack.class);
+		private final Constructor entryCtor = Class.forName("amerifrance.guideapi.entries.EntryItemStack").getConstructor(List.class, String.class, ItemStack.class);
+		private final Constructor pageTextCtor = Class.forName("amerifrance.guideapi.pages.PageText").getConstructor(String.class);
+		private final Method registerBook = registryClass.getMethod("registerBook", bookClass);
+		private final Method getItemStackForBook = registryClass.getMethod("getItemStackForBook", bookClass);
 
 		private Object newBook(List categories, String title, String welcome, String displayName, String author, Color color) throws Exception {
 			Object book = bookCtor.newInstance(categories, title, welcome, displayName, color, false);
