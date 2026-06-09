@@ -11,6 +11,7 @@ import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.clowder.ClowderEvents;
 import com.hfr.clowder.PlayerProtectionData;
 import com.hfr.config.XFConfig;
+import com.hfr.guide.XFGuideBook;
 import com.hfr.data.ClowderData;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.effect.ClowderFlagPacket;
@@ -204,6 +205,7 @@ public class CommandClowderAdmin extends CommandBase {
 		if(p == 1) {
 			sender.addChatMessage(new ChatComponentText(TITLE + "Faction administration"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forcejoin <faction>" + TITLE + " - Forcefully joins a faction"));
+			sender.addChatMessage(new ChatComponentText(INFO + "Handbook: " + XFGuideBook.getFallbackHelp()));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forcekick <player>" + TITLE + " - Forcefully kicks a player from their faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forcedisband <faction>" + TITLE + " - Forcefully disbands a faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forcerename <name>" + TITLE + " - Forcefully renames your faction"));

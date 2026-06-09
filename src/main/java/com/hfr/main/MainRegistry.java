@@ -61,6 +61,7 @@ import com.hfr.entity.grenade.*;
 import com.hfr.entity.logic.*;
 import com.hfr.entity.missile.*;
 import com.hfr.entity.projectile.*;
+import com.hfr.guide.XFGuideBook;
 import com.hfr.handler.*;
 import com.hfr.items.*;
 import com.hfr.lib.*;
@@ -87,7 +88,7 @@ import cpw.mods.fml.common.registry.GameRegistry;
 import static com.hfr.clowder.Clowder.initializeDiplomacy;
 
 
-@Mod(modid = RefStrings.MODID, name = RefStrings.NAME, version = RefStrings.VERSION, guiFactory = RefStrings.GUI_FACTORY)
+@Mod(modid = RefStrings.MODID, name = RefStrings.NAME, version = RefStrings.VERSION, guiFactory = RefStrings.GUI_FACTORY, dependencies = "after:guideapi")
 public class MainRegistry
 {
 	@Instance(RefStrings.MODID)
@@ -763,6 +764,7 @@ public class MainRegistry
 	{
 		//in postload, long after all blocks have been registered, the buffered config is being evaluated and processed.
 		processBuffer();
+		XFGuideBook.register();
 		
 		try {
 			BobbyBreaker.loadConfiguration(jsonDir);

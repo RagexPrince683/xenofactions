@@ -44,6 +44,7 @@ public final class XFConfig {
 	public static boolean enableCustomFactionFlags = true;
 	public static boolean enableNewPlayerProtection = false;
 	public static boolean enableConquestFlagsCommand = true;
+	public static boolean enableGuideBook = true;
 	public static boolean warEnabledDefault = false;
 
 	public static float startingPrestige = 250F;
@@ -134,6 +135,7 @@ public final class XFConfig {
 		enableCustomFactionFlags = bool(config, CAT_MODULES, "enableCustomFactionFlags", enableCustomFactionFlags, "Enables imported custom faction flags via /c flag seturl.");
 		enableNewPlayerProtection = bool(config, CAT_MODULES, "enableNewPlayerProtection", enableNewPlayerProtection, "Enables starter PvP/keep-inventory protection for first-time players.");
 		enableConquestFlagsCommand = bool(config, CAT_MODULES, "enableConquestFlagsCommand", enableConquestFlagsCommand, "Enables the /xflags command that grants conquest flags while wars are enabled.");
+		enableGuideBook = bool(config, CAT_MODULES, "enableGuideBook", enableGuideBook, "Registers the optional Guide-API Xenofactions Handbook when Guide-API is installed.");
 
 		startingPrestige = flt(config, CAT_PRESTIGE_GENERATION, "startingPrestige", startingPrestige, 0F, 1000000F, "Prestige granted to newly-created factions.");
 		basePrestigeGen = flt(config, CAT_PRESTIGE_GENERATION, "basePrestigeGeneration", basePrestigeGen, 0F, 100000F, "Base hourly prestige generation for factions.");
