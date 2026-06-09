@@ -12,6 +12,7 @@ import com.hfr.clowder.Clowder.ScheduledTeleport;
 import com.hfr.clowder.ClowderFlag;
 import com.hfr.clowder.flag.CustomFlagService;
 import com.hfr.config.XFConfig;
+import com.hfr.guide.XFGuideBook;
 import com.hfr.clowder.CityLevel;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.Ownership;
@@ -291,6 +292,7 @@ public class CommandClowder extends CommandBase {
 		if(p == 1) {
 			sender.addChatMessage(new ChatComponentText(TITLE + "Basics & faction info"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-help {page}" + TITLE + " - Shows these help pages"));
+			sender.addChatMessage(new ChatComponentText(INFO + "Handbook: " + XFGuideBook.getFallbackHelp()));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-create <name>" + TITLE + " - Creates a faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-info {faction}" + TITLE + " - Shows info on your faction or another faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-list" + TITLE + " - Lists all factions"));
