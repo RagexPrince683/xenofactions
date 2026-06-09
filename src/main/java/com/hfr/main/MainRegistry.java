@@ -62,7 +62,6 @@ import com.hfr.entity.logic.*;
 import com.hfr.entity.missile.*;
 import com.hfr.entity.projectile.*;
 import com.hfr.handler.*;
-import com.hfr.guide.XFGuideIntegration;
 import com.hfr.items.*;
 import com.hfr.lib.*;
 import com.hfr.packet.*;
@@ -88,7 +87,7 @@ import cpw.mods.fml.common.registry.GameRegistry;
 import static com.hfr.clowder.Clowder.initializeDiplomacy;
 
 
-@Mod(modid = RefStrings.MODID, name = RefStrings.NAME, version = RefStrings.VERSION, guiFactory = RefStrings.GUI_FACTORY, dependencies = "after:guideapi")
+@Mod(modid = RefStrings.MODID, name = RefStrings.NAME, version = RefStrings.VERSION, guiFactory = RefStrings.GUI_FACTORY)
 public class MainRegistry
 {
 	@Instance(RefStrings.MODID)
@@ -744,7 +743,7 @@ public class MainRegistry
 	@EventHandler
 	public static void load(FMLInitializationEvent event)
 	{
-		XFGuideIntegration.registerGuideBook();
+		
 	}
 
 	@Mod.EventHandler
