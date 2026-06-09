@@ -362,7 +362,7 @@ item.capsule.name=Explosive Capsule
 # Xenofactions Guide-API Handbook
 guide.xenofactions.book.title=Xenofactions Handbook
 guide.xenofactions.book.name=Xenofactions Handbook
-guide.xenofactions.book.welcome=Pick an icon for help. Use /c help or /xc help.
+guide.xenofactions.book.welcome=Pick any category.
 
 guide.xenofactions.category.getting_started=Getting Started
 guide.xenofactions.category.factions_commands=Factions and Commands
