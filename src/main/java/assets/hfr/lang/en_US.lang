@@ -358,3 +358,65 @@ item.canned_spam.name=Canned Coochie
 
 item.debug.name=Metal Junk of Debugging
 item.capsule.name=Explosive Capsule
+
+
+# Xenofactions Guide-API Handbook
+guide.xenofactions.book.title=Xenofactions Handbook
+guide.xenofactions.book.name=Xenofactions Handbook
+guide.xenofactions.book.welcome=Quick field notes for factions, claims, prestige, diplomacy, and war. Use /c help and /xc help for live command lists.
+
+guide.xenofactions.category.getting_started=Getting Started
+guide.xenofactions.category.factions_commands=Factions and Commands
+guide.xenofactions.category.city_claims=City Centers and Claims
+guide.xenofactions.category.prestige_upkeep=Prestige and Upkeep
+guide.xenofactions.category.grace=Grace Protection
+guide.xenofactions.category.diplomacy=Diplomacy and Allies
+guide.xenofactions.category.war=War, Raiding, Surrender, Peace
+guide.xenofactions.category.admin=Admin / Server Owner Notes
+guide.xenofactions.category.faq=FAQ / Troubleshooting
+
+guide.xenofactions.entry.getting_started=Your First Steps
+guide.xenofactions.entry.first_commands=First Commands
+guide.xenofactions.entry.faction_lifecycle=Create and Manage a Faction
+guide.xenofactions.entry.member_commands=Members and Ranks
+guide.xenofactions.entry.city_centers=City Centers
+guide.xenofactions.entry.claims=Claims and Radius
+guide.xenofactions.entry.prestige=Prestige Basics
+guide.xenofactions.entry.upkeep=Upkeep Checklist
+guide.xenofactions.entry.new_player_grace=New Player Grace
+guide.xenofactions.entry.build_grace=Build Grace
+guide.xenofactions.entry.allies=Allies
+guide.xenofactions.entry.diplomacy_commands=Diplomacy Commands
+guide.xenofactions.entry.war_raiding=War and Raiding
+guide.xenofactions.entry.peace=Surrender, Peace, Ceasefire
+guide.xenofactions.entry.admin_notes=Admin Commands
+guide.xenofactions.entry.server_owner=Server Owner Setup
+guide.xenofactions.entry.troubleshooting=Troubleshooting
+guide.xenofactions.entry.quick_reference=Quick Reference
+
+guide.xenofactions.page.getting_started=Start with /c help. If you are new, check whether starter grace is active before fighting. Create a faction with /c create <name>, then set a safe home with /c sethome.
+guide.xenofactions.page.first_commands=Useful first commands: /c help, /c create <name>, /c info, /c list, /c apply <faction>, /c sethome, /c home. Admins can use /xc help for server controls.
+guide.xenofactions.page.faction_lifecycle=Use /c create <name> to start. Recruit with applications, keep your MotD clear, and use /c leave only when you are ready to exit. Leaders can rename, set colors, flags, and transfer ownership.
+guide.xenofactions.page.member_commands=Members can use /c comrades and /c alliance. Officers handle applicants, kicks, warps, and many faction settings. Leaders control ownership, war decisions, and sensitive changes.
+guide.xenofactions.page.city_centers=Use /c claim <city name> where you want a City Center. Build and defend cities before expanding. Use /c city upgrade in the current claim when your faction can afford a larger city.
+guide.xenofactions.page.claims=Stand where you want territory and use /c claim <city name>. Use /xmap to inspect claims. Rename useful areas with /c nameclaim <name> so members understand what each claim is for.
+guide.xenofactions.page.claims_config=Server config: max city radius %s chunks; minimum city spacing %s chunks. City levels currently range from radius %s to %s chunks.
+guide.xenofactions.page.prestige=Prestige pays for growth and war. Check /c balance often. Generate prestige with faction infrastructure and deposit prestige items with /c deposit <amount> when needed.
+guide.xenofactions.page.prestige_config=Server config: factions start with %s prestige. Base hourly generation is %s and counted generation caps at %s.
+guide.xenofactions.page.upkeep=Keep upkeep lower than income. Remove unused warps, tents, and vulnerable claims before prestige goes negative. Negative prestige can disable important faction options.
+guide.xenofactions.page.upkeep_config=Server config: warp tent upkeep %s/h, medical tent upkeep %s/h, city claim upkeep %s/h, active war upkeep starts at %s/h.
+guide.xenofactions.page.new_player_grace=Starter grace protects brand-new players. Use that time to make tools, join or create a faction, and learn claims before picking fights.
+guide.xenofactions.page.new_player_grace_config=Server config: starter PvP grace lasts %s hours and keep-inventory grace lasts %s hours when enabled.
+guide.xenofactions.page.build_grace=Leaders can use /c gracebuild when allowed. Activate it before major construction, not during a war. Warn members when the timer is ending.
+guide.xenofactions.page.build_grace_config=Server config: build grace lasts %s hours and is %s.
+guide.xenofactions.page.allies=Allies are political commitments. Use alliances to coordinate defense, but confirm rules before joining fights. Check /c alliance before trusting another faction.
+guide.xenofactions.page.diplomacy_commands=Use diplomacy commands carefully: request alliances, break alliances, and respond to ally defense only when leadership agrees. Use /c help for exact syntax.
+guide.xenofactions.page.diplomacy_config=Server config: alliance break cooldown is %s hours. Allies %s join wars for allies.
+guide.xenofactions.page.war_raiding=Use /c war <faction> or /c declarewar <faction> only when ready. Stock supplies, confirm online requirements, and protect City Centers before raiding.
+guide.xenofactions.page.war_config=Server config: war target online threshold %s players; raid grace after online drop %s minutes. War cost starts at %s prestige plus %s percent of target prestige.
+guide.xenofactions.page.peace=End wars with /c surrender, /c peace, or /c ceasefire when fighting is no longer worth the upkeep. Read offers before accepting because cities or tribute may transfer.
+guide.xenofactions.page.peace_config=Server config: surrender cooldown %s hours, peace cooldown %s hours, ceasefire cooldown %s hours. Surrender tribute is %s percent for %s hours.
+guide.xenofactions.page.admin_notes=Admins: use /xc help for moderation and war controls. Useful examples: /xc setclaim, /xc addprestige, /xc warenable, /xc wardisable, /xc resetbuildgrace.
+guide.xenofactions.page.server_owner=Server owners: review the Xenofactions config categories before launch. Enable Guide-API and enableGuideBook for this handbook. Tune claims, grace, war, upkeep, and Dynmap for your server size.
+guide.xenofactions.page.troubleshooting=If a command fails, check your rank, faction membership, current dimension, active wars, cooldowns, and config toggles. Try /c help or ask staff to check /xc help.
+guide.xenofactions.page.quick_reference=Common examples: /c help, /c create New_Faction, /c claim Capital, /c sethome, /c balance, /c war Enemy_Faction, /c peace Enemy_Faction, /xc help.
