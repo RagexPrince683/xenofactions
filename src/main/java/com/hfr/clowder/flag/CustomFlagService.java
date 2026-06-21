@@ -20,10 +20,13 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import javax.net.ssl.HttpsURLConnection;
 
 import com.hfr.clowder.Clowder;
@@ -188,11 +191,7 @@ public class CustomFlagService {
 	private static ImportResult importAndSave(Clowder clowder, String urlText) throws Exception {
 		URL url = validateUrl(urlText);
 		byte[] downloaded = download(url, 0);
-		BufferedImage input = ImageIO.read(new ByteArrayInputStream(downloaded));
-		if(input == null)
-			return new ImportResult("failed to decode image", null, null);
-		if(input.getWidth() > XFConfig.customFlagMaxWidth || input.getHeight() > XFConfig.customFlagMaxHeight)
-			return new ImportResult("image too large", null, null);
+		BufferedImage input = decodeValidatedImage(downloaded);
 		BufferedImage output = resizeToFlag(input);
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		ImageIO.write(output, "png", out);
@@ -272,6 +271,38 @@ public class CustomFlagService {
 			throw new FlagImportException("failed to decode image");
 		} finally {
 			conn.disconnect();
+		}
+	}
+
+	private static BufferedImage decodeValidatedImage(byte[] downloaded) throws IOException {
+		ImageInputStream stream = ImageIO.createImageInputStream(new ByteArrayInputStream(downloaded));
+		if(stream == null)
+			throw new FlagImportException("failed to decode image");
+		ImageReader reader = null;
+		try {
+			Iterator<ImageReader> readers = ImageIO.getImageReaders(stream);
+			if(!readers.hasNext())
+				throw new FlagImportException("failed to decode image");
+			reader = readers.next();
+			reader.setInput(stream, true, true);
+			int width = reader.getWidth(0);
+			int height = reader.getHeight(0);
+			if(width <= 0 || height <= 0)
+				throw new FlagImportException("failed to decode image");
+			if(width > XFConfig.customFlagMaxWidth || height > XFConfig.customFlagMaxHeight)
+				throw new FlagImportException("image too large");
+			long pixels = (long)width * (long)height;
+			long maxPixels = (long)XFConfig.customFlagMaxWidth * (long)XFConfig.customFlagMaxHeight;
+			if(pixels > maxPixels)
+				throw new FlagImportException("image too large");
+			BufferedImage image = reader.read(0);
+			if(image == null)
+				throw new FlagImportException("failed to decode image");
+			return image;
+		} finally {
+			if(reader != null)
+				reader.dispose();
+			stream.close();
 		}
 	}
 

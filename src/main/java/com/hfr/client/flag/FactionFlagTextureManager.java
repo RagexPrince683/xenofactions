@@ -72,7 +72,10 @@ public class FactionFlagTextureManager {
 			return;
 		}
 		String old = HASHES.get(factionName);
+		ResourceLocation existing = TEXTURES.get(factionName);
 		HASHES.put(factionName, hash);
+		if(old != null && old.equals(hash) && existing != null)
+			return;
 		if(old == null || !old.equals(hash))
 			TEXTURES.remove(factionName);
 		if(!loadCached(factionName, hash))
