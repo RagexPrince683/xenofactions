@@ -96,7 +96,7 @@ public class Conquerer extends BlockContainer {
 				flag.markDirty();
 				MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(
 						EnumChatFormatting.RED + "[WAR] " + EnumChatFormatting.GOLD + clowder.name +
-						EnumChatFormatting.YELLOW + " placed a claim flag for " + getTargetCityName(x, z) +
+						EnumChatFormatting.YELLOW + " placed a claim flag for " + getTargetCityName(world, x, z) +
 						EnumChatFormatting.YELLOW + " at " + EnumChatFormatting.AQUA + "(" + x + ", " + y + ", " + z + ")"
 				));
 			} else {
@@ -129,7 +129,7 @@ public class Conquerer extends BlockContainer {
 
 	}
 	
-	private String getTargetCityName(int x, int z) {
+	private String getTargetCityName(World world, int x, int z) {
 		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords(world, x, z);
 		if(meta != null) {
 			String cityName = meta.cityName != null && !meta.cityName.trim().isEmpty() ? meta.cityName : meta.name;

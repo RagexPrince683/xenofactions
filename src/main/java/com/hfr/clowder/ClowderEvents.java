@@ -1138,7 +1138,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 			int x = (int) e.posX;
 			int y = (int) e.posY;
 			int z = (int) e.posZ;
-			Ownership owner = ClowderTerritory.getOwnerFromInts(event.world, x, z);
+			Ownership owner = ClowderTerritory.getOwnerFromInts(e.worldObj, x, z);
 			if (owner != null && owner.zone == Zone.SAFEZONE) {
 				// Cancel the event to prevent any damage
 				event.setCanceled(true);
@@ -1155,7 +1155,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 			int x = (int) e.posX;
 			int y = (int) e.posY;
 			int z = (int) e.posZ;
-			Ownership owner = ClowderTerritory.getOwnerFromInts(event.world, x, z);
+			Ownership owner = ClowderTerritory.getOwnerFromInts(e.worldObj, x, z);
 			if (owner != null && owner.zone == Zone.SAFEZONE) {
 				// Apply a regeneration effect
 				e.addPotionEffect(new PotionEffect(Potion.regeneration.id, 40));
