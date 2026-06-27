@@ -130,7 +130,7 @@ public class Conquerer extends BlockContainer {
 	}
 	
 	private String getTargetCityName(int x, int z) {
-		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords(x, z);
+		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords(world, x, z);
 		if(meta != null) {
 			String cityName = meta.cityName != null && !meta.cityName.trim().isEmpty() ? meta.cityName : meta.name;
 			if(cityName != null && !cityName.trim().isEmpty()) {
