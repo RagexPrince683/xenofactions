@@ -1055,9 +1055,10 @@ public class Clowder {
 		this.homeX = (int) x;
 		this.homeY = (int) y;
 		this.homeZ = (int) z;
-		this.homeDim = player.worldObj.provider.dimensionId;
+		this.homeDim = player != null ? ClowderTerritory.getDimensionId(player.worldObj) : 0;
 
-		ClowderData.getData(player.worldObj).markDirty();
+		if(player != null && player.worldObj != null)
+			ClowderData.getData(player.worldObj).markDirty();
 	}
 
 	public void setAllyWarp(double x, double y, double z, EntityPlayer player) {
@@ -1065,9 +1066,10 @@ public class Clowder {
 		this.allyWarpX = (int) x;
 		this.allyWarpY = (int) y;
 		this.allyWarpZ = (int) z;
-		this.allyWarpDim = player.worldObj.provider.dimensionId;
+		this.allyWarpDim = player != null ? ClowderTerritory.getDimensionId(player.worldObj) : 0;
 
-		ClowderData.getData(player.worldObj).markDirty();
+		if(player != null && player.worldObj != null)
+			ClowderData.getData(player.worldObj).markDirty();
 	}
 
 	public void rename(String name, EntityPlayer player) {
