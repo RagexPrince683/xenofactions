@@ -59,10 +59,6 @@ public class CommandClowderAdmin extends CommandBase {
 	@Override
 	public void processCommand(ICommandSender sender, String[] args) {
 
-		//but like i want to colonize mars or something... but that might break or something hmm...
-		if(sender.getEntityWorld().provider.dimensionId != 0) {
-			sender.addChatMessage(new ChatComponentText(CRITICAL + "Critical error: CatFac only works in overworld!!"));
-		}
 
 		if(Clowder.clowders.size() == 0)
 			ClowderData.getData(sender.getEntityWorld());

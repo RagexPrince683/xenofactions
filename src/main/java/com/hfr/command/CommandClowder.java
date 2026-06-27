@@ -3,6 +3,7 @@ package com.hfr.command;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import com.hfr.blocks.BlockDummyable;
@@ -46,6 +47,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.world.World;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.ForgeDirection;
@@ -55,6 +57,7 @@ import static com.hfr.main.MainRegistry.sub;
 public class CommandClowder extends CommandBase {
 
 	private static final HashMap<String, Long> CITY_UPGRADE_CONFIRMATIONS = new HashMap();
+	private static final HashMap<String, WarConfirmation> WAR_CONFIRMATIONS = new HashMap();
 
 
 	//private static final CoordPair wbpospos = new CoordPair(4274, 1335);
@@ -120,11 +123,6 @@ public class CommandClowder extends CommandBase {
 	public void processCommand(ICommandSender sender, String[] args) {
 
 		//todo add a /c merge command to merge into other factions (with consent ofc)
-
-		if(sender.getEntityWorld().provider.dimensionId != 0) {
-			sender.addChatMessage(new ChatComponentText(CRITICAL + "Critical error: XenoFac only works in overworld!!"));
-			//todo... remove??? why is this the case? does it work outside overworld?
-		}
 
 		if(Clowder.clowders.size() == 0)
 			ClowderData.getData(sender.getEntityWorld());
@@ -213,7 +211,8 @@ public class CommandClowder extends CommandBase {
 		if(cmd.equals("promote")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdPromote(sender, args[1]); return; }
 		if(cmd.equals("demote")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdDemote(sender, args[1]); return; }
 		if(cmd.equals("nameclaim")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdNameClaim(sender, joinArgs(args, 1)); return; }
-		if(cmd.equals("declarewar")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdDeclareWar(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("declarewar") || cmd.equals("war")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdDeclareWar(sender, joinArgs(args, 1)); return; }
+		if(cmd.equals("listwars")) { cmdListWars(sender); return; }
 		if(cmd.equals("peace")) {
 			if(!requireArgs(sender, cmd, args, 2)) return;
 			// Faction names containing spaces should be written with underscores when a transfer city is supplied.
@@ -267,7 +266,8 @@ public class CommandClowder extends CommandBase {
 		if(cmd.equals("promote")) return "/c promote <player>";
 		if(cmd.equals("demote")) return "/c demote <player>";
 		if(cmd.equals("nameclaim")) return "/c nameclaim <name>";
-		if(cmd.equals("declarewar")) return "/c declarewar <faction>";
+		if(cmd.equals("declarewar") || cmd.equals("war")) return "/c declarewar <faction>";
+		if(cmd.equals("listwars")) return "/c listwars";
 		if(cmd.equals("peace")) return "/c peace <faction> {city}";
 		if(cmd.equals("acceptpeace")) return "/c acceptpeace <faction>";
 		if(cmd.equals("ceasefire")) return "/c ceasefire <faction>";
@@ -360,6 +360,7 @@ public class CommandClowder extends CommandBase {
 		if(p == 6) {
 			sender.addChatMessage(new ChatComponentText(TITLE + "War & related utility commands"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-declarewar <faction>" + TITLE + " - Declares war on another faction"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-listwars" + TITLE + " - Lists your faction active wars"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-peace <faction> {city}" + TITLE + " - Proposes peace, optionally transferring a city"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-acceptpeace <faction>" + TITLE + " - Accepts a peace proposal"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-ceasefire <faction>" + TITLE + " - Proposes a ceasefire"));
@@ -766,6 +767,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(LIST + " -generating: " + clowder.round(clowder.getPrestigeGen()) + " per hour (x" + clowder.round((float) Math.pow(0.99, clowder.getPrestige())) + ")"));
 			sender.addChatMessage(new ChatComponentText(LIST + " -requires: " + clowder.round(clowder.getPrestigeReq()) + " at all times"));
 			sender.addChatMessage(new ChatComponentText(LIST + "Color: " + Integer.toHexString(clowder.color).toUpperCase()));
+			sender.addChatMessage(new ChatComponentText(LIST + "Enemies: " + formatEnemyList(clowder)));
 			sender.addChatMessage(new ChatComponentText(LIST + "Cities: " + ClowderTerritory.getCityClaims(clowder).size()));
 			for(Object cityObj : ClowderTerritory.getCityClaims(clowder)) {
 				TerritoryMeta city = (TerritoryMeta)cityObj;
@@ -790,6 +792,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(LIST + "Members: " + clowder.members.size()));
 			sender.addChatMessage(new ChatComponentText(LIST + "Prestige: " + clowder.round(clowder.getPrestige())));
 			sender.addChatMessage(new ChatComponentText(LIST + "Color: " + Integer.toHexString(clowder.color).toUpperCase()));
+			sender.addChatMessage(new ChatComponentText(LIST + "Enemies: " + formatEnemyList(clowder)));
 			sender.addChatMessage(new ChatComponentText(LIST + "Cities: " + ClowderTerritory.getCityClaims(clowder).size()));
 			for(Object cityObj : ClowderTerritory.getCityClaims(clowder)) {
 				TerritoryMeta city = (TerritoryMeta)cityObj;
@@ -1167,7 +1170,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			// level 1 member level 2 officer level 3 leader
 			if (clowder.getPermLevel(player.getDisplayName()) > 1) {
 
-				Ownership owner = ClowderTerritory.getOwnerFromInts((int) player.posX, (int) player.posZ);
+				Ownership owner = ClowderTerritory.getOwnerFromInts(player.worldObj, (int) player.posX, (int) player.posZ);
 
 				if (owner != null && owner.zone == Zone.FACTION && owner.owner == clowder) {
 
@@ -1207,7 +1210,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			// level 1 member level 2 officer level 3 leader
 			if (clowder.getPermLevel(player.getDisplayName()) > 1) {
 
-				Ownership owner = ClowderTerritory.getOwnerFromInts((int) player.posX, (int) player.posZ);
+				Ownership owner = ClowderTerritory.getOwnerFromInts(player.worldObj, (int) player.posX, (int) player.posZ);
 
 				if (owner != null && owner.zone == Zone.FACTION && owner.owner == clowder) {
 
@@ -1253,7 +1256,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 				return;
 			}
 
-			Ownership owner = ClowderTerritory.getOwnerFromInts((int)player.posX, (int)player.posZ);
+			Ownership owner = ClowderTerritory.getOwnerFromInts(player.worldObj, (int)player.posX, (int)player.posZ);
 
 			if(owner != null && (owner.zone == Zone.WARZONE || (owner.zone == Zone.FACTION && (owner.owner != clowder && clowder.allies.get(owner.owner) == null) ) ) ) { //allow warp from allied territory
 
@@ -1262,7 +1265,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			} else {
 
 				sender.addChatMessage(new ChatComponentText(INFO + "Please stand still for 10 seconds!"));
-				clowder.teleports.put(System.currentTimeMillis() + 10000L, new ScheduledTeleport(clowder.homeX, clowder.homeY, clowder.homeZ, player.getDisplayName(), true));
+				clowder.teleports.put(System.currentTimeMillis() + 10000L, new ScheduledTeleport(clowder.homeDim, clowder.homeX, clowder.homeY, clowder.homeZ, player.getDisplayName(), true));
 			}
 
 		} else {
@@ -1287,7 +1290,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 					return;
 				}
 
-				Ownership owner = ClowderTerritory.getOwnerFromInts((int) player.posX, (int) player.posZ);
+				Ownership owner = ClowderTerritory.getOwnerFromInts(player.worldObj, (int) player.posX, (int) player.posZ);
 
 				if (owner != null
 						&& (owner.zone == Zone.WARZONE || (owner.zone == Zone.FACTION && (owner.owner != clowder && clowder.allies.get(owner.owner) == null) ) ) ) {
@@ -1305,7 +1308,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 						if(ally.allyWarpX != 0 && ally.allyWarpY != 0 && ally.allyWarpZ != 0)
 						{
 							sender.addChatMessage(new ChatComponentText(INFO + "Please stand still for 10 seconds!"));
-							clowder.teleports.put(System.currentTimeMillis() + 10000L, new ScheduledTeleport(ally.allyWarpX,
+							clowder.teleports.put(System.currentTimeMillis() + 10000L, new ScheduledTeleport(ally.allyWarpDim, ally.allyWarpX,
 									ally.allyWarpY, ally.allyWarpZ, player.getDisplayName(), true, true, ally.name));
 						}
 						else
@@ -1400,7 +1403,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 			if (clowder.warps.containsKey(name)) {
 
-				Ownership owner = ClowderTerritory.getOwnerFromInts((int) player.posX, (int) player.posZ);
+				Ownership owner = ClowderTerritory.getOwnerFromInts(player.worldObj, (int) player.posX, (int) player.posZ);
 
 				if (owner != null
 						//&& (owner.zone == Zone.WARZONE || (owner.zone == Zone.FACTION && owner.owner != clowder))) {
@@ -1416,7 +1419,9 @@ private void cmdCreate(ICommandSender sender, String name) {
 					return;
 				}
 
-				IChunkProvider provider = player.worldObj.getChunkProvider();
+				World warpWorld = net.minecraftforge.common.DimensionManager.getWorld(warp.length > 3 ? warp[3] : 0);
+				if(warpWorld == null) { sender.addChatMessage(new ChatComponentText(ERROR + "Warp dimension is not loaded.")); return; }
+				IChunkProvider provider = warpWorld.getChunkProvider();
 
 				for (int i = 2; i <= 5; i++) {
 
@@ -1427,17 +1432,17 @@ private void cmdCreate(ICommandSender sender, String name) {
 					int tentX = warp[0] + dir.offsetX * 2;
 					int tentZ = warp[2] + dir.offsetZ * 2;
 
-					Block block = player.worldObj.getBlock(tentX, warp[1], tentZ);
+					Block block = warpWorld.getBlock(tentX, warp[1], tentZ);
 
 					if (block == ModBlocks.tp_tent) {
 
-						int[] pos = ((BlockDummyable) ModBlocks.tp_tent).findCore(player.worldObj, tentX, warp[1],
+						int[] pos = ((BlockDummyable) ModBlocks.tp_tent).findCore(warpWorld, tentX, warp[1],
 								tentZ);
 
 						if (pos != null) {
 
 							provider.loadChunk(pos[0] >> 4, pos[2] >> 4);
-							TileEntityProp tent = (TileEntityProp) player.worldObj.getTileEntity(pos[0], pos[1],
+							TileEntityProp tent = (TileEntityProp) warpWorld.getTileEntity(pos[0], pos[1],
 									pos[2]);
 
 							if (tent.warp.equals(name) && tent.operational()) {
@@ -1445,7 +1450,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 								sender.addChatMessage(
 										new ChatComponentText(INFO + "Please stand still for 10 seconds!"));
 								clowder.teleports.put(System.currentTimeMillis() + 10000L, new ScheduledTeleport(
-										warp[0], warp[1], warp[2], player.getDisplayName(), name));
+										warp.length > 3 ? warp[3] : 0, warp[0], warp[1], warp[2], player.getDisplayName(), name));
 
 								return;
 							}
@@ -1701,7 +1706,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions to upgrade cities!"));
 			return;
 		}
-		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords((int)player.posX, (int)player.posZ);
+		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords(player.worldObj, (int)player.posX, (int)player.posZ);
 		if(meta == null || meta.owner == null || meta.owner.owner != clowder) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "Stand inside one of your city claims to upgrade it."));
 			return;
@@ -1825,7 +1830,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			return;
 		}
 
-		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords((int)player.posX, (int)player.posZ);
+		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords(player.worldObj, (int)player.posX, (int)player.posZ);
 
 		if(meta == null || meta.owner == null || !meta.isCityClaim()) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in a city claim!"));
@@ -1876,30 +1881,27 @@ private void cmdCreate(ICommandSender sender, String name) {
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
-		if (me == null || target == null || me == target) return;
-		if (me.getPermLevel(player.getDisplayName()) < 3) return;
-		if(!(CommandClowderAdmin.LEGACY_WAR_ENABLED || CommandClowderAdmin.WAR_ONLINE_CHECK_DISABLED) && target.getOnlineMemberCount() < XFConfig.warOnlinePlayerThreshold && !Clowder.forceOnline) {
-			sender.addChatMessage(new ChatComponentText(ERROR + "You can only declare war on factions that are currently online (" + XFConfig.warOnlinePlayerThreshold + "+ members)."));
+		WarValidation validation = validateWarDeclaration(sender, player, me, target);
+		if(!validation.ok)
 			return;
-		}
-		if (!XFConfig.alliesCanDeclareWarOnEachOther && me.allies.containsKey(target)) {
-			sender.addChatMessage(new ChatComponentText(ERROR + "You can not declare war on an ally."));
-			return;
-		}
+
 		long now = System.currentTimeMillis();
-		if(!CommandClowderAdmin.WAR_COOLDOWNS_DISABLED) {
-			Long cd = me.noWarUntil.get(target.name);
-			if (cd != null && cd > now) return;
-			Long allyCd = me.formerAllyNoWarUntil.get(target.name);
-			if (allyCd != null && allyCd > now) return;
-		}
-		if(me.isInfrastructureDisabled()) {
-			sender.addChatMessage(new ChatComponentText(ERROR + "Fallen Nations cannot declare war."));
+		String confirmKey = warConfirmationKey(player, target);
+		WarConfirmation pending = WAR_CONFIRMATIONS.get(confirmKey);
+		if(pending == null || pending.expiresAt < now || !pending.attacker.equals(me.name) || !pending.target.equals(target.name)) {
+			WAR_CONFIRMATIONS.put(confirmKey, new WarConfirmation(me.name, target.name, now + 10000L));
+			sender.addChatMessage(new ChatComponentText(CRITICAL + "Declaring war on " + target.name + " will cost " + Clowder.round(validation.cost) + " prestige."));
+			sender.addChatMessage(new ChatComponentText(CRITICAL + "War upkeep starts at " + Clowder.round(XFConfig.activeWarUpkeep) + " prestige per hour and rises every hour."));
+			sender.addChatMessage(new ChatComponentText(INFO + "Run the same war command against " + target.name + " again within 10 seconds to confirm."));
 			return;
 		}
-		float declarationCost = me.getWarDeclarationCost(target);
-		me.addPrestige(-declarationCost, player.worldObj);
-		sender.addChatMessage(new ChatComponentText(CRITICAL + "Declaring war on " + target.name + " cost " + Clowder.round(declarationCost) + " prestige. War upkeep starts at " + Clowder.round(XFConfig.activeWarUpkeep) + " prestige per hour and rises every hour."));
+
+		WAR_CONFIRMATIONS.remove(confirmKey);
+		validation = validateWarDeclaration(sender, player, me, target);
+		if(!validation.ok)
+			return;
+
+		me.addPrestige(-validation.cost, player.worldObj);
 		me.activeWars.add(target.name);
 		target.activeWars.add(me.name);
 		me.warDeclaredAt.put(target.name, now);
@@ -1907,6 +1909,55 @@ private void cmdCreate(ICommandSender sender, String name) {
 		ClowderData.getData(player.worldObj).markDirty();
 		MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(
 				EnumChatFormatting.DARK_RED + "[WAR] " + EnumChatFormatting.GOLD + me.name + EnumChatFormatting.RED + " has declared war on " + EnumChatFormatting.GOLD + target.name + EnumChatFormatting.RED + "!"));
+	}
+
+	private WarValidation validateWarDeclaration(ICommandSender sender, EntityPlayer player, Clowder me, Clowder target) {
+		if (me == null) { sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!")); return new WarValidation(false, 0F); }
+		if (target == null || me == target) { sender.addChatMessage(new ChatComponentText(ERROR + "That faction does not exist.")); return new WarValidation(false, 0F); }
+		if (me.getPermLevel(player.getDisplayName()) < 3) { sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions to declare war.")); return new WarValidation(false, 0F); }
+		if (areFactionsAtWar(me, target)) { sender.addChatMessage(new ChatComponentText(ERROR + "Your faction is already at war with " + target.name + ".")); return new WarValidation(false, 0F); }
+		if(!(CommandClowderAdmin.LEGACY_WAR_ENABLED || CommandClowderAdmin.WAR_ONLINE_CHECK_DISABLED) && target.getOnlineMemberCount() < XFConfig.warOnlinePlayerThreshold && !Clowder.forceOnline) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You can only declare war on factions that are currently online (" + XFConfig.warOnlinePlayerThreshold + "+ members)."));
+			return new WarValidation(false, 0F);
+		}
+		if (!XFConfig.alliesCanDeclareWarOnEachOther && me.allies.containsKey(target)) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You can not declare war on an ally."));
+			return new WarValidation(false, 0F);
+		}
+		long now = System.currentTimeMillis();
+		if(!CommandClowderAdmin.WAR_COOLDOWNS_DISABLED) {
+			Long cd = me.noWarUntil.get(target.name);
+			if (cd != null && cd > now) { sender.addChatMessage(new ChatComponentText(ERROR + "You cannot declare war on " + target.name + " for " + formatDuration(cd - now) + ".")); return new WarValidation(false, 0F); }
+			Long allyCd = me.formerAllyNoWarUntil.get(target.name);
+			if (allyCd != null && allyCd > now) { sender.addChatMessage(new ChatComponentText(ERROR + "You recently broke alliance with " + target.name + "; wait " + formatDuration(allyCd - now) + ".")); return new WarValidation(false, 0F); }
+		}
+		if(me.isInfrastructureDisabled()) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Fallen Nations cannot declare war."));
+			return new WarValidation(false, 0F);
+		}
+		float declarationCost = me.getWarDeclarationCost(target);
+		if(me.getPrestige() < declarationCost) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Declaring war requires " + Clowder.round(declarationCost) + " prestige."));
+			return new WarValidation(false, declarationCost);
+		}
+		return new WarValidation(true, declarationCost);
+	}
+
+	private void cmdListWars(ICommandSender sender) {
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		Clowder me = Clowder.getClowderFromPlayer(player);
+		if(me == null) { sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!")); return; }
+		LinkedHashSet<String> enemies = collectWarEnemyNames(me);
+		if(enemies.isEmpty()) { sender.addChatMessage(new ChatComponentText(INFO + "Your faction has no active wars.")); return; }
+		sender.addChatMessage(new ChatComponentText(TITLE + "Active wars for " + me.name + ":"));
+		for(String enemyName : enemies) {
+			Clowder enemy = Clowder.getClowderFromName(enemyName);
+			long started = getWarStartedAt(me, enemy);
+			String declaredBy = me.warDeclaredAt.containsKey(enemyName) ? me.name : enemy != null && enemy.warDeclaredAt.containsKey(me.name) ? enemy.name : "Unknown";
+			String duration = started > 0L ? formatDuration(System.currentTimeMillis() - started) : "unknown duration";
+			String state = enemy != null && me.canRaid(enemy) ? "raidable" : "active / raid-gated";
+			sender.addChatMessage(new ChatComponentText(LIST + " - " + enemyName + " | declared by: " + declaredBy + " | duration: " + duration + " | state: " + state));
+		}
 	}
 
 	private void cmdRequestPeace(ICommandSender sender, String targetName, String transferCity) {
@@ -2079,12 +2130,80 @@ private void cmdCreate(ICommandSender sender, String name) {
 		return null;
 	}
 
+	private static boolean areFactionsAtWar(Clowder a, Clowder b) {
+		return a != null && b != null && (a.activeWars.contains(b.name) || b.activeWars.contains(a.name));
+	}
+
+	private static LinkedHashSet<String> collectWarEnemyNames(Clowder clowder) {
+		LinkedHashSet<String> enemies = new LinkedHashSet<String>();
+		if(clowder == null)
+			return enemies;
+		enemies.addAll(clowder.activeWars);
+		for(Clowder other : Clowder.clowders) {
+			if(other != null && other != clowder && other.activeWars.contains(clowder.name))
+				enemies.add(other.name);
+		}
+		enemies.remove(clowder.name);
+		return enemies;
+	}
+
+	private static String formatEnemyList(Clowder clowder) {
+		LinkedHashSet<String> enemies = collectWarEnemyNames(clowder);
+		if(enemies.isEmpty())
+			return "None";
+		StringBuilder sb = new StringBuilder();
+		for(String enemy : enemies) {
+			if(sb.length() > 0)
+				sb.append(", ");
+			sb.append(enemy);
+		}
+		return sb.toString();
+	}
+
+	private static long getWarStartedAt(Clowder a, Clowder b) {
+		long started = 0L;
+		if(a != null && b != null) {
+			Long ab = a.warDeclaredAt.get(b.name);
+			Long ba = b.warDeclaredAt.get(a.name);
+			if(ab != null) started = ab.longValue();
+			if(ba != null && (started == 0L || ba.longValue() < started)) started = ba.longValue();
+		}
+		return started;
+	}
+
+	private static String warConfirmationKey(EntityPlayer player, Clowder target) {
+		return player.getDisplayName() + ":" + (target == null ? "" : target.name.toLowerCase());
+	}
+
+	private static String formatDuration(long millis) {
+		long seconds = Math.max(0L, millis / 1000L);
+		long hours = seconds / 3600L;
+		long minutes = (seconds % 3600L) / 60L;
+		long secs = seconds % 60L;
+		if(hours > 0L) return hours + "h " + minutes + "m";
+		if(minutes > 0L) return minutes + "m " + secs + "s";
+		return secs + "s";
+	}
+
+	private static class WarConfirmation {
+		final String attacker;
+		final String target;
+		final long expiresAt;
+		WarConfirmation(String attacker, String target, long expiresAt) { this.attacker = attacker; this.target = target; this.expiresAt = expiresAt; }
+	}
+
+	private static class WarValidation {
+		final boolean ok;
+		final float cost;
+		WarValidation(boolean ok, float cost) { this.ok = ok; this.cost = cost; }
+	}
+
 	private String[] getPlayerCommandNames() {
 		return new String[] { "help", "create", "info", "list", "comrades", "alliance", "leave", "apply",
 				"applicants", "accept", "deny", "kick", "owner", "promote", "demote", "rename", "color", "motd",
 				"listflags", "flag", "gracebuild", "sethome", "home", "setwarp", "addwarp", "delwarp", "warp", "warps",
 				"claim", "city", "nameclaim", "balance", "deposit", "withdraw", "befriend", "ally", "acceptfriend",
-				"acceptally", "unfriend", "unally", "setallywarp", "allywarp", "merge", "acceptmerge", "declarewar",
+				"acceptally", "unfriend", "unally", "setallywarp", "allywarp", "merge", "acceptmerge", "declarewar", "war", "listwars",
 				"peace", "acceptpeace", "ceasefire", "acceptceasefire", "surrender", "acceptsurrender", "defendally" };
 	}
 
@@ -2096,7 +2215,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 	private boolean isFactionCompletionCommand(String cmd) {
 		return cmd.equals("info") || cmd.equals("apply") || cmd.equals("befriend") || cmd.equals("ally")
 				|| cmd.equals("unfriend") || cmd.equals("unally") || cmd.equals("allywarp") || cmd.equals("merge")
-				|| cmd.equals("acceptmerge") || cmd.equals("declarewar") || cmd.equals("peace") || cmd.equals("acceptpeace")
+				|| cmd.equals("acceptmerge") || cmd.equals("declarewar") || cmd.equals("war") || cmd.equals("peace") || cmd.equals("acceptpeace")
 				|| cmd.equals("ceasefire") || cmd.equals("acceptceasefire") || cmd.equals("surrender")
 				|| cmd.equals("acceptsurrender") || cmd.equals("defendally");
 	}
