@@ -97,6 +97,7 @@ public class Conquerer extends BlockContainer {
 				MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(
 						EnumChatFormatting.RED + "[WAR] " + EnumChatFormatting.GOLD + clowder.name +
 						EnumChatFormatting.YELLOW + " placed a claim flag for " + getTargetCityName(world, x, z) +
+						EnumChatFormatting.YELLOW + " in " + EnumChatFormatting.AQUA + formatDimension(world) +
 						EnumChatFormatting.YELLOW + " at " + EnumChatFormatting.AQUA + "(" + x + ", " + y + ", " + z + ")"
 				));
 			} else {
@@ -129,6 +130,15 @@ public class Conquerer extends BlockContainer {
 
 	}
 	
+	private String formatDimension(World world) {
+		if(world == null || world.provider == null)
+			return "dimension 0";
+		String name = world.provider.getDimensionName();
+		if(name == null || name.trim().isEmpty())
+			name = "dimension";
+		return name + " (dim " + world.provider.dimensionId + ")";
+	}
+
 	private String getTargetCityName(World world, int x, int z) {
 		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords(world, x, z);
 		if(meta != null) {
