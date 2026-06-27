@@ -8,6 +8,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldSavedData;
+import net.minecraftforge.common.DimensionManager;
 
 import java.util.ArrayList;
 
@@ -71,20 +72,23 @@ public class ClowderData extends WorldSavedData {
 
 		//initializeDiplomacy(worldObj);
 		//there's no way this works but let's try it
-		
-		if(worldObj.provider.dimensionId == 0) {
-	
-			data = (ClowderData)worldObj.perWorldStorage.loadData(ClowderData.class, "hfr_clowder");
-		    if(data == null) {
-		        worldObj.perWorldStorage.setData("hfr_clowder", new ClowderData("hfr_clowder"));
-		        
-		        data = (ClowderData)worldObj.perWorldStorage.loadData(ClowderData.class, "hfr_clowder");
-		    }
-		    
-		    return data;
+		if(worldObj == null)
+			return data;
+
+		World storageWorld = worldObj;
+		if(worldObj.provider != null && worldObj.provider.dimensionId != 0) {
+			World overworld = DimensionManager.getWorld(0);
+			if(overworld != null)
+				storageWorld = overworld;
 		}
-		
-	    return null;
+
+		data = (ClowderData)storageWorld.perWorldStorage.loadData(ClowderData.class, "hfr_clowder");
+		if(data == null) {
+			storageWorld.perWorldStorage.setData("hfr_clowder", new ClowderData("hfr_clowder"));
+			data = (ClowderData)storageWorld.perWorldStorage.loadData(ClowderData.class, "hfr_clowder");
+		}
+
+		return data;
 	}
 
 }

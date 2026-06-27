@@ -51,6 +51,7 @@ public class Clowder {
 	public int homeX;
 	public int homeY;
 	public int homeZ;
+	public int homeDim;
 	public HashMap<String, int[]> warps = new HashMap();
 
 	//tracks how many times the clowder has bought from this market option
@@ -150,6 +151,7 @@ public class Clowder {
 	public int allyWarpX;
 	public int allyWarpY;
 	public int allyWarpZ;
+	public int allyWarpDim;
 	public long buildGraceUntil = 0L;
 	public boolean buildGraceUsed = false;
 	public String surrenderTributeTo = "";
@@ -1053,8 +1055,10 @@ public class Clowder {
 		this.homeX = (int) x;
 		this.homeY = (int) y;
 		this.homeZ = (int) z;
+		this.homeDim = player != null ? ClowderTerritory.getDimensionId(player.worldObj) : 0;
 
-		ClowderData.getData(player.worldObj).markDirty();
+		if(player != null && player.worldObj != null)
+			ClowderData.getData(player.worldObj).markDirty();
 	}
 
 	public void setAllyWarp(double x, double y, double z, EntityPlayer player) {
@@ -1062,8 +1066,10 @@ public class Clowder {
 		this.allyWarpX = (int) x;
 		this.allyWarpY = (int) y;
 		this.allyWarpZ = (int) z;
+		this.allyWarpDim = player != null ? ClowderTerritory.getDimensionId(player.worldObj) : 0;
 
-		ClowderData.getData(player.worldObj).markDirty();
+		if(player != null && player.worldObj != null)
+			ClowderData.getData(player.worldObj).markDirty();
 	}
 
 	public void rename(String name, EntityPlayer player) {
@@ -1128,7 +1134,7 @@ public class Clowder {
 						tent.warp = name;
 						tent.markDirty();
 
-						clowder.warps.put(name, new int[] { x, y + 1, z });
+						clowder.warps.put(name, new int[] { x, y + 1, z, world.provider.dimensionId });
 
 						ClowderData.getData(world).markDirty();
 						return 0;
@@ -1534,9 +1540,11 @@ public class Clowder {
 		nbt.setInteger(i + "_homeX", this.homeX);
 		nbt.setInteger(i + "_homeY", this.homeY);
 		nbt.setInteger(i + "_homeZ", this.homeZ);
+		nbt.setInteger(i + "_homeDim", this.homeDim);
 		nbt.setInteger(i + "_allyWarpX", this.allyWarpX);
 		nbt.setInteger(i + "_allyWarpY", this.allyWarpY);
 		nbt.setInteger(i + "_allyWarpZ", this.allyWarpZ);
+		nbt.setInteger(i + "_allyWarpDim", this.allyWarpDim);
 		nbt.setFloat(i + "_prestige", this.prestige);
 		nbt.setFloat(i + "_prestigeGen", this.prestigeGen);
 		nbt.setFloat(i + "_prestigeReq", this.prestigeReq);
@@ -1632,6 +1640,7 @@ public class Clowder {
 			nbt.setInteger(i + "_" + j + "_x", coords[0]);
 			nbt.setInteger(i + "_" + j + "_y", coords[1]);
 			nbt.setInteger(i + "_" + j + "_z", coords[2]);
+			nbt.setInteger(i + "_" + j + "_dim", coords.length > 3 ? coords[3] : 0);
 		}
 
 		for (int j = 0; j < this.activeWars.size(); j++)
@@ -1681,9 +1690,11 @@ public class Clowder {
 		c.homeX = nbt.getInteger(i + "_homeX");
 		c.homeY = nbt.getInteger(i + "_homeY");
 		c.homeZ = nbt.getInteger(i + "_homeZ");
+		c.homeDim = nbt.hasKey(i + "_homeDim") ? nbt.getInteger(i + "_homeDim") : 0;
 		c.allyWarpX = nbt.getInteger(i + "_allyWarpX");
 		c.allyWarpY = nbt.getInteger(i + "_allyWarpY");
 		c.allyWarpZ = nbt.getInteger(i + "_allyWarpZ");
+		c.allyWarpDim = nbt.hasKey(i + "_allyWarpDim") ? nbt.getInteger(i + "_allyWarpDim") : 0;
 		c.prestige = nbt.getFloat(i + "_prestige");
 		c.canDeclareTime = Math.max(nbt.getFloat(i + "_canDeclareTime"), 0F);
 		c.fabricateTime = Math.max(nbt.getFloat(i + "_fabricateTime"), 0F);
@@ -1771,7 +1782,7 @@ public class Clowder {
 
 			String name = nbt.getString(i + "_" + j + "_name");
 			int[] coord = new int[] { nbt.getInteger(i + "_" + j + "_x"), nbt.getInteger(i + "_" + j + "_y"),
-					nbt.getInteger(i + "_" + j + "_z") };
+					nbt.getInteger(i + "_" + j + "_z"), nbt.hasKey(i + "_" + j + "_dim") ? nbt.getInteger(i + "_" + j + "_dim") : 0 };
 
 			c.warps.put(name, coord);
 		}
@@ -2003,33 +2014,52 @@ public class Clowder {
 		int posX;
 		int posY;
 		int posZ;
+		int dimensionId;
 		String player;
 		String warp;
 		boolean home;
 		boolean rendezvous = false;
 		String allyName;
 
+		public ScheduledTeleport(int dimensionId, int posX, int posY, int posZ, String player, String warp) {
+			this(posX, posY, posZ, player, warp);
+			this.dimensionId = dimensionId;
+		}
+
 		public ScheduledTeleport(int posX, int posY, int posZ, String player, String warp) {
 			this.posX = posX;
 			this.posY = posY;
 			this.posZ = posZ;
+			this.dimensionId = 0;
 			this.player = player;
 			this.warp = warp;
+		}
+
+		public ScheduledTeleport(int dimensionId, int posX, int posY, int posZ, String player, boolean home) {
+			this(posX, posY, posZ, player, home);
+			this.dimensionId = dimensionId;
 		}
 
 		public ScheduledTeleport(int posX, int posY, int posZ, String player, boolean home) {
 			this.posX = posX;
 			this.posY = posY;
 			this.posZ = posZ;
+			this.dimensionId = 0;
 			this.player = player;
 			this.home = home;
 		}
 
 		//for ally warp
+		public ScheduledTeleport(int dimensionId, int posX, int posY, int posZ, String player, boolean home, boolean rendezvous, String allyName) {
+			this(posX, posY, posZ, player, home, rendezvous, allyName);
+			this.dimensionId = dimensionId;
+		}
+
 		public ScheduledTeleport(int posX, int posY, int posZ, String player, boolean home, boolean rendezvous, String allyName) {
 			this.posX = posX;
 			this.posY = posY;
 			this.posZ = posZ;
+			this.dimensionId = 0;
 			this.player = player;
 			this.home = home;
 			this.rendezvous = rendezvous;

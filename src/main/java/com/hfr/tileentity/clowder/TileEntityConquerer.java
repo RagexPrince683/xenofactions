@@ -145,13 +145,13 @@ public class TileEntityConquerer extends TileEntityMachineBase implements ITerri
 	
 	private void conquer() {
 		
-		CoordPair loc = ClowderTerritory.getCoordPair(xCoord, zCoord);
+		CoordPair loc = ClowderTerritory.getCoordPair(worldObj, xCoord, zCoord);
 		TerritoryMeta meta = ClowderTerritory.getMetaFromCoords(loc);
 		
 		if(meta != null && meta.owner.zone == Zone.FACTION && meta.owner.owner != this.owner
 				&& this.owner != null && this.owner.canRaid(meta.owner.owner)) {
 
-			CoordPair loc2 = ClowderTerritory.getCoordPair(meta.flagX, meta.flagZ);
+			CoordPair loc2 = ClowderTerritory.getCoordPair(worldObj, meta.flagX, meta.flagZ);
 			
 			TileEntity te = worldObj.getTileEntity(meta.flagX, meta.flagY, meta.flagZ);
 			
@@ -201,29 +201,29 @@ public class TileEntityConquerer extends TileEntityMachineBase implements ITerri
 
 	public boolean checkBorder(int x, int z) {
 
-		CoordPair loc = ClowderTerritory.getCoordPair(x, z);
+		CoordPair loc = ClowderTerritory.getCoordPair(worldObj, x, z);
 		Ownership owner = ClowderTerritory.getOwnerFromCoords(loc);
 		if(owner.zone != Zone.FACTION || owner.owner == this.owner || this.owner == null)
 			return false;
 		if(!this.owner.canRaid(owner.owner))
 			return false;
 		
-		CoordPair loc1 = ClowderTerritory.getCoordPair(x + 16, z);
+		CoordPair loc1 = ClowderTerritory.getCoordPair(worldObj, x + 16, z);
 		Ownership owner1 = ClowderTerritory.getOwnerFromCoords(loc1);
 		if(owner1.zone == Zone.WILDERNESS || owner1.owner != owner.owner)
 			return true;
 		
-		CoordPair loc2 = ClowderTerritory.getCoordPair(x - 16, z);
+		CoordPair loc2 = ClowderTerritory.getCoordPair(worldObj, x - 16, z);
 		Ownership owner2 = ClowderTerritory.getOwnerFromCoords(loc2);
 		if(owner2.zone == Zone.WILDERNESS || owner2.owner != owner.owner)
 			return true;
 		
-		CoordPair loc3 = ClowderTerritory.getCoordPair(x, z + 16);
+		CoordPair loc3 = ClowderTerritory.getCoordPair(worldObj, x, z + 16);
 		Ownership owner3 = ClowderTerritory.getOwnerFromCoords(loc3);
 		if(owner3.zone == Zone.WILDERNESS || owner3.owner != owner.owner)
 			return true;
 		
-		CoordPair loc4 = ClowderTerritory.getCoordPair(x, z - 16);
+		CoordPair loc4 = ClowderTerritory.getCoordPair(worldObj, x, z - 16);
 		Ownership owner4 = ClowderTerritory.getOwnerFromCoords(loc4);
 		if(owner4.zone == Zone.WILDERNESS || owner4.owner != owner.owner)
 			return true;

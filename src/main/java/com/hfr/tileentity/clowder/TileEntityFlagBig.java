@@ -81,7 +81,7 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 			//CoordPair[] coords = new CoordPair[0]);
 			//Random rng = new Random();
 
-			long sampleCode = ClowderTerritory.coordsToCode(coords[rng.nextInt(coords.length)]);
+			CoordPair sampleCode = coords[rng.nextInt(coords.length)];
 			TerritoryMeta sampleMeta = ClowderTerritory.territories.get(sampleCode);
 
 			if (sampleMeta == null) return; // Prevent crash if territory is missing
@@ -94,7 +94,7 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 				owner = null;
 				isCappable = false;
 				for(CoordPair a : claim) {
-					long code = ClowderTerritory.coordsToCode(a);
+					CoordPair code = a;
 					if(ClowderTerritory.territories.get(code) != null && ClowderTerritory.territories.get(code).owner.zone == Zone.FACTION)
 						ClowderTerritory.territories.get(code).owner = new Ownership(Zone.WILDERNESS);
 
@@ -201,10 +201,10 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 		int maxX = Math.max(x1, x2);
 		int maxZ = Math.max(z1, z2);
 		
-		CoordPair origin = ClowderTerritory.getCoordPair(xCoord, zCoord);
+		CoordPair origin = ClowderTerritory.getCoordPair(worldObj, xCoord, zCoord);
 		for(int x = minX; x <= maxX; x += 16) {
 			for(int z = minZ; z <= maxZ; z += 16) {
-				CoordPair coord = ClowderTerritory.getCoordPair(x, z);
+				CoordPair coord = ClowderTerritory.getCoordPair(worldObj, x, z);
 				double dist = Math.sqrt(Math.pow(origin.x - coord.x, 2) + Math.pow(origin.z - coord.z, 2));
 				if(dist < getRadius())
 					this.claim.add(coord);
@@ -265,6 +265,7 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 		
 		for(int i = 0; i < length; i++) {
 			this.claim.add(new CoordPair(
+					nbt.hasKey("dim" + i) ? nbt.getInteger("dim" + i) : 0,
 					nbt.getInteger("x" + i),
 					nbt.getInteger("z" + i)
 					));
@@ -289,6 +290,7 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 		
 		for(CoordPair coords : this.claim) {
 
+			nbt.setInteger("dim" + i, coords.dimensionId);
 			nbt.setInteger("x" + i, coords.x);
 			nbt.setInteger("z" + i, coords.z);
 			
