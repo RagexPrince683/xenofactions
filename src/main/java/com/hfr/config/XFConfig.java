@@ -84,6 +84,9 @@ public final class XFConfig {
 	public static boolean claimNameRequireUnique = true;
 	public static boolean claimRenameOfficersAllowed = true;
 	public static boolean peaceCityTransfersEnabled = true;
+	public static boolean enableClaimsInAllDimensions = true;
+	public static int[] allowedClaimDimensions = new int[0];
+	public static int[] blockedClaimDimensions = new int[0];
 	public static boolean surrenderTransfersCities = true;
 	public static int[] cityRadii = new int[] { 2, 3, 4, 5, 6 };
 	public static float[] cityUpgradeCosts = new float[] { 75F, 150F, 300F, 600F, 1000F };
@@ -126,6 +129,7 @@ public final class XFConfig {
 	public static boolean dynmapShowCityCenterMarkers = true;
 	public static boolean dynmapShowClaimDetails = true;
 	public static boolean dynmapShowPrestigeDetails = true;
+	public static String[] dynmapDimensionWorldMap = new String[] { "0=world", "-1=world_nether", "1=world_the_end" };
 
 	public static void load(Configuration config) {
 		commentCategories(config);
@@ -169,6 +173,9 @@ public final class XFConfig {
 		nationalCollapseUpkeepMult = flt(config, CAT_BANKRUPTCY, "nationalCollapseUpkeepMultiplier", nationalCollapseUpkeepMult, 0F, 100F, "Upkeep multiplier during National Collapse.");
 		fallenNationUpkeepMult = flt(config, CAT_BANKRUPTCY, "fallenNationUpkeepMultiplier", fallenNationUpkeepMult, 0F, 100F, "Upkeep multiplier during Fallen Nation.");
 
+		enableClaimsInAllDimensions = bool(config, CAT_CLAIMS, "enableClaimsInAllDimensions", enableClaimsInAllDimensions, "Allows faction claims outside dimension 0.");
+		allowedClaimDimensions = intList(config, CAT_CLAIMS, "allowedClaimDimensions", allowedClaimDimensions, -100000, 100000, "Dimension whitelist for claims; empty means all dimensions.");
+		blockedClaimDimensions = intList(config, CAT_CLAIMS, "blockedClaimDimensions", blockedClaimDimensions, -100000, 100000, "Dimension blacklist for claims; empty means none.");
 		maxCityRadius = integer(config, CAT_CLAIMS, "maxCityRadius", maxCityRadius, 1, 32, "Maximum city radius in chunks. Existing claims are not deleted when lowered.");
 		minCitySpacingChunks = integer(config, CAT_CLAIMS, "minimumCitySpacingChunks", minCitySpacingChunks, 0, 128, "Minimum chunk distance between city centers to prevent overlap.");
 		claimNameMinLength = integer(config, CAT_CLAIMS, "claimNameMinLength", claimNameMinLength, 1, 64, "Minimum city/claim name length.");
@@ -219,6 +226,7 @@ public final class XFConfig {
 		dynmapShowCityCenterMarkers = bool(config, CAT_DYNMAP, "showCityCenterMarkers", dynmapShowCityCenterMarkers, "Shows a marker at each City Center.");
 		dynmapShowClaimDetails = bool(config, CAT_DYNMAP, "showClaimDetailsInLabels", dynmapShowClaimDetails, "Includes city/claim chunk details in Dynmap labels.");
 		dynmapShowPrestigeDetails = bool(config, CAT_DYNMAP, "showPrestigeDetailsInLabels", dynmapShowPrestigeDetails, "Includes prestige/upkeep details in Dynmap labels.");
+		dynmapDimensionWorldMap = stringList(config, CAT_DYNMAP, "dynmapDimensionWorldMap", dynmapDimensionWorldMap, "Minecraft dimension to Dynmap world map, entries like 0=world.");
 
 		MainRegistry.warpCost = Math.round(warpCost);
 		CommandClowderAdmin.WARENABLED = warEnabledDefault;
@@ -249,6 +257,23 @@ public final class XFConfig {
 	public static float cityUpgradeCost(CityLevel level) { return cityUpgradeCosts[index(level)]; }
 	public static float cityUpkeep(CityLevel level) { return cityUpkeep[index(level)]; }
 	private static int index(CityLevel level) { int i = level == null ? 0 : level.ordinal(); return Math.max(0, Math.min(4, i)); }
+
+	public static boolean canClaimInDimension(int dim) {
+		if(!enableClaimsInAllDimensions && dim != 0) return false;
+		for(int blocked : blockedClaimDimensions) if(blocked == dim) return false;
+		if(allowedClaimDimensions.length == 0) return true;
+		for(int allowed : allowedClaimDimensions) if(allowed == dim) return true;
+		return false;
+	}
+
+	public static String dynmapWorldNameForDimension(int dim) {
+		for(String entry : dynmapDimensionWorldMap) {
+			if(entry == null) continue;
+			String[] parts = entry.split("=", 2);
+			try { if(parts.length == 2 && Integer.parseInt(parts[0].trim()) == dim) return parts[1].trim(); } catch(Exception ignored) { }
+		}
+		return null;
+	}
 
 	private static void rebuildHostSet() {
 		customFlagAllowedHostSet.clear();

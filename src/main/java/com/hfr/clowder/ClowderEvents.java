@@ -58,6 +58,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.*;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.World;
+import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
@@ -297,7 +298,7 @@ public void handleChatServer(ServerChatEvent event) {
 			
 			Block b = event.world.getBlock(x, y, z);
 			
-			Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
+			Ownership owner = ClowderTerritory.getOwnerFromInts(event.world, x, z);
 			//handleCollisionInZone(owner);
 			
 			if(event instanceof BreakEvent) {
@@ -515,7 +516,7 @@ public void handleChatServer(ServerChatEvent event) {
 			int y = pos.chunkPosY;
 			int z = pos.chunkPosZ;
 			
-			Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
+			Ownership owner = ClowderTerritory.getOwnerFromInts(event.world, x, z);
 			
 			if(!canExplode(owner, event.world, x, y, z)) {
 				event.getAffectedBlocks().remove(i);
@@ -527,7 +528,7 @@ public void handleChatServer(ServerChatEvent event) {
 		int x = (int)event.explosion.explosionX;
 		int y = (int)event.explosion.explosionY;
 		int z = (int)event.explosion.explosionZ;
-		Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
+		Ownership owner = ClowderTerritory.getOwnerFromInts(event.world, x, z);
 		
 		if(!canExplode(owner, event.world, x, y, z)) {
 			event.getAffectedBlocks().clear();
@@ -581,7 +582,7 @@ public void handleChatServer(ServerChatEvent event) {
 			if(player.getHeldItem() != null && player.getHeldItem().getItem() == ModItems.debug)
 				return;
 			
-			Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
+			Ownership owner = ClowderTerritory.getOwnerFromInts(event.world, x, z);
 			
 			if(owner != null) {
 				Clowder clowder = Clowder.getClowderFromPlayer(event.entityPlayer);
@@ -661,7 +662,7 @@ public void handleChatServer(ServerChatEvent event) {
 	// so to fix this, track back this annoying shithole logic and fix that how god intended instead
 	private void flagPopup(World world, EntityPlayer player) {
 
-		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords((int)player.posX, (int)player.posZ - 1);
+		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords(player.worldObj, (int)player.posX, (int)player.posZ - 1);
 		
 		Ownership owner;
 		
@@ -711,7 +712,7 @@ public void handleChatServer(ServerChatEvent event) {
 
 	private void handleBuildGraceMovement(EntityPlayer player) {
 
-		Ownership owner = ClowderTerritory.getOwnerFromInts((int) player.posX, (int) player.posZ);
+		Ownership owner = ClowderTerritory.getOwnerFromInts(player.worldObj, (int) player.posX, (int) player.posZ);
 
 		if (owner == null)
 			return;
@@ -850,9 +851,9 @@ public void handleChatServer(ServerChatEvent event) {
 		for(int x = -range; x < range; x++) {
 			for(int z = -range; z < range; z++) {
 
-				Ownership center = ClowderTerritory.getOwnerFromInts(ox + x * 16 + 1, oz + z * 16);
-				Ownership north = ClowderTerritory.getOwnerFromInts(ox + (x + ForgeDirection.NORTH.offsetX) * 16 + 1, oz + (z + ForgeDirection.NORTH.offsetZ) * 16);
-				Ownership west = ClowderTerritory.getOwnerFromInts(ox + (x + ForgeDirection.WEST.offsetX) * 16 + 1, oz + (z + ForgeDirection.WEST.offsetZ) * 16);
+				Ownership center = ClowderTerritory.getOwnerFromInts(world, ox + x * 16 + 1, oz + z * 16);
+				Ownership north = ClowderTerritory.getOwnerFromInts(world, ox + (x + ForgeDirection.NORTH.offsetX) * 16 + 1, oz + (z + ForgeDirection.NORTH.offsetZ) * 16);
+				Ownership west = ClowderTerritory.getOwnerFromInts(world, ox + (x + ForgeDirection.WEST.offsetX) * 16 + 1, oz + (z + ForgeDirection.WEST.offsetZ) * 16);
 
 				Ownership none = ClowderTerritory.WILDERNESS;
 				boolean n = isTerritoryDifferent(north, center);
@@ -885,7 +886,7 @@ public void handleChatServer(ServerChatEvent event) {
 			return;
 		}
 
-		Ownership owner = ClowderTerritory.getOwner((int) entity.posX, (int) entity.posZ);
+		Ownership owner = ClowderTerritory.getOwner(entity.worldObj, (int) entity.posX, (int) entity.posZ);
 		if (owner != null && owner.zone == Zone.SAFEZONE) {
 			entity.setDead();
 			event.setCanceled(true);
@@ -927,7 +928,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 	// Check if the entity is any of the relevant types (Minecraft base entities)
 	if (entity instanceof EntityArrow || entity instanceof EntityThrowable || entity instanceof EntityFireball) {
 		// Check if the entity is in a safezone
-		Ownership owner = ClowderTerritory.getOwnerFromInts((int) entity.posX, (int) entity.posZ);
+		Ownership owner = ClowderTerritory.getOwnerFromInts(entity.worldObj, (int) entity.posX, (int) entity.posZ);
 		if (owner != null && owner.zone == Zone.SAFEZONE) {
 			event.setCanceled(true);  // Cancel the event
 			entity.setDead(); // Kill the entity
@@ -947,7 +948,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 				(MCH_EntityRocket != null && MCH_EntityRocket.isInstance(entity))) {
 
 			// Check if the entity is in a safezone
-			Ownership owner = ClowderTerritory.getOwnerFromInts((int) entity.posX, (int) entity.posZ);
+			Ownership owner = ClowderTerritory.getOwnerFromInts(entity.worldObj, (int) entity.posX, (int) entity.posZ);
 			if (owner != null && owner.zone == Zone.SAFEZONE) {
 				event.setCanceled(true);  // Cancel the event
 				entity.setDead(); // Kill the entity
@@ -993,7 +994,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 		EntityLivingBase e = event.entityLiving;
 		DamageSource dmg = event.source;
 
-		Ownership owner = ClowderTerritory.getOwner((int)e.posX, (int)e.posZ);
+		Ownership owner = ClowderTerritory.getOwner(e.worldObj, (int)e.posX, (int)e.posZ);
 
 		if(e instanceof EntityPlayer && owner != null && owner.zone == Zone.SAFEZONE)
 			event.setCanceled(true);
@@ -1075,7 +1076,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 		// Check if the entity is one of the projectiles we care about (Minecraft base or MCHeli)
 		if (entity instanceof EntityArrow || entity instanceof EntityThrowable || entity instanceof EntityFireball) {
 			// Get the owner based on the entity's position
-			Ownership owner = ClowderTerritory.getOwnerFromInts((int) entity.posX, (int) entity.posZ);
+			Ownership owner = ClowderTerritory.getOwnerFromInts(entity.worldObj, (int) entity.posX, (int) entity.posZ);
 
 			// If the owner exists and it's a safezone, proceed to delete the projectile
 			if (owner != null && owner.zone == Zone.SAFEZONE) {
@@ -1095,7 +1096,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 					(MCH_EntityRocket != null && MCH_EntityRocket.isInstance(entity))) {
 
 				// Get the owner based on the entity's position
-				Ownership owner = ClowderTerritory.getOwnerFromInts((int) entity.posX, (int) entity.posZ);
+				Ownership owner = ClowderTerritory.getOwnerFromInts(entity.worldObj, (int) entity.posX, (int) entity.posZ);
 
 				// If the owner exists and it's a safezone, proceed to disable the projectile
 				if (owner != null && owner.zone == Zone.SAFEZONE) {
@@ -1137,7 +1138,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 			int x = (int) e.posX;
 			int y = (int) e.posY;
 			int z = (int) e.posZ;
-			Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
+			Ownership owner = ClowderTerritory.getOwnerFromInts(event.world, x, z);
 			if (owner != null && owner.zone == Zone.SAFEZONE) {
 				// Cancel the event to prevent any damage
 				event.setCanceled(true);
@@ -1154,7 +1155,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 			int x = (int) e.posX;
 			int y = (int) e.posY;
 			int z = (int) e.posZ;
-			Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
+			Ownership owner = ClowderTerritory.getOwnerFromInts(event.world, x, z);
 			if (owner != null && owner.zone == Zone.SAFEZONE) {
 				// Apply a regeneration effect
 				e.addPotionEffect(new PotionEffect(Potion.regeneration.id, 40));
@@ -1196,7 +1197,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 		int z = MathHelper.floor_double(explosionPos.zCoord);
 
 		// Check if the explosion is within a safezone
-		Ownership owner = ClowderTerritory.getOwner(x, z);
+		Ownership owner = ClowderTerritory.getOwner(world, x, z);
 		if (owner != null && owner.zone == Zone.SAFEZONE) {
 			// Clear the affected block list to prevent block damage
 			event.getAffectedBlocks().clear();
@@ -1215,7 +1216,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 		int z = event.z;
 
 		// Check if the block is in a safezone
-		Ownership owner = ClowderTerritory.getOwner(x, z);
+		Ownership owner = ClowderTerritory.getOwner(world, x, z);
 		if (owner != null && owner.zone == Zone.SAFEZONE) {
 			Entity entity = event.getPlayer();
 
@@ -1252,7 +1253,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 		
 		if(!player.worldObj.isRemote) {
 
-			Ownership owner = ClowderTerritory.getOwnerFromInts((int)player.posX, (int)player.posZ - 1);
+			Ownership owner = ClowderTerritory.getOwnerFromInts(player.worldObj, (int)player.posX, (int)player.posZ - 1);
 			flagPopup(player.worldObj, player);
 			handleBuildGraceMovement(player);
 			
@@ -1357,15 +1358,17 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 		
 		World world = event.world;
 		
-		if(world.isRemote || world.provider.dimensionId != 0 || event.phase == Phase.END)
+		if(world.isRemote || event.phase == Phase.END)
 			return;
 
-		if (hour > 0) {
-			hour--;
-		} else {
-			hour = MainRegistry.prestigeDelay;
-			Clowder.updatePrestige(world);
-			System.out.println("[Clowder] Prestige update complete.");
+		if(world.provider.dimensionId == 0) {
+			if (hour > 0) {
+				hour--;
+			} else {
+				hour = MainRegistry.prestigeDelay;
+				Clowder.updatePrestige(world);
+				System.out.println("[Clowder] Prestige update complete.");
+			}
 		}
 		
 		if(delay > 0) {
@@ -1379,14 +1382,17 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 		for(Long time : Clowder.teleports.keySet()) {
 
 			ScheduledTeleport tp = Clowder.teleports.get(time);
-			EntityPlayer player = world.getPlayerEntityByName(tp.player);
+			World tpWorld = DimensionManager.getWorld(tp.dimensionId);
+			if(tpWorld == null)
+				continue;
+			EntityPlayer player = MinecraftServer.getServer().getConfigurationManager().func_152612_a(tp.player);
 
 			if(player == null)
 				continue;
 
 			if(time < System.currentTimeMillis()) {
 
-				Ownership owner = ClowderTerritory.getOwnerFromInts(tp.posX, tp.posZ);
+				Ownership owner = ClowderTerritory.getOwnerFromInts(tp.dimensionId, tp.posX, tp.posZ);
 				Clowder me = Clowder.getClowderFromPlayer(player);
 
 				if(!tp.rendezvous && (owner == null || owner.zone != Zone.FACTION || owner.owner != me)) {
@@ -1398,6 +1404,8 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 
 					EntityPlayerMP playermp = (EntityPlayerMP)player;
 					playermp.mountEntity(null);
+					if(playermp.dimension != tp.dimensionId)
+						playermp.travelToDimension(tp.dimensionId);
 					playermp.playerNetServerHandler.setPlayerLocation(tp.posX + 0.5D, tp.posY, tp.posZ + 0.5D, player.rotationYaw, player.rotationPitch);
 
 					if(tp.rendezvous)

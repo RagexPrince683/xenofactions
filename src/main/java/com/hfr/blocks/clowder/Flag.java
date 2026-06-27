@@ -111,7 +111,7 @@ public class Flag extends BlockContainer {
 
 			String cityName = itemStack.hasTagCompound() ? itemStack.stackTagCompound.getString("cityName") : "";
 			CoordPair cityChunk = ClowderTerritory.getCoordPair(x, z);
-			String cityError = ClowderTerritory.getCityPlacementError(cityChunk.x, cityChunk.z);
+			String cityError = ClowderTerritory.getCityPlacementError(world, cityChunk.x, cityChunk.z);
 
 			if(cityName == null || cityName.trim().isEmpty()) {
 				world.setBlockToAir(x, y, z);
