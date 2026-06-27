@@ -46,6 +46,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.world.World;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.ForgeDirection;
@@ -120,11 +121,6 @@ public class CommandClowder extends CommandBase {
 	public void processCommand(ICommandSender sender, String[] args) {
 
 		//todo add a /c merge command to merge into other factions (with consent ofc)
-
-		if(sender.getEntityWorld().provider.dimensionId != 0) {
-			sender.addChatMessage(new ChatComponentText(CRITICAL + "Critical error: XenoFac only works in overworld!!"));
-			//todo... remove??? why is this the case? does it work outside overworld?
-		}
 
 		if(Clowder.clowders.size() == 0)
 			ClowderData.getData(sender.getEntityWorld());
@@ -1167,7 +1163,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			// level 1 member level 2 officer level 3 leader
 			if (clowder.getPermLevel(player.getDisplayName()) > 1) {
 
-				Ownership owner = ClowderTerritory.getOwnerFromInts((int) player.posX, (int) player.posZ);
+				Ownership owner = ClowderTerritory.getOwnerFromInts(player.worldObj, (int) player.posX, (int) player.posZ);
 
 				if (owner != null && owner.zone == Zone.FACTION && owner.owner == clowder) {
 
@@ -1207,7 +1203,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			// level 1 member level 2 officer level 3 leader
 			if (clowder.getPermLevel(player.getDisplayName()) > 1) {
 
-				Ownership owner = ClowderTerritory.getOwnerFromInts((int) player.posX, (int) player.posZ);
+				Ownership owner = ClowderTerritory.getOwnerFromInts(player.worldObj, (int) player.posX, (int) player.posZ);
 
 				if (owner != null && owner.zone == Zone.FACTION && owner.owner == clowder) {
 
@@ -1253,7 +1249,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 				return;
 			}
 
-			Ownership owner = ClowderTerritory.getOwnerFromInts((int)player.posX, (int)player.posZ);
+			Ownership owner = ClowderTerritory.getOwnerFromInts(player.worldObj, (int)player.posX, (int)player.posZ);
 
 			if(owner != null && (owner.zone == Zone.WARZONE || (owner.zone == Zone.FACTION && (owner.owner != clowder && clowder.allies.get(owner.owner) == null) ) ) ) { //allow warp from allied territory
 
@@ -1262,7 +1258,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			} else {
 
 				sender.addChatMessage(new ChatComponentText(INFO + "Please stand still for 10 seconds!"));
-				clowder.teleports.put(System.currentTimeMillis() + 10000L, new ScheduledTeleport(clowder.homeX, clowder.homeY, clowder.homeZ, player.getDisplayName(), true));
+				clowder.teleports.put(System.currentTimeMillis() + 10000L, new ScheduledTeleport(clowder.homeDim, clowder.homeX, clowder.homeY, clowder.homeZ, player.getDisplayName(), true));
 			}
 
 		} else {
@@ -1287,7 +1283,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 					return;
 				}
 
-				Ownership owner = ClowderTerritory.getOwnerFromInts((int) player.posX, (int) player.posZ);
+				Ownership owner = ClowderTerritory.getOwnerFromInts(player.worldObj, (int) player.posX, (int) player.posZ);
 
 				if (owner != null
 						&& (owner.zone == Zone.WARZONE || (owner.zone == Zone.FACTION && (owner.owner != clowder && clowder.allies.get(owner.owner) == null) ) ) ) {
@@ -1305,7 +1301,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 						if(ally.allyWarpX != 0 && ally.allyWarpY != 0 && ally.allyWarpZ != 0)
 						{
 							sender.addChatMessage(new ChatComponentText(INFO + "Please stand still for 10 seconds!"));
-							clowder.teleports.put(System.currentTimeMillis() + 10000L, new ScheduledTeleport(ally.allyWarpX,
+							clowder.teleports.put(System.currentTimeMillis() + 10000L, new ScheduledTeleport(ally.allyWarpDim, ally.allyWarpX,
 									ally.allyWarpY, ally.allyWarpZ, player.getDisplayName(), true, true, ally.name));
 						}
 						else
@@ -1400,7 +1396,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 			if (clowder.warps.containsKey(name)) {
 
-				Ownership owner = ClowderTerritory.getOwnerFromInts((int) player.posX, (int) player.posZ);
+				Ownership owner = ClowderTerritory.getOwnerFromInts(player.worldObj, (int) player.posX, (int) player.posZ);
 
 				if (owner != null
 						//&& (owner.zone == Zone.WARZONE || (owner.zone == Zone.FACTION && owner.owner != clowder))) {
@@ -1416,7 +1412,9 @@ private void cmdCreate(ICommandSender sender, String name) {
 					return;
 				}
 
-				IChunkProvider provider = player.worldObj.getChunkProvider();
+				World warpWorld = net.minecraftforge.common.DimensionManager.getWorld(warp.length > 3 ? warp[3] : 0);
+				if(warpWorld == null) { sender.addChatMessage(new ChatComponentText(ERROR + "Warp dimension is not loaded.")); return; }
+				IChunkProvider provider = warpWorld.getChunkProvider();
 
 				for (int i = 2; i <= 5; i++) {
 
@@ -1427,17 +1425,17 @@ private void cmdCreate(ICommandSender sender, String name) {
 					int tentX = warp[0] + dir.offsetX * 2;
 					int tentZ = warp[2] + dir.offsetZ * 2;
 
-					Block block = player.worldObj.getBlock(tentX, warp[1], tentZ);
+					Block block = warpWorld.getBlock(tentX, warp[1], tentZ);
 
 					if (block == ModBlocks.tp_tent) {
 
-						int[] pos = ((BlockDummyable) ModBlocks.tp_tent).findCore(player.worldObj, tentX, warp[1],
+						int[] pos = ((BlockDummyable) ModBlocks.tp_tent).findCore(warpWorld, tentX, warp[1],
 								tentZ);
 
 						if (pos != null) {
 
 							provider.loadChunk(pos[0] >> 4, pos[2] >> 4);
-							TileEntityProp tent = (TileEntityProp) player.worldObj.getTileEntity(pos[0], pos[1],
+							TileEntityProp tent = (TileEntityProp) warpWorld.getTileEntity(pos[0], pos[1],
 									pos[2]);
 
 							if (tent.warp.equals(name) && tent.operational()) {
@@ -1445,7 +1443,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 								sender.addChatMessage(
 										new ChatComponentText(INFO + "Please stand still for 10 seconds!"));
 								clowder.teleports.put(System.currentTimeMillis() + 10000L, new ScheduledTeleport(
-										warp[0], warp[1], warp[2], player.getDisplayName(), name));
+										warp.length > 3 ? warp[3] : 0, warp[0], warp[1], warp[2], player.getDisplayName(), name));
 
 								return;
 							}
@@ -1701,7 +1699,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions to upgrade cities!"));
 			return;
 		}
-		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords((int)player.posX, (int)player.posZ);
+		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords(player.worldObj, (int)player.posX, (int)player.posZ);
 		if(meta == null || meta.owner == null || meta.owner.owner != clowder) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "Stand inside one of your city claims to upgrade it."));
 			return;
@@ -1825,7 +1823,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			return;
 		}
 
-		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords((int)player.posX, (int)player.posZ);
+		TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords(player.worldObj, (int)player.posX, (int)player.posZ);
 
 		if(meta == null || meta.owner == null || !meta.isCityClaim()) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in a city claim!"));
