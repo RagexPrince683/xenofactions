@@ -73,9 +73,7 @@ public class XFDynmapIntegration {
 			if(markerApi == null)
 				return;
 
-			World world = DimensionManager.getWorld(0);
-			if(world == null)
-				return;
+			World world = null;
 
 			markerSet = getOrCreateMarkerSet(markerApi);
 			if(markerSet == null)
@@ -89,7 +87,15 @@ public class XFDynmapIntegration {
 
 			cacheMarkerMethods();
 			clearMarkerSet(markerSet);
-			createCityMarkers(world, getWorldName(world));
+			HashSet<Integer> renderedDims = new HashSet();
+			for(CoordPair coord : ClowderTerritory.territories.keySet()) {
+				if(!renderedDims.add(Integer.valueOf(coord.dimensionId)))
+					continue;
+				World dimWorld = DimensionManager.getWorld(coord.dimensionId);
+				String worldName = XFConfig.dynmapWorldNameForDimension(coord.dimensionId);
+				if(dimWorld != null && worldName != null && !worldName.isEmpty())
+					createCityMarkers(dimWorld, worldName);
+			}
 			dirty = false;
 		} catch(Throwable t) {
 			markerSet = null;
@@ -169,16 +175,18 @@ public class XFDynmapIntegration {
 
 	private static void createCityMarkers(World world, String worldName) throws Exception {
 		HashMap<String, CitySummary> cities = new HashMap();
-		for(Map.Entry<Long, TerritoryMeta> entry : ClowderTerritory.territories.entrySet()) {
+		for(Map.Entry<CoordPair, TerritoryMeta> entry : ClowderTerritory.territories.entrySet()) {
 			TerritoryMeta meta = entry.getValue();
 			if(meta == null || meta.owner == null || meta.owner.zone != Zone.FACTION || meta.owner.owner == null || !meta.isCityClaim())
 				continue;
 
-			CoordPair coords = ClowderTerritory.codeToCoords(entry.getKey().longValue());
+			CoordPair coords = entry.getKey();
+			if(coords.dimensionId != ClowderTerritory.getDimensionId(world))
+				continue;
 			Clowder owner = meta.owner.owner;
 			int color = owner.color & 0xFFFFFF;
 			String cityId = safeCityId(meta);
-			String markerId = "xf_claim_" + Long.toUnsignedString(entry.getKey().longValue(), 16);
+			String markerId = "xf_claim_" + coords.dimensionId + "_" + coords.x + "_" + coords.z;
 			String label = buildClaimLabel(meta, owner, coords);
 			double[] x = new double[] { coords.x * 16.0D, coords.x * 16.0D + 16.0D };
 			double[] z = new double[] { coords.z * 16.0D, coords.z * 16.0D + 16.0D };
