@@ -30,27 +30,45 @@ public class ClowderTerritory {
 	public static final int WARZONE_COLOR = 0xFF0000;
 	public static final int WILDERNESS_COLOR = 0xFFFFFF;
 	
-	public static HashMap<Long, TerritoryMeta> territories = new HashMap();
+	public static HashMap<CoordPair, TerritoryMeta> territories = new HashMap();
 	
 	//the chunk coords in the CodePair wrapper class
-	public static CoordPair getCoordPair(int x, int z) {
+	public static CoordPair getCoordPair(int x, int z) { return getCoordPair(0, x, z); }
+
+	public static CoordPair getCoordPair(World world, int x, int z) { return getCoordPair(getDimensionId(world), x, z); }
+
+	public static CoordPair getCoordPair(int dimensionId, int x, int z) {
 		
 		//why is this necessary? idk but it is
 		x += 1;
 		z += 1;
 		
-		return new CoordPair(x / 16, z / 16);
+		return new CoordPair(dimensionId, x / 16, z / 16);
 	}
 	
 
 	public static boolean canPlaceCityCenter(int chunkX, int chunkZ) {
-		return getCityPlacementError(chunkX, chunkZ) == null;
+		return getCityPlacementError(0, chunkX, chunkZ) == null;
+	}
+
+	public static boolean canPlaceCityCenter(World world, int chunkX, int chunkZ) {
+		return getCityPlacementError(world, chunkX, chunkZ) == null;
+	}
+
+	public static String getCityPlacementError(World world, int chunkX, int chunkZ) {
+		return getCityPlacementError(getDimensionId(world), chunkX, chunkZ);
 	}
 
 	public static String getCityPlacementError(int chunkX, int chunkZ) {
+		return getCityPlacementError(0, chunkX, chunkZ);
+	}
+
+	public static String getCityPlacementError(int dimensionId, int chunkX, int chunkZ) {
 		for(TerritoryMeta meta : territories.values()) {
 			if(meta != null && meta.owner != null && meta.owner.zone == Zone.FACTION && meta.isCityClaim()) {
-				CoordPair other = getCoordPair(meta.flagX, meta.flagZ);
+				if(meta.dimensionId != dimensionId)
+					continue;
+				CoordPair other = getCoordPair(meta.dimensionId, meta.flagX, meta.flagZ);
 				double dist = Math.sqrt(Math.pow(chunkX - other.x, 2) + Math.pow(chunkZ - other.z, 2));
 				int required = XFConfig.minCitySpacingChunks;
 				if(dist < required)
@@ -105,7 +123,7 @@ public class ClowderTerritory {
 	}
 
 	public static int renameClaimsForCity(World world, int fX, int fY, int fZ, String name) {
-		String id = fX + "," + fY + "," + fZ;
+		String id = cityId(getDimensionId(world), fX, fY, fZ);
 		int renamed = 0;
 		for(TerritoryMeta meta : territories.values()) {
 			if(meta != null && id.equals(meta.cityId)) {
@@ -124,15 +142,15 @@ public class ClowderTerritory {
 				ClowderData.getData(world).markDirty();
 		}
 		if(renamed > 0)
-			com.hfr.dynmap.XFDynmapIntegration.markDirty();
+		com.hfr.dynmap.XFDynmapIntegration.markDirty();
 		return renamed;
 	}
 
 	public static int removeClaimsForCity(World world, int fX, int fY, int fZ) {
-		String id = fX + "," + fY + "," + fZ;
+		String id = cityId(getDimensionId(world), fX, fY, fZ);
 		int removed = 0;
-		List<Long> claims = new ArrayList(territories.keySet());
-		for(Long code : claims) {
+		List<CoordPair> claims = new ArrayList(territories.keySet());
+		for(CoordPair code : claims) {
 			TerritoryMeta meta = territories.get(code);
 			if(meta != null && id.equals(meta.cityId)) {
 				territories.remove(code);
@@ -142,7 +160,7 @@ public class ClowderTerritory {
 		if(removed > 0 && world != null)
 			ClowderData.getData(world).markDirty();
 		if(removed > 0)
-			com.hfr.dynmap.XFDynmapIntegration.markDirty();
+		com.hfr.dynmap.XFDynmapIntegration.markDirty();
 		return removed;
 	}
 
@@ -174,7 +192,7 @@ public class ClowderTerritory {
 		}
 		ClowderData.getData(world).markDirty();
 		if(moved > 0)
-			com.hfr.dynmap.XFDynmapIntegration.markDirty();
+		com.hfr.dynmap.XFDynmapIntegration.markDirty();
 		return moved;
 	}
 
@@ -187,7 +205,9 @@ public class ClowderTerritory {
 	//sets the owner of a chunk to a clowder
 	public static void setOwnerForInts(World world, int x, int z, Clowder owner, int fX, int fY, int fZ, String name) {
 		
-		long code = intsToCode(x, z);
+		if(!XFConfig.canClaimInDimension(getDimensionId(world)))
+			return;
+		CoordPair code = new CoordPair(getDimensionId(world), x, z);
 		//TerritoryMeta old = territories.get(code);
 		
 		territories.remove(code);
@@ -197,7 +217,8 @@ public class ClowderTerritory {
 		TerritoryMeta metadata = new TerritoryMeta(o, fX, fY, fZ);
 		metadata.name = name;
 		metadata.cityName = name;
-		metadata.cityId = fX + "," + fY + "," + fZ;
+		metadata.dimensionId = getDimensionId(world);
+		metadata.cityId = cityId(metadata.dimensionId, fX, fY, fZ);
 		//fuck this goddamn shithole of a mod
 		TileEntity flag = world.getTileEntity(fX, fY, fZ);
 		if(flag != null) {
@@ -221,7 +242,9 @@ public class ClowderTerritory {
 	//sets the owner of a chunk to a special zone
 	public static void setZoneForInts(World world, int x, int z, Zone zone) {
 		
-		long code = intsToCode(x, z);
+		if(!XFConfig.canClaimInDimension(getDimensionId(world)))
+			return;
+		CoordPair code = new CoordPair(getDimensionId(world), x, z);
 		
 		territories.remove(code);
 		
@@ -245,7 +268,7 @@ public class ClowderTerritory {
 	//removes territory metadata
 	public static void removeZoneForInts(World world, int x, int z) {
 
-		long code = intsToCode(x, z);
+		CoordPair code = new CoordPair(getDimensionId(world), x, z);
 		territories.remove(code);
 		
 		ClowderData.getData(world).markDirty();
@@ -255,21 +278,29 @@ public class ClowderTerritory {
 	//returns the ownership information of the chunk
 	public static Ownership getOwnerFromCoords(CoordPair coords) {
 		
-		return getOwner(coords.x, coords.z);
+		return getOwner(coords.dimensionId, coords.x, coords.z);
 	}
 	
 	//returns the ownership information of the chunk
-	public static Ownership getOwnerFromInts(int x, int z) {
+	public static Ownership getOwnerFromInts(int x, int z) { return getOwnerFromInts(0, x, z); }
+
+	public static Ownership getOwnerFromInts(World world, int x, int z) { return getOwnerFromInts(getDimensionId(world), x, z); }
+
+	public static Ownership getOwnerFromInts(int dimensionId, int x, int z) {
 
 		z += 1;
 		
-		return getOwner(x / 16, z / 16);
+		return getOwner(dimensionId, x / 16, z / 16);
 	}
 	
 	//returns the ownership information of the chunk
-	public static Ownership getOwner(int x, int z) {
+	public static Ownership getOwner(World world, int x, int z) { return getOwner(getDimensionId(world), x, z); }
+
+	public static Ownership getOwner(int x, int z) { return getOwner(0, x, z); }
+
+	public static Ownership getOwner(int dimensionId, int x, int z) {
 		
-		long code = intsToCode(x, z);
+		CoordPair code = new CoordPair(dimensionId, x, z);
 		
 		TerritoryMeta meta = territories.get(code);
 		
@@ -292,7 +323,7 @@ public class ClowderTerritory {
 		if(clowder == null)
 			return false;
 		
-		Ownership owner = getOwnerFromInts((int)player.posX, (int)player.posZ);
+		Ownership owner = getOwnerFromInts(player.worldObj, (int)player.posX, (int)player.posZ);
 		
 		if(owner != null && owner.zone == Zone.FACTION && owner.owner == clowder)
 			return true;
@@ -302,23 +333,31 @@ public class ClowderTerritory {
 	}
 	
 	//returns the ownership information of the chunk
-	public static TerritoryMeta getMetaFromIntCoords(int x, int z) {
+	public static TerritoryMeta getMetaFromIntCoords(int x, int z) { return getMetaFromIntCoords(0, x, z); }
+
+	public static TerritoryMeta getMetaFromIntCoords(World world, int x, int z) { return getMetaFromIntCoords(getDimensionId(world), x, z); }
+
+	public static TerritoryMeta getMetaFromIntCoords(int dimensionId, int x, int z) {
 
 		z += 1;
 		
-		return getMetaFromInts(x / 16, z / 16);
+		return getMetaFromInts(dimensionId, x / 16, z / 16);
 	}
 	
 	//returns the ownership information of the chunk
 	public static TerritoryMeta getMetaFromCoords(CoordPair coords) {
 		
-		return getMetaFromInts(coords.x, coords.z);
+		return getMetaFromInts(coords.dimensionId, coords.x, coords.z);
 	}
 	
 	//returns the ownership information of the chunk
-	public static TerritoryMeta getMetaFromInts(int x, int z) {
+	public static TerritoryMeta getMetaFromInts(int x, int z) { return getMetaFromInts(0, x, z); }
+
+	public static TerritoryMeta getMetaFromInts(World world, int x, int z) { return getMetaFromInts(getDimensionId(world), x, z); }
+
+	public static TerritoryMeta getMetaFromInts(int dimensionId, int x, int z) {
 		
-		long code = intsToCode(x, z);
+		CoordPair code = new CoordPair(dimensionId, x, z);
 		
 		TerritoryMeta meta = territories.get(code);
 		
@@ -332,18 +371,22 @@ public class ClowderTerritory {
 	}
 
 	//converts the UUID long code into a CoordPair instance
+	public static CoordPair codeToCoords(CoordPair code) { return code; }
+
+	public static CoordPair codeToCoords(String code) { return CoordPair.parse(code); }
+
 	public static CoordPair codeToCoords(long code) {
 
-		return new CoordPair((int)(code >> 32), (int)code);
+		return new CoordPair(0, (int)(code >> 32), (int)code);
 	}
 
 	//converts a CoordPair instance into the UUID long code
-	public static long coordsToCode(CoordPair coord) {
+	public static String coordsToCode(CoordPair coord) {
 		try {
-			return intsToCode(coord.x, coord.z);
+			return coord.toString();
 		} catch (Exception e) {
 			e.printStackTrace();
-			return 0L;
+			return "0:0,0";
 		}
 	}
 
@@ -351,6 +394,10 @@ public class ClowderTerritory {
 		
         return ((long)x & 0xFFFFFFFFL) << 32 | ((long)z & 0xFFFFFFFFL);
 	}
+
+	public static int getDimensionId(World world) { return world == null || world.provider == null ? 0 : world.provider.dimensionId; }
+
+	public static String cityId(int dimensionId, int x, int y, int z) { return dimensionId + ":" + x + "," + y + "," + z; }
 	
 	public static class Ownership {
 		
@@ -439,6 +486,7 @@ public class ClowderTerritory {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
+			result = prime * result + dimensionId;
 			result = prime * result + x;
 			result = prime * result + z;
 			return result;
@@ -453,6 +501,8 @@ public class ClowderTerritory {
 			if (getClass() != obj.getClass())
 				return false;
 			CoordPair other = (CoordPair) obj;
+			if (dimensionId != other.dimensionId)
+				return false;
 			if (x != other.x)
 				return false;
 			if (z != other.z)
@@ -460,18 +510,33 @@ public class ClowderTerritory {
 			return true;
 		}
 
+		public int dimensionId;
 		public int x;
 		public int z;
 		
-		public CoordPair(int x, int z) {
+		public CoordPair(int x, int z) { this(0, x, z); }
+		public CoordPair(World world, int x, int z) { this(getDimensionId(world), x, z); }
+		public CoordPair(int dimensionId, int x, int z) {
+			this.dimensionId = dimensionId;
 			this.x = x;
 			this.z = z;
+		}
+		public String toString() { return dimensionId + ":" + x + "," + z; }
+		public static CoordPair parse(String s) {
+			try {
+				String[] dimSplit = s.split(":", 2);
+				int dim = dimSplit.length == 2 ? Integer.parseInt(dimSplit[0]) : 0;
+				String coords = dimSplit.length == 2 ? dimSplit[1] : dimSplit[0];
+				String[] parts = coords.split(",", 2);
+				return new CoordPair(dim, Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+			} catch(Exception e) { return new CoordPair(0, 0, 0); }
 		}
 	}
 	
 	public static class TerritoryMeta {
 		
 		public Ownership owner;
+		public int dimensionId;
 		public int flagX;
 		public int flagY;
 		public int flagZ;
@@ -482,17 +547,19 @@ public class ClowderTerritory {
 		
 		public TerritoryMeta(Ownership owner, int flagX, int flagY, int flagZ) {
 			this.owner = owner;
+			this.dimensionId = 0;
 			this.flagX = flagX;
 			this.flagY = flagY;
 			this.flagZ = flagZ;
 			this.name = "";
-			this.cityId = flagX + "," + flagY + "," + flagZ;
+			this.cityId = cityId(dimensionId, flagX, flagY, flagZ);
 			this.cityName = "";
 			this.cityLevel = 0;
 		}
 
 		public TerritoryMeta(Ownership owner, int flagX, int flagY, int flagZ, World world, String name) {
 			this.owner = owner;
+			this.dimensionId = getDimensionId(world);
 			this.flagX = flagX;
 			this.flagY = flagY;
 			this.flagZ = flagZ;
@@ -512,6 +579,7 @@ public class ClowderTerritory {
 			//nbt.setInteger("terr_" + code + "_flagZ", flagZ);
 
 			owner.writeToNBT(nbt, code);
+			nbt.setInteger("dim_" + code, dimensionId);
 			nbt.setInteger(code + "X",flagX);
 			nbt.setInteger(code + "Y",flagY);
 			nbt.setInteger(code + "Z",flagZ);
@@ -529,10 +597,11 @@ public class ClowderTerritory {
 					nbt.getInteger(code + "Y"),
 					nbt.getInteger(code + "Z")
 			);
+			meta.dimensionId = nbt.hasKey("dim_" + code) ? nbt.getInteger("dim_" + code) : 0;
 			meta.name = nbt.getString("name_" + code);
 			meta.cityId = nbt.getString("cityId_" + code);
 			if(meta.cityId == null || meta.cityId.isEmpty())
-				meta.cityId = meta.flagX + "," + meta.flagY + "," + meta.flagZ;
+				meta.cityId = cityId(meta.dimensionId, meta.flagX, meta.flagY, meta.flagZ);
 			meta.cityName = nbt.getString("cityName_" + code);
 			if(meta.cityName == null || meta.cityName.isEmpty())
 				meta.cityName = meta.name;
@@ -567,7 +636,7 @@ public class ClowderTerritory {
 				return false;
 			
 			Clowder own = owner.owner;
-			CoordPair origin = getCoordPair(flagX, flagZ);
+			CoordPair origin = getCoordPair(dimensionId, flagX, flagZ);
 			
 			if(world == null || world.getChunkProvider() == null)
 				return true;
@@ -617,11 +686,11 @@ public class ClowderTerritory {
 	//checks a part of the clowder claim data for persistence, will delete non-persistent ones
 	public static void checkPersistence(World world, int cycle, int index) {
 		
-		List<Long> BOW = new ArrayList(territories.keySet());
+		List<CoordPair> BOW = new ArrayList(territories.keySet());
 		
 		for(int i = index; i < BOW.size(); i += cycle) {
 			
-			long code = BOW.get(i);
+			CoordPair code = BOW.get(i);
 			TerritoryMeta meta = territories.get(code);
 			
 			//code will be deleted IF
@@ -629,6 +698,8 @@ public class ClowderTerritory {
 			// -the code refers to a claim that is deemed non-persistent
 			if(meta != null) {
 				
+				if(code.dimensionId != getDimensionId(world))
+					continue;
 				if(!meta.checkPersistence(world, codeToCoords(code))) {
 					territories.remove(code);
 					i--;
@@ -657,15 +728,29 @@ public class ClowderTerritory {
 		
 		territories.clear();
 		int count = nbt.getInteger("territory_count");
+		int migrated = 0;
 		
 		for(int i = 0; i < count; i++) {
 			
-			long code = nbt.getLong("code_" + i);
+			CoordPair code;
+			String rawCode = nbt.getString("code_" + i);
+			if(rawCode != null && rawCode.indexOf(":") >= 0)
+				code = CoordPair.parse(rawCode);
+			else {
+				code = codeToCoords(nbt.getLong("code_" + i));
+				migrated++;
+			}
 			TerritoryMeta meta = TerritoryMeta.readFromNBT(nbt, "meta_" + i);
 			
-			if(meta != null && meta.owner.zone != Zone.WILDERNESS) //todo here
+			if(meta != null && meta.owner.zone != Zone.WILDERNESS) { //todo here
+				meta.dimensionId = code.dimensionId;
+				if(meta.cityId == null || meta.cityId.indexOf(":") < 0)
+					meta.cityId = cityId(meta.dimensionId, meta.flagX, meta.flagY, meta.flagZ);
 				territories.put(code, meta);
+			}
 		}
+		if(migrated > 0 && MainRegistry.logger != null)
+			MainRegistry.logger.info("Migrated " + migrated + " legacy faction territory entries to dimension 0 claim keys.");
 		com.hfr.dynmap.XFDynmapIntegration.markDirty();
 	}
 	
@@ -674,14 +759,14 @@ public class ClowderTerritory {
 		nbt.setInteger("territory_count", territories.size());
 		int index = 0;
 		
-		for(long code : territories.keySet()) {
+		for(CoordPair code : territories.keySet()) {
 			
 			TerritoryMeta meta = territories.get(code);
 			
 			//do not save wilderness
 			//todo check that this isnt some bs
 			if(meta.owner.zone != Zone.WILDERNESS) {
-				nbt.setLong("code_" + index, code);
+				nbt.setString("code_" + index, code.toString());
 				meta.writeToNBT(nbt, "meta_" + index);
 			}
 			
