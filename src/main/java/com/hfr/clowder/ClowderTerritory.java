@@ -17,6 +17,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraftforge.common.DimensionManager;
 
 public class ClowderTerritory {
 
@@ -81,10 +82,29 @@ public class ClowderTerritory {
 	public static List<TerritoryMeta> getCityClaims(Clowder owner) {
 		HashMap<String, TerritoryMeta> cities = new HashMap();
 		for(TerritoryMeta meta : territories.values()) {
-			if(meta != null && meta.owner != null && meta.owner.zone == Zone.FACTION && meta.owner.owner == owner && meta.isCityClaim())
-				cities.put(meta.cityId, meta);
+			if(meta != null && meta.owner != null && meta.owner.zone == Zone.FACTION && meta.owner.owner == owner && meta.isCityClaim()) {
+				refreshCityMetaFromTile(meta);
+				TerritoryMeta existing = cities.get(meta.cityId);
+				if(existing == null || meta.cityLevel > existing.cityLevel || (meta.flagX == existing.flagX && meta.flagY == existing.flagY && meta.flagZ == existing.flagZ))
+					cities.put(meta.cityId, meta);
+			}
 		}
 		return new ArrayList(cities.values());
+	}
+
+	public static void refreshCityMetaFromTile(TerritoryMeta meta) {
+		if(meta == null || !meta.isCityClaim())
+			return;
+		World world = DimensionManager.getWorld(meta.dimensionId);
+		if(world == null)
+			return;
+		TileEntity te = world.getTileEntity(meta.flagX, meta.flagY, meta.flagZ);
+		if(te instanceof TileEntityFlag) {
+			TileEntityFlag flag = (TileEntityFlag)te;
+			meta.cityLevel = flag.cityLevel.ordinal();
+			meta.cityName = flag.name;
+			meta.name = flag.name;
+		}
 	}
 
 	public static TerritoryMeta getCityByName(Clowder owner, String cityName) {
