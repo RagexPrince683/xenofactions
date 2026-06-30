@@ -38,7 +38,7 @@ public class TileEntityStatue extends TileEntityMachineBase {
 			
 			if(this.operational()) {
 				
-				Ownership o = ClowderTerritory.getOwnerFromInts(xCoord, zCoord);
+				Ownership o = ClowderTerritory.getOwnerFromInts(worldObj, xCoord, zCoord);
 				
 				if(owner != o.owner) {
 					

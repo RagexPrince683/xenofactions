@@ -28,7 +28,7 @@ public class TileEntityMachineTemple extends TileEntityMachineBase {
 		
 		if(!worldObj.isRemote) {
 
-			Ownership o = ClowderTerritory.getOwnerFromInts(xCoord, zCoord);
+			Ownership o = ClowderTerritory.getOwnerFromInts(worldObj, xCoord, zCoord);
 			if(o != null && o.zone == Zone.FACTION) {
 				if(owner != o.owner) {
 					if(owner != null)

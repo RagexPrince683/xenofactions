@@ -46,3 +46,11 @@ Back up the world and config directory before:
 - Compare your old config against the new generated `XENOFACTIONS_*` categories.
 - Re-check feature toggles because new systems may default to enabled for compatibility with the maintained fork.
 - Test faction commands, prestige ticks, claims, and war declarations on a staging copy before updating a live server.
+
+## Multi-dimension persistence checks
+
+When validating an update, test faction claims, City Centers, homes, faction warps, and ally warps in every enabled dimension. Legacy saves that predate dimension-aware faction locations are migrated to dimension `0`, and the server log should include a migration message for each legacy location type that is encountered.
+
+Runtime admin war toggles such as `/xc warenable`, `/xc wardisable`, and war-check bypass toggles are saved with faction data and restored on restart. The `warEnabledDefault` config value only applies before a runtime value has been saved for the world.
+
+For non-overworld claims, specifically verify warp tents, medical tents, statues, and other prestige buildings. These structures should resolve the claim in their own dimension, and City Center GUIs should show prestige generation changes immediately while the actual prestige accrual interval remains unchanged.

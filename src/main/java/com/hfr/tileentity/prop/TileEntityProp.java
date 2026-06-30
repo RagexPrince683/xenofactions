@@ -73,7 +73,7 @@ public class TileEntityProp extends TileEntity {
 				}
 			}
 			
-			Ownership o = ClowderTerritory.getOwnerFromInts(xCoord, zCoord);
+			Ownership o = ClowderTerritory.getOwnerFromInts(worldObj, xCoord, zCoord);
 			
 			/// WARP UPDATE ///
 			if(!warp.isEmpty()) {

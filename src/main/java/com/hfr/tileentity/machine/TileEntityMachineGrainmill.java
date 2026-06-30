@@ -43,7 +43,7 @@ public class TileEntityMachineGrainmill extends TileEntityMachineBase {
 			
 			if(operational()) {
 				
-				Ownership o = ClowderTerritory.getOwnerFromInts(xCoord, zCoord);
+				Ownership o = ClowderTerritory.getOwnerFromInts(worldObj, xCoord, zCoord);
 				
 				if(owner != o.owner) {
 					
