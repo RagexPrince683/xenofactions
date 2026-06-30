@@ -1346,7 +1346,7 @@ public class Clowder {
 	}
 
 	private void refreshPrestigeDisplays() {
-		for(TerritoryMeta meta : ClowderTerritory.getCityClaims(this)) {
+		for(ClowderTerritory.TerritoryMeta meta : ClowderTerritory.getCityClaims(this)) {
 			if(meta == null)
 				continue;
 			World world = DimensionManager.getWorld(meta.dimensionId);
