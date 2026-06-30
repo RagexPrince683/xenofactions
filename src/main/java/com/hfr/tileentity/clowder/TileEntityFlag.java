@@ -50,6 +50,8 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	public float prestige;
 	@SideOnly(Side.CLIENT)
 	public float prestigeReq;
+	@SideOnly(Side.CLIENT)
+	public float prestigeGen;
 	public String customFlagHash = "";
 
 	public TileEntityFlag() {
@@ -205,18 +207,7 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 					PacketDispatcher.wrapper.sendToAllAround(packet, new TargetPoint(this.worldObj.provider.dimensionId, xCoord, yCoord, zCoord, 250));
 				}
 
-			if(owner != null) {
-				this.updateGauge(owner.flag.ordinal(), 0, 250);
-				this.updateGauge(owner.color, 1, 250);
-				this.updateGauge(Float.floatToIntBits(owner.getPrestige()), 4, 20);
-				this.updateGauge(Float.floatToIntBits(owner.getPrestigeReq()), 5, 20);
-				this.updateGauge(cityLevel.ordinal(), 6, 20);
-			} else {
-				this.updateGauge(ClowderFlag.NONE.ordinal(), 0, 250);
-				this.updateGauge(0xFFFFFF, 1, 250);
-				this.updateGauge(0, 4, 20);
-				this.updateGauge(0, 5, 20);
-			}
+			syncPrestigeGauges();
 			this.updateGauge(mode, 2, 25);
 			this.updateGauge((int) (height * 100F), 3, 100);
 			
@@ -236,6 +227,23 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 		}
 	}
 	
+	public void syncPrestigeGauges() {
+		if(owner != null) {
+			this.updateGauge(owner.flag.ordinal(), 0, 250);
+			this.updateGauge(owner.color, 1, 250);
+			this.updateGauge(Float.floatToIntBits(owner.getPrestige()), 4, 20);
+			this.updateGauge(Float.floatToIntBits(owner.getPrestigeReq()), 5, 20);
+			this.updateGauge(Float.floatToIntBits(owner.getPrestigeGen()), 7, 20);
+			this.updateGauge(cityLevel.ordinal(), 6, 20);
+		} else {
+			this.updateGauge(ClowderFlag.NONE.ordinal(), 0, 250);
+			this.updateGauge(0xFFFFFF, 1, 250);
+			this.updateGauge(0, 4, 20);
+			this.updateGauge(0, 5, 20);
+			this.updateGauge(0, 7, 20);
+		}
+	}
+
 	public void processGauge(int val, int id) {
 		
 		switch(id) {
@@ -245,6 +253,7 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 		case 3: height = val * 0.01F; break;
 		case 4: prestige = Float.intBitsToFloat(val); break;
 		case 5: prestigeReq = Float.intBitsToFloat(val); break;
+		case 7: prestigeGen = Float.intBitsToFloat(val); break;
 		case 6: cityLevel = CityLevel.byOrdinal(val); break;
 		}
 	}
@@ -365,7 +374,7 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 
 				int posX = xCoord + x * 16;
 				int posZ = zCoord + z * 16;
-				CoordPair loc = ClowderTerritory.getCoordPair(posX, posZ);
+				CoordPair loc = ClowderTerritory.getCoordPair(worldObj, posX, posZ);
 				
 				TerritoryMeta meta = ClowderTerritory.getMetaFromCoords(loc);
 				
@@ -411,27 +420,27 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	
 	public boolean checkBorder(int x, int z) {
 
-		CoordPair loc = ClowderTerritory.getCoordPair(x, z);
+		CoordPair loc = ClowderTerritory.getCoordPair(worldObj, x, z);
 		Ownership owner = ClowderTerritory.getOwnerFromCoords(loc);
 		if(owner.zone != Zone.FACTION || owner.owner != this.owner)
 			return false;
 		
-		CoordPair loc1 = ClowderTerritory.getCoordPair(x + 16, z);
+		CoordPair loc1 = ClowderTerritory.getCoordPair(worldObj, x + 16, z);
 		Ownership owner1 = ClowderTerritory.getOwnerFromCoords(loc1);
 		if(owner1.zone == Zone.WILDERNESS || owner1.owner != this.owner)
 			return true;
 		
-		CoordPair loc2 = ClowderTerritory.getCoordPair(x - 16, z);
+		CoordPair loc2 = ClowderTerritory.getCoordPair(worldObj, x - 16, z);
 		Ownership owner2 = ClowderTerritory.getOwnerFromCoords(loc2);
 		if(owner2.zone == Zone.WILDERNESS || owner2.owner != this.owner)
 			return true;
 		
-		CoordPair loc3 = ClowderTerritory.getCoordPair(x, z + 16);
+		CoordPair loc3 = ClowderTerritory.getCoordPair(worldObj, x, z + 16);
 		Ownership owner3 = ClowderTerritory.getOwnerFromCoords(loc3);
 		if(owner3.zone == Zone.WILDERNESS || owner3.owner != this.owner)
 			return true;
 		
-		CoordPair loc4 = ClowderTerritory.getCoordPair(x, z - 16);
+		CoordPair loc4 = ClowderTerritory.getCoordPair(worldObj, x, z - 16);
 		Ownership owner4 = ClowderTerritory.getOwnerFromCoords(loc4);
 		if(owner4.zone == Zone.WILDERNESS || owner4.owner != this.owner)
 			return true;

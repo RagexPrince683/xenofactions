@@ -46,7 +46,7 @@ public class MachineTemple extends BlockDummyable {
 	@Override
 	public void breakBlock(World world, int x, int y, int z, Block block, int meta) {
 		if(meta >= 12) {
-			Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
+			Ownership owner = ClowderTerritory.getOwnerFromInts(world, x, z);
 			TileEntity entity = world.getTileEntity(x, y, z);
 			if(owner != null && owner.zone == Zone.FACTION && entity instanceof TileEntityMachineTemple) {
 				TileEntityMachineTemple temple = (TileEntityMachineTemple)entity;

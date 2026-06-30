@@ -39,7 +39,7 @@ public class TileEntityMachineUni extends TileEntityMachineBase {
 			
 			if(operational() && hasSpace() && slots[4] == null) {
 				
-				Ownership o = ClowderTerritory.getOwnerFromInts(xCoord, zCoord);
+				Ownership o = ClowderTerritory.getOwnerFromInts(worldObj, xCoord, zCoord);
 				
 				if(owner != o.owner) {
 					

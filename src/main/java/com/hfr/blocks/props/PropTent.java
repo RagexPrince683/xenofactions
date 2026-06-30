@@ -44,7 +44,7 @@ public class PropTent extends BlockDummyable {
 	public void breakBlock(World world, int x, int y, int z, Block b, int i)
     {
 		if(i >= ForgeDirection.UNKNOWN.ordinal()) {
-			Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
+			Ownership owner = ClowderTerritory.getOwnerFromInts(world, x, z);
 			
 			if(owner != null && owner.zone == Zone.FACTION) {
 

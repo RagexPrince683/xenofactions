@@ -2,6 +2,8 @@ package com.hfr.data;
 
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderTerritory;
+import com.hfr.command.CommandClowderAdmin;
+import com.hfr.config.XFConfig;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -84,6 +86,7 @@ public class ClowderData extends WorldSavedData {
 
 		data = (ClowderData)storageWorld.perWorldStorage.loadData(ClowderData.class, "hfr_clowder");
 		if(data == null) {
+			CommandClowderAdmin.WARENABLED = XFConfig.warEnabledDefault;
 			storageWorld.perWorldStorage.setData("hfr_clowder", new ClowderData("hfr_clowder"));
 			data = (ClowderData)storageWorld.perWorldStorage.loadData(ClowderData.class, "hfr_clowder");
 		}
