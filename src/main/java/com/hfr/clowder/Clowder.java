@@ -10,10 +10,12 @@ import java.util.UUID;
 import com.hfr.blocks.BlockDummyable;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.command.CommandClowder;
+import com.hfr.command.CommandClowderAdmin;
 import com.hfr.config.XFConfig;
 import com.hfr.data.ClowderData;
 //import com.hfr.data.MarketData.Offer;
 import com.hfr.main.MainRegistry;
+import com.hfr.tileentity.clowder.TileEntityFlag;
 import com.hfr.tileentity.prop.TileEntityProp;
 
 import cpw.mods.fml.common.Loader;
@@ -22,10 +24,12 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
 import net.minecraft.world.World;
+import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.util.ForgeDirection;
 
 //it's like a faction
@@ -1337,7 +1341,21 @@ public class Clowder {
 			prestigeGen = 0F;
 
 		prestigeGen = Math.min(prestigeGen, XFConfig.prestigeGenCap);
+		refreshPrestigeDisplays();
 		this.save(world);
+	}
+
+	private void refreshPrestigeDisplays() {
+		for(TerritoryMeta meta : ClowderTerritory.getCityClaims(this)) {
+			if(meta == null)
+				continue;
+			World world = DimensionManager.getWorld(meta.dimensionId);
+			if(world == null)
+				continue;
+			TileEntity te = world.getTileEntity(meta.flagX, meta.flagY, meta.flagZ);
+			if(te instanceof TileEntityFlag)
+				((TileEntityFlag)te).syncPrestigeGauges();
+		}
 	}
 
 	public void addPrestigeReq(float f, World world) {
@@ -1529,6 +1547,7 @@ public class Clowder {
 	}
 
 	public void saveClowder(int i, NBTTagCompound nbt) {
+		syncAllyNames();
 		nbt.setString(i + "_uuid", this.uuid);
 		nbt.setString(i + "_name", this.name);
 		nbt.setString(i + "_motd", this.motd);
@@ -1578,6 +1597,8 @@ public class Clowder {
 		nbt.setString(i + "_leader", this.leader);
 		nbt.setInteger(i + "_members", this.members.size());
 		nbt.setInteger(i + "_officers", this.officers.size());
+		nbt.setInteger(i + "_potentialFriends", this.potentialFriends.size());
+		nbt.setInteger(i + "_allies", this.alliesS.size());
 		nbt.setInteger(i + "_warps", this.warps.size());
 		nbt.setInteger(i + "_activeWars", this.activeWars.size());
 		nbt.setInteger(i + "_defendingAllies", this.defendingAllies.size());
@@ -1622,7 +1643,10 @@ public class Clowder {
 		for (int j = 0; j < this.members.keySet().size(); j++)
 			nbt.setString(i + "_" + j, (String) this.members.keySet().toArray()[j]);
 
-		// try to save allies
+		// save pending and active allies
+		for (int j = 0; j < this.potentialFriends.size(); j++)
+			nbt.setString(i + "_" + j + "_pfriend", (String) this.potentialFriends.toArray()[j]);
+
 		for (int j = 0; j < this.alliesS.keySet().size(); j++)
 			nbt.setString(i + "_" + j + "_ally", (String) this.alliesS.keySet().toArray()[j]);
 
@@ -1690,10 +1714,12 @@ public class Clowder {
 		c.homeX = nbt.getInteger(i + "_homeX");
 		c.homeY = nbt.getInteger(i + "_homeY");
 		c.homeZ = nbt.getInteger(i + "_homeZ");
+		if(!nbt.hasKey(i + "_homeDim") && MainRegistry.logger != null) MainRegistry.logger.info("Migrating legacy faction home for " + c.name + " to dimension 0.");
 		c.homeDim = nbt.hasKey(i + "_homeDim") ? nbt.getInteger(i + "_homeDim") : 0;
 		c.allyWarpX = nbt.getInteger(i + "_allyWarpX");
 		c.allyWarpY = nbt.getInteger(i + "_allyWarpY");
 		c.allyWarpZ = nbt.getInteger(i + "_allyWarpZ");
+		if(!nbt.hasKey(i + "_allyWarpDim") && MainRegistry.logger != null) MainRegistry.logger.info("Migrating legacy ally warp for " + c.name + " to dimension 0.");
 		c.allyWarpDim = nbt.hasKey(i + "_allyWarpDim") ? nbt.getInteger(i + "_allyWarpDim") : 0;
 		c.prestige = nbt.getFloat(i + "_prestige");
 		c.canDeclareTime = Math.max(nbt.getFloat(i + "_canDeclareTime"), 0F);
@@ -1752,6 +1778,13 @@ public class Clowder {
 		c.leader = nbt.getString(i + "_leader");
 		int count = nbt.getInteger(i + "_members");
 		int co = nbt.getInteger(i + "_officers");
+		int cpf = nbt.getInteger(i + "_potentialFriends");
+		int ca = nbt.getInteger(i + "_allies");
+		if(ca == 0 && nbt.getInteger(i + "_members") > 0 && nbt.hasKey(i + "_0_ally")) {
+			ca = nbt.getInteger(i + "_members");
+			if(MainRegistry.logger != null)
+				MainRegistry.logger.info("Migrating legacy ally list for faction " + c.name + "; using member-count bounded ally entries from old saves.");
+		}
 		int cwarp = nbt.getInteger(i + "_warps");
 		int cwar = nbt.getInteger(i + "_activeWars");
 		int cdef = nbt.getInteger(i + "_defendingAllies");
@@ -1772,8 +1805,14 @@ public class Clowder {
 		for (int j = 0; j < count; j++)
 			c.members.put(nbt.getString(i + "_" + j), time());
 
-		for (int j = 0; j < count; j++)
-			c.alliesS.put(nbt.getString(i + "_" + j + "_ally"), time());
+		for (int j = 0; j < cpf; j++)
+			c.potentialFriends.add(nbt.getString(i + "_" + j + "_pfriend"));
+
+		for (int j = 0; j < ca; j++) {
+			String allyName = nbt.getString(i + "_" + j + "_ally");
+			if(allyName != null && !allyName.isEmpty())
+				c.alliesS.put(allyName, time());
+		}
 
 		for (int j = 0; j < co; j++)
 			c.officers.add(nbt.getString(i + "_" + j + "_off"));
@@ -1781,6 +1820,7 @@ public class Clowder {
 		for (int j = 0; j < cwarp; j++) {
 
 			String name = nbt.getString(i + "_" + j + "_name");
+			if(!nbt.hasKey(i + "_" + j + "_dim") && MainRegistry.logger != null) MainRegistry.logger.info("Migrating legacy faction warp " + name + " for " + c.name + " to dimension 0.");
 			int[] coord = new int[] { nbt.getInteger(i + "_" + j + "_x"), nbt.getInteger(i + "_" + j + "_y"),
 					nbt.getInteger(i + "_" + j + "_z"), nbt.hasKey(i + "_" + j + "_dim") ? nbt.getInteger(i + "_" + j + "_dim") : 0 };
 
@@ -1859,6 +1899,24 @@ public class Clowder {
 		}
 	}
 
+	private void syncAllyNames() {
+		for(Clowder ally : new ArrayList<Clowder>(allies.keySet())) {
+			if(ally != null && ally.valid())
+				alliesS.put(ally.name, allies.get(ally));
+		}
+	}
+
+	private static void restoreAllyReferences() {
+		for(Clowder clowder : clowders) {
+			clowder.allies.clear();
+			for(String allyName : new HashSet<String>(clowder.alliesS.keySet())) {
+				Clowder ally = getClowderFromName(allyName);
+				if(ally != null && ally != clowder)
+					clowder.allies.put(ally, clowder.alliesS.get(allyName));
+			}
+		}
+	}
+
 	public static void readFromNBT(NBTTagCompound nbt) {
 
 		colours.add(ClowderTerritory.SAFEZONE_COLOR);
@@ -1867,17 +1925,29 @@ public class Clowder {
 
 		clowders.clear();
 
+		CommandClowderAdmin.WARENABLED = nbt.hasKey("warEnabledRuntime") ? nbt.getBoolean("warEnabledRuntime") : XFConfig.warEnabledDefault;
+		CommandClowderAdmin.WAR_COOLDOWNS_DISABLED = nbt.getBoolean("warCooldownsDisabled");
+		CommandClowderAdmin.WAR_ONLINE_CHECK_DISABLED = nbt.getBoolean("warOnlineCheckDisabled");
+		CommandClowderAdmin.WAR_STATE_CHECK_DISABLED = nbt.getBoolean("warStateCheckDisabled");
+		CommandClowderAdmin.LEGACY_WAR_ENABLED = nbt.getBoolean("legacyWarEnabled");
+
 		int count = nbt.getInteger("clowderCount");
 
 		for (int i = 0; i < count; i++)
 			clowders.add(loadClowder(i, nbt));
 
+		restoreAllyReferences();
 		recalculateIMap();
 	}
 
 	public static void writeToNBT(NBTTagCompound nbt) {
 
 		nbt.setInteger("clowderCount", clowders.size());
+		nbt.setBoolean("warEnabledRuntime", CommandClowderAdmin.WARENABLED);
+		nbt.setBoolean("warCooldownsDisabled", CommandClowderAdmin.WAR_COOLDOWNS_DISABLED);
+		nbt.setBoolean("warOnlineCheckDisabled", CommandClowderAdmin.WAR_ONLINE_CHECK_DISABLED);
+		nbt.setBoolean("warStateCheckDisabled", CommandClowderAdmin.WAR_STATE_CHECK_DISABLED);
+		nbt.setBoolean("legacyWarEnabled", CommandClowderAdmin.LEGACY_WAR_ENABLED);
 
 		for (int i = 0; i < clowders.size(); i++)
 			clowders.get(i).saveClowder(i, nbt);

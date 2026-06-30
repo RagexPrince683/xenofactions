@@ -50,6 +50,7 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import static com.hfr.main.MainRegistry.sub;
@@ -156,7 +157,7 @@ public class CommandClowder extends CommandBase {
 		if(cmd.equals("acceptmerge")) { if(!requireArgs(sender, cmd, args, 2)) return; acceptMerge(sender, joinArgs(args, 1)); return; }
 		if(cmd.equals("gracebuild")) { cmdGraceBuild(sender); return; }
 		if(cmd.equals("comrades")) { cmdComrades(sender); return; }
-		if(cmd.equals("alliance")) { cmdAlliance(sender); return; }
+		if(cmd.equals("alliance") || cmd.equals("allies") || cmd.equals("allylist")) { cmdAlliance(sender); return; }
 		if(cmd.equals("color")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdColor(sender, args[1]); return; }
 
 		if(cmd.equals("info")) {
@@ -297,7 +298,7 @@ public class CommandClowder extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-info {faction}" + TITLE + " - Shows info on your faction or another faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-list" + TITLE + " - Lists all factions"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-comrades" + TITLE + " - Shows all members of your faction"));
-			sender.addChatMessage(new ChatComponentText(COMMAND + "-alliance" + TITLE + " - Shows all allied factions"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-alliance/allies" + TITLE + " - Shows all allied factions"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-leave" + TITLE + " - Leaves your faction"));
 			sender.addChatMessage(new ChatComponentText(INFO + "Tip: faction spaces are saved as underscores; use underscores in commands."));
 			sender.addChatMessage(new ChatComponentText(INFO + "/clowder help 2"));
@@ -546,11 +547,15 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if (clowder != null) {
 
-			sender.addChatMessage(new ChatComponentText(TITLE + clowder.getDecoratedName() + " Alliance:"));
+			sender.addChatMessage(new ChatComponentText(TITLE + clowder.getDecoratedName() + " Allies:"));
+			if(clowder.allies.isEmpty())
+				sender.addChatMessage(new ChatComponentText(LIST + "None"));
+			else
+				for (Clowder s : clowder.allies.keySet())
+					sender.addChatMessage(new ChatComponentText(LIST + s.name));
 
-
-			for (Clowder s : clowder.allies.keySet())
-				sender.addChatMessage(new ChatComponentText(LIST + s.name));
+			if(!clowder.potentialFriends.isEmpty())
+				sender.addChatMessage(new ChatComponentText(INFO + "Pending alliance offers from: " + formatStringSet(clowder.potentialFriends)));
 
 		} else {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any clowder!"));
@@ -764,14 +769,22 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(LIST + "Raidable? " + clowder.isRaidable()));
 			sender.addChatMessage(new ChatComponentText(LIST + "Members: " + clowder.members.size()));
 			sender.addChatMessage(new ChatComponentText(LIST + "Prestige: " + clowder.round(clowder.getPrestige())));
-			sender.addChatMessage(new ChatComponentText(LIST + " -generating: " + clowder.round(clowder.getPrestigeGen()) + " per hour (x" + clowder.round((float) Math.pow(0.99, clowder.getPrestige())) + ")"));
+			sender.addChatMessage(new ChatComponentText(LIST + " -generating: " + clowder.round(clowder.getPrestigeGen()) + " per hour"));
 			sender.addChatMessage(new ChatComponentText(LIST + " -requires: " + clowder.round(clowder.getPrestigeReq()) + " at all times"));
+			sender.addChatMessage(new ChatComponentText(LIST + " -net: " + clowder.round(clowder.getHourlyNetPrestige()) + " per hour"));
 			sender.addChatMessage(new ChatComponentText(LIST + "Color: " + Integer.toHexString(clowder.color).toUpperCase()));
+			sender.addChatMessage(new ChatComponentText(LIST + "Allies: " + formatAllyList(clowder)));
 			sender.addChatMessage(new ChatComponentText(LIST + "Enemies: " + formatEnemyList(clowder)));
 			sender.addChatMessage(new ChatComponentText(LIST + "Cities: " + ClowderTerritory.getCityClaims(clowder).size()));
 			for(Object cityObj : ClowderTerritory.getCityClaims(clowder)) {
 				TerritoryMeta city = (TerritoryMeta)cityObj;
-				sender.addChatMessage(new ChatComponentText(LIST + " - " + city.cityName + " [" + city.getCityLevel().displayName + "] center X:" + city.flagX + " Y:" + city.flagY + " Z:" + city.flagZ + " radius " + XFConfig.cityRadius(city.getCityLevel()) + " upkeep " + XFConfig.cityUpkeep(city.getCityLevel())));
+				ClowderTerritory.refreshCityMetaFromTile(city);
+				CityLevel level = city.getCityLevel();
+				World cityWorld = DimensionManager.getWorld(city.dimensionId);
+				TileEntity te = cityWorld == null ? null : cityWorld.getTileEntity(city.flagX, city.flagY, city.flagZ);
+				if(te instanceof TileEntityFlag)
+					level = ((TileEntityFlag)te).cityLevel;
+				sender.addChatMessage(new ChatComponentText(LIST + " - " + city.cityName + " [" + level.displayName + "] dim " + city.dimensionId + " center X:" + city.flagX + " Y:" + city.flagY + " Z:" + city.flagZ + " radius " + XFConfig.cityRadius(level) + " upkeep " + XFConfig.cityUpkeep(level)));
 			}
 
 		} else {
@@ -796,7 +809,13 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(LIST + "Cities: " + ClowderTerritory.getCityClaims(clowder).size()));
 			for(Object cityObj : ClowderTerritory.getCityClaims(clowder)) {
 				TerritoryMeta city = (TerritoryMeta)cityObj;
-				sender.addChatMessage(new ChatComponentText(LIST + " - " + city.cityName + " [" + city.getCityLevel().displayName + "] center X:" + city.flagX + " Y:" + city.flagY + " Z:" + city.flagZ + " radius " + XFConfig.cityRadius(city.getCityLevel()) + " upkeep " + XFConfig.cityUpkeep(city.getCityLevel())));
+				ClowderTerritory.refreshCityMetaFromTile(city);
+				CityLevel level = city.getCityLevel();
+				World cityWorld = DimensionManager.getWorld(city.dimensionId);
+				TileEntity te = cityWorld == null ? null : cityWorld.getTileEntity(city.flagX, city.flagY, city.flagZ);
+				if(te instanceof TileEntityFlag)
+					level = ((TileEntityFlag)te).cityLevel;
+				sender.addChatMessage(new ChatComponentText(LIST + " - " + city.cityName + " [" + level.displayName + "] dim " + city.dimensionId + " center X:" + city.flagX + " Y:" + city.flagY + " Z:" + city.flagZ + " radius " + XFConfig.cityRadius(level) + " upkeep " + XFConfig.cityUpkeep(level)));
 			}
 
 		} else {
@@ -2147,6 +2166,34 @@ private void cmdCreate(ICommandSender sender, String name) {
 		return enemies;
 	}
 
+	private static String formatAllyList(Clowder clowder) {
+		if(clowder == null || clowder.allies.isEmpty())
+			return "None";
+		StringBuilder sb = new StringBuilder();
+		for(Clowder ally : clowder.allies.keySet()) {
+			if(ally == null)
+				continue;
+			if(sb.length() > 0)
+				sb.append(", ");
+			sb.append(ally.name);
+		}
+		return sb.length() == 0 ? "None" : sb.toString();
+	}
+
+	private static String formatStringSet(java.util.Set<String> values) {
+		if(values == null || values.isEmpty())
+			return "None";
+		StringBuilder sb = new StringBuilder();
+		for(String value : values) {
+			if(value == null || value.isEmpty())
+				continue;
+			if(sb.length() > 0)
+				sb.append(", ");
+			sb.append(value);
+		}
+		return sb.length() == 0 ? "None" : sb.toString();
+	}
+
 	private static String formatEnemyList(Clowder clowder) {
 		LinkedHashSet<String> enemies = collectWarEnemyNames(clowder);
 		if(enemies.isEmpty())
@@ -2199,7 +2246,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 	}
 
 	private String[] getPlayerCommandNames() {
-		return new String[] { "help", "create", "info", "list", "comrades", "alliance", "leave", "apply",
+		return new String[] { "help", "create", "info", "list", "comrades", "alliance", "allies", "allylist", "leave", "apply",
 				"applicants", "accept", "deny", "kick", "owner", "promote", "demote", "rename", "color", "motd",
 				"listflags", "flag", "gracebuild", "sethome", "home", "setwarp", "addwarp", "delwarp", "warp", "warps",
 				"claim", "city", "nameclaim", "balance", "deposit", "withdraw", "befriend", "ally", "acceptfriend",

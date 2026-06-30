@@ -43,7 +43,7 @@ public class TileEntityMachineGrainmill extends TileEntityMachineBase {
 			
 			if(operational()) {
 				
-				Ownership o = ClowderTerritory.getOwnerFromInts(xCoord, zCoord);
+				Ownership o = ClowderTerritory.getOwnerFromInts(worldObj, xCoord, zCoord);
 				
 				if(owner != o.owner) {
 					
@@ -94,8 +94,7 @@ public class TileEntityMachineGrainmill extends TileEntityMachineBase {
 
 		for(int i = -1; i <= 1; i++)
 			for(int j = -1; j <= 1; j++)
-				if(worldObj.getBlock(xCoord + i, yCoord + 6, zCoord + j).getMaterial() != Material.air && !(i == 0 && j == 0) ||
-					!worldObj.canBlockSeeTheSky(xCoord + i, yCoord + 6, zCoord + j))
+				if(worldObj.getBlock(xCoord + i, yCoord + 6, zCoord + j).getMaterial() != Material.air && !(i == 0 && j == 0))
 					return false;
 
 		for(int x = -1; x <= 1; x++)

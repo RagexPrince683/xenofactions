@@ -73,7 +73,7 @@ public class TileEntityProp extends TileEntity {
 				}
 			}
 			
-			Ownership o = ClowderTerritory.getOwnerFromInts(xCoord, zCoord);
+			Ownership o = ClowderTerritory.getOwnerFromInts(worldObj, xCoord, zCoord);
 			
 			/// WARP UPDATE ///
 			if(!warp.isEmpty()) {
@@ -149,8 +149,7 @@ public class TileEntityProp extends TileEntity {
 
 		for(int i = -w; i <= e; i++)
 			for(int j = -n; j <= s; j++)
-				if(worldObj.getBlock(xCoord + i, yCoord + 4, zCoord + j).getMaterial() != Material.air && !(i == 0 && j == 0) ||
-					!worldObj.canBlockSeeTheSky(xCoord + i, yCoord + 4, zCoord + j))
+				if(worldObj.getBlock(xCoord + i, yCoord + 4, zCoord + j).getMaterial() != Material.air && !(i == 0 && j == 0))
 					return false;
 
 		for(int x = -w; x <= e; x++)

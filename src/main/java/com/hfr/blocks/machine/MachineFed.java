@@ -145,7 +145,7 @@ public class MachineFed extends BlockDummyable {
         }
 
         if(i >= ForgeDirection.UNKNOWN.ordinal()) {
-            Ownership owner = ClowderTerritory.getOwnerFromInts(x, z);
+            Ownership owner = ClowderTerritory.getOwnerFromInts(world, x, z);
 
             if(owner != null && owner.zone == Zone.FACTION) {
 

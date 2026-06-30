@@ -84,6 +84,7 @@ public class CommandClowderAdmin extends CommandBase {
 
 		if (cmd.equals("warenable")) {
 			WARENABLED = true;
+			ClowderData.getData(sender.getEntityWorld()).markDirty();
 			sender.addChatMessage(new ChatComponentText(INFO + "War declarations enabled!"));
 
 			// Notify and play sound for all players
@@ -111,6 +112,7 @@ public class CommandClowderAdmin extends CommandBase {
 
 		if(cmd.equals("wardisable")) {
 			WARENABLED = false;
+			ClowderData.getData(sender.getEntityWorld()).markDirty();
 			for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
 				if (obj instanceof EntityPlayerMP) {
 					EntityPlayerMP player = (EntityPlayerMP) obj;
@@ -128,6 +130,7 @@ public class CommandClowderAdmin extends CommandBase {
 			for (Clowder c : Clowder.clowders) {
 				c.activeWars.clear();
 				c.defendingAllies.clear();
+				c.warDeclaredAt.clear();
 			}
 			sender.addChatMessage(new ChatComponentText(INFO + "War declarations disabled; active wars cleared."));
 			return;
@@ -136,10 +139,10 @@ public class CommandClowderAdmin extends CommandBase {
 		if(cmd.equals("newplayerprotection")) { if(!XFConfig.enableNewPlayerProtection) { sender.addChatMessage(new ChatComponentText(ERROR + "New-player protection module is disabled in the config.")); return; } ClowderEvents.newPlayerProtectionEnabled = !ClowderEvents.newPlayerProtectionEnabled; sender.addChatMessage(new ChatComponentText(INFO + "New player protection is now " + (ClowderEvents.newPlayerProtectionEnabled ? "enabled" : "disabled") + ".")); return; }
 		if(cmd.equals("resetnewplayerprotection")) { cmdResetNewPlayerProtection(sender); return; }
 		if(cmd.equals("endnewplayerprotection")) { cmdEndNewPlayerProtection(sender); return; }
-		if(cmd.equals("skipwarcooldowns")) { WAR_COOLDOWNS_DISABLED = !WAR_COOLDOWNS_DISABLED; sender.addChatMessage(new ChatComponentText(INFO + "War cooldown skipping is now " + (WAR_COOLDOWNS_DISABLED ? "ENABLED" : "DISABLED") + ".")); return; }
-		if(cmd.equals("ignorewarcooldowncheck")) { WAR_COOLDOWNS_DISABLED = !WAR_COOLDOWNS_DISABLED; sender.addChatMessage(new ChatComponentText(INFO + "War cooldown checks are now " + (WAR_COOLDOWNS_DISABLED ? "IGNORED" : "ENFORCED") + ".")); return; }
-		if(cmd.equals("ignorewaronlinecheck")) { WAR_ONLINE_CHECK_DISABLED = !WAR_ONLINE_CHECK_DISABLED; sender.addChatMessage(new ChatComponentText(INFO + "War online checks are now " + (WAR_ONLINE_CHECK_DISABLED ? "IGNORED" : "ENFORCED") + ".")); return; }
-		if(cmd.equals("ignorewarstatecheck")) { WAR_STATE_CHECK_DISABLED = !WAR_STATE_CHECK_DISABLED; sender.addChatMessage(new ChatComponentText(INFO + "War state checks are now " + (WAR_STATE_CHECK_DISABLED ? "IGNORED" : "ENFORCED") + ".")); return; }
+		if(cmd.equals("skipwarcooldowns")) { WAR_COOLDOWNS_DISABLED = !WAR_COOLDOWNS_DISABLED; ClowderData.getData(sender.getEntityWorld()).markDirty(); sender.addChatMessage(new ChatComponentText(INFO + "War cooldown skipping is now " + (WAR_COOLDOWNS_DISABLED ? "ENABLED" : "DISABLED") + ".")); return; }
+		if(cmd.equals("ignorewarcooldowncheck")) { WAR_COOLDOWNS_DISABLED = !WAR_COOLDOWNS_DISABLED; ClowderData.getData(sender.getEntityWorld()).markDirty(); sender.addChatMessage(new ChatComponentText(INFO + "War cooldown checks are now " + (WAR_COOLDOWNS_DISABLED ? "IGNORED" : "ENFORCED") + ".")); return; }
+		if(cmd.equals("ignorewaronlinecheck")) { WAR_ONLINE_CHECK_DISABLED = !WAR_ONLINE_CHECK_DISABLED; ClowderData.getData(sender.getEntityWorld()).markDirty(); sender.addChatMessage(new ChatComponentText(INFO + "War online checks are now " + (WAR_ONLINE_CHECK_DISABLED ? "IGNORED" : "ENFORCED") + ".")); return; }
+		if(cmd.equals("ignorewarstatecheck")) { WAR_STATE_CHECK_DISABLED = !WAR_STATE_CHECK_DISABLED; ClowderData.getData(sender.getEntityWorld()).markDirty(); sender.addChatMessage(new ChatComponentText(INFO + "War state checks are now " + (WAR_STATE_CHECK_DISABLED ? "IGNORED" : "ENFORCED") + ".")); return; }
 		if(cmd.equals("skipwarcooldown")) {
 			for (Clowder c : Clowder.clowders) { c.noWarUntil.clear(); c.formerAllyNoWarUntil.clear(); }
 			sender.addChatMessage(new ChatComponentText(INFO + "All faction war cooldowns have been reset to 0."));
@@ -147,6 +150,7 @@ public class CommandClowderAdmin extends CommandBase {
 		}
 		if(cmd.equals("enablelegacywar")) {
 			LEGACY_WAR_ENABLED = !LEGACY_WAR_ENABLED;
+			ClowderData.getData(sender.getEntityWorld()).markDirty();
 			if(LEGACY_WAR_ENABLED) { WAR_COOLDOWNS_DISABLED = true; WAR_ONLINE_CHECK_DISABLED = true; WAR_STATE_CHECK_DISABLED = true; }
 			sender.addChatMessage(new ChatComponentText(INFO + "Legacy war mode is now " + (LEGACY_WAR_ENABLED ? "ENABLED" : "DISABLED") + "."));
 			return;
@@ -387,7 +391,7 @@ public class CommandClowderAdmin extends CommandBase {
 
 							int posX = xCoord + x * 16;
 							int posZ = zCoord + z * 16;
-							CoordPair loc = ClowderTerritory.getCoordPair(posX, posZ);
+							CoordPair loc = ClowderTerritory.getCoordPair(player.worldObj, posX, posZ);
 							
 							if(shape == 0 || Math.sqrt(Math.pow(x, 2) + Math.pow(z, 2)) < radius) {
 								ClowderTerritory.setZoneForCoord(player.worldObj, loc, zone);

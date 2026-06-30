@@ -140,7 +140,7 @@ public class TileEntityCap extends TileEntityMachineBase implements ITerritoryPr
 
 				int posX = xCoord + x * 16;
 				int posZ = zCoord + z * 16;
-				CoordPair loc = ClowderTerritory.getCoordPair(posX, posZ);
+				CoordPair loc = ClowderTerritory.getCoordPair(worldObj, posX, posZ);
 				
 				TerritoryMeta meta = ClowderTerritory.getMetaFromCoords(loc);
 				

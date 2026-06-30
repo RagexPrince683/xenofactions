@@ -42,6 +42,7 @@ public class GUIFlag extends GuiContainer {
 
 		float prestige = diFurnace.prestige;
 		float prestigeReq = diFurnace.prestigeReq;
+		float prestigeGen = diFurnace.prestigeGen;
 		int color = prestigeReq <= prestige ? 0x55FF55 : 0xFF5555;
 
 		String cityName = diFurnace.name == null || diFurnace.name.isEmpty() ? "Unnamed" : diFurnace.name;
@@ -53,7 +54,8 @@ public class GUIFlag extends GuiContainer {
 		this.fontRendererObj.drawString("Radius: " + XFConfig.cityRadius(diFurnace.cityLevel) + " Upkeep: " + Clowder.round(XFConfig.cityUpkeep(diFurnace.cityLevel)), 50, 42, 0xFFFFFF);
 		this.fontRendererObj.drawString("Owner: " + this.fontRendererObj.trimStringToWidth(ownerName, 82), 50, 53, 0xFFFFFF);
 		this.fontRendererObj.drawString("Prestige: " + Clowder.round(prestige), 50, 64, 0xFFFFFF);
-		this.fontRendererObj.drawString("Required: " + Clowder.round(prestigeReq), 50, 75, color);
+		this.fontRendererObj.drawString("Gain: " + Clowder.round(prestigeGen) + "/h", 50, 75, 0xFFFFFF);
+		this.fontRendererObj.drawString("Required: " + Clowder.round(prestigeReq), 50, 86, color);
 
 		if(isHelpHovered(x, y)) {
 			this.func_146283_a(Arrays.asList(new String[] {"Flag functions", "Claims are city-based", "Use /c city upgrade to level up", "Each level adds 1 chunk radius", "Capital max radius: 6 chunks", "Founding and upgrades require prestige"}), x - guiLeft, y - guiTop);
