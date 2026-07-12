@@ -14,6 +14,7 @@ import java.io.*;
 import java.lang.reflect.Type;
 import java.util.*;
 
+import com.hfr.util.XFLog;
 public class MarketData {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final File SAVE_FILE = new File("config/marketdata.json");
@@ -70,7 +71,7 @@ public class MarketData {
 						arr[j] = s;
 					} catch (Exception e) {
 						System.err.println("Failed to load ItemStack from NBT at offer " + i + " slot " + j);
-						e.printStackTrace();
+						XFLog.error("Unexpected exception", e);
 					}
 				} else {
 					arr[j] = null;
@@ -82,19 +83,19 @@ public class MarketData {
 	}
 
 	public static void saveMarketData() {
-		System.out.println("Saving marketdata to: " + SAVE_FILE.getAbsolutePath());
+		XFLog.debug("Saving marketdata to: " + SAVE_FILE.getAbsolutePath());
 		FileWriter writer = null;
 		try {
 			writer = new FileWriter(SAVE_FILE);
 			GSON.toJson(offers, writer);
-			System.out.println("Market data saved successfully.");
+			XFLog.debug("Market data saved successfully.");
 		} catch (Exception e) {
 			System.err.println("Failed to save market data: " + e.getMessage());
 		} finally {
 			if (writer != null) {
 				try {
 					writer.close();
-					System.out.println("FileWriter closed successfully after saving market data.");
+					XFLog.debug("FileWriter closed successfully after saving market data.");
 				} catch (Exception e) {
 					System.err.println("Failed to close FileWriter: " + e.getMessage());
 				}
@@ -103,9 +104,9 @@ public class MarketData {
 	}
 
 	public static void loadMarketData() {
-		System.out.println("Loading marketdata from: " + SAVE_FILE.getAbsolutePath());
+		XFLog.debug("Loading marketdata from: " + SAVE_FILE.getAbsolutePath());
 		if (!SAVE_FILE.exists()) {
-			System.out.println("MarketData file does not exist. Skipping load.");
+			XFLog.debug("MarketData file does not exist. Skipping load.");
 			return; // No file to load
 		}
 
@@ -114,14 +115,14 @@ public class MarketData {
 			reader = new FileReader(SAVE_FILE);
 			Type type = new TypeToken<HashMap<String, List<ItemEntry[]>>>() {}.getType();
 			offers = GSON.fromJson(reader, type);
-			System.out.println("Market data loaded successfully. Offers: " + offers);
+			XFLog.debug("Market data loaded successfully. Offers: " + offers);
 		} catch (Exception e) {
 			System.err.println("Failed to load market data: " + e.getMessage());
 		} finally {
 			if (reader != null) {
 				try {
 					reader.close();
-					System.out.println("FileReader closed successfully after loading market data.");
+					XFLog.debug("FileReader closed successfully after loading market data.");
 				} catch (Exception e) {
 					System.err.println("Failed to close FileReader: " + e.getMessage());
 				}
@@ -130,12 +131,12 @@ public class MarketData {
 	}
 
 	public static void addOffer(String market, ItemStack[] items) {
-		System.out.println("Adding offer to market: " + market);
+		XFLog.debug("Adding offer to market: " + market);
 		List<ItemEntry[]> marketOffers = offers.get(market);
 
 		if (marketOffers == null) {
 			marketOffers = new ArrayList<ItemEntry[]>();
-			System.out.println("Created new offer list for market: " + market);
+			XFLog.debug("Created new offer list for market: " + market);
 		}
 
 		ItemEntry[] entries = new ItemEntry[items.length];
@@ -143,24 +144,24 @@ public class MarketData {
 		for (int i = 0; i < items.length; i++) {
 			if (items[i] != null) {
 				entries[i] = new ItemEntry(items[i]);
-				System.out.println("Added item to offer: " + items[i].getDisplayName());
+				XFLog.debug("Added item to offer: " + items[i].getDisplayName());
 			}
 		}
 
 		marketOffers.add(entries);
 		offers.put(market, marketOffers);
-		System.out.println("Offer added to market: " + market + ". Current offers: " + marketOffers);
+		XFLog.debug("Offer added to market: " + market + ". Current offers: " + marketOffers);
 		saveMarketData();
 	}
 
 	public static List<ItemStack[]> getOffers(String market) {
-		System.out.println("Fetching offers for market: " + market);
+		XFLog.debug("Fetching offers for market: " + market);
 		loadMarketData(); // Ensure data is loaded each time offers are fetched
 		List<ItemStack[]> result = new ArrayList<ItemStack[]>();
 		List<ItemEntry[]> entryList = offers.get(market);
 
 		if (entryList == null) {
-			System.out.println("No offers found for market: " + market);
+			XFLog.debug("No offers found for market: " + market);
 			return result;
 		}
 
@@ -169,7 +170,7 @@ public class MarketData {
 			for (int i = 0; i < entryArray.length; i++) {
 				if (entryArray[i] != null) {
 					stackArray[i] = entryArray[i].toItemStack();
-					System.out.println("Converted ItemEntry to ItemStack: " + stackArray[i].getDisplayName());
+					XFLog.debug("Converted ItemEntry to ItemStack: " + stackArray[i].getDisplayName());
 				}
 			}
 			result.add(stackArray);

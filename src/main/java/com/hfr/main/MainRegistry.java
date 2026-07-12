@@ -753,9 +753,9 @@ public class MainRegistry
 		Item steelIngot = GameRegistry.findItem("mcheli", "item.ingot_steel");
 		if (steelIngot != null) {
 			OreDictionary.registerOre("ingotSteel", steelIngot);
-			System.out.println("[XF] Registered MCHeli steel ingot to OreDict");
+			XFLog.debug("[XF] Registered MCHeli steel ingot to OreDict");
 		} else {
-			System.out.println("[XF] Failed to find MCHeli steel ingot!");
+			XFLog.warn("[XF] Failed to find MCHeli steel ingot for OreDict registration; MCHeli integration will skip ingotSteel.");
 		}
 	}
 	
@@ -1489,7 +1489,7 @@ public class MainRegistry
 	        	boolean over = Boolean.parseBoolean(val.split(":")[3]);
 	        	
 	        	EnumHelper.addEnum(ClowderFlag.class, fname, new Class[] { String.class, boolean.class, boolean.class, boolean.class }, new Object[] {fname, vis, base, over} );
-	        	System.out.println("Successfully added flag " + fname);
+	        XFLog.debug("Successfully added flag " + fname);
         	} catch(Exception ex) {
         		logger.error("Invalid config entry '" + val + "'");
         	}

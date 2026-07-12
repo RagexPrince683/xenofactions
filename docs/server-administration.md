@@ -18,6 +18,7 @@
 - **New-player protection:** Disabled by default. Enable it before launch if your rules require starter PvP/keep-inventory grace.
 - **Free raid:** The legacy `freeRaid=true` default ignores raidability checks. Review this setting carefully for protected-claim servers.
 - **Radar bridge:** Leave `FxR_enableRadar=false` unless you have tested the FMU+/vehicle radar integration with your modpack.
+- **Debug logging:** Leave `enableDebugLogging=false` for normal servers. Enable it only while diagnosing noisy systems such as registration confirmations, OreDictionary integration chatter, market packet traces, background task confirmations, and other developer diagnostics; warnings, errors, and important operational events still log when it is disabled.
 
 ## Common staff commands
 

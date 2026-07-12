@@ -11,6 +11,7 @@ import com.hfr.util.FourInts;
 
 import net.minecraft.world.World;
 
+import com.hfr.util.XFLog;
 public class ExplosionController {
 
 	public static final int memCap = 10000;
@@ -31,21 +32,21 @@ public class ExplosionController {
 			this.setPriority(3);
 			this.setName("PON4_EXPLOSION_THREAD");
 			
-			System.out.println("PON4 THREAD - STARTUP");
+			XFLog.debug("PON4 THREAD - STARTUP");
 
 			while(explosions.size() > 0) {
 				collectTips();
 				processTips();
 			}
 			
-			System.out.println("PON4 THREAD - SHUTTING DOWN");
+			XFLog.debug("PON4 THREAD - SHUTTING DOWN");
 		}
 		
 	};
 	
 	public static void start() {
 		
-		System.out.println("PON4 THREAD - INVOKE ATTEMPT TAKEN");
+		XFLog.debug("PON4 THREAD - INVOKE ATTEMPT TAKEN");
 		
 		demon = new Thread(demonTemplate);
 		demon.start();
@@ -83,7 +84,7 @@ public class ExplosionController {
 	public static void registerExplosion(ExplosionNukeRay explosion) {
 
 		explosions.add(explosion);
-		System.out.println("PON4 THREAD - EXPLOSION REGISTERED");
+		XFLog.debug("PON4 THREAD - EXPLOSION REGISTERED");
 		
 		if(demon == null || !demon.isAlive())
 			start();

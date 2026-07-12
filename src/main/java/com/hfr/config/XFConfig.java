@@ -46,6 +46,7 @@ public final class XFConfig {
 	public static boolean enableConquestFlagsCommand = true;
 	public static boolean enableGuideBook = true;
 	public static boolean warEnabledDefault = false;
+	public static boolean enableDebugLogging = false;
 
 	public static float startingPrestige = 250F;
 	public static float basePrestigeGen = 25F;
@@ -227,6 +228,8 @@ public final class XFConfig {
 		dynmapShowClaimDetails = bool(config, CAT_DYNMAP, "showClaimDetailsInLabels", dynmapShowClaimDetails, "Includes city/claim chunk details in Dynmap labels.");
 		dynmapShowPrestigeDetails = bool(config, CAT_DYNMAP, "showPrestigeDetailsInLabels", dynmapShowPrestigeDetails, "Includes prestige/upkeep details in Dynmap labels.");
 		dynmapDimensionWorldMap = stringList(config, CAT_DYNMAP, "dynmapDimensionWorldMap", dynmapDimensionWorldMap, "Minecraft dimension to Dynmap world map, entries like 0=world.");
+
+		enableDebugLogging = bool(config, CAT_LEGACY_DEBUG, "enableDebugLogging", enableDebugLogging, "Enables verbose development/debug logging such as registration confirmations, market packet traces, and background task chatter. Errors, warnings, and important startup checks still log when disabled.");
 
 		MainRegistry.warpCost = Math.round(warpCost);
 		CommandClowderAdmin.WARENABLED = warEnabledDefault;

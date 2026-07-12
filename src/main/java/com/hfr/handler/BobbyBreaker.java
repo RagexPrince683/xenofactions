@@ -24,6 +24,8 @@ import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.event.world.BlockEvent.BreakEvent;
 import net.minecraftforge.event.world.ExplosionEvent.Detonate;
 
+import com.hfr.util.XFLog;
+
 public class BobbyBreaker {
 
     private static final Gson gson = new Gson();
@@ -149,7 +151,7 @@ public class BobbyBreaker {
 		resistance.clear();
 		values.clear();
 		
-		System.out.println("Attempting to read bobbybreaker configuration...");
+		XFLog.debug("Attempting to read bobbybreaker configuration...");
 		JsonObject json = gson.fromJson(new FileReader(name), JsonObject.class);
         
         for(Entry<String, JsonElement> child : json.entrySet()) {
@@ -185,20 +187,20 @@ public class BobbyBreaker {
 	        		}
 	        		
         		} catch(Exception ex) {
-        			System.out.println("Error while reading line! (Is the JSON malformed?)");
-        			System.out.println(child.getKey() + " " + child.getValue().toString());
+					XFLog.debug("Error while reading line! (Is the JSON malformed?)");
+					XFLog.debug(child.getKey() + " " + child.getValue().toString());
         		}
         	}
         }
-		System.out.println("Config loaded without dying. Yay!");
+		XFLog.debug("Config loaded without dying. Yay!");
 		
 		for(String key : resistance.keySet()) {
 			HashMap<Integer, Integer> map = resistance.get(key);
 			
-			System.out.println("Entry for " + key);
+			XFLog.debug("Entry for " + key);
 			
 			for(Integer k : map.keySet()) {
-				System.out.println("Meta " + k + ": " + map.get(k) + " health");
+				XFLog.debug("Meta " + k + ": " + map.get(k) + " health");
 			}
 		}
 	}

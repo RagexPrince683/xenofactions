@@ -4,6 +4,7 @@ import net.minecraft.block.Block;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
+import com.hfr.util.XFLog;
 public class MultiblockHandler {
 	
 	//when looking north
@@ -44,7 +45,7 @@ public class MultiblockHandler {
 					count++;
 					
 					if(count > 2000) {
-						System.out.println("checkspace: ded " + a + " " + b + " " + c + " " + x + " " + y + " " + z);
+						XFLog.debug("checkspace: ded " + a + " " + b + " " + c + " " + x + " " + y + " " + z);
 						return false;
 					}
 				}
@@ -90,7 +91,7 @@ public class MultiblockHandler {
 					count++;
 					
 					if(count > 2000) {
-						System.out.println("fillspace: ded " + a + " " + b + " " + c + " " + x + " " + y + " " + z);
+						XFLog.debug("fillspace: ded " + a + " " + b + " " + c + " " + x + " " + y + " " + z);
 						return;
 					}
 				}
@@ -106,7 +107,7 @@ public class MultiblockHandler {
 
 		int count = 0;
 		
-		System.out.println("emptyspace is deprecated and shouldn't even be executed");
+		XFLog.debug("emptyspace is deprecated and shouldn't even be executed");
 		
 		int[] rot = rotate(dim, dir);
 
@@ -120,7 +121,7 @@ public class MultiblockHandler {
 					count++;
 					
 					if(count > 2000) {
-						System.out.println("emptyspace: ded " + a + " " + b + " " + c);
+						XFLog.debug("emptyspace: ded " + a + " " + b + " " + c);
 						return;
 					}
 				}
