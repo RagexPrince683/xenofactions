@@ -21,6 +21,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
+import com.hfr.util.XFLog;
 public class GUIMachineMarket extends GuiScreen {
 
 	public static ResourceLocation texture = new ResourceLocation(RefStrings.MODID + ":textures/gui/gui_shop.png");
@@ -40,7 +41,7 @@ public class GUIMachineMarket extends GuiScreen {
 	// call to request server
 	private void sendRequestIfNeeded() {
 		if (market == null) {
-			System.out.println("[GUIMachineMarket] market is null when trying to request");
+			XFLog.debug("[GUIMachineMarket] market is null when trying to request");
 			return;
 		}
 		if (requestSent) {
@@ -49,7 +50,7 @@ public class GUIMachineMarket extends GuiScreen {
 		}
 		requestSent = true;
 		PacketDispatcher.wrapper.sendToServer(new com.hfr.packet.tile.OfferPacket(market.xCoord, market.yCoord, market.zCoord, market.name));
-		System.out.println("[GUIMachineMarket] Sent request OfferPacket for market='" + market.name + "' coords=("
+		XFLog.debug("[GUIMachineMarket] Sent request OfferPacket for market='" + market.name + "' coords=("
 				+ market.xCoord + "," + market.yCoord + "," + market.zCoord + ")");
 	}
 
@@ -116,18 +117,18 @@ public class GUIMachineMarket extends GuiScreen {
 					// inside initGui(), replace the PacketDispatcher.wrapper.sendToServer(...) block with:
 					sendRequestIfNeeded();
 
-					System.out.println("[GUIMachineMarket] Sent request OfferPacket for market='" + market.name + "' coords=("
+					XFLog.debug("[GUIMachineMarket] Sent request OfferPacket for market='" + market.name + "' coords=("
 							+ market.xCoord + "," + market.yCoord + "," + market.zCoord + ")");
 				} catch (Exception e) {
 					System.err.println("[GUIMachineMarket] Exception while sending OfferPacket request:");
-					e.printStackTrace();
+					XFLog.error("Unexpected exception", e);
 				}
 			} else {
-				System.out.println("[GUIMachineMarket] market is null on client when initGui()");
+				XFLog.debug("[GUIMachineMarket] market is null on client when initGui()");
 			}
 		} catch (Exception e) {
 			System.err.println("[GUIMachineMarket] Exception while sending OfferPacket request:");
-			e.printStackTrace();
+			XFLog.error("Unexpected exception", e);
 		}
 	}
 

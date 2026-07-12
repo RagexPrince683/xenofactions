@@ -24,6 +24,7 @@ import com.hfr.handler.ExplosionSound;
 import com.hfr.items.ItemMace;
 import com.hfr.items.ModItems;
 import com.hfr.main.MainRegistry;
+import com.hfr.util.XFLog;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.effect.ClowderBorderPacket;
 import com.hfr.packet.effect.ClowderFlagPacket;
@@ -96,9 +97,9 @@ public class ClowderEvents {
 	static {
 		if (MCH_CONFIG == null || MCH_ENTITY_BULLET == null || MCH_ENTITY_AIRCRAFT == null ||
 				MCH_ENTITY_BASE_BULLET == null || MCH_ENTITY_ROCKET == null) {
-			System.out.println("[Clowder] Warning: One or more MCHeli classes could not be found. Ensure MCHeli is installed.");
+			XFLog.warn("[Clowder] One or more MCHeli classes could not be found. Ensure MCHeli is installed if aircraft protection integration is expected.");
 		} else {
-			System.out.println("[Clowder] Successfully loaded MCHeli classes via reflection.");
+			XFLog.debug("[Clowder] Successfully loaded MCHeli classes via reflection.");
 		}
 	}
 
@@ -111,7 +112,7 @@ public class ClowderEvents {
 				// Example of using the MCH_EntityAircraft class via reflection (check or interact with the class as needed)
 				// For example, to instantiate or interact with the MCH_EntityAircraft class,
 				// you can use reflection to invoke methods or get fields
-				System.out.println("[Clowder] MCH_EntityAircraft class is available.");
+				XFLog.debug("[Clowder] MCH_EntityAircraft class is available.");
 			}
 
 			ClowderData.getData(event.world);
@@ -124,7 +125,7 @@ public class ClowderEvents {
 			// Ensure MCHeli classes are available for unloading event
 			if (MCH_ENTITY_AIRCRAFT != null) {
 				// Example of reflection interaction with the MCH_EntityAircraft class
-				System.out.println("[Clowder] MCH_EntityAircraft is still available during world unload.");
+				XFLog.debug("[Clowder] MCH_EntityAircraft is still available during world unload.");
 			}
 
 			ClowderData.getData(event.world).markDirty();
@@ -1367,7 +1368,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 			} else {
 				hour = MainRegistry.prestigeDelay;
 				Clowder.updatePrestige(world);
-				System.out.println("[Clowder] Prestige update complete.");
+				XFLog.debug("[Clowder] Prestige update complete.");
 			}
 		}
 		

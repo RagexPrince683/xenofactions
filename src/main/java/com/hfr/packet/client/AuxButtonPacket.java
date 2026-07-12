@@ -5,6 +5,7 @@ import com.hfr.clowder.Clowder;
 import com.hfr.data.MarketData;
 import com.hfr.data.StockData;
 import com.hfr.main.MainRegistry;
+import com.hfr.util.XFLog;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.effect.ParticleControlPacket;
 import com.hfr.packet.tile.AuxGaugePacket;
@@ -270,27 +271,27 @@ public class AuxButtonPacket implements IMessage {
 					}
 					lastClickMap.put(id, now);
 
-					System.out.println("Market packet received");
+					XFLog.debug("Market packet received");
 					TileEntityMarket market = (TileEntityMarket) te;
 
 					// Get the market's offers from JSON
 					List<ItemStack[]> offers = MarketData.getOffers(market.name);
 
 					if (offers.isEmpty()) {
-						System.out.println("There's no market with the name: " + market.name);
+						XFLog.warn("There is no market with the name: " + market.name);
 						return null;
 					}
 
 					if (m.value < 0 || m.value >= offers.size()) {
-						System.out.println("The selected offer is out of bounds for market: " + market.name);
-						System.out.println("Offer index: " + m.value);
+						XFLog.warn("The selected offer is out of bounds for market: " + market.name);
+						XFLog.debug("Offer index: " + m.value);
 						return null;
 					}
 
 					ItemStack[] offer = offers.get(m.value);
 
 					if (offer != null) {
-						System.out.println("offer is not null for market");
+						XFLog.debug("Offer is not null for market");
 						ItemStack item = offer[0]; // First item is the one being purchased
 						boolean hasRequiredItems = true;
 
@@ -328,7 +329,7 @@ public class AuxButtonPacket implements IMessage {
 									EnumChatFormatting.RED + "You lack the required items."));
 						}
 					} else {
-						System.out.println("The selected offer is null for market: " + market.name);
+						XFLog.warn("The selected offer is null for market: " + market.name);
 					}
 				}
 

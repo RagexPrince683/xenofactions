@@ -55,7 +55,7 @@ public class LoggingEngine {
 				tmp = String.format("[%s:%s:%s.%s]", date.getHours(), date.getMinutes(), date.getSeconds(), millis);
 				
 				String message = mesg.replace(timestamp + ":", tmp + " ");
-				System.out.println(message);
+				XFLog.debug(message);
 			}
 		}
 		

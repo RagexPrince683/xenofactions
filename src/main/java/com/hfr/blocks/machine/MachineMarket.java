@@ -6,6 +6,7 @@ import com.hfr.blocks.ModBlocks;
 import com.hfr.data.MarketData;
 import com.hfr.lib.RefStrings;
 import com.hfr.main.MainRegistry;
+import com.hfr.util.XFLog;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.tile.OfferPacket;
 
@@ -61,7 +62,7 @@ public class MachineMarket extends BlockContainer {
 	@Override
 	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
 		if (!world.isRemote) {
-			System.out.println("should be server side");
+			XFLog.debug("Market activation is running server-side.");
 			TileEntityMarket market = (TileEntityMarket) world.getTileEntity(x, y, z);
 			if (market == null) return false;
 
@@ -90,7 +91,7 @@ public class MachineMarket extends BlockContainer {
 			}
 
 			// Send updated market offers to client
-			System.out.println("Sending market data to client for: " + market.name);
+			XFLog.debug("Sending market data to client for: " + market.name);
 			PacketDispatcher.wrapper.sendTo(new OfferPacket(x, y, z, market.name, nbt), (EntityPlayerMP) player);
 			//NO DUMBASS SEND TO SERVER AS WELL OR SOME SHIT FUCK GODDAMN BULLSHIT MAN I HATE THIS FUCKING MOD
 			//PacketDispatcher.wrapper.sendToServer(new OfferPacket(market.name, nbt));
@@ -101,7 +102,7 @@ public class MachineMarket extends BlockContainer {
 				market.name = player.getHeldItem().getDisplayName();
 				market.markDirty();
 
-				System.out.println("Market renamed to: " + market.name);
+				XFLog.info("Market renamed to: " + market.name);
 
 				return true;
 			}

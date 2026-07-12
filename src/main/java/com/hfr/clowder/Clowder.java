@@ -15,6 +15,7 @@ import com.hfr.config.XFConfig;
 import com.hfr.data.ClowderData;
 //import com.hfr.data.MarketData.Offer;
 import com.hfr.main.MainRegistry;
+import com.hfr.util.XFLog;
 import com.hfr.tileentity.clowder.TileEntityFlag;
 import com.hfr.tileentity.prop.TileEntityProp;
 
@@ -766,7 +767,7 @@ public class Clowder {
 			}
 
 		}
-		System.out.println("Initializing LabJac's poorly coded clowder diplomacy systems");
+		XFLog.debug("Initializing legacy clowder diplomacy systems");
 
 	}
 

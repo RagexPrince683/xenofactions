@@ -7,6 +7,7 @@ import com.hfr.blocks.machine.MachineMarket;
 import com.hfr.blocks.machine.MachineMarket.TileEntityMarket;
 import com.hfr.data.MarketData;
 import com.hfr.inventory.gui.GUIMachineMarket;
+import com.hfr.util.XFLog;
 import com.hfr.packet.PacketDispatcher;
 
 import cpw.mods.fml.common.network.ByteBufUtils;
@@ -89,7 +90,7 @@ public class OfferPacket implements IMessage {
 					}
 				}
 
-				System.out.println("[OfferPacket.ServerHandler] Received request for shop '" + marketName + "' from player: "
+				XFLog.debug("[OfferPacket.ServerHandler] Received request for shop '" + marketName + "' from player: "
 						+ (player != null ? player.getCommandSenderName() : "UNKNOWN") + " coords=(" + msg.x + "," + msg.y + "," + msg.z + ")");
 
 				MarketData.loadMarketData();
@@ -100,13 +101,12 @@ public class OfferPacket implements IMessage {
 				NBTTagCompound response = MarketData.offersToNBT(offers);
 				PacketDispatcher.wrapper.sendTo(new OfferPacket(msg.x, msg.y, msg.z, marketName, response), player);
 
-				System.out.println("[OfferPacket.ServerHandler] Sent reply to player "
+				XFLog.debug("[OfferPacket.ServerHandler] Sent reply to player "
 						+ (player != null ? player.getCommandSenderName() : "UNKNOWN")
 						+ " for shop '" + marketName + "' (offers=" + offers.size() + ")");
 
 			} catch (Exception e) {
-				System.err.println("[OfferPacket.ServerHandler] Exception:");
-				e.printStackTrace();
+				XFLog.error("[OfferPacket.ServerHandler] Exception", e);
 			}
 			return null;
 		}
@@ -126,24 +126,24 @@ public class OfferPacket implements IMessage {
 
 			long now = System.currentTimeMillis();
 			if (msg.x == lastX && msg.y == lastY && msg.z == lastZ && msg.name != null && msg.name.equals(lastName) && (now - lastReplyTime) < 250) {
-				System.out.println("[OfferPacket.ClientHandler] Ignoring duplicate quick reply for " + msg.name);
+				XFLog.debug("[OfferPacket.ClientHandler] Ignoring duplicate quick reply for " + msg.name);
 				return null;
 			}
 			lastReplyTime = now; lastX = msg.x; lastY = msg.y; lastZ = msg.z; lastName = msg.name;
 
 			try {
-				System.out.println("[OfferPacket.ClientHandler] Received packet for shop '" + msg.name + "' on client (coords: "
+				XFLog.debug("[OfferPacket.ClientHandler] Received packet for shop '" + msg.name + "' on client (coords: "
 						+ msg.x + "," + msg.y + "," + msg.z + ")");
 
 				List<ItemStack[]> offers;
 				if (msg.nbt != null && msg.nbt.hasKey("offers")) {
 					offers = MarketData.offersFromNBT(msg.nbt);
-					System.out.println("[OfferPacket.ClientHandler] Parsed " + offers.size() + " offers from NBT for '" + msg.name + "'");
+					XFLog.debug("[OfferPacket.ClientHandler] Parsed " + offers.size() + " offers from NBT for '" + msg.name + "'");
 				} else {
 					// Fallback: client JSON (less deterministic)
 					MarketData.loadMarketData();
 					offers = MarketData.getOffers(msg.name);
-					System.out.println("[OfferPacket.ClientHandler] Fallback loaded " + offers.size() + " offers for '" + msg.name + "'");
+					XFLog.debug("[OfferPacket.ClientHandler] Fallback loaded " + offers.size() + " offers for '" + msg.name + "'");
 				}
 
 				if (offers == null) offers = new ArrayList<ItemStack[]>();
@@ -156,14 +156,13 @@ public class OfferPacket implements IMessage {
 					((GUIMachineMarket) mc.currentScreen).refreshOffers();
 					GUIMachineMarket gui = (GUIMachineMarket) mc.currentScreen;
 					gui.onOffersReceived(); // clears request flag + refreshOffers()
-					System.out.println("[OfferPacket.ClientHandler] GUIMachineMarket.refreshOffers() called");
+					XFLog.debug("[OfferPacket.ClientHandler] GUIMachineMarket.refreshOffers() called");
 				}
 
 
 
 			} catch (Exception e) {
-				System.err.println("[OfferPacket.ClientHandler] Exception while handling packet:");
-				e.printStackTrace();
+				XFLog.error("[OfferPacket.ClientHandler] Exception while handling packet", e);
 			}
 			return null;
 		}
