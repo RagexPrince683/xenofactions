@@ -18,6 +18,7 @@ import net.minecraft.world.World;
 import java.util.List;
 
 public class BlockWallImage extends BlockContainer {
+    //I am sorry god for this affront to you abomination I have created that crashes servers.
     public static BlockWallImage instance;
     private static final float THICK = 1.0F / 16.0F; // thickness of the sliver
 

@@ -183,6 +183,8 @@ public class ClientProxy extends ServerProxy
 		RenderingRegistry.registerEntityRenderingHandler(EntityPig.class, new RenderPig(new ModelPig(), 1.0F));
 		RenderingRegistry.registerEntityRenderingHandler(EntitySheep.class, new RenderSheep(new ModelSheep(), new ModelSheepWooly(), 1.0F));
 		RenderingRegistry.registerEntityRenderingHandler(EntityChicken.class, new RenderChicken(new ModelChicken(), 0.5F));
+		//todo villager -> human
+
 
 		MinecraftForgeClient.registerItemRenderer(ModItems.flaregun, new RenderFlaregun());
 		MinecraftForgeClient.registerItemRenderer(ModItems.pakker, new RenderPak());

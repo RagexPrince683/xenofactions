@@ -11,6 +11,8 @@ import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.world.World;
 
 public class BlockMud extends Block {
+    //TODO: this block is fucking retarded, it should NOT destroy tall grass that is on it when it converts grass/dirt into it.
+    // It needs to inherit the properties of dirt/grass so if it is converted into mud, it should not destroy the tall grass that is on it.
 
     public BlockMud(Material mat) {
         super(mat);
