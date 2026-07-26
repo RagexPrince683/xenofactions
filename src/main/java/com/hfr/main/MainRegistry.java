@@ -50,6 +50,7 @@ import com.hfr.blocks.*;
 import com.hfr.blocks.machine.MachineMarket.TileEntityMarket;
 import com.hfr.clowder.*;
 import com.hfr.command.*;
+import com.hfr.compat.HbmStoneDropIntegration;
 import com.hfr.config.XFConfig;
 import com.hfr.data.*;
 import com.hfr.dynmap.XFDynmapIntegration;
@@ -766,6 +767,7 @@ public class MainRegistry
 	{
 		//in postload, long after all blocks have been registered, the buffered config is being evaluated and processed.
 		processBuffer();
+		HbmStoneDropIntegration.seedDefaultsIfAvailable(SAVE_FILE.exists());
 		XFGuideBook.register();
 		
 		try {

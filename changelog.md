@@ -1,3 +1,10 @@
+# Seed stone drops from an installed HBM MiningConfig
+
+- Added optional, reflection-only discovery of HBM's `com.hbm.config.MiningConfig` and its `excavatorBedrockDrops` list.
+- Automatically creates `config/stonedrops.json` only when the file does not already exist, preserving all administrator customizations and intentionally empty configurations.
+- Assigned harder HBM minerals to deeper Y ranges and progressively softer deposits to higher ranges, with a one-percent stone-drop chance.
+- Documented HBM default seeding and its non-overwriting behavior in the configuration reference.
+
 # Implement optional JourneyMap 1.7.10 faction claim overlays
 
 - Added an optional, client-only reflection bridge for legacy JourneyMap 5.2.x/5.2.8 without imports, binaries, patches, or a required dependency. It preserves separate minimap and fullscreen `DrawStep` proxies across JourneyMap list clears and soft resets.
