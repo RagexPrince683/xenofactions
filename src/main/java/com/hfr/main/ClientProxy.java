@@ -65,6 +65,12 @@ import cpw.mods.fml.relauncher.ReflectionHelper;
 
 public class ClientProxy extends ServerProxy
 {
+	@Override
+	public void receiveClaimOverlay(final int dimension, final int generation, final int part, final int parts, final List<com.hfr.clowder.ClaimOverlayData.Claim> claims) {
+		Minecraft.getMinecraft().func_152344_a(new Runnable() { @Override public void run() {
+			com.hfr.client.journeymap.ClientClaimOverlayCache.accept(dimension, generation, part, parts, claims);
+		} });
+	}
 	public static KeyBinding toggleZoom = new KeyBinding("Toggle Radar Zoom", 33, "xRadar");
 	public static KeyBinding incScale = new KeyBinding("Increase Radar Scale", 78, "xRadar");
 	public static KeyBinding decScale = new KeyBinding("Decrease Radar Scale", 74, "xRadar");
@@ -78,6 +84,7 @@ public class ClientProxy extends ServerProxy
 	public void registerRenderInfo()
 	{
 		new EventHandlerClient().register();
+		com.hfr.client.journeymap.XFJourneyMapIntegration.register();
 		
 		AdvancedModelLoader.registerModelHandler(new HmfModelLoader());
 		RenderingRegistry.addNewArmourRendererPrefix("5");

@@ -60,6 +60,7 @@ public class PacketDispatcher {
 		wrapper.registerMessage(FactionFlagMetadataPacket.ServerHandler.class, FactionFlagMetadataPacket.class, i++, Side.SERVER);
 		wrapper.registerMessage(FactionFlagBytesPacket.Handler.class, FactionFlagBytesPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(ClowderBorderPacket.Handler.class, ClowderBorderPacket.class, i++, Side.CLIENT);
+		wrapper.registerMessage(ClaimOverlayPacket.Handler.class, ClaimOverlayPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(ExplosionSoundPacket.Handler.class, ExplosionSoundPacket.class, i++, Side.CLIENT);
 		//wrapper.registerMessage(OfferPacket.Handler.class, OfferPacket.class, i++, Side.CLIENT);
 		//you are now on the server, so fucking WORK

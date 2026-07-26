@@ -49,6 +49,7 @@ public class XFDynmapIntegration {
 
 	public static void markDirty() {
 		dirty = true;
+		com.hfr.journeymap.ClaimOverlaySync.markAllDirty();
 	}
 
 	@SubscribeEvent
