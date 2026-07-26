@@ -8,6 +8,7 @@
 4. Decide whether war starts enabled with `warEnabledDefault` or is controlled manually by `/xc warenable` and `/xc wardisable`.
 5. Review prestige generation, upkeep, and bankruptcy values before opening a public world.
 6. If using Dynmap, install Dynmap separately and keep `enableDynmapIntegration=true`.
+7. JourneyMap is never required on the server. Clients may optionally use legacy JourneyMap 5.2.x for Minecraft 1.7.10; Xenofactions synchronizes bounded, current-dimension claim snapshots and a reflection incompatibility disables only that client's overlay.
 7. If allowing custom flags, review `allowedImageHosts`, image dimensions, file size, redirects, timeout, and rate limits.
 8. If using TDM, keep `enableTDM=true`; otherwise disable it to avoid registering `/tdm`.
 

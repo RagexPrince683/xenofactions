@@ -29,6 +29,7 @@ public final class XFConfig {
 	public static final String CAT_PROTECTION = "XENOFACTIONS_07_NEW_PLAYER_PROTECTION";
 	public static final String CAT_CUSTOM_FLAGS = "XENOFACTIONS_08_CUSTOM_FLAGS";
 	public static final String CAT_DYNMAP = "XENOFACTIONS_09_DYNMAP";
+	public static final String CAT_JOURNEYMAP = "XENOFACTIONS_09B_JOURNEYMAP_CLIENT";
 
 	public static final String CAT_LEGACY_MACHINES = "XENOFACTIONS_10_MACHINES_POWER";
 	public static final String CAT_LEGACY_DEFENSE = "XENOFACTIONS_11_RADAR_FORCEFIELD";
@@ -40,6 +41,12 @@ public final class XFConfig {
 	public static final String CAT_LEGACY_DEBUG = "XENOFACTIONS_17_DEBUG_LOGGING";
 
 	public static boolean enableDynmapIntegration = true;
+	public static boolean enableJourneyMapIntegration = true;
+	public static boolean journeyMapShowMinimapClaims = true;
+	public static boolean journeyMapShowFullscreenClaims = true;
+	public static double journeyMapClaimFillOpacity = 0.18D;
+	public static double journeyMapClaimBorderOpacity = 0.80D;
+	public static double journeyMapClaimBorderWidth = 1.0D;
 	public static boolean enableTDM = true;
 	public static boolean enableCustomFactionFlags = true;
 	public static boolean enableNewPlayerProtection = false;
@@ -136,6 +143,7 @@ public final class XFConfig {
 		commentCategories(config);
 
 		enableDynmapIntegration = bool(config, CAT_MODULES, "enableDynmapIntegration", enableDynmapIntegration, "Enables optional Dynmap markers. Safe no-op when Dynmap is absent.");
+		enableJourneyMapIntegration = bool(config, CAT_MODULES, "enableJourneyMapIntegration", enableJourneyMapIntegration, "Enables optional legacy JourneyMap 5.2.x client claim overlays. Safe no-op when JourneyMap is absent or incompatible.");
 		enableTDM = bool(config, CAT_MODULES, "enableTDM", enableTDM, "Enables Xenofactions TDM commands and event hooks.");
 		enableCustomFactionFlags = bool(config, CAT_MODULES, "enableCustomFactionFlags", enableCustomFactionFlags, "Enables imported custom faction flags via /c flag seturl.");
 		enableNewPlayerProtection = bool(config, CAT_MODULES, "enableNewPlayerProtection", enableNewPlayerProtection, "Enables starter PvP/keep-inventory protection for first-time players.");
@@ -228,6 +236,12 @@ public final class XFConfig {
 		dynmapShowClaimDetails = bool(config, CAT_DYNMAP, "showClaimDetailsInLabels", dynmapShowClaimDetails, "Includes city/claim chunk details in Dynmap labels.");
 		dynmapShowPrestigeDetails = bool(config, CAT_DYNMAP, "showPrestigeDetailsInLabels", dynmapShowPrestigeDetails, "Includes prestige/upkeep details in Dynmap labels.");
 		dynmapDimensionWorldMap = stringList(config, CAT_DYNMAP, "dynmapDimensionWorldMap", dynmapDimensionWorldMap, "Minecraft dimension to Dynmap world map, entries like 0=world.");
+
+		journeyMapShowMinimapClaims = bool(config, CAT_JOURNEYMAP, "showMinimapClaims", journeyMapShowMinimapClaims, "Shows faction city claims on legacy JourneyMap minimaps.");
+		journeyMapShowFullscreenClaims = bool(config, CAT_JOURNEYMAP, "showFullscreenClaims", journeyMapShowFullscreenClaims, "Shows faction city claims on the legacy JourneyMap fullscreen map.");
+		journeyMapClaimFillOpacity = dbl(config, CAT_JOURNEYMAP, "claimFillOpacity", journeyMapClaimFillOpacity, 0D, 1D, "Faction-color claim fill opacity.");
+		journeyMapClaimBorderOpacity = dbl(config, CAT_JOURNEYMAP, "claimBorderOpacity", journeyMapClaimBorderOpacity, 0D, 1D, "Faction-color exposed-border opacity.");
+		journeyMapClaimBorderWidth = dbl(config, CAT_JOURNEYMAP, "claimBorderWidth", journeyMapClaimBorderWidth, 0.25D, 10D, "Exposed claim border width in pixels.");
 
 		enableDebugLogging = bool(config, CAT_LEGACY_DEBUG, "enableDebugLogging", enableDebugLogging, "Enables verbose development/debug logging such as registration confirmations, market packet traces, and background task chatter. Errors, warnings, and important startup checks still log when disabled.");
 

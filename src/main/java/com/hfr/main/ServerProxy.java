@@ -3,6 +3,7 @@ package com.hfr.main;
 import java.util.List;
 
 import com.hfr.rvi.RVICommon.Indicator;
+import com.hfr.clowder.ClaimOverlayData.Claim;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
@@ -34,4 +35,5 @@ public class ServerProxy
 	public void openURL(String url) { }
 
 	public void effectNT(NBTTagCompound nbt) { }
+	public void receiveClaimOverlay(int dimension, int generation, int part, int parts, List<Claim> claims) { }
 }

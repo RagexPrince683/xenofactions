@@ -684,11 +684,13 @@ public class MainRegistry
 
 		CommonEventHandler handler = new CommonEventHandler();
 		ClowderEvents clowder = new ClowderEvents();
+		com.hfr.journeymap.ClaimOverlaySync claimOverlaySync = new com.hfr.journeymap.ClaimOverlaySync();
 		XFDynmapIntegration dynmap = new XFDynmapIntegration();
 		//WorldController pon4 = new WorldController();
 		
 		FMLCommonHandler.instance().bus().register(handler);
 		FMLCommonHandler.instance().bus().register(clowder);
+		FMLCommonHandler.instance().bus().register(claimOverlaySync);
 		if(XFConfig.enableDynmapIntegration)
 			FMLCommonHandler.instance().bus().register(dynmap);
 		//FMLCommonHandler.instance().bus().register(pon4);

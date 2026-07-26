@@ -15,6 +15,7 @@ Category: `XENOFACTIONS_01_MODULES`
 | Key | Default | Meaning |
 | --- | ---: | --- |
 | `enableDynmapIntegration` | `true` | Try to publish faction city/claim markers through Dynmap when Dynmap is installed. |
+| `enableJourneyMapIntegration` | `true` | Enable optional client claim overlays for legacy JourneyMap 5.2.x on Minecraft 1.7.10. |
 | `enableTDM` | `true` | Register and initialize the optional team-deathmatch module. |
 | `enableCustomFactionFlags` | `true` | Allow `/c flag seturl`, `clear`, and `reload` custom flag workflows. |
 | `enableNewPlayerProtection` | `false` | Enable starter protection systems. |
@@ -150,6 +151,20 @@ Category: `XENOFACTIONS_09_DYNMAP`
 | `showCityCenterMarkers` | `true` | Show a point marker at each city center. |
 | `showClaimDetailsInLabels` | `true` | Include claim details in Dynmap labels. |
 | `showPrestigeDetailsInLabels` | `true` | Include prestige/upkeep details in labels. |
+
+## JourneyMap client overlay
+
+JourneyMap is optional. Xenofactions targets the legacy JourneyMap 5.2.x implementation for Minecraft 1.7.10 (especially 5.2.8) through reflection; it does not use the modern JourneyMap API and has no JourneyMap dependency. Missing or changed JourneyMap internals disable only this overlay for the client session.
+
+Category: `XENOFACTIONS_09B_JOURNEYMAP_CLIENT`
+
+| Key | Default | Meaning |
+|---|---:|---|
+| `showMinimapClaims` | `true` | Render faction city claims on rectangular or circular minimaps. |
+| `showFullscreenClaims` | `true` | Render faction city claims on the fullscreen map. |
+| `claimFillOpacity` | `0.18` | Faction-color fill opacity, clamped to `0.0–1.0`. |
+| `claimBorderOpacity` | `0.80` | Exposed perimeter opacity, clamped to `0.0–1.0`. |
+| `claimBorderWidth` | `1.0` | Perimeter width, clamped to `0.25–10.0` pixels. |
 
 ## Legacy categories
 
