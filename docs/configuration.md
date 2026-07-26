@@ -206,3 +206,10 @@ config/stonedrops.json
 ```
 
 Each saved entry stores item registry name, metadata, stack size, chance, optional NBT string, and optional `minY`/`maxY` range.
+
+When no `stonedrops.json` exists, Xenofactions also checks for the optional HBM mod and its
+`com.hbm.config.MiningConfig` class. If both are present, the HBM
+`excavatorBedrockDrops` entries seed the file at a one-percent chance per stone block.
+Hard minerals use deeper Y ranges, while progressively softer deposits can appear higher.
+An existing file, including an intentionally empty list, is never overwritten; use
+`/stonedrop` or edit the JSON to customize the generated defaults.
