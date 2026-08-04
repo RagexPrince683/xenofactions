@@ -12,7 +12,6 @@ import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
 
 /** A bounded part of an authoritative dimension snapshot. */
 public class ClaimOverlayPacket implements IMessage {
@@ -41,7 +40,9 @@ public class ClaimOverlayPacket implements IMessage {
 		for(int i = 0; i < count && buf.readableBytes() >= 13; i++) {
 			int x = buf.readInt(), z = buf.readInt(), color = buf.readInt(), length = buf.readUnsignedByte();
 			if(length > 128 || buf.readableBytes() < length) { claims.clear(); parts = 0; return; }
-			String id = new String(ByteBufUtil.getBytes(buf, buf.readerIndex(), length), java.nio.charset.Charset.forName("UTF-8")); buf.skipBytes(length);
+			byte[] idBytes = new byte[length];
+			buf.readBytes(idBytes);
+			String id = new String(idBytes, java.nio.charset.Charset.forName("UTF-8"));
 			if(id.length() > 0) claims.add(new Claim(dimensionId, x, z, id, color));
 		}
 		if(claims.size() != count) { claims.clear(); parts = 0; }
