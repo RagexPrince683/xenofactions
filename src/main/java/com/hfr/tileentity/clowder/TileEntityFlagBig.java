@@ -26,7 +26,6 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraftforge.common.MinecraftForge;
 
@@ -305,11 +304,6 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 		//nbt.setByteArray("tiers", tiers);
 		//nbt.setBoolean("O",oilProvince);
 		nbt.setString("P", provinceName);
-	}
-
-	@Override
-	public AxisAlignedBB getRenderBoundingBox() {
-		return TileEntity.INFINITE_EXTENT_AABB;
 	}
 
 	@Override
