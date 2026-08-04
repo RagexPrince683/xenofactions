@@ -1,3 +1,13 @@
+# Remap production mods in the development client
+
+- Migrated the legacy ForgeGradle 1.2 build to the GTNH convention and
+  RetroFuturaGradle setup used by MCH-mocmaster while preserving Minecraft
+  1.7.10, Forge 10.13.4.1614, MCP stable 12, and Java 8 output.
+- Added the `devmods` workflow for automatic SRG-to-MCP remapping, with explicit
+  `devmods/deobf` handling for jars that are already development-mapped.
+- Kept generated jars under `build`, excluded development mods from publishing,
+  and added a Gradle-backed IDE client run configuration and documentation.
+
 # Fix claim overlay packet decoding for Forge 1.7.10
 
 - Replaced an unsupported Netty `ByteBufUtil.getBytes` call with sequential `ByteBuf.readBytes` decoding while preserving packet validation and wire format.

@@ -1,112 +1,70 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        //jcenter()
-        maven {
-            url = "https://maven.minecraftforge.net"
-        }
-        maven {
-            name = "sonatype"
-            url = "https://oss.sonatype.org/content/repositories/snapshots/"
-        }
-        maven {
-            url = "https://repo1.maven.org/maven2/"
-        }
-    }
-    dependencies {
-        classpath('com.anatawa12.forge:ForgeGradle:1.2-1.0.+')
-    }
+plugins {
+    id 'com.gtnewhorizons.gtnhconvention'
 }
 
+version = providers.gradleProperty('modVersion').get()
+group = providers.gradleProperty('modGroup').get()
 
-// Define the version increment logic
-def versionFile = file('version.properties')
-def currentVersion = '2.0.0' // Default version
-
-if (versionFile.exists()) {
-    currentVersion = versionFile.text.trim()
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
-def versionParts = currentVersion.tokenize('.')
-def patch = versionParts[2].toInteger() + 1
-def newVersion = "${versionParts[0]}.${versionParts[1]}.${patch}"
+def productionDevMods = fileTree('devmods') { include '*.jar' }
+def mcpDevMods = fileTree('devmods/deobf') { include '*.jar' }
+def remappedDevModsDir = layout.buildDirectory.dir('devmods/remapped')
 
-// Update the version in the build.gradle file
-version newVersion
-
-// Write the new version back to the version.txt file
-task updateVersion {
-    doLast {
-        versionFile.text = newVersion
-        println "Version updated to $newVersion"
-    }
-}
-
-// Ensure the version is updated before building
-afterEvaluate {
-    build.dependsOn updateVersion
-}
-
-
-
-
-allprojects {
-    tasks.withType(JavaCompile) {
-        options.encoding = 'UTF-8'
-    }
-}
-
-
-
-apply plugin: 'forge'
-
-
-//may need a equals here idk its weird
-//version
-newVersion
-group= "com.ragexprince683.xenofactions"
-archivesBaseName = "Xenofactions"
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-minecraft {
-    version = "1.7.10-10.13.4.1614-1.7.10"
-    runDir = "eclipse"
-}
-
-repositories {
-    maven { name = "chickenbones"; url = "http://chickenbones.net/maven/" }
+configurations.create('remappedDevMods') {
+    canBeConsumed = false
+    canBeResolved = true
+    visible = false
 }
 
 dependencies {
-    //no idea how bob did this with hbm I'm going to try to do it using mcheli stuff
-    //implementation 'codechicken:CodeChickenCore:1.7.10-1.0.4.29:dev'
-    //compileOnly 'codechicken:CodeChickenCore:1.7.10-1.0.4.29:src'
-//
-    //implementation 'codechicken:CodeChickenLib:1.7.10-1.1.3.140:dev'
-    //compileOnly 'codechicken:CodeChickenLib:1.7.10-1.1.3.140:src'
-//
-    //implementation 'codechicken:NotEnoughItems:1.7.10-1.0.3.74:dev'
-    //compileOnly 'codechicken:NotEnoughItems:1.7.10-1.0.3.74:src'
-//
-    //compileOnly "inventorytweaks:InventoryTweaks:1.59-dev:deobf"
-   // runtime "codechicken:CodeChickenLib:1.7.10-1.1.3.140:dev"
-    // runtime "codechicken:CodeChickenCore:1.7.10-1.0.7.47:dev"
-    // runtime "codechicken:NotEnoughItems:1.7.10-1.0.5.120:dev"
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    // RFG remaps ordinary production (SRG-named) mods into this MCP workspace.
+    // Keep explicitly supplied development jars out of that transform.
+    remappedDevMods(rfg.deobf(productionDevMods))
+    devOnlyNonPublishable(fileTree(remappedDevModsDir) { include '*.jar' })
+    devOnlyNonPublishable(mcpDevMods)
 }
 
-processResources {
-    inputs.property "version", project.version
-    inputs.property "mcversion", project.minecraft.version
+tasks.register('prepareDevMods') {
+    group = 'forgegradle'
+    description = 'Resolves and remaps the external development mods used by runClient.'
+    inputs.files(productionDevMods, mcpDevMods)
+    outputs.dir(remappedDevModsDir)
 
-    from(sourceSets.main.resources.srcDirs) {
-        include 'mcmod.info'
-        expand 'version': project.version, 'mcversion': project.minecraft.version
+    doLast {
+        try {
+            def destination = remappedDevModsDir.get().asFile
+            delete(destination)
+            copy {
+                from(configurations.remappedDevMods)
+                into(destination)
+            }
+        } catch (Exception failure) {
+            def configuredNames = (productionDevMods.files + mcpDevMods.files)*.name.sort()
+            def detail = configuredNames.empty ? 'the development-mod configuration' : configuredNames.join(', ')
+            throw new GradleException(
+                "Could not prepare development mod(s): ${detail}. " +
+                    'Production jars belong in devmods; MCP development jars belong in devmods/deobf.',
+                failure)
+        }
     }
+}
 
-    from(sourceSets.main.resources.srcDirs) {
-        exclude 'mcmod.info'
+tasks.named('runClient') {
+    dependsOn(tasks.named('prepareDevMods'))
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.named('processResources') {
+    inputs.property 'version', project.version
+    inputs.property 'mcversion', providers.gradleProperty('minecraftVersion')
+    filesMatching('mcmod.info') {
+        expand(version: project.version, mcversion: providers.gradleProperty('minecraftVersion').get())
     }
 }
