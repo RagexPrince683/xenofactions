@@ -38,6 +38,8 @@ public class RenderFlagBig extends TileEntitySpecialRenderer {
 		}
         
         TileEntityFlagBig flagpole = (TileEntityFlagBig)te;
+        bindTexture(FlagBeamRenderer.BEACON_BEAM);
+        FlagBeamRenderer.render(te, x, y, z, interp, flagpole.color);
 		
         bindTexture(ResourceManager.flag_tex);
         
