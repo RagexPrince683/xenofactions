@@ -61,6 +61,12 @@ public class TileEntityFlagBig extends TileEntityMachineBase implements ITerrito
 	}
 
 	@Override
+	@SideOnly(Side.CLIENT)
+	public AxisAlignedBB getRenderBoundingBox() {
+		return AxisAlignedBB.getBoundingBox(xCoord, 0, zCoord, xCoord + 1, 256, zCoord + 1);
+	}
+
+	@Override
 	public void updateEntity() {
 
 

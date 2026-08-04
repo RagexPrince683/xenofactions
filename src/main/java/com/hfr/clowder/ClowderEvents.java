@@ -473,11 +473,13 @@ public void handleChatServer(ServerChatEvent event) {
 				for (int i = x - 2; i <= x + 2; i++) {
 					for (int j = z - 2; j <= z + 2; j++) {
 
-						int topY = player.worldObj.getHeightValue(i, j);
-						int minY = Math.max(0, topY - 12); // don’t go lower than world bottom
+						if(!player.worldObj.blockExists(i, y, j))
+							continue;
 
-						// Check only within 12 blocks below flag surface
-						for (int checkY = topY; checkY >= minY; checkY--) {
+						int minY = Math.max(0, y - 12);
+
+						// Only block placements that are above a nearby flag.
+						for (int checkY = y; checkY >= minY; checkY--) {
 							if (player.worldObj.getBlock(i, checkY, j) == ModBlocks.clowder_flag) {
 								player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Please refrain from obstructing the flag."));
 								return false;
