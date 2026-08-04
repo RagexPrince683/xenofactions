@@ -44,6 +44,7 @@ public final class XFConfig {
 	public static boolean enableJourneyMapIntegration = true;
 	public static boolean journeyMapShowMinimapClaims = true;
 	public static boolean journeyMapShowFullscreenClaims = true;
+	public static boolean journeyMapShowTerritoryLabels = true;
 	public static double journeyMapClaimFillOpacity = 0.18D;
 	public static double journeyMapClaimBorderOpacity = 0.80D;
 	public static double journeyMapClaimBorderWidth = 1.0D;
@@ -239,6 +240,7 @@ public final class XFConfig {
 
 		journeyMapShowMinimapClaims = bool(config, CAT_JOURNEYMAP, "showMinimapClaims", journeyMapShowMinimapClaims, "Shows faction city claims on legacy JourneyMap minimaps.");
 		journeyMapShowFullscreenClaims = bool(config, CAT_JOURNEYMAP, "showFullscreenClaims", journeyMapShowFullscreenClaims, "Shows faction city claims on the legacy JourneyMap fullscreen map.");
+		journeyMapShowTerritoryLabels = bool(config, CAT_JOURNEYMAP, "journeyMapShowTerritoryLabels", journeyMapShowTerritoryLabels, "Shows one readable city-name label for each JourneyMap city territory when that map's claim overlay is enabled.");
 		journeyMapClaimFillOpacity = dbl(config, CAT_JOURNEYMAP, "claimFillOpacity", journeyMapClaimFillOpacity, 0D, 1D, "Faction-color claim fill opacity.");
 		journeyMapClaimBorderOpacity = dbl(config, CAT_JOURNEYMAP, "claimBorderOpacity", journeyMapClaimBorderOpacity, 0D, 1D, "Faction-color exposed-border opacity.");
 		journeyMapClaimBorderWidth = dbl(config, CAT_JOURNEYMAP, "claimBorderWidth", journeyMapClaimBorderWidth, 0.25D, 10D, "Exposed claim border width in pixels.");
@@ -260,6 +262,7 @@ public final class XFConfig {
 		config.addCustomCategoryComment(CAT_PROTECTION, "07 - Starter player protection and faction build-grace settings.");
 		config.addCustomCategoryComment(CAT_CUSTOM_FLAGS, "08 - Custom faction flag import safety limits and cache/reload behaviour.");
 		config.addCustomCategoryComment(CAT_DYNMAP, "09 - Optional Dynmap marker styling, labels, and refresh timing.");
+		config.addCustomCategoryComment(CAT_JOURNEYMAP, "09B - Optional JourneyMap 5.2.x client claim overlay styling and city territory labels.");
 		config.addCustomCategoryComment(CAT_LEGACY_MACHINES, "10 - Legacy machine and power settings moved under the Xenofactions category flow.");
 		config.addCustomCategoryComment(CAT_LEGACY_DEFENSE, "11 - Legacy radar and forcefield settings.");
 		config.addCustomCategoryComment(CAT_LEGACY_WEAPONS, "12 - Legacy missile, nuke, railgun, and explosive weapon settings.");

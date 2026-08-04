@@ -162,6 +162,7 @@ Category: `XENOFACTIONS_09B_JOURNEYMAP_CLIENT`
 |---|---:|---|
 | `showMinimapClaims` | `true` | Render faction city claims on rectangular or circular minimaps. |
 | `showFullscreenClaims` | `true` | Render faction city claims on the fullscreen map. |
+| `journeyMapShowTerritoryLabels` | `true` | Render one readable city-name label per city territory on enabled JourneyMap claim overlays. Labels use the city name, not internal faction or city IDs. |
 | `claimFillOpacity` | `0.18` | Faction-color fill opacity, clamped to `0.0–1.0`. |
 | `claimBorderOpacity` | `0.80` | Exposed perimeter opacity, clamped to `0.0–1.0`. |
 | `claimBorderWidth` | `1.0` | Perimeter width, clamped to `0.25–10.0` pixels. |

@@ -9,6 +9,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
 import com.hfr.client.journeymap.ClientClaimOverlayCache.Snapshot;
+import com.hfr.client.journeymap.ClientClaimOverlayCache.TerritoryGroup;
 import com.hfr.clowder.ClaimOverlayData.Claim;
 import com.hfr.config.XFConfig;
 
@@ -44,6 +45,11 @@ final class JourneyMapClaimDrawHandler implements InvocationHandler {
 		GL11.glDisable(GL11.GL_TEXTURE_2D); GL11.glEnable(GL11.GL_BLEND); GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA); GL11.glDisable(GL11.GL_ALPHA_TEST); GL11.glDisable(GL11.GL_DEPTH_TEST);
 		try {
 			for(Claim claim : snapshot.claims) renderClaim(grid, claim, snapshot, xOffset, yOffset, width, height);
+			if(XFConfig.journeyMapShowTerritoryLabels) {
+				GL11.glEnable(GL11.GL_TEXTURE_2D);
+				GL11.glColor4f(1F, 1F, 1F, 1F);
+				for(TerritoryGroup group : snapshot.groups) renderLabel(grid, group, xOffset, yOffset, width, height);
+			}
 		} finally {
 			if(texture) GL11.glEnable(GL11.GL_TEXTURE_2D); else GL11.glDisable(GL11.GL_TEXTURE_2D);
 			if(blend) GL11.glEnable(GL11.GL_BLEND); else GL11.glDisable(GL11.GL_BLEND); GL11.glBlendFunc(blendSrc, blendDst);
@@ -67,6 +73,29 @@ final class JourneyMapClaimDrawHandler implements InvocationHandler {
 		if(!snapshot.sameGroup(claim.chunkX + 1, claim.chunkZ, claim.groupId)) edge(t,p1,p2,xo,yo);
 		if(!snapshot.sameGroup(claim.chunkX, claim.chunkZ + 1, claim.groupId)) edge(t,p2,p3,xo,yo);
 		if(!snapshot.sameGroup(claim.chunkX - 1, claim.chunkZ, claim.groupId)) edge(t,p3,p0,xo,yo); t.draw();
+	}
+	private void renderLabel(Object grid, TerritoryGroup group, double xo, double yo, int width, int height) throws Exception {
+		if(group.label == null || group.label.length() == 0) return;
+		Point2D b0 = point(grid, group.minChunkX * 16D, group.minChunkZ * 16D), b1 = point(grid, (group.maxChunkX + 1) * 16D, group.minChunkZ * 16D);
+		Point2D b2 = point(grid, (group.maxChunkX + 1) * 16D, (group.maxChunkZ + 1) * 16D), b3 = point(grid, group.minChunkX * 16D, (group.maxChunkZ + 1) * 16D);
+		double minX = Math.min(Math.min(b0.getX(), b1.getX()), Math.min(b2.getX(), b3.getX())) + xo, maxX = Math.max(Math.max(b0.getX(), b1.getX()), Math.max(b2.getX(), b3.getX())) + xo;
+		double minY = Math.min(Math.min(b0.getY(), b1.getY()), Math.min(b2.getY(), b3.getY())) + yo, maxY = Math.max(Math.max(b0.getY(), b1.getY()), Math.max(b2.getY(), b3.getY())) + yo;
+		if(maxX < 0 || maxY < 0 || minX > width || minY > height || maxX - minX < 12D || maxY - minY < 8D) return;
+		Minecraft mc = Minecraft.getMinecraft(); if(mc == null || mc.fontRenderer == null) return;
+		String text = fit(group.label, Math.max(0, (int)Math.floor(maxX - minX) - 4), mc.fontRenderer);
+		if(text.length() == 0) return;
+		Point2D label = point(grid, group.labelX, group.labelZ);
+		int textWidth = mc.fontRenderer.getStringWidth(text);
+		int x = (int)Math.round(label.getX() + xo - textWidth / 2D), y = (int)Math.round(label.getY() + yo - mc.fontRenderer.FONT_HEIGHT / 2D);
+		if(x + textWidth < 0 || y + mc.fontRenderer.FONT_HEIGHT < 0 || x > width || y > height) return;
+		mc.fontRenderer.drawStringWithShadow(text, x, y, 0xFFFFFF);
+	}
+	private String fit(String label, int maxWidth, net.minecraft.client.gui.FontRenderer font) {
+		if(maxWidth <= 0 || font.getStringWidth(label) <= maxWidth) return maxWidth <= 0 ? "" : label;
+		String ellipsis = "..."; int ellipsisWidth = font.getStringWidth(ellipsis); if(ellipsisWidth > maxWidth) return "";
+		String text = label;
+		while(text.length() > 0 && font.getStringWidth(text) + ellipsisWidth > maxWidth) text = text.substring(0, text.length() - 1);
+		return text.length() == 0 ? "" : text + ellipsis;
 	}
 	private Point2D point(Object grid,double x,double z) throws Exception { return (Point2D)reflection.getBlockPixel.invoke(grid, x, z); }
 	private static void vertex(Tessellator t,Point2D p,double x,double y){t.addVertex(p.getX()+x,p.getY()+y,0);}
