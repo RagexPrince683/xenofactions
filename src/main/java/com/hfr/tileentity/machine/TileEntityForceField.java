@@ -2,6 +2,7 @@ package com.hfr.tileentity.machine;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.hfr.entity.missile.EntityMissileAntiBallistic;
@@ -392,10 +393,13 @@ public class TileEntityForceField extends TileEntity implements ISidedInventory,
 		outside.clear();
 		inside.clear();
 
-		List<Object> list = worldObj.getEntitiesWithinAABBExcludingEntity(null,
-				AxisAlignedBB.getBoundingBox(xCoord + 0.5 - (rad + 25), yCoord + 0.5 - (rad + 25),
-						zCoord + 0.5 - (rad + 25), xCoord + 0.5 + (rad + 25), yCoord + 0.5 + (rad + 25),
-						zCoord + 0.5 + (rad + 25)));
+		List<Object> list = Collections.singletonList(worldObj.getEntitiesWithinAABBExcludingEntity(null,
+                                                                                                    AxisAlignedBB.getBoundingBox(xCoord + 0.5 - (rad + 25),
+                                                                                                                                 yCoord + 0.5 - (rad + 25),
+                                                                                                                                 zCoord + 0.5 - (rad + 25),
+                                                                                                                                 xCoord + 0.5 + (rad + 25),
+                                                                                                                                 yCoord + 0.5 + (rad + 25),
+                                                                                                                                 zCoord + 0.5 + (rad + 25))));
 
 		for (Object o : list) {
 
