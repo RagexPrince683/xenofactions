@@ -31,8 +31,8 @@ final class FlagBeamRenderer {
         boolean depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
         int alphaFunc = GL11.glGetInteger(GL11.GL_ALPHA_TEST_FUNC);
         float alphaRef = GL11.glGetFloat(GL11.GL_ALPHA_TEST_REF);
-        FloatBuffer color = BufferUtils.createFloatBuffer(4);
-        GL11.glGetFloat(GL11.GL_CURRENT_COLOR, color);
+        FloatBuffer previousColor = BufferUtils.createFloatBuffer(4);
+        GL11.glGetFloat(GL11.GL_CURRENT_COLOR, previousColor);
 
         GL11.glPushMatrix();
         GL11.glTranslated(x, y + localStartY, z);
@@ -50,7 +50,12 @@ final class FlagBeamRenderer {
         setEnabled(GL11.GL_CULL_FACE, cullEnabled);
         setEnabled(GL11.GL_LIGHTING, lightingEnabled);
         GL11.glAlphaFunc(alphaFunc, alphaRef);
-        GL11.glColor4f(color.get(0), color.get(1), color.get(2), color.get(3));
+        GL11.glColor4f(
+                previousColor.get(0),
+                previousColor.get(1),
+                previousColor.get(2),
+                previousColor.get(3)
+        );
         GL11.glPopMatrix();
     }
 

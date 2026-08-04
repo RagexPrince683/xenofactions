@@ -1,3 +1,7 @@
+# Fix flag beam color buffer collision
+
+- Renamed the saved OpenGL color buffer in `FlagBeamRenderer` to avoid colliding with the existing render color parameter while preserving beam rendering and color restoration.
+
 # Fix flag beacon coordinate space
 
 - Moved normal and large flag beacon rendering before the flag model translation and metadata rotation so tile entity render coordinates are applied exactly once.
