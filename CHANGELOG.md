@@ -1,3 +1,8 @@
+# Fix duplicate flag render bounding boxes
+
+- Removed duplicate flag tile entity render bounding box overrides that returned an infinite extent.
+- Kept the beacon-sized render bounding boxes from world Y 0 through Y 256 for both city and territory flags.
+
 # Fix flag obstruction checks and add flag beams
 
 - Fixed flag obstruction placement checks to compare the placed block Y coordinate against nearby flag block Y coordinates instead of using the column surface height, allowing blocks below flags while preserving above-flag obstruction protection.
