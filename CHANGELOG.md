@@ -1,3 +1,9 @@
+# Add JourneyMap city territory labels
+
+- Added JourneyMap city territory labels that render once per city territory on enabled minimap and fullscreen claim overlays, using city names instead of internal faction/group IDs.
+- Extended authoritative claim overlay snapshots with bounded city-label text and stable label positions, including flag positions when available and territory-center fallbacks.
+- Hardened claim overlay packet decoding for bounded labels and malformed multipart data while preserving the optional JourneyMap 5.2.x reflection bridge.
+
 # Remap production mods in the development client
 
 - Migrated the legacy ForgeGradle 1.2 build to the GTNH convention and
