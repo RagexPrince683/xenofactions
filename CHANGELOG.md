@@ -1,3 +1,7 @@
+# Fix claim overlay packet decoding for Forge 1.7.10
+
+- Replaced an unsupported Netty `ByteBufUtil.getBytes` call with sequential `ByteBuf.readBytes` decoding while preserving packet validation and wire format.
+
 # Seed stone drops from an installed HBM MiningConfig
 
 - Added optional, reflection-only discovery of HBM's `com.hbm.config.MiningConfig` and its `excavatorBedrockDrops` list.
