@@ -16,6 +16,10 @@ public class RenderFlag extends TileEntitySpecialRenderer {
 	@Override
 	public void renderTileEntityAt(TileEntity te, double x, double y, double z, float p_147500_8_) {
 		
+        TileEntityFlag flagpole = (TileEntityFlag)te;
+        bindTexture(FlagBeamRenderer.BEACON_BEAM);
+        FlagBeamRenderer.render(te, x, y, z, p_147500_8_, flagpole.color);
+
         GL11.glPushMatrix();
         GL11.glTranslated(x + 0.5D, y, z + 0.5D);
         GL11.glEnable(GL11.GL_LIGHTING);
@@ -33,10 +37,6 @@ public class RenderFlag extends TileEntitySpecialRenderer {
 			GL11.glRotatef(0, 0F, 1F, 0F); break;
 		}
         
-        TileEntityFlag flagpole = (TileEntityFlag)te;
-        bindTexture(FlagBeamRenderer.BEACON_BEAM);
-        FlagBeamRenderer.render(te, x, y, z, p_147500_8_, flagpole.color);
-		
         bindTexture(ResourceManager.flag_tex);
         
         GL11.glShadeModel(GL11.GL_SMOOTH);

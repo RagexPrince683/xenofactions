@@ -1,3 +1,9 @@
+# Fix flag beacon coordinate space
+
+- Moved normal and large flag beacon rendering before the flag model translation and metadata rotation so tile entity render coordinates are applied exactly once.
+- Removed the duplicate large-flag `renderFlare` beacon implementation in favor of the shared full-height `FlagBeamRenderer`.
+- Preserved the shared beam world Y 0 through Y 256 span and restored OpenGL render state after beam rendering.
+
 # Fix duplicate flag render bounding boxes
 
 - Removed duplicate flag tile entity render bounding box overrides that returned an infinite extent.
