@@ -1,3 +1,8 @@
+# Fix flag beacon renderer state restoration
+
+- Reworked `FlagBeamRenderer` to use OpenGL attribute stacks instead of querying individual render states, removing the `GL_CURRENT_COLOR`/`FloatBuffer` path that could crash LWJGL 2.
+- Kept the full-height flag beacon centered on the flag block with tile-entity-relative translation and local beam vertices around X/Z `0.5`.
+
 # Fix flag beam color buffer collision
 
 - Renamed the saved OpenGL color buffer in `FlagBeamRenderer` to avoid colliding with the existing render color parameter while preserving beam rendering and color restoration.

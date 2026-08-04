@@ -1,8 +1,5 @@
 package com.hfr.render.tileentity;
 
-import java.nio.FloatBuffer;
-
-import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -23,47 +20,44 @@ final class FlagBeamRenderer {
         int red = (beamColor >> 16) & 255;
         int green = (beamColor >> 8) & 255;
         int blue = beamColor & 255;
-        double localStartY = -te.yCoord;
 
-        boolean lightingEnabled = GL11.glIsEnabled(GL11.GL_LIGHTING);
-        boolean cullEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
-        boolean blendEnabled = GL11.glIsEnabled(GL11.GL_BLEND);
-        boolean depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
-        int alphaFunc = GL11.glGetInteger(GL11.GL_ALPHA_TEST_FUNC);
-        float alphaRef = GL11.glGetFloat(GL11.GL_ALPHA_TEST_REF);
-        FloatBuffer previousColor = BufferUtils.createFloatBuffer(4);
-        GL11.glGetFloat(GL11.GL_CURRENT_COLOR, previousColor);
+        double beamRenderY = y - te.yCoord;
 
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
         GL11.glPushMatrix();
-        GL11.glTranslated(x, y + localStartY, z);
-        GL11.glAlphaFunc(GL11.GL_GREATER, 0.1F);
-        GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, 10497.0F);
-        GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, 10497.0F);
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glEnable(GL11.GL_BLEND);
-        OpenGlHelper.glBlendFunc(770, 771, 1, 0);
-        GL11.glDepthMask(false);
-        renderBeamQuads(te, interp, red, green, blue);
-        GL11.glDepthMask(depthMask);
-        setEnabled(GL11.GL_BLEND, blendEnabled);
-        setEnabled(GL11.GL_CULL_FACE, cullEnabled);
-        setEnabled(GL11.GL_LIGHTING, lightingEnabled);
-        GL11.glAlphaFunc(alphaFunc, alphaRef);
-        GL11.glColor4f(
-                previousColor.get(0),
-                previousColor.get(1),
-                previousColor.get(2),
-                previousColor.get(3)
-        );
-        GL11.glPopMatrix();
-    }
 
-    private static void setEnabled(int capability, boolean enabled) {
-        if(enabled) {
-            GL11.glEnable(capability);
-        } else {
-            GL11.glDisable(capability);
+        try {
+            GL11.glTranslated(x, beamRenderY, z);
+
+            GL11.glEnable(GL11.GL_TEXTURE_2D);
+            GL11.glEnable(GL11.GL_DEPTH_TEST);
+            GL11.glEnable(GL11.GL_BLEND);
+            GL11.glDisable(GL11.GL_LIGHTING);
+            GL11.glDisable(GL11.GL_CULL_FACE);
+
+            GL11.glAlphaFunc(GL11.GL_GREATER, 0.1F);
+            GL11.glDepthMask(false);
+
+            OpenGlHelper.glBlendFunc(770, 771, 1, 0);
+
+            GL11.glTexParameterf(
+                    GL11.GL_TEXTURE_2D,
+                    GL11.GL_TEXTURE_WRAP_S,
+                    GL11.GL_REPEAT
+            );
+
+            GL11.glTexParameterf(
+                    GL11.GL_TEXTURE_2D,
+                    GL11.GL_TEXTURE_WRAP_T,
+                    GL11.GL_REPEAT
+            );
+
+            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+
+            renderBeamQuads(te, interp, red, green, blue);
+        } finally {
+            GL11.glPopMatrix();
+            GL11.glPopAttrib();
         }
     }
 
