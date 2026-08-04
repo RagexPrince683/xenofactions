@@ -17,13 +17,14 @@ import net.minecraft.client.renderer.Tessellator;
 
 final class JourneyMapClaimDrawHandler implements InvocationHandler {
 	private final boolean minimap; private final JourneyMapReflection reflection; private final XFJourneyMapIntegration integration;
+	private boolean renderFailureLogged;
 	JourneyMapClaimDrawHandler(boolean minimap, JourneyMapReflection reflection, XFJourneyMapIntegration integration) { this.minimap = minimap; this.reflection = reflection; this.integration = integration; }
 	@Override public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		String name = method.getName();
 		if("equals".equals(name)) return Boolean.valueOf(proxy == args[0]);
 		if("hashCode".equals(name)) return Integer.valueOf(System.identityHashCode(proxy));
 		if("toString".equals(name)) return "Xenofactions JourneyMap " + (minimap ? "minimap" : "fullscreen") + " overlay";
-		if("draw".equals(name) && args != null && args.length == 6) { try { draw(((Double)args[0]).doubleValue(), ((Double)args[1]).doubleValue(), args[2]); } catch(Throwable failure) { integration.fail("render invocation failed", failure); } return null; }
+		if("draw".equals(name) && args != null && args.length == 6) { try { draw(((Double)args[0]).doubleValue(), ((Double)args[1]).doubleValue(), args[2]); renderFailureLogged = false; } catch(Throwable failure) { if(!renderFailureLogged) { renderFailureLogged = true; integration.renderFail("render invocation failed", failure); } } return null; }
 		Class<?> type = method.getReturnType();
 		if(type == boolean.class) return Boolean.FALSE; if(type == byte.class) return Byte.valueOf((byte)0);
 		if(type == short.class) return Short.valueOf((short)0); if(type == int.class) return Integer.valueOf(0);
@@ -38,7 +39,8 @@ final class JourneyMapClaimDrawHandler implements InvocationHandler {
 		int width = ((Integer)reflection.getWidth.invoke(grid)).intValue(), height = ((Integer)reflection.getHeight.invoke(grid)).intValue();
 		boolean texture = GL11.glIsEnabled(GL11.GL_TEXTURE_2D), blend = GL11.glIsEnabled(GL11.GL_BLEND), alpha = GL11.glIsEnabled(GL11.GL_ALPHA_TEST), depth = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
 		int blendSrc = GL11.glGetInteger(GL11.GL_BLEND_SRC), blendDst = GL11.glGetInteger(GL11.GL_BLEND_DST); float oldWidth = GL11.glGetFloat(GL11.GL_LINE_WIDTH);
-		FloatBuffer color = BufferUtils.createFloatBuffer(4); GL11.glGetFloat(GL11.GL_CURRENT_COLOR, color);
+		// LWJGL 2 generic glGetFloat requires room for 16 floats even when reading GL_CURRENT_COLOR.
+		FloatBuffer color = BufferUtils.createFloatBuffer(16); GL11.glGetFloat(GL11.GL_CURRENT_COLOR, color);
 		GL11.glDisable(GL11.GL_TEXTURE_2D); GL11.glEnable(GL11.GL_BLEND); GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA); GL11.glDisable(GL11.GL_ALPHA_TEST); GL11.glDisable(GL11.GL_DEPTH_TEST);
 		try {
 			for(Claim claim : snapshot.claims) renderClaim(grid, claim, snapshot, xOffset, yOffset, width, height);

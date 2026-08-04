@@ -14,7 +14,7 @@ import net.minecraftforge.event.world.WorldEvent;
 /** Optional, reflection-only bridge for legacy JourneyMap 5.2.x. */
 public final class XFJourneyMapIntegration {
 	private JourneyMapReflection reflection; private Object miniProxy, fullscreenProxy, miniState, fullscreenState;
-	private boolean incompatible, logged;
+	private boolean incompatible, logged, renderLogged;
 	public static void register() {
 		if(!Loader.isModLoaded("journeymap")) return;
 		XFJourneyMapIntegration value = new XFJourneyMapIntegration();
@@ -51,6 +51,9 @@ public final class XFJourneyMapIntegration {
 	void fail(String reason, Throwable failure) {
 		incompatible = true; ClientClaimOverlayCache.clear(); miniState = fullscreenState = miniProxy = fullscreenProxy = null; reflection = null;
 		if(!logged && MainRegistry.logger != null) { logged = true; MainRegistry.logger.warn("JourneyMap claim overlays disabled for this session (" + version() + "): " + reason + ": " + failure, failure); }
+	}
+	void renderFail(String reason, Throwable failure) {
+		if(!renderLogged && MainRegistry.logger != null) { renderLogged = true; MainRegistry.logger.warn("JourneyMap claim overlay render failed; overlays will retry next frame (" + version() + "): " + reason + ": " + failure, failure); }
 	}
 	private String version() { ModContainer mod = Loader.instance().getIndexedModList().get("journeymap"); return mod == null ? "unknown JourneyMap version" : "JourneyMap " + mod.getVersion(); }
 }
