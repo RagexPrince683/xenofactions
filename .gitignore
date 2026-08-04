@@ -57,6 +57,10 @@ saves/
 # *.ogg
 .idea/gradle.xml
 .idea/workspace.xml
+/devmods/*.jar
+/devmods/deobf/*.jar
+!/.run/
+!/.run/*.xml
 /eclipse/world
 /eclipse/asm
 /eclipse/asm

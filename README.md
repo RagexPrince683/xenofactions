@@ -70,6 +70,39 @@ A typical faction flow is:
 5. Manage members with `/c applicants`, `/c accept <player>`, `/c promote <player>`, and `/c kick <player>`.
 6. Use diplomacy commands such as `/c ally`, `/c declarewar`, `/c ceasefire`, `/c peace`, and `/c surrender` when server rules allow.
 
+## Development client and external mods
+
+The development workspace uses the same GTNH convention/RetroFuturaGradle
+toolchain as MCH-mocmaster: Minecraft 1.7.10, Forge `10.13.4.1614`, Java 8
+bytecode, and MCP stable mappings 12. Start the IDE client with the checked-in
+**Xenofactions Client** run configuration, or from a terminal with:
+
+```bash
+gradle runClient
+```
+
+Put ordinary Forge release JARs (including the normal JourneyMap 1.7.10 JAR)
+directly in [`devmods/`](devmods/). Production mods refer to Minecraft with SRG
+names such as `func_135052_a`; before `runClient`, RetroFuturaGradle remaps those
+references to the MCP names present in this workspace. The remapped copies are
+written to `build/devmods/remapped/`, while the original files are never changed.
+Only those remapped copies are placed on the development runtime classpath.
+
+A development or `-dev.jar` is already MCP-mapped and must not be transformed.
+Mark one explicitly by placing it in `devmods/deobf/` instead. Do not put the
+same mod in both folders. Both configurations are development-only, so their
+mods are neither bundled into the Xenofactions release JAR nor published as
+dependency metadata. Remove all generated remapped dependencies with:
+
+```bash
+gradle clean
+```
+
+The existing `eclipse/` directory remains the client run directory, preserving
+its configs, saves, and test worlds. It must not also contain an original copy
+of a mod configured through `devmods/`, because Forge would then discover two
+copies of that mod.
+
 For a fuller walkthrough, see [`docs/getting-started.md`](docs/getting-started.md).
 
 ## Configuration
