@@ -53,8 +53,14 @@ tasks.register('prepareDevMods') {
     }
 }
 
+def prepareDevModsTask = tasks.named('prepareDevMods')
+
+tasks.named('compileJava') {
+    dependsOn(prepareDevModsTask)
+}
+
 tasks.named('runClient') {
-    dependsOn(tasks.named('prepareDevMods'))
+    dependsOn(prepareDevModsTask)
 }
 
 tasks.withType(JavaCompile).configureEach {
