@@ -249,11 +249,11 @@ public void handleChatServer(ServerChatEvent event) {
 		
 		String name = "";
 
-		if(clowder.getPermLevel(player.getDisplayName()) > 2) {
+		if(clowder.getPermLevel(player) > 2) {
 			name += "<Leader> ";
-		} else if(clowder.getPermLevel(player.getDisplayName()) > 1) {
+		} else if(clowder.getPermLevel(player) > 1) {
 			name += "<Officer> ";
-		} else if(clowder.getPermLevel(player.getDisplayName()) > 0) {
+		} else if(clowder.getPermLevel(player) > 0) {
 			name += "<Citizen> ";
 		}
 		
@@ -268,11 +268,11 @@ public void handleChatServer(ServerChatEvent event) {
 
 		String name = "";
 
-		if (clowder.getPermLevel(player.getDisplayName()) > 2) {
+		if (clowder.getPermLevel(player) > 2) {
 			name += "<Leader> ";
-		} else if (clowder.getPermLevel(player.getDisplayName()) > 1) {
+		} else if (clowder.getPermLevel(player) > 1) {
 			name += "<Officer> ";
-		} else if (clowder.getPermLevel(player.getDisplayName()) > 0) {
+		} else if (clowder.getPermLevel(player) > 0) {
 			name += "<Citizen> ";
 		}
 
@@ -410,7 +410,7 @@ public void handleChatServer(ServerChatEvent event) {
 					return false;
 				}
 
-				if(clowder.getPermLevel(player.getDisplayName()) < 3) {
+				if(clowder.getPermLevel(player) < 3) {
 					player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Only the faction leader can break City Centers."));
 					return false;
 				}
@@ -442,7 +442,7 @@ public void handleChatServer(ServerChatEvent event) {
 				return false;
 			} else {
 				
-				if(player.worldObj.getBlock(x, y, z) == ModBlocks.officer_chest && clowder.getPermLevel(player.getDisplayName()) < 2) {
+				if(player.worldObj.getBlock(x, y, z) == ModBlocks.officer_chest && clowder.getPermLevel(player) < 2) {
 					player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "You lack the permissions to destroy this chest."));
 					return false;
 				}
@@ -1294,7 +1294,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 					return;
 				}
 				
-				if(!Clowder.retreating.contains(name)) {
+				if(!Clowder.retreating.contains(player.getUniqueID())) {
 
 
 					//System.out.println("POV: I mog you");
@@ -1315,7 +1315,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 			//is not in any clowder
 			} else {
 				
-				//if(Clowder.retreating.contains(name)) {
+				//if(Clowder.retreating.contains(player.getUniqueID())) {
 				//	Clowder.retreating.remove(name);
 				//}
 				

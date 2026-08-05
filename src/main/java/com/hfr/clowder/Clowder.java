@@ -28,6 +28,7 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatComponentText;
@@ -139,10 +140,14 @@ public class Clowder {
 	//for one-time use war extension for attacker
 	public boolean overtime = false;
 
-	public String leader;
-	public Set<String> officers = new HashSet();
-	public HashMap<String, Long> members = new HashMap();
-	public Set<String> applications = new HashSet();
+	/** Canonical membership and role authority, keyed only by Mojang UUID. */
+	public final Map<UUID, FactionMemberRecord> memberRecords = new HashMap<UUID, FactionMemberRecord>();
+	public final Map<UUID, FactionApplication> applicationsByUuid = new HashMap<UUID, FactionApplication>();
+	/** Legacy import staging only. Never consulted by UUID permission methods. */
+	@Deprecated public String leader;
+	@Deprecated public Set<String> officers = new HashSet<String>();
+	@Deprecated public HashMap<String, Long> members = new HashMap<String, Long>();
+	@Deprecated public Set<String> applications = new HashSet<String>();
 	public int flags = 0;
 
 	//shitty ally system
@@ -177,8 +182,10 @@ public class Clowder {
 	private int lastBankruptcyStage = 0;
 
 	public static List<Clowder> clowders = new ArrayList();
-	public static HashMap<String, Clowder> inverseMap = new HashMap();
-	public static HashSet<String> retreating = new HashSet();
+	public static HashMap<UUID, Clowder> inverseMap = new HashMap<UUID, Clowder>();
+	/** Legacy migration index; it is never used by getClowderFromPlayer. */
+	@Deprecated private static HashMap<String, Clowder> legacyInverseMap = new HashMap<String, Clowder>();
+	public static HashSet<UUID> retreating = new HashSet<UUID>();
 	public static HashMap<Long, ScheduledTeleport> teleports = new HashMap();
 	public static final long ENEMY_REMOVAL_DELAY_MS = 72L * 60L * 60L * 1000L;
 
@@ -660,7 +667,7 @@ public class Clowder {
 
 			// Add to new
 			newClowder.members.put(p, time());
-			inverseMap.put(p, newClowder);
+			legacyInverseMap.put(p, newClowder);
 
 			if (wasOfficer) {
 				newClowder.officers.add(p);
@@ -903,7 +910,7 @@ public class Clowder {
 		alliesS.put(friend.name, time()); //nbt compliant version..? what does that mean??
 		//probably fixes ally shit to actually work...?
 		//I fucking hate old labshit weeder and retarded bob code so goddamn much
-		inverseMap.put(name, this); //i dont know wtf the inversemap shit is
+		legacyInverseMap.put(name, this); //i dont know wtf the inversemap shit is
 
 		//I fucking HATE everything about this mod.
 
@@ -950,12 +957,12 @@ public class Clowder {
 		if (world.getPlayerEntityByName(name) == null)
 			return false;
 
-		if (inverseMap.containsKey(name) || members.get(name) != null)
+		if (legacyInverseMap.containsKey(name) || members.get(name) != null)
 			return false;
 
 
 		members.put(name, time());
-		inverseMap.put(name, this);
+		legacyInverseMap.put(name, this);
 
 		ClowderData.getData(world).markDirty();
 
@@ -964,12 +971,12 @@ public class Clowder {
 
 	public boolean removeMember(World world, String name) {
 
-		if (!inverseMap.containsKey(name) && members.get(name) == null)
+		if (!legacyInverseMap.containsKey(name) && members.get(name) == null)
 			return false;
 
 		members.remove(name);
 		officers.remove(name);
-		inverseMap.remove(name);
+		legacyInverseMap.remove(name);
 
 		ClowderData.getData(world).markDirty();
 
@@ -1040,18 +1047,27 @@ public class Clowder {
 	}
 
 	public int getPermLevel(String name) {
-
-		if (this.leader.equals(name))
-			return 3;
-
-		if (this.officers.contains(name))
-			return 2;
-
-		if (this.members.get(name) != null)
-			return 1;
-
+		// Deliberately fail closed. Usernames must never authorize faction actions.
 		return 0;
+	}
 
+	public FactionMemberRecord getMember(UUID playerUuid) { return memberRecords.get(playerUuid); }
+	public boolean hasMember(UUID playerUuid) { return playerUuid != null && memberRecords.containsKey(playerUuid); }
+	public boolean isOwner(UUID playerUuid) { FactionMemberRecord r = getMember(playerUuid); return r != null && r.role == FactionRole.OWNER; }
+	public boolean isOfficer(UUID playerUuid) { FactionMemberRecord r = getMember(playerUuid); return r != null && r.role == FactionRole.OFFICER; }
+	public int getPermLevel(UUID playerUuid) { FactionMemberRecord r = getMember(playerUuid); return r == null ? 0 : r.role.getPermissionLevel(); }
+	public int getPermLevel(EntityPlayer player) { return player == null ? 0 : getPermLevel(player.getUniqueID()); }
+
+	public boolean updateLastKnownName(EntityPlayer player) {
+		if (player == null) return false;
+		FactionMemberRecord record = getMember(player.getUniqueID());
+		String name = player.getGameProfile().getName();
+		if (record == null || name == null || name.equals(record.lastKnownName)) return false;
+		record.lastKnownName = name;
+		ClowderData data = ClowderData.getData(player.worldObj);
+		if (data != null) data.markDirty();
+		syncNameplateDataAll();
+		return true;
 	}
 
 
@@ -1168,10 +1184,7 @@ public class Clowder {
 	}
 
 	public boolean isOwner(EntityPlayer player) {
-
-		String key = player.getDisplayName();
-
-		return this.leader.equals(key);
+		return player != null && isOwner(player.getUniqueID());
 	}
 
 	public void mergeWith(Clowder target, World world) {
@@ -1182,10 +1195,10 @@ public class Clowder {
 		//this.pussy(world);
 		//not used crap from shitty labjac code
 
-		// 1. Transfer members (CRITICAL: fix inverseMap)
+		// 1. Transfer members (CRITICAL: fix legacyInverseMap)
 		for (String member : this.members.keySet()) {
 			target.members.put(member, time());
-			inverseMap.put(member, target);
+			legacyInverseMap.put(member, target);
 		}
 
 		// 2. Transfer officers
@@ -1197,7 +1210,7 @@ public class Clowder {
 		if (this.leader != null && !this.leader.isEmpty()) {
 			target.members.put(this.leader, time());
 			target.officers.add(this.leader);
-			inverseMap.put(this.leader, target);
+			legacyInverseMap.put(this.leader, target);
 		}
 
 		// 4. Merge warps (avoid overwriting)
@@ -1616,6 +1629,24 @@ public class Clowder {
 	}
 
 	public void saveClowder(int i, NBTTagCompound nbt) {
+		NBTTagList identityMembers = new NBTTagList();
+		for (FactionMemberRecord record : memberRecords.values()) {
+			NBTTagCompound member = new NBTTagCompound();
+			member.setString("uuid", record.playerUuid.toString());
+			member.setString("lastKnownName", record.lastKnownName);
+			member.setLong("joinedAt", record.joinedAt);
+			member.setString("role", record.role.name());
+			identityMembers.appendTag(member);
+		}
+		nbt.setTag(i + "_identityMembers", identityMembers);
+		NBTTagList identityApplications = new NBTTagList();
+		for (FactionApplication application : applicationsByUuid.values()) {
+			NBTTagCompound entry = new NBTTagCompound();
+			entry.setString("uuid", application.playerUuid.toString());
+			entry.setString("lastKnownName", application.lastKnownName);
+			identityApplications.appendTag(entry);
+		}
+		nbt.setTag(i + "_identityApplications", identityApplications);
 		syncAllyNames();
 		nbt.setString(i + "_uuid", this.uuid);
 		nbt.setString(i + "_name", this.name);
@@ -1927,6 +1958,28 @@ public class Clowder {
 		for (int j = 0; j < co; j++)
 			c.officers.add(nbt.getString(i + "_" + j + "_off"));
 
+		NBTTagList identityMembers = nbt.getTagList(i + "_identityMembers", 10);
+		for (int j = 0; j < identityMembers.tagCount(); j++) {
+			NBTTagCompound member = identityMembers.getCompoundTagAt(j);
+			try {
+				UUID playerUuid = UUID.fromString(member.getString("uuid"));
+				FactionRole role = FactionRole.valueOf(member.getString("role"));
+				c.memberRecords.put(playerUuid, new FactionMemberRecord(playerUuid, member.getString("lastKnownName"), member.getLong("joinedAt"), role));
+			} catch (IllegalArgumentException malformed) {
+				if (MainRegistry.logger != null) MainRegistry.logger.warn("Skipping malformed UUID faction member in " + c.name + ": " + member.getString("uuid"));
+			}
+		}
+		NBTTagList identityApplications = nbt.getTagList(i + "_identityApplications", 10);
+		for (int j = 0; j < identityApplications.tagCount(); j++) {
+			NBTTagCompound entry = identityApplications.getCompoundTagAt(j);
+			try {
+				UUID playerUuid = UUID.fromString(entry.getString("uuid"));
+				c.applicationsByUuid.put(playerUuid, new FactionApplication(playerUuid, entry.getString("lastKnownName")));
+			} catch (IllegalArgumentException malformed) {
+				if (MainRegistry.logger != null) MainRegistry.logger.warn("Skipping malformed faction application UUID in " + c.name);
+			}
+		}
+
 		for (int j = 0; j < cwarp; j++) {
 
 			String name = nbt.getString(i + "_" + j + "_name");
@@ -2009,10 +2062,15 @@ public class Clowder {
 	public static void recalculateIMap() {
 
 		inverseMap.clear();
+		legacyInverseMap.clear();
 
 		for (Clowder clowder : clowders) {
+			for (UUID member : clowder.memberRecords.keySet()) {
+				if (!inverseMap.containsKey(member)) inverseMap.put(member, clowder);
+				else if (MainRegistry.logger != null) MainRegistry.logger.warn("UUID " + member + " occurs in multiple factions; ignoring duplicate in " + clowder.name);
+			}
 			for (String member : clowder.members.keySet()) {
-				inverseMap.put(member, clowder);
+				legacyInverseMap.put(member, clowder);
 			}
 		}
 	}
@@ -2165,6 +2223,7 @@ public class Clowder {
 
 	public static void writeToNBT(NBTTagCompound nbt) {
 
+		nbt.setInteger("factionIdentityDataVersion", 2);
 		nbt.setInteger("clowderCount", clowders.size());
 		nbt.setBoolean("warEnabledRuntime", CommandClowderAdmin.WARENABLED);
 		nbt.setBoolean("warCooldownsDisabled", CommandClowderAdmin.WAR_COOLDOWNS_DISABLED);
@@ -2193,13 +2252,15 @@ public class Clowder {
 	}
 
 	public static Clowder getClowderFromPlayer(EntityPlayer player) {
-
-		return getClowderFromPlayerName(player.getDisplayName());
+		return player == null ? null : getClowderFromPlayerUuid(player.getUniqueID());
 	}
 
-	public static Clowder getClowderFromPlayerName(String key) {
+	public static Clowder getClowderFromPlayerUuid(UUID playerUuid) { return playerUuid == null ? null : inverseMap.get(playerUuid); }
+	public static void clearIdentityMaps() { inverseMap.clear(); legacyInverseMap.clear(); }
 
-		return inverseMap.get(key);
+	public static Clowder getClowderFromPlayerName(String key) {
+		// Kept only for source compatibility with non-permission diagnostics.
+		return null;
 	}
 
 	public static Clowder getClowderFromName(String name) {
@@ -2245,7 +2306,8 @@ public class Clowder {
 
 	public static void createClowder(EntityPlayer player, String name) {
 
-		String leader = player.getDisplayName();
+		String leader = player.getGameProfile().getName();
+		UUID leaderUuid = player.getUniqueID();
 
 		Clowder c = new Clowder();
 
@@ -2253,6 +2315,7 @@ public class Clowder {
 		c.name = canonicalizeClowderName(name);
 		c.leader = leader;
 		c.members.put(leader, time());
+		c.memberRecords.put(leaderUuid, new FactionMemberRecord(leaderUuid, leader, time(), FactionRole.OWNER));
 
 		int colour = player.getRNG().nextInt(0x1000000);
 		while (colours.contains(colour))
@@ -2272,7 +2335,7 @@ public class Clowder {
 		c.addPrestigeGen(XFConfig.basePrestigeGen, player.worldObj);
 
 		clowders.add(c);
-		inverseMap.put(leader, c);
+		inverseMap.put(leaderUuid, c);
 
 		ClowderData.getData(player.worldObj).markDirty();
 	}

@@ -183,7 +183,7 @@ public class TileEntityOfficerChest extends TileEntity implements IInventory {
     		return false;
     	}
     	
-    	if(c.getPermLevel(player.getDisplayName()) < 2) {
+		if(c.getPermLevel(player) < 2) {
     		player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "You lack permission to open this chest!"));
     		return false;
     	}

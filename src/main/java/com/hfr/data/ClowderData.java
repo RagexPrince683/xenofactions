@@ -12,13 +12,15 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldSavedData;
 import net.minecraftforge.common.DimensionManager;
 
-import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 import static com.hfr.clowder.Clowder.initializeDiplomacy;
 
 public class ClowderData extends WorldSavedData {
 
-	private final ArrayList claimedPlayers = new ArrayList();
+	private final Set<UUID> claimedPlayers = new HashSet<UUID>();
 
 	public ClowderData(String name) {
 		super(name);
@@ -39,7 +41,7 @@ public class ClowderData extends WorldSavedData {
 		NBTTagList claimedList = nbt.getTagList("ClaimedPlayers", 8); // 8 = String
 		claimedPlayers.clear();
 		for (int i = 0; i < claimedList.tagCount(); i++) {
-			claimedPlayers.add(claimedList.getStringTagAt(i));
+			try { claimedPlayers.add(UUID.fromString(claimedList.getStringTagAt(i))); } catch (IllegalArgumentException ignored) { }
 		}
 
 	}
@@ -52,22 +54,21 @@ public class ClowderData extends WorldSavedData {
 
 		// Save claimed players
 		NBTTagList claimedList = new NBTTagList();
-		for (int i = 0; i < claimedPlayers.size(); i++) {
-			claimedList.appendTag(new NBTTagString((String) claimedPlayers.get(i)));
-		}
+		for (UUID playerUuid : claimedPlayers)
+			claimedList.appendTag(new NBTTagString(playerUuid.toString()));
 		nbt.setTag("ClaimedPlayers", claimedList);
 
 	}
 
 	// Check if a player has claimed a flag
-	public boolean hasPlayerClaimedFlag(String playerName) {
-		return claimedPlayers.contains(playerName);
+	public boolean hasPlayerClaimedFlag(UUID playerUuid) {
+		return claimedPlayers.contains(playerUuid);
 	}
 
 	// Mark a player as having claimed a flag
-	public void markPlayerClaimedFlag(String playerName) {
-		if (!claimedPlayers.contains(playerName)) {
-			claimedPlayers.add(playerName);
+	public void markPlayerClaimedFlag(UUID playerUuid) {
+		if (!claimedPlayers.contains(playerUuid)) {
+			claimedPlayers.add(playerUuid);
 			markDirty(); // Mark data as dirty to save it
 		}
 	}

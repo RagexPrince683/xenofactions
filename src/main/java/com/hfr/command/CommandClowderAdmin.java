@@ -273,7 +273,7 @@ public class CommandClowderAdmin extends CommandBase {
 		
 		if(clowder != null) {
 			
-			if(!clowder.leader.equals(kickee.getDisplayName())) {
+			if(!clowder.isOwner(kickee.getUniqueID())) {
 				
 				clowder.removeMember(player.worldObj, kickee.getDisplayName());
 				sender.addChatMessage(new ChatComponentText(INFO + "You have kicked " + kickee.getDisplayName() + " from the faction " + clowder.getDecoratedName() + "!"));
@@ -334,7 +334,7 @@ public class CommandClowderAdmin extends CommandBase {
 		
 		if(clowder != null) {
 			
-			if(!clowder.leader.equals(player.getDisplayName())) {
+			if(!clowder.isOwner(player.getUniqueID())) {
 				
 				clowder.transferOwnership(player.worldObj, player.getDisplayName());
 				sender.addChatMessage(new ChatComponentText(INFO + "You have assumed ownership of this faction!"));
@@ -357,7 +357,7 @@ public class CommandClowderAdmin extends CommandBase {
 		while(Clowder.clowders.size() > 0)
 			Clowder.clowders.get(0).disbandClowder(player.worldObj);
 		
-		Clowder.inverseMap.clear();
+		Clowder.clearIdentityMaps();
 		Clowder.retreating.clear();
 		ClowderData.getData(player.worldObj).markDirty();
 		sender.addChatMessage(new ChatComponentText(EnumChatFormatting.OBFUSCATED + "" + EnumChatFormatting.DARK_PURPLE + "All data has been deleted!"));
@@ -566,7 +566,7 @@ public class CommandClowderAdmin extends CommandBase {
 				
 			if(Clowder.getClowderFromName(factionName) == null) {
 
-				if(clowder.getPermLevel(player.getDisplayName()) > 1) {
+				if(clowder.getPermLevel(player) > 1) {
 					clowder.rename(factionName, player);
 					sender.addChatMessage(new ChatComponentText(TITLE + "Renamed faction to " + factionName + "!"));
 					PacketDispatcher.wrapper.sendTo(new ClowderFlagPacket(clowder, ""), (EntityPlayerMP) player);

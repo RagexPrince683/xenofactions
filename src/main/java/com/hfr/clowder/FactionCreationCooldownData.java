@@ -109,11 +109,8 @@ public class FactionCreationCooldownData {
         Map<String, String> snapshot = new HashMap<String, String>();
         if(clowder == null)
             return null;
-        snapshot.put(clowder.leader, resolveUuid(clowder.leader, world));
-        for(String member : clowder.members.keySet())
-            snapshot.put(member, resolveUuid(member, world));
-        for(String officer : clowder.officers)
-            snapshot.put(officer, resolveUuid(officer, world));
+        for(FactionMemberRecord member : clowder.memberRecords.values())
+            snapshot.put(member.lastKnownName, member.playerUuid.toString());
         return snapshot;
     }
 

@@ -389,7 +389,7 @@ public class CommandClowder extends CommandBase {
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
 		if(clowder == null) { sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!")); return; }
-		if(clowder.getPermLevel(player.getDisplayName()) <= 2) { sender.addChatMessage(new ChatComponentText(ERROR + "Only faction leaders can activate build grace!")); return; }
+		if(clowder.getPermLevel(player) <= 2) { sender.addChatMessage(new ChatComponentText(ERROR + "Only faction leaders can activate build grace!")); return; }
 		if(!XFConfig.graceBuildEnabled) { sender.addChatMessage(new ChatComponentText(ERROR + "Build grace is disabled on this server.")); return; }
 		if(XFConfig.graceBuildOneTimeUse && clowder.buildGraceUsed) { sender.addChatMessage(new ChatComponentText(ERROR + "This faction already used build grace.")); return; }
 		if(!clowder.activeWars.isEmpty()) { sender.addChatMessage(new ChatComponentText(ERROR + "Cannot activate while in active war.")); return; }
@@ -512,7 +512,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 			if(target != null) {
 				//ONLY LEADERS CAN MERGE
-				if(clowder.getPermLevel(player.getDisplayName()) > 2 ) {
+				if(clowder.getPermLevel(player) > 2 ) {
 
 
 
@@ -596,7 +596,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			//if(diplomat.suzerain == null)
 			//{
 
-				if(diplomat.getPermLevel(envoy.getDisplayName()) > 1) {
+				if(diplomat.getPermLevel(envoy) > 1) {
 
 					Clowder toApply = Clowder.getClowderFromName(name);
 
@@ -642,7 +642,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			if(clowder.suzerain == null) {
 
 
-				if(clowder.getPermLevel(player.getDisplayName()) > 1) {
+				if(clowder.getPermLevel(player) > 1) {
 
 					if(clowder.potentialFriends.contains(name))
 					{ //checks if the name of the guy you typed in command actually applied to become your ALLY
@@ -714,7 +714,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			//fuck yo whole bitch system
 
 
-				if (clowder.getPermLevel(player.getDisplayName()) > 1) {
+				if (clowder.getPermLevel(player) > 1) {
 
 					if (formerFriend != null) {
 
@@ -759,7 +759,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
-			if(clowder.getPermLevel(player.getDisplayName()) > 1) {
+			if(clowder.getPermLevel(player) > 1) {
 				int c = ParserUtil.parseColor(color);
 
 				if(c < 0) {
@@ -859,7 +859,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 			if(Clowder.getClowderFromName(factionName) == null) {
 
-				if(clowder.getPermLevel(player.getDisplayName()) > 1) {
+				if(clowder.getPermLevel(player) > 1) {
 					clowder.rename(factionName, player);
 					sender.addChatMessage(new ChatComponentText(TITLE + "Renamed faction to " + factionName + "!"));
 					PacketDispatcher.wrapper.sendTo(new ClowderFlagPacket(clowder, ""), (EntityPlayerMP) player);
@@ -899,7 +899,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
-			if(clowder.getPermLevel(player.getDisplayName()) > 1) {
+			if(clowder.getPermLevel(player) > 1) {
 
 				String stitched = "";
 
@@ -926,7 +926,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
-			if(clowder.getPermLevel(player.getDisplayName()) > 2) {
+			if(clowder.getPermLevel(player) > 2) {
 
 				if(clowder.members.get(owner) != null) {
 
@@ -978,7 +978,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
-			if(clowder.getPermLevel(player.getDisplayName()) < 3) {
+			if(clowder.getPermLevel(player) < 3) {
 
 				clowder.removeMember(player.worldObj, player.getDisplayName());
 				sender.addChatMessage(new ChatComponentText(CRITICAL + "You left this faction!"));
@@ -999,7 +999,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
-			if(clowder.getPermLevel(player.getDisplayName()) > 1) {
+			if(clowder.getPermLevel(player) > 1) {
 
 				if(clowder.applications.contains(name)) {
 
@@ -1033,7 +1033,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
-			if(clowder.getPermLevel(player.getDisplayName()) > 1) {
+			if(clowder.getPermLevel(player) > 1) {
 
 				if(clowder.applications.contains(name)) {
 
@@ -1065,7 +1065,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
-			if(clowder.getPermLevel(player.getDisplayName()) > 1) {
+			if(clowder.getPermLevel(player) > 1) {
 
 				sender.addChatMessage(new ChatComponentText(TITLE + "Applicants:"));
 				int cnt = 0;
@@ -1094,7 +1094,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
-			if(clowder.getPermLevel(player.getDisplayName()) > 1) {
+			if(clowder.getPermLevel(player) > 1) {
 
 				if(clowder.members.get(kickee) != null) {
 
@@ -1146,7 +1146,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
-			if(clowder.getPermLevel(player.getDisplayName()) > 2 ) {
+			if(clowder.getPermLevel(player) > 2 ) {
 
 				String flag = args[1];
 				if(flag.equalsIgnoreCase("seturl")) {
@@ -1188,7 +1188,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
-			if(!Clowder.retreating.contains(player.getDisplayName())) {
+			if(!Clowder.retreating.contains(player.getUniqueID())) {
 				//System.out.println("POV: I mog you");
 				sender.addChatMessage(new ChatComponentText(INFO + "POV: I mog you"));
 				//clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Player " + player.getDisplayName() + " is retreating!"));
@@ -1211,7 +1211,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if (clowder != null) {
 			// level 1 member level 2 officer level 3 leader
-			if (clowder.getPermLevel(player.getDisplayName()) > 1) {
+			if (clowder.getPermLevel(player) > 1) {
 
 				Ownership owner = ClowderTerritory.getOwnerFromInts(player.worldObj, (int) player.posX, (int) player.posZ);
 
@@ -1251,7 +1251,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if (clowder != null) {
 			// level 1 member level 2 officer level 3 leader
-			if (clowder.getPermLevel(player.getDisplayName()) > 1) {
+			if (clowder.getPermLevel(player) > 1) {
 
 				Ownership owner = ClowderTerritory.getOwnerFromInts(player.worldObj, (int) player.posX, (int) player.posZ);
 
@@ -1632,7 +1632,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 	//	if (clowder != null) {
 	//		//if(!clowder.bitch)
 	//		//{
-	//			if (clowder.getPermLevel(player.getDisplayName()) > 1) {
+	//			if (clowder.getPermLevel(player) > 1) {
 	//				TerritoryMeta meta = ClowderTerritory.territories
 	//						.get(ClowderTerritory.coordsToCode(new CoordPair(player.chunkCoordX, player.chunkCoordZ)));
 	//				//if (meta != null) {
@@ -1744,7 +1744,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 	}
 	private void cmdCityMove(ICommandSender sender, boolean recover) {
 		EntityPlayer player = getCommandSenderAsPlayer(sender); Clowder faction = Clowder.getClowderFromPlayer(player);
-		if(faction == null || faction.leader == null || !faction.leader.equals(player.getDisplayName())) { sender.addChatMessage(new ChatComponentText(ERROR + "Only the faction leader may manage City Center moves.")); return; }
+		if(faction == null || !faction.isOwner(player.getUniqueID())) { sender.addChatMessage(new ChatComponentText(ERROR + "Only the faction leader may manage City Center moves.")); return; }
 		if(!com.hfr.clowder.CityCenterRelocationManager.hasPending(faction)) { sender.addChatMessage(new ChatComponentText(ERROR + "Your faction has no pending City Center move.")); return; }
 		if(recover) { com.hfr.clowder.CityCenterRelocationManager.issueToken(player, faction); sender.addChatMessage(new ChatComponentText(INFO + "A replacement relocation token was issued.")); }
 		else { com.hfr.clowder.CityCenterRelocationManager.clear(faction, player.worldObj); sender.addChatMessage(new ChatComponentText(INFO + "City Center move canceled; the city and claims were not changed.")); }
@@ -1756,7 +1756,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
 			return;
 		}
-		if(clowder.getPermLevel(player.getDisplayName()) < 2) {
+		if(clowder.getPermLevel(player) < 2) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions to upgrade cities!"));
 			return;
 		}
@@ -1805,7 +1805,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
-			if(clowder.getPermLevel(player.getDisplayName()) > 2) {
+			if(clowder.getPermLevel(player) > 2) {
 
 				if(clowder.members.get(promotee) != null) {
 
@@ -1837,7 +1837,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
-			if(clowder.getPermLevel(player.getDisplayName()) > 2) {
+			if(clowder.getPermLevel(player) > 2) {
 
 				if(clowder.members.get(demotee) != null) {
 
@@ -1879,7 +1879,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 			return;
 		}
 
-		if(clowder.getPermLevel(player.getDisplayName()) < (XFConfig.claimRenameOfficersAllowed ? 2 : 3)) {
+		if(clowder.getPermLevel(player) < (XFConfig.claimRenameOfficersAllowed ? 2 : 3)) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions to rename cities!"));
 			return;
 		}
@@ -1968,7 +1968,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 	private WarValidation validateWarDeclaration(ICommandSender sender, EntityPlayer player, Clowder me, Clowder target) {
 		if (me == null) { sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!")); return new WarValidation(false, 0F); }
 		if (target == null || me == target) { sender.addChatMessage(new ChatComponentText(ERROR + "That faction does not exist.")); return new WarValidation(false, 0F); }
-		if (me.getPermLevel(player.getDisplayName()) < 3) { sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions to declare war.")); return new WarValidation(false, 0F); }
+		if (me.getPermLevel(player) < 3) { sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions to declare war.")); return new WarValidation(false, 0F); }
 		if (areFactionsAtWar(me, target)) { sender.addChatMessage(new ChatComponentText(ERROR + "Your faction is already at war with " + target.name + ".")); return new WarValidation(false, 0F); }
 		if(!(CommandClowderAdmin.LEGACY_WAR_ENABLED || CommandClowderAdmin.WAR_ONLINE_CHECK_DISABLED) && target.getOnlineMemberCount() < XFConfig.warOnlinePlayerThreshold && !Clowder.forceOnline) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You can only declare war on factions that are currently online (" + XFConfig.warOnlinePlayerThreshold + "+ members)."));
@@ -2023,7 +2023,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
 		if (me == null || target == null || me == target) return;
-		if (me.getPermLevel(player.getDisplayName()) < 3) return;
+		if (me.getPermLevel(player) < 3) return;
 		me.peaceRequests.add(target.name);
 		if(transferCity != null && !transferCity.trim().isEmpty()) {
 			if(!XFConfig.peaceCityTransfersEnabled) { sender.addChatMessage(new ChatComponentText(ERROR + "Peace city transfers are disabled on this server.")); return; }
@@ -2046,7 +2046,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
-		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 3) return;
+		if (me == null || target == null || me == target || me.getPermLevel(player) < 3) return;
 		if(!(CommandClowderAdmin.LEGACY_WAR_ENABLED || CommandClowderAdmin.WAR_STATE_CHECK_DISABLED) && !me.isAtWarWith(target)) return;
 		if(!target.peaceRequests.contains(me.name)) return;
 		target.peaceRequests.remove(me.name);
@@ -2079,7 +2079,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
-		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 3) return;
+		if (me == null || target == null || me == target || me.getPermLevel(player) < 3) return;
 		if(!(CommandClowderAdmin.LEGACY_WAR_ENABLED || CommandClowderAdmin.WAR_STATE_CHECK_DISABLED) && !me.isAtWarWith(target)) return;
 		me.ceasefireRequests.add(target.name);
 		target.notifyAll(player.worldObj, new ChatComponentText(INFO + me.name + " has proposed a ceasefire. Use /c acceptceasefire " + me.name));
@@ -2092,7 +2092,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
-		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 3) return;
+		if (me == null || target == null || me == target || me.getPermLevel(player) < 3) return;
 		if(!target.ceasefireRequests.contains(me.name)) return;
 		target.ceasefireRequests.remove(me.name);
 		me.clearWarStateWith(target); target.clearWarStateWith(me);
@@ -2109,7 +2109,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
-		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 3) return;
+		if (me == null || target == null || me == target || me.getPermLevel(player) < 3) return;
 		if(!(CommandClowderAdmin.LEGACY_WAR_ENABLED || CommandClowderAdmin.WAR_STATE_CHECK_DISABLED) && !me.isAtWarWith(target)) return;
 		me.surrenderRequests.add(target.name);
 		target.notifyAll(player.worldObj, new ChatComponentText(CRITICAL + me.name + " offers surrender. Use /c acceptsurrender " + me.name + " to accept."));
@@ -2122,7 +2122,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder target = Clowder.getClowderFromName(targetName);
-		if (me == null || target == null || me == target || me.getPermLevel(player.getDisplayName()) < 3) return;
+		if (me == null || target == null || me == target || me.getPermLevel(player) < 3) return;
 		if(!target.surrenderRequests.contains(me.name)) return;
 		target.surrenderRequests.remove(me.name);
 		if(XFConfig.surrenderTransfersCities) {
@@ -2146,7 +2146,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		Clowder ally = Clowder.getClowderFromName(allyName);
 		if (me == null || ally == null) return;
-		if (me.getPermLevel(player.getDisplayName()) < 3) return;
+		if (me.getPermLevel(player) < 3) return;
 		if (!me.allies.containsKey(ally)) return;
 		int joined = 0;
 		for (String enemyName : ally.activeWars) {
