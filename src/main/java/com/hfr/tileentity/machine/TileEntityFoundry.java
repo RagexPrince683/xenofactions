@@ -65,7 +65,7 @@ public class TileEntityFoundry extends TileEntityMachineBase {
 	public boolean isItemValidForSlot(int i, ItemStack itemStack) {
 		if (itemStack == null) return false;
 		if (i == 0) { // steel input slot (top)
-			return getSteel(itemStack) > 0.0F; // uses your existing getSteel(...) method
+			return getSteelValue(itemStack) > 0.0F; // uses shared steel value data
 		} else if (i == 1) { // fuel slot (sides)
 			return itemStack.getItem() == net.minecraft.init.Items.coal;
 		} else { // output slot not insertable
@@ -266,7 +266,7 @@ public class TileEntityFoundry extends TileEntityMachineBase {
 			/// FIRE OVEN END ///
 			
 			/// SMELT DOWN STEEL START ///
-			float steelContent = slots[0] != null ? getSteel(slots[0]) : 0.0F;
+			float steelContent = slots[0] != null ? getSteelValue(slots[0]) : 0.0F;
 			
 			if(heat > 0 && steelContent > 0 && steel + steelContent <= maxSteel) {
 				smeltTimer++;
@@ -365,7 +365,7 @@ public class TileEntityFoundry extends TileEntityMachineBase {
 		return false;
 	}
 	
-	private float getSteel(ItemStack stack) {
+	public static float getSteelValue(ItemStack stack) {
 		
 		if(stack == null)
 			return 0.0F;
@@ -383,6 +383,11 @@ public class TileEntityFoundry extends TileEntityMachineBase {
 			return 0.0F;
 		
 		return steel;
+	}
+
+	public static float getSteelCost(Item item) {
+		Float steel = item == null ? null : recipes.get(item.getUnlocalizedName());
+		return steel == null ? 0.0F : steel.floatValue();
 	}
 	
 	public void increment() {

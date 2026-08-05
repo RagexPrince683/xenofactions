@@ -22,6 +22,7 @@ import com.hfr.render.hud.RenderFlagOverlay;
 import com.hfr.render.hud.RenderRVIOverlay;
 import com.hfr.render.hud.RenderRadarScreen;
 import com.hfr.render.util.RenderAccessoryUtility;
+import com.hfr.tileentity.machine.MachineDisplaySnapshot;
 import com.hfr.util.LoggingEngine;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture.Type;
 
@@ -415,6 +416,7 @@ public class EventHandlerClient {
 	public void onClientDisconnect(ClientDisconnectionFromServerEvent event) {
 		lookup.clear();
 		com.hfr.stonedrops.StoneDropDisplaySnapshot.clearClientSnapshot();
+		MachineDisplaySnapshot.clearClientSnapshot();
 	}
 
 	private void renderTag(EntityPlayer player, double x, double y, double z, RendererLivingEntity renderer, String name) {
