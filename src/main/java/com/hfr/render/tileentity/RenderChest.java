@@ -22,7 +22,6 @@ public class RenderChest extends TileEntitySpecialRenderer
 	
     private ModelChest field_147510_h = new ModelChest();
     private boolean field_147509_j;
-    private static final String __OBFID = "CL_00000965";
 
     public RenderChest()
     {
