@@ -25,6 +25,7 @@ import com.mojang.authlib.minecraft.MinecraftProfileTexture.Type;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.network.FMLNetworkEvent.ClientDisconnectionFromServerEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.ClientTickEvent;
 import cpw.mods.fml.relauncher.Side;
@@ -382,7 +383,6 @@ public class EventHandlerClient {
 		if(event.entity instanceof EntityPlayer) {
 			//allahu bookmark note important - this is the part where player name changes based on clowder
 			String clowder = lookup.get(event.entity.getUniqueID().toString());
-			String own = lookup.get(Minecraft.getMinecraft().thePlayer.getUniqueID().toString());
 
 			//doesnt work this way
 			//Clowder enemy = Clowder.getClowderFromName(clowder);
@@ -390,28 +390,30 @@ public class EventHandlerClient {
 
 			if(clowder != null && !clowder.equals("###")) {
 
-				String trueName = clowder.split("_")[0];  //cuts off the list of allies
+				String[] relationData = clowder.split("\\|", 2);
+				String trueName = relationData[0];
+				String relation = relationData.length > 1 ? relationData[1] : "neutral";
 
-				if(own == null || own.equals("###")) {
-					clowder = EnumChatFormatting.YELLOW + trueName;
-				} else if(own.equals(clowder)) {
+				if("own".equals(relation)) {
 					clowder = EnumChatFormatting.GREEN + trueName;
-				}
-				else if(own.contains(trueName)) { //for allies
+				} else if("ally".equals(relation)) {
 					clowder = EnumChatFormatting.BLUE + trueName;
-				} else {
+				} else if("enemy".equals(relation)) {
 					clowder = EnumChatFormatting.RED + trueName;
+				} else {
+					clowder = EnumChatFormatting.YELLOW + trueName;
 				}
-
-				//if(mines != null && enemy != null && mines.allies.get(enemy) != null)
-				//	clowder = EnumChatFormatting.BLUE + clowder;
-
 
 				renderTag((EntityPlayer)event.entity, event.x, event.y, event.z, event.renderer, clowder.replaceAll("_", " "));
 			}
 		}
 	}
 	
+	@SubscribeEvent
+	public void onClientDisconnect(ClientDisconnectionFromServerEvent event) {
+		lookup.clear();
+	}
+
 	private void renderTag(EntityPlayer player, double x, double y, double z, RendererLivingEntity renderer, String name) {
 		
 		EntityPlayer thePlayer = Minecraft.getMinecraft().thePlayer;

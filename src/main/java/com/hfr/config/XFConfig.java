@@ -74,6 +74,7 @@ public final class XFConfig {
 	public static float warDeclarationBaseCost = 150F;
 	public static float warDeclarationTargetPrestigeFactor = 0.15F;
 	public static float activeWarUpkeep = 75F;
+	public static float enemyKillPrestigeReward = 25F;
 	public static float warUpkeepHourlyGrowth = 0.25F;
 	public static float warUpkeepHourlyGrowthSquared = 0.05F;
 	public static float surrenderPrestigeTransferPercent = 0.50F;
@@ -170,6 +171,7 @@ public final class XFConfig {
 		warDeclarationBaseCost = flt(config, CAT_PRESTIGE_COSTS, "warDeclarationBaseCost", warDeclarationBaseCost, 0F, 1000000F, "Base prestige cost to declare war.");
 		warDeclarationTargetPrestigeFactor = flt(config, CAT_PRESTIGE_COSTS, "warDeclarationTargetPrestigeFactor", warDeclarationTargetPrestigeFactor, 0F, 10F, "Extra war declaration cost as a fraction of target prestige.");
 		activeWarUpkeep = flt(config, CAT_PRESTIGE_COSTS, "activeWarUpkeep", activeWarUpkeep, 0F, 1000000F, "Starting hourly prestige upkeep per active war.");
+		enemyKillPrestigeReward = flt(config, CAT_PRESTIGE_COSTS, "enemyKillPrestigeReward", enemyKillPrestigeReward, 0F, 1000000F, "Prestige awarded to a faction when one of its players kills a member of a faction it explicitly marks as an enemy.");
 		warUpkeepHourlyGrowth = flt(config, CAT_PRESTIGE_COSTS, "warUpkeepHourlyGrowth", warUpkeepHourlyGrowth, 0F, 100F, "Linear hourly growth multiplier for active war upkeep.");
 		warUpkeepHourlyGrowthSquared = flt(config, CAT_PRESTIGE_COSTS, "warUpkeepHourlyGrowthSquared", warUpkeepHourlyGrowthSquared, 0F, 100F, "Quadratic hourly growth multiplier for active war upkeep.");
 		surrenderPrestigeTransferPercent = flt(config, CAT_PRESTIGE_COSTS, "surrenderPrestigeTransferPercent", surrenderPrestigeTransferPercent, 0F, 1F, "Fraction of surrendered faction generation paid as tribute.");

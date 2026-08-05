@@ -355,6 +355,8 @@ public class CommandClowder extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-allywarp <faction>" + TITLE + " - Teleports to an ally rally point"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-merge <faction>" + TITLE + " - Requests to merge into another faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-acceptmerge <faction>" + TITLE + " - Accepts a merge request"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "/enemy <faction>" + TITLE + " - Marks a faction as an enemy; enemy kills grant Prestige"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "/unenemy <faction>" + TITLE + " - Starts 72h enemy removal; separate from wars"));
 			sender.addChatMessage(new ChatComponentText(INFO + "/clowder help 6"));
 		}
 

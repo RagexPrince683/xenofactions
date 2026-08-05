@@ -85,6 +85,8 @@ Usage: `/clowder help`; aliases: `/clowder`, `/c`; permission level: 0.
 | `/c ally <faction>` or `/c befriend <faction>` | Request an alliance. |
 | `/c acceptally <faction>` or `/c acceptfriend <faction>` | Accept an alliance request. |
 | `/c unally <faction>` or `/c unfriend <faction>` | Break an alliance. |
+| `/enemy <faction>` | Leader-only one-way enemy marker. It is separate from wars, costs no Prestige, and enemy kills grant faction Prestige. |
+| `/unenemy <faction>` | Leader-only enemy removal request. The enemy relation remains active for 72 real hours before expiring. |
 | `/c declarewar <faction>` | Declare war when war mode/rules allow. |
 | `/c peace <faction> {city}` | Request peace, optionally including a city transfer. |
 | `/c acceptpeace <faction>` | Accept peace. |

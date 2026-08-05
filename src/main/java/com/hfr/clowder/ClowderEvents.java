@@ -67,6 +67,7 @@ import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.PlayerDropsEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.Action;
@@ -963,6 +964,8 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 	@SubscribeEvent
 	public void onPlayerLogin(PlayerLoggedInEvent event) {
 
+		if(event.player instanceof EntityPlayerMP) Clowder.syncNameplateDataAll();
+
 		if(!XFConfig.enableNewPlayerProtection || !newPlayerProtectionEnabled || event.player == null)
 			return;
 
@@ -1340,6 +1343,37 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 	//	}
 	}
 
+	@SubscribeEvent
+	public void onLivingDeath(LivingDeathEvent event) {
+		if(event == null || event.entityLiving == null || event.entityLiving.worldObj == null || event.entityLiving.worldObj.isRemote) return;
+		if(!(event.entityLiving instanceof EntityPlayer)) return;
+		EntityPlayer victim = (EntityPlayer)event.entityLiving;
+		DamageSource source = event.source;
+		if(source == null) return;
+		Entity attacker = source.getEntity();
+		EntityPlayer killer = null;
+		if(attacker instanceof EntityPlayer) {
+			killer = (EntityPlayer)attacker;
+		} else if(attacker instanceof EntityThrowable) {
+			Entity shooter = ((EntityThrowable)attacker).getThrower();
+			if(shooter instanceof EntityPlayer) killer = (EntityPlayer)shooter;
+		} else if(attacker instanceof EntityArrow) {
+			Entity shooter = ((EntityArrow)attacker).shootingEntity;
+			if(shooter instanceof EntityPlayer) killer = (EntityPlayer)shooter;
+		}
+		if(killer == null || killer == victim) return;
+		Clowder killerFaction = Clowder.getClowderFromPlayer(killer);
+		Clowder victimFaction = Clowder.getClowderFromPlayer(victim);
+		if(killerFaction == null || victimFaction == null || killerFaction.uuid != null && killerFaction.uuid.equals(victimFaction.uuid)) return;
+		killerFaction.processExpiredEnemyRelations(killer.worldObj, System.currentTimeMillis());
+		if(!killerFaction.isEnemyFaction(victimFaction, killer.worldObj)) return;
+		float reward = XFConfig.enemyKillPrestigeReward;
+		if(reward <= 0F) return;
+		killerFaction.addPrestige(reward, killer.worldObj);
+		killer.addChatMessage(new ChatComponentText(CommandClowder.INFO + "Killed enemy " + victim.getDisplayName() + " of " + victimFaction.name + ": +" + Clowder.round(reward) + " Prestige."));
+		killerFaction.notifyAll(killer.worldObj, new ChatComponentText(CommandClowder.INFO + killer.getDisplayName() + " killed enemy " + victim.getDisplayName() + " of " + victimFaction.name + " for +" + Clowder.round(reward) + " Prestige."));
+	}
+
 	int delay = 0;
 	int hour = 0;
 	/**
@@ -1374,6 +1408,10 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 			}
 		}
 		
+		if(world.provider.dimensionId == 0 && world.getTotalWorldTime() % 1200L == 0L) {
+			Clowder.processExpiredEnemyRelations(world);
+		}
+
 		if(delay > 0) {
 			delay--;
 			return;

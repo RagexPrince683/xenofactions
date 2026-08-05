@@ -53,6 +53,7 @@ Categories: `XENOFACTIONS_03_PRESTIGE_COSTS_UPKEEP` and `XENOFACTIONS_04_BANKRUP
 | `warDeclarationBaseCost` | `150` | Base cost to declare war. |
 | `warDeclarationTargetPrestigeFactor` | `0.15` | Additional war cost factor based on target prestige. |
 | `activeWarUpkeep` | `75` | Ongoing active-war upkeep. |
+| `enemyKillPrestigeReward` | `25` | Prestige awarded for killing a member of a faction your faction explicitly marks as an enemy. |
 | `warUpkeepHourlyGrowth` | `0.25` | Linear hourly active-war upkeep growth. |
 | `warUpkeepHourlyGrowthSquared` | `0.05` | Squared hourly active-war upkeep growth. |
 | `surrenderPrestigeTransferPercent` | `0.50` | Prestige transfer percent for surrender tribute. |
