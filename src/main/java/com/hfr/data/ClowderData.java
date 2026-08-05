@@ -29,6 +29,11 @@ public class ClowderData extends WorldSavedData {
 		
 		Clowder.readFromNBT(nbt);
 		ClowderTerritory.readFromNBT(nbt);
+		for(Clowder clowder : Clowder.clowders) {
+			clowder.reconcileCitiesFounded(null);
+			if(clowder.buildGraceUntil > System.currentTimeMillis() && !clowder.hasValidBuildGraceHome())
+				clowder.buildGraceUntil = 0L;
+		}
 
 		// Load claimed players
 		NBTTagList claimedList = nbt.getTagList("ClaimedPlayers", 8); // 8 = String

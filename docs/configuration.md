@@ -227,3 +227,7 @@ automatic entries. The success log message is:
 ```text
 [XF] Registered <count> automatic HBM stone drops from MiningConfig.excavatorBedrockDrops.
 ```
+
+## Faction creation cooldown data
+
+Regular leader-run `/c disband <faction name>` writes faction creation penalties to `clowder_faction_creation_cooldowns.json` in the server root. Entries are absolute real-time expiration timestamps keyed by player UUID where possible, with last-known names and normalized-name fallbacks for unresolved offline profiles. These cooldowns block only `/c create`; applications, invitations, and joining are unchanged.

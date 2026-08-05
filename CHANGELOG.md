@@ -1,3 +1,9 @@
+## Build grace home validation, city Prestige scaling, and regular disband penalties
+
+- Added server-side build grace home validation so `/c gracebuild` requires an explicitly set faction home that still resolves to owned faction territory, and active grace ends when that home claim is lost or transferred.
+- Corrected City Center founding cost scaling to use the current distinct owned city count instead of stale historical `citiesFounded` data, with city removal and transfer paths reconciling ownership.
+- Finished regular `/c disband <faction name>` for faction leaders and added UUID-backed faction creation cooldown persistence: 7 real days for the disbanding leader and 3 real days for other current members, blocking only faction creation.
+
 ## Fix NEI machine page text layout
 
 - Moved selected machine NEI information text below the item row while preserving slot, arrow, recipe, usage, catalyst, and machine value behavior.

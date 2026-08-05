@@ -20,7 +20,8 @@ Usage: `/clowder help`; aliases: `/clowder`, `/c`; permission level: 0.
 | Command | Purpose |
 | --- | --- |
 | `/c help {page}` | Show in-game help pages. |
-| `/c create <name>` | Create a faction. |
+| `/c create <name>` | Create a faction. Blocked only while a faction-creation cooldown is active. |
+| `/c disband <faction name>` | Leader-only regular disband. Requires the exact faction name as confirmation, warns members, then blocks the leader from creating factions for 7 real days and other current/offline members for 3 real days. Applications and joining remain allowed. |
 | `/c info {faction}` | Show your faction or another faction. |
 | `/c list` | List factions. |
 | `/c comrades` | List faction members. |
@@ -139,6 +140,10 @@ Usage: `/cc <message>`; permission level: 0.
 | `/cc p` or `/cc public` | Return to public chat. |
 | `/cc m` or `/cc mute` | Mute faction chat behavior. |
 | `/cc u` or `/cc unmute` | Unmute. |
+
+## Persistent command data
+
+`clowder_faction_creation_cooldowns.json` stores UUID-keyed faction creation cooldown expirations plus last-known player names and fallback name entries for unresolved offline members. Expired entries are ignored/cleaned on load or lookup.
 
 ## Utility and moderation commands
 

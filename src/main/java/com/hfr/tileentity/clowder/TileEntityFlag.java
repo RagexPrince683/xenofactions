@@ -285,6 +285,9 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	
 	public void setOwner(Clowder c) {
 		
+		if(owner == c)
+			return;
+
 		if(owner != c)
 			MainRegistry.logger.info("Changing owner for flag " + xCoord + " " + yCoord + " " + zCoord + " from " + (owner != null ? owner.name : "null") + " to " + (c != null ? c.name : "null"));
 		
