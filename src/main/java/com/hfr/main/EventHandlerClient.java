@@ -15,6 +15,8 @@ import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.client.ReseatRequestPacket;
 import com.hfr.packet.effect.PlayerDataPacket;
 import com.hfr.packet.client.TDMMenuActionPacket;
+import com.hfr.inventory.gui.GUIXenofactionsMenu;
+import com.hfr.inventory.gui.GUIXenofactionsTutorial;
 import com.hfr.inventory.gui.GUITDMMenu;
 import com.hfr.render.hud.RenderFlagOverlay;
 import com.hfr.render.hud.RenderRVIOverlay;
@@ -519,13 +521,30 @@ public class EventHandlerClient {
 		}
 	}
 	
+	private boolean xfHadWorld = false;
+	private boolean xfTutorialQueued = false;
+
+	@SubscribeEvent
+	public void xenofactionsClientTick(ClientTickEvent event) {
+		Minecraft xfMc = Minecraft.getMinecraft();
+		boolean xfHasWorld = xfMc.theWorld != null;
+		if(!xfHadWorld && xfHasWorld) xfTutorialQueued = true;
+		if(!xfHasWorld) xfTutorialQueued = false;
+		xfHadWorld = xfHasWorld;
+		if(xfHasWorld && xfMc.thePlayer != null && xfMc.currentScreen == null) {
+			while(ClientProxy.xenofactionsMenu.isPressed()) GUIXenofactionsMenu.requestAndOpen();
+			if(xfTutorialQueued && !GUIXenofactionsTutorial.getFlagFile().exists()) {
+				xfTutorialQueued = false;
+				xfMc.displayGuiScreen(new GUIXenofactionsTutorial());
+			}
+		}
+	}
+
 	long time = -1;
 	int oldEnt = 0;
 	
 	/*@SubscribeEvent
-	public void clientTick(ClientTickEvent event) {
-		
-		EntityPlayer player = Minecraft.getMinecraft().thePlayer;
+	EntityPlayer player = Minecraft.getMinecraft().thePlayer;
 		
 		if(player == null || player.worldObj == null)
 			return;
