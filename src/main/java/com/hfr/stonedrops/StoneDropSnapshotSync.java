@@ -9,7 +9,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 
 public final class StoneDropSnapshotSync {
-    private StoneDropSnapshotSync() { }
+    public StoneDropSnapshotSync() { }
     @SubscribeEvent public void login(PlayerLoggedInEvent event) { if (event.player instanceof EntityPlayerMP) send((EntityPlayerMP) event.player); }
     @SubscribeEvent public void changed(PlayerChangedDimensionEvent event) { if (event.player instanceof EntityPlayerMP) send((EntityPlayerMP) event.player); }
     public static void send(EntityPlayerMP player) { PacketDispatcher.wrapper.sendTo(new StoneDropSnapshotPacket(StoneDropDisplaySnapshot.fromRuntime()), player); }
