@@ -156,3 +156,9 @@ Added `/stonedrops [page]` as a read-only player-accessible command for viewing 
 - Exposed shared machine display and recipe data for NEI without requiring NEI outside `com.hfr.nei`.
 - Added server-authoritative machine display snapshot synchronization and client disconnect clearing.
 - Added localization keys for the new NEI categories and labels.
+
+# NEI Machine Integration Update
+
+- Added NEI categories, catalysts, display data, and server-synchronized configuration values for the Grain Mill, University, Production Line, Temple, and Coal Mine.
+- Removed Windmill NEI category, handler registration, handler class, localization, and display snapshot field while leaving Windmill gameplay and registration unchanged.
+- Added display snapshot packet validation for incomplete payloads and documented packet field order.
