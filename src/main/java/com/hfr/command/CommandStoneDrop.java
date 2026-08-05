@@ -7,6 +7,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import com.hfr.main.MainRegistry;
+import com.hfr.stonedrops.StoneDropSnapshotSync;
 import java.util.List;
 
 public class CommandStoneDrop extends CommandBase {
@@ -90,6 +91,7 @@ public class CommandStoneDrop extends CommandBase {
         Integer removedMaxY = MainRegistry.customDropMaxYs.remove(index);
 
         MainRegistry.saveCustomDrops(); // Save after removing
+        StoneDropSnapshotSync.sendToAll();
 
         sender.addChatMessage(new ChatComponentText("Removed custom drop: " + removed.getDisplayName()
                 + " (Chance: " + removedChance + ", Y: " + formatYRange(removedMinY, removedMaxY) + ")"));
@@ -148,6 +150,7 @@ public class CommandStoneDrop extends CommandBase {
         MainRegistry.customDropMaxYs.add(maxY);
 
         MainRegistry.saveCustomDrops(); // Save after adding
+        StoneDropSnapshotSync.sendToAll();
 
         sender.addChatMessage(new ChatComponentText("Stone drop added! "
                 + " Item: " + heldItem.getDisplayName()

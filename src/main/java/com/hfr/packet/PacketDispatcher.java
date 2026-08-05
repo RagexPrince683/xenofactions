@@ -87,6 +87,7 @@ public class PacketDispatcher {
 		wrapper.registerMessage(TDMMenuDataPacket.Handler.class, TDMMenuDataPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(XFMenuDataRequestPacket.Handler.class, XFMenuDataRequestPacket.class, i++, Side.SERVER);
 		wrapper.registerMessage(XFMenuDataPacket.Handler.class, XFMenuDataPacket.class, i++, Side.CLIENT);
+		wrapper.registerMessage(StoneDropSnapshotPacket.Handler.class, StoneDropSnapshotPacket.class, i++, Side.CLIENT);
 
 	}
 	
