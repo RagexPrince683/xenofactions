@@ -1,10 +1,13 @@
 package com.hfr.tileentity.machine;
 
+import com.hfr.blocks.machine.MachineCoalMine;
+import com.hfr.handler.MultiblockHandler;
 import com.hfr.items.ModItems;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.oredict.OreDictionary;
 
 import java.util.ArrayList;
@@ -19,6 +22,47 @@ public final class MachineNeiRecipes {
         public final ItemStack stack;
         public final float value;
         public ItemValue(ItemStack stack, float value) { this.stack = stack; this.value = value; }
+    }
+
+
+    public static final class ChanceEntry {
+        public final ItemStack stack;
+        public final int chancePercent;
+        public ChanceEntry(ItemStack stack, int chancePercent) { this.stack = stack.copy(); this.chancePercent = chancePercent; }
+    }
+
+    public static ItemStack grainMillInput() { return new ItemStack(Items.wheat); }
+    public static ItemStack grainMillOutput() { return new ItemStack(ModItems.flour); }
+    public static int grainMillTicks() { return TileEntityMachineGrainmill.maxProgress; }
+    public static ItemStack universityOutput() { return new ItemStack(ModItems.science); }
+    public static ItemStack productionLineOutput() { return new ItemStack(ModItems.cog); }
+    public static ItemStack templeOutput() { return new ItemStack(ModItems.scroll); }
+    public static ItemStack coalMineOutput() { return new ItemStack(Items.coal); }
+    public static ItemStack miner() { return new ItemStack(ModItems.miner); }
+    public static ItemStack minerSupplies() { return new ItemStack(ModItems.miner_supplies); }
+    public static ItemStack canary() { return new ItemStack(ModItems.canary); }
+    public static int coalMineMaxSupplies() { return TileEntityMachineCoalMine.maxSupplies; }
+    public static int coalMineSupplyChanceDenominator() { return 15; }
+    public static int coalMineMinerLossChancePercent() { return 25; }
+    public static int coalMineTicksForWorkforce(int workforce, MachineDisplaySnapshot snapshot) { return snapshot.coalRate * 20 / workforce; }
+    public static int[] coalMineRotatedFootprint() { return MultiblockHandler.rotate(new MachineCoalMine(net.minecraft.block.material.Material.rock).getDimensions(), ForgeDirection.NORTH); }
+
+    public static List<ChanceEntry> universityJams() {
+        List<ChanceEntry> list = new ArrayList<ChanceEntry>();
+        list.add(new ChanceEntry(new ItemStack(Items.paper).setStackDisplayName("Student Strike"), 50));
+        list.add(new ChanceEntry(new ItemStack(Items.gunpowder).setStackDisplayName("Bomb Threat"), 20));
+        list.add(new ChanceEntry(new ItemStack(Items.skull).setStackDisplayName("Workplace Accident"), 20));
+        list.add(new ChanceEntry(new ItemStack(Items.bone).setStackDisplayName("Skeleton Attack"), 10));
+        return list;
+    }
+
+    public static List<ChanceEntry> productionLineJams() {
+        List<ChanceEntry> list = new ArrayList<ChanceEntry>();
+        list.add(new ChanceEntry(new ItemStack(Items.paper).setStackDisplayName("Worker Strike"), 50));
+        list.add(new ChanceEntry(new ItemStack(Items.skull).setStackDisplayName("Workplace Accident"), 20));
+        list.add(new ChanceEntry(new ItemStack(Items.slime_ball).setStackDisplayName("Chemical Spill"), 20));
+        list.add(new ChanceEntry(new ItemStack(Items.potato).setStackDisplayName("Communist Takeover"), 10));
+        return list;
     }
 
     public static List<ItemStack> blastFurnaceInputs() {

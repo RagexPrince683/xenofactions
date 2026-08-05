@@ -13,7 +13,7 @@ import net.minecraft.util.StatCollector;
 @SideOnly(Side.CLIENT)
 public class NEIXenoFactionsConfig implements IConfigureNEI {
     public void loadConfig() {
-        if (!XFConfig.enableNEIIntegration) return;
+        if (!XFConfig.enableNEIIntegration) { return; }
         XenoFactionsStoneDropHandler handler = new XenoFactionsStoneDropHandler();
         API.registerRecipeHandler(handler);
         API.registerUsageHandler(handler);
@@ -21,7 +21,11 @@ public class NEIXenoFactionsConfig implements IConfigureNEI {
         register(new XenoFactionsFoundryMeltingHandler(), new ItemStack(ModBlocks.machine_foundry));
         register(new XenoFactionsFoundryCastingHandler(), new ItemStack(ModBlocks.machine_foundry));
         register(new XenoFactionsFishingNetHandler(), new ItemStack(ModBlocks.machine_net));
-        register(new XenoFactionsWindmillHandler(), new ItemStack(ModBlocks.machine_windmill));
+        register(new XenoFactionsGrainMillHandler(), new ItemStack(ModBlocks.machine_grainmill));
+        register(new XenoFactionsUniversityHandler(), new ItemStack(ModBlocks.machine_uni));
+        register(new XenoFactionsProductionLineHandler(), new ItemStack(ModBlocks.machine_factory));
+        register(new XenoFactionsTempleHandler(), new ItemStack(ModBlocks.machine_temple));
+        register(new XenoFactionsCoalMineHandler(), new ItemStack(ModBlocks.machine_coalmine));
     }
 
     private void register(XenoFactionsMachineHandler handler, ItemStack catalyst) {
