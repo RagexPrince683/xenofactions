@@ -21,6 +21,7 @@ Category: `XENOFACTIONS_01_MODULES`
 | `enableNewPlayerProtection` | `false` | Enable starter protection systems. |
 | `enableConquestFlagsCommand` | `true` | Enable conquest flag command/system toggle. |
 | `enableGuideBook` | `true` | Enable guide-book integration/fallback references. |
+| `enableNEIIntegration` | `true` | Register optional Not Enough Items handlers when NEI is installed; ordinary gameplay recipes and stone-drop behavior are unchanged. |
 
 ## Prestige generation
 

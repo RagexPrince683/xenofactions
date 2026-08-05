@@ -26,6 +26,8 @@ dependencies {
     remappedDevMods(rfg.deobf(productionDevMods))
     devOnlyNonPublishable(fileTree(remappedDevModsDir) { include '*.jar' })
     devOnlyNonPublishable(mcpDevMods)
+    devOnlyNonPublishable("com.github.GTNewHorizons:CodeChickenCore:1.4.16:dev")
+    devOnlyNonPublishable("com.github.GTNewHorizons:NotEnoughItems:2.8.114-GTNH:dev")
 }
 
 tasks.register('prepareDevMods') {
@@ -51,6 +53,11 @@ tasks.register('prepareDevMods') {
                 failure)
         }
     }
+}
+
+configurations.devOnlyNonPublishable {
+    exclude group: 'codechicken', module: 'CodeChickenCore'
+    exclude group: 'codechicken', module: 'NotEnoughItems'
 }
 
 def prepareDevModsTask = tasks.named('prepareDevMods')

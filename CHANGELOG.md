@@ -1,3 +1,11 @@
+
+## Optional Not Enough Items integration
+
+- Added development-only Not Enough Items and CodeChickenCore dependencies through GTNH Convention's non-publishable configuration while preserving the existing `devmods` remapping flow.
+- Added an optional, client-only NEI integration entry point and a Xenofactions stone-drop recipe/usage category.
+- Added server-authoritative stone-drop display snapshot synchronization for multiplayer NEI displays.
+- Added the `enableNEIIntegration` module option and documented the new configuration key.
+
 # Xenofactions command GUI and first-join tutorial
 
 - Added a client-side Xenofactions command GUI with category navigation, command search, command preview, dangerous-command confirmation, Open in Chat, and Copy Usage actions.

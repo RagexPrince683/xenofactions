@@ -76,6 +76,7 @@ import com.hfr.lib.*;
 import com.hfr.packet.*;
 import com.hfr.potion.HFRPotion;
 import com.hfr.schematic.*;
+import com.hfr.stonedrops.StoneDropSnapshotSync;
 import com.hfr.tdm.*;
 import com.hfr.tileentity.*;
 import com.hfr.tileentity.clowder.*;
@@ -744,6 +745,7 @@ public class MainRegistry
 		FMLCommonHandler.instance().bus().register(handler);
 		FMLCommonHandler.instance().bus().register(clowder);
 		FMLCommonHandler.instance().bus().register(claimOverlaySync);
+		FMLCommonHandler.instance().bus().register(new StoneDropSnapshotSync());
 		if(XFConfig.enableDynmapIntegration)
 			FMLCommonHandler.instance().bus().register(dynmap);
 		//FMLCommonHandler.instance().bus().register(pon4);
@@ -821,6 +823,7 @@ public class MainRegistry
 		processBuffer();
 		HbmStoneDropIntegration.seedDefaultsIfAvailable(stoneDropLoadState);
 		XFGuideBook.register();
+		StoneDropSnapshotSync.sendToAll();
 
 		try {
 			BobbyBreaker.loadConfiguration(jsonDir);

@@ -414,6 +414,7 @@ public class EventHandlerClient {
 	@SubscribeEvent
 	public void onClientDisconnect(ClientDisconnectionFromServerEvent event) {
 		lookup.clear();
+		com.hfr.stonedrops.StoneDropDisplaySnapshot.clearClientSnapshot();
 	}
 
 	private void renderTag(EntityPlayer player, double x, double y, double z, RendererLivingEntity renderer, String name) {
