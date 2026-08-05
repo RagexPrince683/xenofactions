@@ -48,7 +48,7 @@ The mod is opinionated toward competitive survival servers: factions create citi
 5. Stop the server and review the configuration. Start with the documented `XENOFACTIONS_*` categories.
 6. Restart after making configuration changes.
 
-Data files created or used by the mod include faction/world data managed by the mod, `config/stonedrops.json` for custom stone drops, and market/player-protection JSON files loaded by server startup systems.
+Data files created or used by the mod include faction/world data managed by the mod, `config/stonedrops.json` for custom stone drops, and market/player-protection JSON files loaded by server startup systems, and `clowder_faction_creation_cooldowns.json` for regular disband creation penalties.
 
 ## Quick Start
 
@@ -129,6 +129,7 @@ Most player-facing faction commands are under `/clowder` or `/c`:
 ```text
 /c help
 /c create <name>
+/c disband <faction name>
 /c apply <faction>
 /c claim <city name>
 /c city upgrade

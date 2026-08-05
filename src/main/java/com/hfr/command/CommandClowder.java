@@ -5,10 +5,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
 import com.hfr.blocks.BlockDummyable;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder;
+import com.hfr.clowder.FactionCreationCooldownData;
 import com.hfr.clowder.Clowder.ScheduledTeleport;
 import com.hfr.clowder.ClowderFlag;
 import com.hfr.clowder.flag.CustomFlagService;
@@ -153,6 +155,7 @@ public class CommandClowder extends CommandBase {
 			return;
 		}
 
+		if(cmd.equals("disband")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdDisband(sender, joinArgs(args, 1)); return; }
 		if(cmd.equals("merge")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdMerge(sender, joinArgs(args, 1)); return; }
 		if(cmd.equals("acceptmerge")) { if(!requireArgs(sender, cmd, args, 2)) return; acceptMerge(sender, joinArgs(args, 1)); return; }
 		if(cmd.equals("gracebuild")) { cmdGraceBuild(sender); return; }
@@ -244,6 +247,7 @@ public class CommandClowder extends CommandBase {
 
 	private String getUsageFor(String cmd) {
 		if(cmd.equals("create")) return "/c create <name>";
+		if(cmd.equals("disband")) return "/c disband <faction name>";
 		if(cmd.equals("merge")) return "/c merge <faction>";
 		if(cmd.equals("acceptmerge")) return "/c acceptmerge <faction>";
 		if(cmd.equals("color")) return "/c color <hexadecimal>";
@@ -300,6 +304,7 @@ public class CommandClowder extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-comrades" + TITLE + " - Shows all members of your faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-alliance/allies" + TITLE + " - Shows all allied factions"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-leave" + TITLE + " - Leaves your faction"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-disband <faction name>" + TITLE + " - Disbands your faction and blocks creation temporarily"));
 			sender.addChatMessage(new ChatComponentText(INFO + "Tip: faction spaces are saved as underscores; use underscores in commands."));
 			sender.addChatMessage(new ChatComponentText(INFO + "/clowder help 2"));
 		}
@@ -384,6 +389,7 @@ public class CommandClowder extends CommandBase {
 		if(!XFConfig.graceBuildEnabled) { sender.addChatMessage(new ChatComponentText(ERROR + "Build grace is disabled on this server.")); return; }
 		if(XFConfig.graceBuildOneTimeUse && clowder.buildGraceUsed) { sender.addChatMessage(new ChatComponentText(ERROR + "This faction already used build grace.")); return; }
 		if(!clowder.activeWars.isEmpty()) { sender.addChatMessage(new ChatComponentText(ERROR + "Cannot activate while in active war.")); return; }
+		if(!clowder.hasValidBuildGraceHome()) { sender.addChatMessage(new ChatComponentText(ERROR + "Build grace requires a faction home inside owned faction territory.")); return; }
 		clowder.buildGraceUsed = true;
 		clowder.buildGraceUntil = System.currentTimeMillis() + XFConfig.graceBuildDurationMs;
 		clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Build grace activated for " + (XFConfig.graceBuildDurationMs / (60L * 60L * 1000L)) + " hours."));
@@ -395,6 +401,9 @@ private void cmdCreate(ICommandSender sender, String name) {
 		String factionName = Clowder.canonicalizeClowderName(name);
 
 		if(factionName.isEmpty()) { sender.addChatMessage(new ChatComponentText(ERROR + "Faction name cannot be empty.")); return; }
+		FactionCreationCooldownData.migrateFallback(player);
+		long cooldownUntil = FactionCreationCooldownData.getCooldownUntil(player.getUniqueID());
+		if(cooldownUntil > System.currentTimeMillis()) { sender.addChatMessage(new ChatComponentText(ERROR + "You cannot create a faction for " + FactionCreationCooldownData.formatRemaining(cooldownUntil - System.currentTimeMillis()) + ". You may still apply to or join factions.")); return; }
 
 		if(Clowder.getClowderFromPlayer(player) == null) {
 
@@ -423,9 +432,18 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 			if(Clowder.normalizeClowderName(name).equals(Clowder.normalizeClowderName(clowder.name))) {
 
+				if(!clowder.isOwner(player)) {
+					sender.addChatMessage(new ChatComponentText(ERROR + "Can not disband a faction you do not own!"));
+					return;
+				}
+				Map<String, String> snapshot = FactionCreationCooldownData.snapshotFactionMembers(clowder, player.worldObj);
+				if(snapshot == null) {
+					sender.addChatMessage(new ChatComponentText(ERROR + "Could not safely snapshot faction members; disband cancelled."));
+					return;
+				}
+				clowder.notifyAll(player.worldObj, new ChatComponentText(CRITICAL + "Faction " + clowder.name + " is being disbanded. Creation cooldowns will apply."));
 				if(clowder.disbandClowder(player)) {
-					//wait ten minutes before allowing the player to create a new faction, or maybe just prevent them from creating a new one for a while. This is to prevent abuse of the disband command.
-					//todo maybe add a cooldown system for creating new factions after disbanding?
+					FactionCreationCooldownData.applyDisbandCooldowns(snapshot, player.getDisplayName());
 					sender.addChatMessage(new ChatComponentText(CRITICAL + "Your faction was disbanded!"));
 				} else {
 					sender.addChatMessage(new ChatComponentText(ERROR + "Can not disband a faction you do not own!"));
@@ -2248,7 +2266,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 	}
 
 	private String[] getPlayerCommandNames() {
-		return new String[] { "help", "create", "info", "list", "comrades", "alliance", "allies", "allylist", "leave", "apply",
+		return new String[] { "help", "create", "disband", "info", "list", "comrades", "alliance", "allies", "allylist", "leave", "apply",
 				"applicants", "accept", "deny", "kick", "owner", "promote", "demote", "rename", "color", "motd",
 				"listflags", "flag", "gracebuild", "sethome", "home", "setwarp", "addwarp", "delwarp", "warp", "warps",
 				"claim", "city", "nameclaim", "balance", "deposit", "withdraw", "befriend", "ally", "acceptfriend",

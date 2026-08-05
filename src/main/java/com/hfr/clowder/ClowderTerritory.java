@@ -170,13 +170,17 @@ public class ClowderTerritory {
 		String id = cityId(getDimensionId(world), fX, fY, fZ);
 		int removed = 0;
 		List<CoordPair> claims = new ArrayList(territories.keySet());
+		Clowder oldOwner = null;
 		for(CoordPair code : claims) {
 			TerritoryMeta meta = territories.get(code);
 			if(meta != null && id.equals(meta.cityId)) {
+				if(oldOwner == null && meta.owner != null) oldOwner = meta.owner.owner;
 				territories.remove(code);
 				removed++;
 			}
 		}
+		clearCityFlagOwner(world, fX, fY, fZ);
+		if(oldOwner != null) { oldOwner.reconcileCitiesFounded(world); oldOwner.endBuildGraceIfHomeInvalid(world, true); }
 		if(removed > 0 && world != null)
 			ClowderData.getData(world).markDirty();
 		if(removed > 0)
@@ -189,6 +193,7 @@ public class ClowderTerritory {
 			return 0;
 		String id = city.cityId;
 		int moved = 0;
+		Clowder oldTerritoryOwner = city.owner == null ? null : city.owner.owner;
 		for(TerritoryMeta meta : territories.values()) {
 			if(meta != null && id.equals(meta.cityId) && meta.owner != null && meta.owner.zone == Zone.FACTION) {
 				meta.owner.owner = newOwner;
@@ -205,15 +210,29 @@ public class ClowderTerritory {
 				oldOwner.flags--;
 			}
 			flag.owner = newOwner;
-			newOwner.addPrestigeGen(flag.getGenRate(), world);
-			newOwner.addPrestigeReq(flag.getCost(), world);
-			newOwner.flags++;
+			if(oldOwner != newOwner) {
+				newOwner.addPrestigeGen(flag.getGenRate(), world);
+				newOwner.addPrestigeReq(flag.getCost(), world);
+				newOwner.flags++;
+			}
 			flag.markDirty();
 		}
+		if(oldTerritoryOwner != null) oldTerritoryOwner.reconcileCitiesFounded(world);
+		newOwner.reconcileCitiesFounded(world);
+		if(oldTerritoryOwner != null) oldTerritoryOwner.endBuildGraceIfHomeInvalid(world, true);
+		newOwner.endBuildGraceIfHomeInvalid(world, true);
 		ClowderData.getData(world).markDirty();
 		if(moved > 0)
 		com.hfr.dynmap.XFDynmapIntegration.markDirty();
 		return moved;
+	}
+
+	private static void clearCityFlagOwner(World world, int fX, int fY, int fZ) {
+		if(world == null)
+			return;
+		TileEntity te = world.getTileEntity(fX, fY, fZ);
+		if(te instanceof TileEntityFlag)
+			((TileEntityFlag)te).setOwner(null);
 	}
 
 	//sets the owner of a chunk to a clowder
@@ -228,9 +247,8 @@ public class ClowderTerritory {
 		if(!XFConfig.canClaimInDimension(getDimensionId(world)))
 			return;
 		CoordPair code = new CoordPair(getDimensionId(world), x, z);
-		//TerritoryMeta old = territories.get(code);
-		
-		territories.remove(code);
+		TerritoryMeta oldMeta = territories.remove(code);
+		Clowder oldOwner = oldMeta == null || oldMeta.owner == null ? null : oldMeta.owner.owner;
 
 		//todo check
 		Ownership o = new Ownership(Zone.FACTION, owner);
@@ -249,6 +267,8 @@ public class ClowderTerritory {
 		}
 		
 		territories.put(code, metadata);
+		if(oldOwner != null) oldOwner.endBuildGraceIfHomeInvalid(world, true);
+		if(owner != null) owner.reconcileCitiesFounded(world);
 		ClowderData.getData(world).markDirty();
 		com.hfr.dynmap.XFDynmapIntegration.markDirty();
 	}
@@ -266,7 +286,10 @@ public class ClowderTerritory {
 			return;
 		CoordPair code = new CoordPair(getDimensionId(world), x, z);
 		
-		territories.remove(code);
+		TerritoryMeta oldMeta = territories.remove(code);
+		Clowder oldOwner = oldMeta == null || oldMeta.owner == null ? null : oldMeta.owner.owner;
+		if(oldMeta != null && oldMeta.isCityClaim() && getCoordPair(oldMeta.dimensionId, oldMeta.flagX, oldMeta.flagZ).equals(code))
+			clearCityFlagOwner(world, oldMeta.flagX, oldMeta.flagY, oldMeta.flagZ);
 		
 		//do not create wilderness k thx
 		if(zone != Zone.WILDERNESS) {
@@ -275,6 +298,7 @@ public class ClowderTerritory {
 			
 			territories.put(code, metadata);
 		}
+		if(oldOwner != null) { oldOwner.reconcileCitiesFounded(world); oldOwner.endBuildGraceIfHomeInvalid(world, true); }
 		ClowderData.getData(world).markDirty();
 		com.hfr.dynmap.XFDynmapIntegration.markDirty();
 	}
@@ -289,7 +313,11 @@ public class ClowderTerritory {
 	public static void removeZoneForInts(World world, int x, int z) {
 
 		CoordPair code = new CoordPair(getDimensionId(world), x, z);
-		territories.remove(code);
+		TerritoryMeta oldMeta = territories.remove(code);
+		Clowder oldOwner = oldMeta == null || oldMeta.owner == null ? null : oldMeta.owner.owner;
+		if(oldMeta != null && oldMeta.isCityClaim() && getCoordPair(oldMeta.dimensionId, oldMeta.flagX, oldMeta.flagZ).equals(code))
+			clearCityFlagOwner(world, oldMeta.flagX, oldMeta.flagY, oldMeta.flagZ);
+		if(oldOwner != null) { oldOwner.reconcileCitiesFounded(world); oldOwner.endBuildGraceIfHomeInvalid(world, true); }
 		
 		ClowderData.getData(world).markDirty();
 		com.hfr.dynmap.XFDynmapIntegration.markDirty();

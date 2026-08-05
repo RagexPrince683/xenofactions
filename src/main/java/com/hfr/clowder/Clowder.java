@@ -61,6 +61,7 @@ public class Clowder {
 	public int homeY;
 	public int homeZ;
 	public int homeDim;
+	public boolean homeSet = false;
 	public HashMap<String, int[]> warps = new HashMap();
 
 	//tracks how many times the clowder has bought from this market option
@@ -1070,6 +1071,7 @@ public class Clowder {
 		this.homeY = (int) y;
 		this.homeZ = (int) z;
 		this.homeDim = player != null ? ClowderTerritory.getDimensionId(player.worldObj) : 0;
+		this.homeSet = true;
 
 		if(player != null && player.worldObj != null)
 			ClowderData.getData(player.worldObj).markDirty();
@@ -1454,13 +1456,24 @@ public class Clowder {
 		return XFConfig.warDeclarationBaseCost + targetPrestige * XFConfig.warDeclarationTargetPrestigeFactor;
 	}
 
+	public int getOwnedCityCount() {
+		return ClowderTerritory.getCityClaims(this).size();
+	}
+
+	public void reconcileCitiesFounded(World world) {
+		int current = getOwnedCityCount();
+		if(citiesFounded != current) {
+			citiesFounded = current;
+			save(world);
+		}
+	}
+
 	public float getCityFoundingCost() {
-		return XFConfig.cityUpgradeCost(CityLevel.SETTLEMENT) * (1F + Math.max(0, citiesFounded) * XFConfig.cityFoundingCostGrowth);
+		return XFConfig.cityUpgradeCost(CityLevel.SETTLEMENT) * (1F + Math.max(0, getOwnedCityCount()) * XFConfig.cityFoundingCostGrowth);
 	}
 
 	public void markCityFounded(World world) {
-		citiesFounded++;
-		save(world);
+		reconcileCitiesFounded(world);
 	}
 
 	public float getHourlyWarCost() {
@@ -1549,6 +1562,28 @@ public class Clowder {
 
 
 	//war time goes to 10 for retreat bonus level
+	public boolean hasValidBuildGraceHome() {
+		if(!XFConfig.canClaimInDimension(homeDim))
+			return false;
+		ClowderTerritory.TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords(homeDim, homeX, homeZ);
+		if(meta == null || meta.owner == null)
+			return false;
+		boolean valid = meta.owner.zone == ClowderTerritory.Zone.FACTION && meta.owner.owner == this;
+		if(valid && !homeSet)
+			homeSet = true;
+		return valid && homeSet;
+	}
+
+	public boolean endBuildGraceIfHomeInvalid(World world, boolean notify) {
+		if(!isBuildGraceActive() || hasValidBuildGraceHome())
+			return false;
+		buildGraceUntil = 0L;
+		if(notify)
+			notifyAll(world, new ChatComponentText(CommandClowder.ERROR + "Build grace ended because the faction home is no longer inside owned faction territory."));
+		save(world);
+		return true;
+	}
+
 	public boolean isBuildGraceActive() {
 		return this.buildGraceUntil > System.currentTimeMillis();
 	}
@@ -1589,6 +1624,7 @@ public class Clowder {
 		nbt.setInteger(i + "_homeY", this.homeY);
 		nbt.setInteger(i + "_homeZ", this.homeZ);
 		nbt.setInteger(i + "_homeDim", this.homeDim);
+		nbt.setBoolean(i + "_homeSet", this.homeSet);
 		nbt.setInteger(i + "_allyWarpX", this.allyWarpX);
 		nbt.setInteger(i + "_allyWarpY", this.allyWarpY);
 		nbt.setInteger(i + "_allyWarpZ", this.allyWarpZ);
@@ -1754,6 +1790,7 @@ public class Clowder {
 		c.homeZ = nbt.getInteger(i + "_homeZ");
 		if(!nbt.hasKey(i + "_homeDim") && MainRegistry.logger != null) MainRegistry.logger.info("Migrating legacy faction home for " + c.name + " to dimension 0.");
 		c.homeDim = nbt.hasKey(i + "_homeDim") ? nbt.getInteger(i + "_homeDim") : 0;
+		c.homeSet = nbt.hasKey(i + "_homeSet") ? nbt.getBoolean(i + "_homeSet") : false;
 		c.allyWarpX = nbt.getInteger(i + "_allyWarpX");
 		c.allyWarpY = nbt.getInteger(i + "_allyWarpY");
 		c.allyWarpZ = nbt.getInteger(i + "_allyWarpZ");

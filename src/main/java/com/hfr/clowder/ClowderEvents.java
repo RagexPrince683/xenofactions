@@ -84,6 +84,8 @@ import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
 public class ClowderEvents {
+
+	private static int buildGraceValidationTicks = 0;
 	public static boolean newPlayerProtectionEnabled = false;
 	private static final String XENO_PROT = "xeno_player_prot";
 
@@ -966,6 +968,9 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 
 		if(event.player instanceof EntityPlayerMP) Clowder.syncNameplateDataAll();
 
+		if(event.player != null)
+			FactionCreationCooldownData.migrateFallback(event.player);
+
 		if(!XFConfig.enableNewPlayerProtection || !newPlayerProtectionEnabled || event.player == null)
 			return;
 
@@ -1386,6 +1391,11 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 
 		//new check here for safezone
 		if (event.phase == Phase.END) { // After all entities have moved
+			if(!event.world.isRemote && ClowderTerritory.getDimensionId(event.world) == 0 && ++buildGraceValidationTicks >= 1200) {
+				buildGraceValidationTicks = 0;
+				for(Clowder clowder : Clowder.clowders)
+					clowder.endBuildGraceIfHomeInvalid(event.world, true);
+			}
 			List<Entity> entities = event.world.loadedEntityList;
 
 			for (Entity entity : entities) {
