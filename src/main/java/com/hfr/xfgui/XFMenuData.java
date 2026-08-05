@@ -1,0 +1,3 @@
+package com.hfr.xfgui;
+import java.util.*;
+public class XFMenuData { public String currentFaction=""; public String currentRank=""; public boolean operator; public boolean tdmEnabled; public boolean customFlagsEnabled; public boolean xflagsEnabled; public final List<String> onlinePlayers=new ArrayList<String>(), factions=new ArrayList<String>(), members=new ArrayList<String>(), applicants=new ArrayList<String>(), allies=new ArrayList<String>(), enemies=new ArrayList<String>(), warps=new ArrayList<String>(), cities=new ArrayList<String>(), flags=new ArrayList<String>(), activeWars=new ArrayList<String>(); }

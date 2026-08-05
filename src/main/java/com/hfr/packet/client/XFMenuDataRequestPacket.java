@@ -1,0 +1,3 @@
+package com.hfr.packet.client;
+import com.hfr.packet.effect.XFMenuDataPacket; import com.hfr.packet.PacketDispatcher; import cpw.mods.fml.common.network.simpleimpl.*; import io.netty.buffer.ByteBuf; import net.minecraft.entity.player.EntityPlayerMP;
+public class XFMenuDataRequestPacket implements IMessage { public void fromBytes(ByteBuf b){} public void toBytes(ByteBuf b){} public static class Handler implements IMessageHandler<XFMenuDataRequestPacket,IMessage>{ public IMessage onMessage(XFMenuDataRequestPacket m, MessageContext ctx){ EntityPlayerMP p=ctx.getServerHandler().playerEntity; PacketDispatcher.wrapper.sendTo(new XFMenuDataPacket(p), p); return null; } } }

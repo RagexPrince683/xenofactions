@@ -1,3 +1,12 @@
+# Xenofactions command GUI and first-join tutorial
+
+- Added a client-side Xenofactions command GUI with category navigation, command search, command preview, dangerous-command confirmation, Open in Chat, and Copy Usage actions.
+- Added a configurable `Open Xenofactions Menu` key binding in the Xenofactions controls category, defaulting to `K`.
+- Added server-backed menu data packets for safe dynamic command options and operator/TDM/config availability.
+- Added a first-join tutorial explaining the GUI, dynamic forms, command preview, server-side permission validation, and continued support for legacy slash commands.
+- The tutorial completion flag is stored exactly at `new File(Minecraft.getMinecraft().mcDataDir, "tutorialflag")`, outside the `config` directory and without an extension.
+- Legacy commands remain supported and server permissions remain authoritative; the GUI sends commands through the normal chat command path.
+
 # Enemy faction relations and Prestige rewards
 
 - Added persistent one-way enemy faction relations using faction UUIDs, with `/enemy <faction>` and delayed `/unenemy <faction>` commands for leaders.

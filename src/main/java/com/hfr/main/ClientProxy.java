@@ -13,6 +13,7 @@ import net.minecraft.client.particle.EntityReddustFX;
 import net.minecraft.client.particle.EntitySmokeFX;
 import net.minecraft.client.renderer.entity.RenderSnowball;
 import net.minecraft.client.settings.KeyBinding;
+import org.lwjgl.input.Keyboard;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.EntityChicken;
 import net.minecraft.entity.passive.EntityCow;
@@ -79,6 +80,7 @@ public class ClientProxy extends ServerProxy
 	public static KeyBinding markers = new KeyBinding("Toggle resource markers", 0, "xRadar");
 	public static KeyBinding flushLog = new KeyBinding("Flush extended debugging log", 0, "xRadar");
 	public static KeyBinding tdmMenu = new KeyBinding("Open TDM Menu", 38, "xRadar");
+	public static KeyBinding xenofactionsMenu = new KeyBinding("key.hfr.xfmenu", Keyboard.KEY_K, "key.categories.hfr.xenofactions");
 	
 	@Override
 	public void registerRenderInfo()
@@ -110,6 +112,7 @@ public class ClientProxy extends ServerProxy
 		ClientRegistry.registerKeyBinding(markers);
 		ClientRegistry.registerKeyBinding(flushLog);
 		ClientRegistry.registerKeyBinding(tdmMenu);
+		ClientRegistry.registerKeyBinding(xenofactionsMenu);
 		
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityMachineRadar.class, new RenderRadar());
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityForceField.class, new RenderMachineForceField());
