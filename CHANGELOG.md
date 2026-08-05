@@ -1,3 +1,8 @@
+## Fix NEI machine page text layout
+
+- Moved selected machine NEI information text below the item row while preserving slot, arrow, recipe, usage, catalyst, and machine value behavior.
+- Trimmed below-row machine information to avoid the NEI side controls and kept Foundry and Stone Drops layouts unchanged.
+
 ## Fix NEI machine handler reflection constructors
 
 - Split the shared Xenofactions machine NEI implementation into public per-category handlers with zero-argument constructors so GTNH NEI can recreate registered handlers reflectively during recipe and usage lookup.
