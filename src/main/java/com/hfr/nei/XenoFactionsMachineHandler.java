@@ -45,21 +45,92 @@ public class XenoFactionsMachineHandler extends TemplateRecipeHandler {
     public void loadUsageRecipes(ItemStack ingredient) { if (ingredient == null) return; loadMatching(ingredient, true); }
 
     private void loadAll() {
-        if (BLAST.equals(id)) for (ItemStack in : MachineNeiRecipes.blastFurnaceInputs()) arecipes.add(new SimpleRecipe(in, new ItemStack(ModItems.ingot_steel), blastLines()));
-        else if (FOUNDRY_MELT.equals(id)) for (MachineNeiRecipes.ItemValue in : MachineNeiRecipes.foundryMeltingInputs()) arecipes.add(new SimpleRecipe(in.stack, new ItemStack(ModItems.ingot_steel), meltLines(in.value)));
-        else if (FOUNDRY_CAST.equals(id)) for (MachineNeiRecipes.ItemValue out : MachineNeiRecipes.foundryCastingOutputs()) arecipes.add(new SimpleRecipe(new ItemStack(ModItems.ingot_steel), out.stack, castLines(out.value)));
-        else if (NET.equals(id)) { arecipes.add(new SimpleRecipe(new ItemStack(Blocks.water), new ItemStack(Items.fish), netLines(false))); arecipes.add(new SimpleRecipe(new ItemStack(Blocks.water), new ItemStack(ModItems.whale_meat), netLines(true))); for (ItemStack jam : MachineNeiRecipes.fishingOutputsAndJams().subList(2, 6)) arecipes.add(new SimpleRecipe(new ItemStack(Blocks.water), jam, jamLines(jam))); }
-        else if (WIND.equals(id)) arecipes.add(new SimpleRecipe(new ItemStack(Blocks.air), new ItemStack(Blocks.redstone_block), windLines()));
+        if (BLAST.equals(id)) {
+            for (ItemStack input : MachineNeiRecipes.blastFurnaceInputs()) {
+                arecipes.add(new SimpleRecipe(input, new ItemStack(ModItems.ingot_steel), blastLines()));
+            }
+        } else if (FOUNDRY_MELT.equals(id)) {
+            for (MachineNeiRecipes.ItemValue input : MachineNeiRecipes.foundryMeltingInputs()) {
+                arecipes.add(new SimpleRecipe(input.stack, new ItemStack(ModItems.ingot_steel), meltLines(input.value)));
+            }
+        } else if (FOUNDRY_CAST.equals(id)) {
+            for (MachineNeiRecipes.ItemValue castingOutput : MachineNeiRecipes.foundryCastingOutputs()) {
+                arecipes.add(new SimpleRecipe(new ItemStack(ModItems.ingot_steel), castingOutput.stack, castLines(castingOutput.value)));
+            }
+        } else if (NET.equals(id)) {
+            arecipes.add(new SimpleRecipe(new ItemStack(Blocks.water), new ItemStack(Items.fish), netLines(false)));
+            arecipes.add(new SimpleRecipe(new ItemStack(Blocks.water), new ItemStack(ModItems.whale_meat), netLines(true)));
+            for (ItemStack jam : MachineNeiRecipes.fishingOutputsAndJams().subList(2, 6)) {
+                arecipes.add(new SimpleRecipe(new ItemStack(Blocks.water), jam, jamLines(jam)));
+            }
+        } else if (WIND.equals(id)) {
+            arecipes.add(new SimpleRecipe(new ItemStack(Blocks.air), new ItemStack(Blocks.redstone_block), windLines()));
+        }
     }
 
     private void loadMatching(ItemStack stack, boolean usage) {
-        if (BLAST.equals(id)) { for (ItemStack in : MachineNeiRecipes.blastFurnaceInputs()) if (same(stack, in) && usage) arecipes.add(new SimpleRecipe(in, new ItemStack(ModItems.ingot_steel), blastLines())); if (same(stack, new ItemStack(ModItems.ingot_steel)) && !usage) loadAll(); for (MachineNeiRecipes.ItemValue f : MachineNeiRecipes.blastFurnaceFuels()) if (same(stack, f.stack) && usage) arecipes.add(new SimpleRecipe(f.stack, new ItemStack(ModItems.ingot_steel), fuelLines(f.value))); }
-        else if (FOUNDRY_MELT.equals(id)) { for (MachineNeiRecipes.ItemValue in : MachineNeiRecipes.foundryMeltingInputs()) if (same(stack, in.stack) && usage) arecipes.add(new SimpleRecipe(in.stack, new ItemStack(ModItems.ingot_steel), meltLines(in.value))); if (same(stack, new ItemStack(Items.coal)) && usage) arecipes.add(new SimpleRecipe(new ItemStack(Items.coal), new ItemStack(ModItems.ingot_steel), fuelLines(TileEntityFoundry.maxHeat))); }
-        else if (FOUNDRY_CAST.equals(id)) for (MachineNeiRecipes.ItemValue out : MachineNeiRecipes.foundryCastingOutputs()) if (same(stack, out.stack) && !usage) arecipes.add(new SimpleRecipe(new ItemStack(ModItems.ingot_steel), out.stack, castLines(out.value)));
-        else if (NET.equals(id)) for (ItemStack out : MachineNeiRecipes.fishingOutputsAndJams()) if (same(stack, out) && !usage) arecipes.add(new SimpleRecipe(new ItemStack(Blocks.water), out, out.getItem() == Items.fish || out.getItem() == ModItems.whale_meat ? netLines(out.getItem() == ModItems.whale_meat) : jamLines(out)));
+        if (BLAST.equals(id)) {
+            for (ItemStack input : MachineNeiRecipes.blastFurnaceInputs()) {
+                if (same(stack, input) && usage) {
+                    arecipes.add(new SimpleRecipe(input, new ItemStack(ModItems.ingot_steel), blastLines()));
+                }
+            }
+            if (same(stack, new ItemStack(ModItems.ingot_steel)) && !usage) {
+                loadAll();
+            }
+            for (MachineNeiRecipes.ItemValue fuel : MachineNeiRecipes.blastFurnaceFuels()) {
+                if (same(stack, fuel.stack) && usage) {
+                    arecipes.add(new SimpleRecipe(fuel.stack, new ItemStack(ModItems.ingot_steel), fuelLines(fuel.value)));
+                }
+            }
+        } else if (FOUNDRY_MELT.equals(id)) {
+            for (MachineNeiRecipes.ItemValue input : MachineNeiRecipes.foundryMeltingInputs()) {
+                if (same(stack, input.stack) && usage) {
+                    arecipes.add(new SimpleRecipe(input.stack, new ItemStack(ModItems.ingot_steel), meltLines(input.value)));
+                }
+            }
+            if (same(stack, new ItemStack(Items.coal)) && usage) {
+                arecipes.add(new SimpleRecipe(new ItemStack(Items.coal), new ItemStack(ModItems.ingot_steel), fuelLines(TileEntityFoundry.maxHeat)));
+            }
+        } else if (FOUNDRY_CAST.equals(id)) {
+            for (MachineNeiRecipes.ItemValue castingOutput : MachineNeiRecipes.foundryCastingOutputs()) {
+                if (same(stack, castingOutput.stack) && !usage) {
+                    arecipes.add(new SimpleRecipe(
+                        new ItemStack(ModItems.ingot_steel),
+                        castingOutput.stack,
+                        castLines(castingOutput.value)
+                    ));
+                }
+            }
+        } else if (NET.equals(id)) {
+            for (ItemStack fishingOutput : MachineNeiRecipes.fishingOutputsAndJams()) {
+                if (same(stack, fishingOutput) && !usage) {
+                    boolean isWhale = fishingOutput.getItem() == ModItems.whale_meat;
+                    boolean isNormalOutput = fishingOutput.getItem() == Items.fish || isWhale;
+
+                    arecipes.add(new SimpleRecipe(
+                        new ItemStack(Blocks.water),
+                        fishingOutput,
+                        isNormalOutput ? netLines(isWhale) : jamLines(fishingOutput)
+                    ));
+                }
+            }
+        }
     }
 
-    public void drawExtras(int recipe) { if (recipe < 0 || recipe >= arecipes.size()) return; FontRenderer fr = Minecraft.getMinecraft().fontRenderer; SimpleRecipe r = (SimpleRecipe) arecipes.get(recipe); int y = 4; for (String line : r.lines) { fr.drawString(trim(fr, line, 160), 6, y, 0x404040); y += 10; } GL11.glColor4f(1,1,1,1); }
+    public void drawExtras(int recipe) {
+        if (recipe < 0 || recipe >= arecipes.size()) {
+            return;
+        }
+        FontRenderer fr = Minecraft.getMinecraft().fontRenderer;
+        SimpleRecipe r = (SimpleRecipe) arecipes.get(recipe);
+        int y = 4;
+        for (String line : r.lines) {
+            fr.drawString(trim(fr, line, 160), 6, y, 0x404040);
+            y += 10;
+        }
+        GL11.glColor4f(1, 1, 1, 1);
+    }
     private String[] blastLines() { return new String[] { tr("hfr.nei.processing_time") + ": " + ticks(TileEntityMachineBlastFurnace.maxProgress / 2), tr("hfr.nei.fuel_units") + ": 1", tr("hfr.nei.structure") + ": " + tr("hfr.nei.blast.structure") }; }
     private String[] fuelLines(float value) { return new String[] { tr("hfr.nei.fuel_value") + ": " + NUM.format(value), tr("hfr.nei.blast.fuel.note") }; }
     private String[] meltLines(float value) { return new String[] { tr("hfr.nei.steel_units") + ": " + NUM.format(value), tr("hfr.nei.fuel_value") + ": 1 " + tr("hfr.nei.heat_unit"), tr("hfr.nei.processing_time") + ": " + ticks(21) }; }
