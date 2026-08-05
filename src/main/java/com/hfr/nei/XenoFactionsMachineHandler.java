@@ -35,8 +35,10 @@ public class XenoFactionsMachineHandler extends TemplateRecipeHandler {
 
     public XenoFactionsMachineHandler(String id) { this.id = id; }
     public String getRecipeName() { return tr("hfr.nei." + key() + ".title"); }
-    public String getGuiTexture() { return "textures/gui/container/crafting_table.png"; }
+    public String getGuiTexture() { return "textures/gui/options_background.png"; }
     public String getOverlayIdentifier() { return id; }
+
+    public void drawBackground(int recipe) { XenoFactionsStoneDropHandler.drawCleanRecipeBackground(30, 24, 116, 24); }
 
     public void loadCraftingRecipes(String outputId, Object... results) { if (id.equals(outputId)) loadAll(); else super.loadCraftingRecipes(outputId, results); }
     public void loadCraftingRecipes(ItemStack result) { if (result == null) return; loadMatching(result, false); }

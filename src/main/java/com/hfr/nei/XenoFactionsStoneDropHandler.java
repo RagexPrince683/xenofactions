@@ -8,6 +8,7 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.StatCollector;
@@ -24,8 +25,12 @@ public class XenoFactionsStoneDropHandler extends TemplateRecipeHandler {
     private static final DecimalFormat CHANCE_FORMAT = new DecimalFormat("0.######%", DecimalFormatSymbols.getInstance(Locale.US));
 
     public String getRecipeName() { return tr("hfr.nei.stone_drops.title"); }
-    public String getGuiTexture() { return "textures/gui/container/crafting_table.png"; }
+    public String getGuiTexture() { return "textures/gui/options_background.png"; }
     public String getOverlayIdentifier() { return OVERLAY_ID; }
+
+    public void drawBackground(int recipe) {
+        drawCleanRecipeBackground(25, 20, 111, 20);
+    }
 
     public void loadCraftingRecipes(String outputId, Object... results) {
         if (outputId.equals(OVERLAY_ID)) loadAll(); else super.loadCraftingRecipes(outputId, results);
@@ -52,6 +57,35 @@ public class XenoFactionsStoneDropHandler extends TemplateRecipeHandler {
         fr.drawString(trim(fr, tr("hfr.nei.label.chance") + ": " + CHANCE_FORMAT.format(c.entry.chance), 150), 18, 42, 0x404040);
         fr.drawString(trim(fr, tr("hfr.nei.label.y_range") + ": " + yRange(c.entry), 150), 18, 54, 0x404040);
         GL11.glColor4f(1, 1, 1, 1);
+    }
+
+    static void drawCleanRecipeBackground(int sourceX, int sourceY, int resultX, int resultY) {
+        GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+        GL11.glDisable(GL11.GL_LIGHTING);
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        GL11.glColor4f(1, 1, 1, 1);
+
+        drawSlotBackground(sourceX, sourceY);
+        drawSlotBackground(resultX, resultY);
+        drawArrow(sourceX + 37, sourceY + 8, resultX - 17);
+
+        GL11.glPopAttrib();
+        GL11.glColor4f(1, 1, 1, 1);
+    }
+
+    private static void drawSlotBackground(int x, int y) {
+        Gui.drawRect(x, y, x + 18, y + 18, 0xFF8B8B8B);
+        Gui.drawRect(x + 1, y + 1, x + 17, y + 17, 0xFFE0E0E0);
+        Gui.drawRect(x + 2, y + 2, x + 16, y + 16, 0xFFB8B8B8);
+    }
+
+    private static void drawArrow(int x, int centerY, int right) {
+        int color = 0xFF4A4A4A;
+        Gui.drawRect(x, centerY - 1, right - 5, centerY + 2, color);
+        Gui.drawRect(right - 5, centerY - 4, right - 2, centerY + 5, color);
+        Gui.drawRect(right - 2, centerY - 3, right + 1, centerY + 4, color);
+        Gui.drawRect(right + 1, centerY - 2, right + 4, centerY + 3, color);
+        Gui.drawRect(right + 4, centerY - 1, right + 7, centerY + 2, color);
     }
 
     private void loadAll() { for (StoneDropDisplayEntry e : snapshot()) if (e.toStack() != null) arecipes.add(new CachedStoneDrop(e)); }
