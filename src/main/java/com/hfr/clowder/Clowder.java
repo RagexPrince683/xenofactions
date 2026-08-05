@@ -169,6 +169,11 @@ public class Clowder {
 	public String surrenderTributeTo = "";
 	public long surrenderTributeUntil = 0L;
 	public int citiesFounded = 0;
+	/** Server-authoritative relocation transaction; item NBT is never authoritative. */
+	public String relocationId = "", relocationCityId = "";
+	public int relocationDim, relocationX, relocationY, relocationZ;
+	public long relocationStarted, relocationExpires;
+	public HashMap<String, List<Long>> cityRelocationHistory = new HashMap<String, List<Long>>();
 	private int lastBankruptcyStage = 0;
 
 	public static List<Clowder> clowders = new ArrayList();
@@ -1682,6 +1687,23 @@ public class Clowder {
 		nbt.setLong(i + "_surrenderTributeUntil", this.surrenderTributeUntil);
 		nbt.setInteger(i + "_lastBankruptcyStage", this.lastBankruptcyStage);
 		nbt.setInteger(i + "_citiesFounded", this.citiesFounded);
+		nbt.setString(i + "_relocationId", relocationId);
+		nbt.setString(i + "_relocationCityId", relocationCityId);
+		nbt.setInteger(i + "_relocationDim", relocationDim);
+		nbt.setInteger(i + "_relocationX", relocationX);
+		nbt.setInteger(i + "_relocationY", relocationY);
+		nbt.setInteger(i + "_relocationZ", relocationZ);
+		nbt.setLong(i + "_relocationStarted", relocationStarted);
+		nbt.setLong(i + "_relocationExpires", relocationExpires);
+		int relocationHistoryIndex = 0;
+		for(Map.Entry<String, List<Long>> entry : cityRelocationHistory.entrySet()) {
+			for(Long timestamp : entry.getValue()) {
+				nbt.setString(i + "_relocationHistoryCity_" + relocationHistoryIndex, entry.getKey());
+				nbt.setLong(i + "_relocationHistoryTime_" + relocationHistoryIndex, timestamp.longValue());
+				relocationHistoryIndex++;
+			}
+		}
+		nbt.setInteger(i + "_relocationHistoryCount", relocationHistoryIndex);
 
 		///poorly coded "treaty" system///
 		//nbt.setString(i + "_treaty1", this.treaty1);
@@ -1878,6 +1900,17 @@ public class Clowder {
 		c.surrenderTributeUntil = nbt.getLong(i + "_surrenderTributeUntil");
 		c.lastBankruptcyStage = nbt.hasKey(i + "_lastBankruptcyStage") ? nbt.getInteger(i + "_lastBankruptcyStage") : c.getBankruptcyStage();
 		c.citiesFounded = Math.max(nbt.getInteger(i + "_citiesFounded"), 0);
+		c.relocationId = nbt.getString(i + "_relocationId");
+		c.relocationCityId = nbt.getString(i + "_relocationCityId");
+		c.relocationDim = nbt.getInteger(i + "_relocationDim");
+		c.relocationX = nbt.getInteger(i + "_relocationX"); c.relocationY = nbt.getInteger(i + "_relocationY"); c.relocationZ = nbt.getInteger(i + "_relocationZ");
+		c.relocationStarted = nbt.getLong(i + "_relocationStarted"); c.relocationExpires = nbt.getLong(i + "_relocationExpires");
+		for(int j = 0; j < nbt.getInteger(i + "_relocationHistoryCount"); j++) {
+			String cityId = nbt.getString(i + "_relocationHistoryCity_" + j);
+			List<Long> history = c.cityRelocationHistory.get(cityId);
+			if(history == null) { history = new ArrayList<Long>(); c.cityRelocationHistory.put(cityId, history); }
+			history.add(Long.valueOf(nbt.getLong(i + "_relocationHistoryTime_" + j)));
+		}
 
 		for (int j = 0; j < count; j++)
 			c.members.put(nbt.getString(i + "_" + j), time());

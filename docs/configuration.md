@@ -85,6 +85,14 @@ Category: `XENOFACTIONS_05_CLAIMS_CITIES`
 | `cityUpgradeCosts` | `[75,150,300,600,1000]` | Upgrade cost per city level. |
 | `cityUpkeep` | `[10,25,50,90,140]` | Upkeep per city level. |
 | `cityFoundingCostGrowth` | `0.50` | Cost growth for founding additional cities. |
+| `cityRelocationEnabled` | `true` | Enable leader-only, two-phase City Center relocation. |
+| `cityRelocationFreeDistanceBlocks` | `10` | Free horizontal move distance. |
+| `cityRelocationBasePrestigeCost` | `50` | Base cost for moves beyond the free distance. |
+| `cityRelocationPrestigePerExtraBlock` | `1` | Cost per additional horizontal block, rounded up. |
+| `cityRelocationMaxDistanceBlocks` | `256` | Maximum horizontal move distance. |
+| `cityRelocationMoveLimit` | `3` | Successful moves allowed per stable city ID in the rolling window. |
+| `cityRelocationWindowHours` | `24` | Rolling move-frequency window. |
+| `cityRelocationPendingMinutes` | `30` | Pending transaction lifetime; expiration leaves the old city unchanged. |
 | `warpCost` | `125` | Legacy alias still read in this category. |
 | `territoryDelay` | `5` | Ticks between territory validation operations. |
 | `territoryAmount` | `50` | Chunks checked per territory operation. |

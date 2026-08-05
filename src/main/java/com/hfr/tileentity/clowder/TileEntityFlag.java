@@ -3,6 +3,7 @@ package com.hfr.tileentity.clowder;
 import static net.minecraftforge.common.util.ForgeDirection.UP;
 
 import java.util.List;
+import java.util.UUID;
 
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderFlag;
@@ -38,6 +39,16 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	public String name = "";
 	public String ownerName = "";
 	public CityLevel cityLevel = CityLevel.SETTLEMENT;
+	private String cityId = "";
+
+	public String getCityId() {
+		if(cityId == null || cityId.isEmpty())
+			cityId = ClowderTerritory.cityId(ClowderTerritory.getDimensionId(worldObj), xCoord, yCoord, zCoord);
+		return cityId;
+	}
+
+	public void setCityId(String id) { cityId = id == null ? "" : id; markDirty(); }
+	public void createCityId() { cityId = UUID.randomUUID().toString(); markDirty(); }
 	
 	private int timer = 0;
 	
@@ -389,7 +400,7 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 				double dist = Math.sqrt(Math.pow(x, 2) + Math.pow(z, 2));
 				if(dist < rad) {
 					if(meta == null || !meta.checkPersistence(worldObj, loc) || (meta.flagX == xCoord && meta.flagY == yCoord && meta.flagZ == zCoord)) {
-						ClowderTerritory.setOwnerForCoord(worldObj, loc, owner, xCoord, yCoord, zCoord, name);
+						ClowderTerritory.setOwnerForCoord(worldObj, loc, owner, xCoord, yCoord, zCoord, name, getCityId());
 						TerritoryMeta newMeta = ClowderTerritory.getMetaFromCoords(loc);
 						if(newMeta != null) {
 							newMeta.cityLevel = cityLevel.ordinal();
@@ -515,6 +526,7 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 		this.name = nbt.getString("name");
 		this.ownerName = owner == null ? "" : owner.name;
 		this.cityLevel = CityLevel.byOrdinal(nbt.getInteger("cityLevel"));
+		this.cityId = nbt.getString("cityId");
 		
 		slots = new ItemStack[getSizeInventory()];
 		
@@ -546,6 +558,7 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 		nbt.setInteger("timer", timer);
 		nbt.setString("name", name);
 		nbt.setInteger("cityLevel", cityLevel.ordinal());
+		nbt.setString("cityId", getCityId());
 		
 		NBTTagList list = new NBTTagList();
 		

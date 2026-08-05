@@ -370,7 +370,7 @@ public class ModBlocks {
 		GameRegistry.registerBlock(box, ItemBlockLore.class, box.getUnlocalizedName());
 
 
-		GameRegistry.registerBlock(clowder_flag, ItemBlockUnstackable.class, clowder_flag.getUnlocalizedName());
+		GameRegistry.registerBlock(clowder_flag, com.hfr.items.ItemBlockCityCenter.class, clowder_flag.getUnlocalizedName());
 		GameRegistry.registerBlock(clowder_flag_big, ItemBlockUnstackable.class, clowder_flag_big.getUnlocalizedName());
 		GameRegistry.registerBlock(clowder_cap, ItemBlockUnstackable.class, clowder_cap.getUnlocalizedName());
 		GameRegistry.registerBlock(clowder_conquerer, ItemBlockConqueror.class, clowder_conquerer.getUnlocalizedName());

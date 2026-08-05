@@ -103,6 +103,14 @@ public final class XFConfig {
 	public static float[] cityUpgradeCosts = new float[] { 75F, 150F, 300F, 600F, 1000F };
 	public static float[] cityUpkeep = new float[] { 10F, 25F, 50F, 90F, 140F };
 	public static float cityFoundingCostGrowth = 0.50F;
+	public static boolean cityRelocationEnabled = true;
+	public static int cityRelocationFreeDistanceBlocks = 10;
+	public static float cityRelocationBasePrestigeCost = 50F;
+	public static float cityRelocationPrestigePerExtraBlock = 1F;
+	public static int cityRelocationMaxDistanceBlocks = 256;
+	public static int cityRelocationMoveLimit = 3;
+	public static int cityRelocationWindowHours = 24;
+	public static int cityRelocationPendingMinutes = 30;
 
 	public static int warOnlinePlayerThreshold = 2;
 	public static long raidGraceAfterOnlineDropMs = 30L * 60L * 1000L;
@@ -199,6 +207,14 @@ public final class XFConfig {
 		peaceCityTransfersEnabled = bool(config, CAT_CLAIMS, "peaceCityTransfersEnabled", peaceCityTransfersEnabled, "Allows peace offers to include a city transfer.");
 		surrenderTransfersCities = bool(config, CAT_CLAIMS, "surrenderTransfersCities", surrenderTransfersCities, "Transfers all loser cities to victor when surrender is accepted.");
 		cityFoundingCostGrowth = flt(config, CAT_CLAIMS, "cityFoundingCostGrowth", cityFoundingCostGrowth, 0F, 100F, "Additional settlement founding cost per previously-founded city.");
+		cityRelocationEnabled = bool(config, CAT_CLAIMS, "cityRelocationEnabled", cityRelocationEnabled, "Allows faction leaders to relocate an existing City Center safely.");
+		cityRelocationFreeDistanceBlocks = integer(config, CAT_CLAIMS, "cityRelocationFreeDistanceBlocks", cityRelocationFreeDistanceBlocks, 0, 100000, "Horizontal distance in blocks that a City Center may move without a prestige charge.");
+		cityRelocationBasePrestigeCost = flt(config, CAT_CLAIMS, "cityRelocationBasePrestigeCost", cityRelocationBasePrestigeCost, 0F, 1000000F, "Base prestige charge for a relocation beyond the free distance.");
+		cityRelocationPrestigePerExtraBlock = flt(config, CAT_CLAIMS, "cityRelocationPrestigePerExtraBlock", cityRelocationPrestigePerExtraBlock, 0F, 100000F, "Additional prestige charged for each block, rounded up, beyond the free distance.");
+		cityRelocationMaxDistanceBlocks = integer(config, CAT_CLAIMS, "cityRelocationMaxDistanceBlocks", cityRelocationMaxDistanceBlocks, 0, 100000, "Maximum horizontal City Center relocation distance.");
+		cityRelocationMoveLimit = integer(config, CAT_CLAIMS, "cityRelocationMoveLimit", cityRelocationMoveLimit, 1, 100, "Successful moves allowed for each stable city ID inside the rolling window.");
+		cityRelocationWindowHours = integer(config, CAT_CLAIMS, "cityRelocationWindowHours", cityRelocationWindowHours, 1, 8760, "Rolling City Center move-limit window in hours.");
+		cityRelocationPendingMinutes = integer(config, CAT_CLAIMS, "cityRelocationPendingMinutes", cityRelocationPendingMinutes, 1, 10080, "Minutes before an uncompleted relocation request expires harmlessly.");
 		cityRadii = intList(config, CAT_CLAIMS, "cityRadii", cityRadii, 1, maxCityRadius, "City radii by level: settlement,town,city,metropolis,capital.");
 		cityUpgradeCosts = floatList(config, CAT_CLAIMS, "cityUpgradeCosts", cityUpgradeCosts, 0F, 1000000F, "City upgrade/founding prestige costs by level.");
 		cityUpkeep = floatList(config, CAT_CLAIMS, "cityUpkeep", cityUpkeep, 0F, 1000000F, "Hourly city upkeep by level.");

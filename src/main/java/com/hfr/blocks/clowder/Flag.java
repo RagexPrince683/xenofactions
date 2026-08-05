@@ -2,6 +2,7 @@ package com.hfr.blocks.clowder;
 
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.CityLevel;
+import com.hfr.clowder.CityCenterRelocationManager;
 import com.hfr.config.XFConfig;
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderTerritory;
@@ -131,9 +132,10 @@ public class Flag extends BlockContainer {
 			}
 
 			if(flag.canSeeSky()) {
-				float foundingCost = clowder.getCityFoundingCost();
+				boolean firstCity = clowder.getOwnedCityCount() == 0;
+				float foundingCost = firstCity ? 0F : clowder.getCityFoundingCost();
 				float foundingUpkeep = XFConfig.cityUpkeep(CityLevel.SETTLEMENT);
-				if(clowder.getPrestige() < foundingCost || clowder.getPrestigeReq() + foundingUpkeep > clowder.getPrestige() - foundingCost) {
+				if(!clowder.activeWars.isEmpty() || CityCenterRelocationManager.hasPending(clowder) || clowder.getPrestige() < foundingCost || (!firstCity && clowder.getPrestigeReq() + foundingUpkeep > clowder.getPrestige() - foundingCost)) {
 					world.setBlockToAir(x, y, z);
 					entityPlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Founding a City Center requires " + foundingCost + " prestige and " + foundingUpkeep + " upkeep capacity."));
 					return;
@@ -141,6 +143,7 @@ public class Flag extends BlockContainer {
 				clowder.addPrestige(-foundingCost, world);
 				clowder.markCityFounded(world);
 				flag.name = cityName;
+				flag.createCityId();
 				flag.setOwner(clowder);
 				flag.setMode(1);
 				flag.isClaimed = true;
@@ -184,10 +187,16 @@ public class Flag extends BlockContainer {
 	@Override
 	public void breakBlock(World world, int x, int y, int z, Block b, int i)
 	{
+		if(CityCenterRelocationManager.isGuardedRemoval(world, x, y, z)) {
+			super.breakBlock(world, x, y, z, b, i);
+			return;
+		}
 		TileEntity tile = world.getTileEntity(x, y, z);
 
 		if(tile instanceof TileEntityFlag) {
 			TileEntityFlag flag = (TileEntityFlag)tile;
+			if(flag.owner != null && flag.getCityId().equals(flag.owner.relocationCityId))
+				CityCenterRelocationManager.clear(flag.owner, world);
 
 			if(flag.owner != null)
 				flag.setOwner(null);

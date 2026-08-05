@@ -61,6 +61,8 @@ Usage: `/clowder help`; aliases: `/clowder`, `/c`; permission level: 0.
 | --- | --- |
 | `/c claim <city name>` | Claim/found a city at your location. |
 | `/c city upgrade` | Upgrade the city where you are standing. |
+| `/c city cancelmove` | Leader-only: cancel the pending relocation without changing the City Center or its claims. |
+| `/c city recovermove` | Leader-only: issue a replacement token for the active server-authorized relocation. |
 | `/c nameclaim <name>` | Name the current claim. |
 | `/c sethome` | Set faction home. |
 | `/c home` | Teleport to faction home. |

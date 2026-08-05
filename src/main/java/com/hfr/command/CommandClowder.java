@@ -204,10 +204,14 @@ public class CommandClowder extends CommandBase {
 		if(cmd.equals("claim") || cmd.equals("city")) {
 			if(args.length > 1 && args[1].equalsIgnoreCase("upgrade")) {
 				cmdCityUpgrade(sender);
+			} else if(cmd.equals("city") && args.length > 1 && args[1].equalsIgnoreCase("cancelmove")) {
+				cmdCityMove(sender, false);
+			} else if(cmd.equals("city") && args.length > 1 && args[1].equalsIgnoreCase("recovermove")) {
+				cmdCityMove(sender, true);
 			} else if(args.length > 1) {
 				cmdClaim(sender, joinArgs(args, 1));
 			} else {
-				sender.addChatMessage(new ChatComponentText(ERROR + "Invalid format. Usage: /c claim <city name> or /c city upgrade"));
+				sender.addChatMessage(new ChatComponentText(ERROR + "Usage: /c claim <city name> or /c city <upgrade|cancelmove|recovermove>"));
 			}
 			return;
 		}
@@ -1710,9 +1714,13 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(clowder != null) {
 
-			float foundingCost = clowder.getCityFoundingCost();
+			boolean firstCity = clowder.getOwnedCityCount() == 0;
+			float foundingCost = firstCity ? 0F : clowder.getCityFoundingCost();
 			float foundingUpkeep = XFConfig.cityUpkeep(CityLevel.SETTLEMENT);
-			if(clowder.getPrestige() < foundingCost || clowder.getPrestigeReq() + foundingUpkeep > clowder.getPrestige() - foundingCost) {
+			if(!clowder.activeWars.isEmpty() || com.hfr.clowder.CityCenterRelocationManager.hasPending(clowder)) {
+				sender.addChatMessage(new ChatComponentText(ERROR + "A City Center cannot be founded during war or a pending relocation.")); return;
+			}
+			if(clowder.getPrestige() < foundingCost || (!firstCity && clowder.getPrestigeReq() + foundingUpkeep > clowder.getPrestige() - foundingCost)) {
 				sender.addChatMessage(new ChatComponentText(ERROR + "Founding a City Center requires " + foundingCost + " prestige and " + foundingUpkeep + " upkeep capacity."));
 				return;
 			}
@@ -1733,6 +1741,13 @@ private void cmdCreate(ICommandSender sender, String name) {
 		} else {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
 		}
+	}
+	private void cmdCityMove(ICommandSender sender, boolean recover) {
+		EntityPlayer player = getCommandSenderAsPlayer(sender); Clowder faction = Clowder.getClowderFromPlayer(player);
+		if(faction == null || faction.leader == null || !faction.leader.equals(player.getDisplayName())) { sender.addChatMessage(new ChatComponentText(ERROR + "Only the faction leader may manage City Center moves.")); return; }
+		if(!com.hfr.clowder.CityCenterRelocationManager.hasPending(faction)) { sender.addChatMessage(new ChatComponentText(ERROR + "Your faction has no pending City Center move.")); return; }
+		if(recover) { com.hfr.clowder.CityCenterRelocationManager.issueToken(player, faction); sender.addChatMessage(new ChatComponentText(INFO + "A replacement relocation token was issued.")); }
+		else { com.hfr.clowder.CityCenterRelocationManager.clear(faction, player.worldObj); sender.addChatMessage(new ChatComponentText(INFO + "City Center move canceled; the city and claims were not changed.")); }
 	}
 	private void cmdCityUpgrade(ICommandSender sender) {
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
@@ -2165,6 +2180,8 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(cmd.equals("flag"))
 			return getListOfStringsMatchingLastWord(args, getFlagCompletionNames());
+		if(cmd.equals("city") && args.length == 2)
+			return getListOfStringsMatchingLastWord(args, new String[] { "upgrade", "cancelmove", "recovermove" });
 
 		return null;
 	}
