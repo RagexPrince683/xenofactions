@@ -35,6 +35,15 @@ public abstract class XenoFactionsMachineHandler extends TemplateRecipeHandler {
     public static final String TEMPLE = "hfr.temple";
     public static final String COAL_MINE = "hfr.coal_mine";
     private static final DecimalFormat NUM = new DecimalFormat("0.######", DecimalFormatSymbols.getInstance(Locale.US));
+    private static final int ITEM_ROW_Y = 24;
+    private static final int ITEM_SLOT_SIZE = 18;
+    private static final int INFO_TEXT_GAP = 8;
+    private static final int INFO_TEXT_X = 6;
+    private static final int INFO_TEXT_START_Y = ITEM_ROW_Y + ITEM_SLOT_SIZE + INFO_TEXT_GAP;
+    private static final int INFO_LINE_HEIGHT = 10;
+    private static final int INFO_TEXT_WIDTH = 142;
+    private static final int DEFAULT_INFO_TEXT_Y = 4;
+    private static final int DEFAULT_INFO_TEXT_WIDTH = 160;
     private final String id;
 
     protected XenoFactionsMachineHandler(String id) {
@@ -47,7 +56,7 @@ public abstract class XenoFactionsMachineHandler extends TemplateRecipeHandler {
     public String getGuiTexture() { return "textures/gui/options_background.png"; }
     public String getOverlayIdentifier() { return id; }
 
-    public void drawBackground(int recipe) { XenoFactionsStoneDropHandler.drawCleanRecipeBackground(30, 24, 116, 24); }
+    public void drawBackground(int recipe) { XenoFactionsStoneDropHandler.drawCleanRecipeBackground(30, ITEM_ROW_Y, 116, ITEM_ROW_Y); }
 
     public void loadCraftingRecipes(String outputId, Object... results) { if (id.equals(outputId)) loadAll(); else super.loadCraftingRecipes(outputId, results); }
     public void loadCraftingRecipes(ItemStack result) { if (result == null) return; loadMatching(result, false); }
@@ -163,12 +172,24 @@ public abstract class XenoFactionsMachineHandler extends TemplateRecipeHandler {
         }
         FontRenderer fr = Minecraft.getMinecraft().fontRenderer;
         LineRecipe r = (LineRecipe) arecipes.get(recipe);
-        int y = 4;
+        boolean belowItemTextLayout = usesBelowItemTextLayout();
+        int y = belowItemTextLayout ? INFO_TEXT_START_Y : DEFAULT_INFO_TEXT_Y;
+        int textWidth = belowItemTextLayout ? INFO_TEXT_WIDTH : DEFAULT_INFO_TEXT_WIDTH;
         for (String line : r.lines()) {
-            fr.drawString(trim(fr, line, 160), 6, y, 0x404040);
-            y += 10;
+            fr.drawString(trim(fr, line, textWidth), INFO_TEXT_X, y, 0x404040);
+            y += INFO_LINE_HEIGHT;
         }
         GL11.glColor4f(1, 1, 1, 1);
+    }
+
+    private boolean usesBelowItemTextLayout() {
+        return BLAST.equals(id)
+            || NET.equals(id)
+            || GRAIN_MILL.equals(id)
+            || UNIVERSITY.equals(id)
+            || PRODUCTION_LINE.equals(id)
+            || TEMPLE.equals(id)
+            || COAL_MINE.equals(id);
     }
     private String[] blastLines() { return new String[] { tr("hfr.nei.processing_time") + ": " + ticks(TileEntityMachineBlastFurnace.maxProgress / 2), tr("hfr.nei.fuel_units") + ": 1", tr("hfr.nei.structure") + ": " + tr("hfr.nei.blast.structure") }; }
     private String[] fuelLines(float value) { return new String[] { tr("hfr.nei.fuel_value") + ": " + NUM.format(value), tr("hfr.nei.blast.fuel.note") }; }
@@ -196,7 +217,7 @@ public abstract class XenoFactionsMachineHandler extends TemplateRecipeHandler {
 
     public class SimpleRecipe extends CachedRecipe implements LineRecipe {
         private final PositionedStack in; private final PositionedStack out; private final String[] lines;
-        public SimpleRecipe(ItemStack in, ItemStack out, String[] lines) { this.in = new PositionedStack(in.copy(), 30, 24); this.out = new PositionedStack(out.copy(), 116, 24); this.lines = lines; }
+        public SimpleRecipe(ItemStack in, ItemStack out, String[] lines) { this.in = new PositionedStack(in.copy(), 30, ITEM_ROW_Y); this.out = new PositionedStack(out.copy(), 116, ITEM_ROW_Y); this.lines = lines; }
         public PositionedStack getIngredient() { return in; }
         public PositionedStack getResult() { return out; }
         public String[] lines() { return lines; }
@@ -209,11 +230,11 @@ public abstract class XenoFactionsMachineHandler extends TemplateRecipeHandler {
             int x = 12;
             for (ItemStack input : inputs) {
                 if (input != null && input.getItem() != null) {
-                    this.in.add(new PositionedStack(input.copy(), x, 24));
+                    this.in.add(new PositionedStack(input.copy(), x, ITEM_ROW_Y));
                     x += 20;
                 }
             }
-            this.out = new PositionedStack(out.copy(), 116, 24);
+            this.out = new PositionedStack(out.copy(), 116, ITEM_ROW_Y);
             this.lines = lines;
         }
         public List<PositionedStack> getIngredients() { return in; }
