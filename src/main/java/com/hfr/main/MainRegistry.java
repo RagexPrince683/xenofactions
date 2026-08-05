@@ -77,6 +77,7 @@ import com.hfr.packet.*;
 import com.hfr.potion.HFRPotion;
 import com.hfr.schematic.*;
 import com.hfr.stonedrops.StoneDropSnapshotSync;
+import com.hfr.tileentity.machine.MachineDisplaySnapshotSync;
 import com.hfr.tdm.*;
 import com.hfr.tileentity.*;
 import com.hfr.tileentity.clowder.*;
@@ -746,6 +747,7 @@ public class MainRegistry
 		FMLCommonHandler.instance().bus().register(clowder);
 		FMLCommonHandler.instance().bus().register(claimOverlaySync);
 		FMLCommonHandler.instance().bus().register(new StoneDropSnapshotSync());
+		FMLCommonHandler.instance().bus().register(new MachineDisplaySnapshotSync());
 		if(XFConfig.enableDynmapIntegration)
 			FMLCommonHandler.instance().bus().register(dynmap);
 		//FMLCommonHandler.instance().bus().register(pon4);

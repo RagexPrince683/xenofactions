@@ -134,3 +134,10 @@ Added `/stonedrops [page]` as a read-only player-accessible command for viewing 
 - Fixed the JourneyMap claim overlay OpenGL color backup to satisfy LWJGL 2 generic `glGetFloat` buffer sizing requirements.
 - Kept JourneyMap claim overlays active after recoverable render-state failures while preserving fatal reflection compatibility shutdown behavior.
 - Hardened the JourneyMap draw-step list wrapper so JourneyMap list refreshes cannot remove or replace the claim overlay.
+
+# Extend optional NEI machine integration
+
+- Added optional NEI machine categories for Blast Furnace, Steel Foundry melting, Steel Foundry casting, Fishing Net, and Windmill while preserving the existing stone drop integration.
+- Exposed shared machine display and recipe data for NEI without requiring NEI outside `com.hfr.nei`.
+- Added server-authoritative machine display snapshot synchronization and client disconnect clearing.
+- Added localization keys for the new NEI categories and labels.
