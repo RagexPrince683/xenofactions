@@ -1,3 +1,11 @@
+# Fix automatic HBM stone-drop integration
+
+- Fixed the real automatic HBM stone-drop failure: Xenofactions now resolves HBM's documented `modid:item metadata minimumAmount maximumAmount` specifications through the Forge 1.7.10 item/block registries after HBM post-initialization instead of relying on fragile direct item lookups.
+- Added safe recovery for missing, empty, malformed, and intentionally empty `config/stonedrops.json` states, including atomic replacement and malformed-file backup behavior.
+- Preserved administrator-defined stone drops while appending missing automatic HBM drops without duplicate item/metadata/NBT entries, and kept the parallel runtime drop lists size-aligned.
+- Logged exact invalid HBM specifications, debug details for resolved entries, and the success message `[XF] Registered <count> automatic HBM stone drops from MiningConfig.excavatorBedrockDrops.`.
+- Prevented custom stone drops from being produced on the client side or by creative-mode stone breaking while retaining the existing stone-only, chance, Silk Touch, and Fortune behavior.
+
 # Fix flag beacon renderer state restoration
 
 - Reworked `FlagBeamRenderer` to use OpenGL attribute stacks instead of querying individual render states, removing the `GL_CURRENT_COLOR`/`FloatBuffer` path that could crash LWJGL 2.
