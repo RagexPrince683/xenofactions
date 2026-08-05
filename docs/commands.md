@@ -150,9 +150,10 @@ Usage: `/cc <message>`; permission level: 0.
 | `/xflags` | Player | Open/list faction flag functionality. |
 | `/xmulti` | Player | Utility command registered for all players. |
 | `/xdebug <param>` | Player | Debug command registered for all players; server policy should control use. |
-| `/stonedrop <rarity> [minY] [maxY]` | Admin/moderator default | Add held item/block as a custom stone drop. |
-| `/stonedrop list` | Admin/moderator default | List configured custom stone drops. |
-| `/stonedrop remove <index>` | Admin/moderator default | Remove a custom stone drop. |
+| `/stonedrops [page]` | Player | Read-only list of custom stone drops, including chance, raw chance, item registry name, metadata, stack amount, and Y range. All players and the server console can use this command. |
+| `/stonedrop <rarity> [minY] [maxY]` | Admin/moderator default | Administrator command to add held item/block as a custom stone drop. |
+| `/stonedrop list` | Admin/moderator default | Administrator command to list configured custom stone drops. |
+| `/stonedrop remove <index>` | Admin/moderator default | Administrator command to remove a custom stone drop. |
 | `/xshop add <shop>` | Level 3 | Add a shop offer using hotbar slots: slot 1 sold item, next three slots currency. |
 | `/xshop delete <shop/index>` | Level 3 | Delete a shop offer. |
 | `/xmarket setstock ...` | Level 3 | Admin stock market control. |
