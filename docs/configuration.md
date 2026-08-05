@@ -208,9 +208,20 @@ config/stonedrops.json
 
 Each saved entry stores item registry name, metadata, stack size, chance, optional NBT string, and optional `minY`/`maxY` range.
 
-When no `stonedrops.json` exists, Xenofactions also checks for the optional HBM mod and its
-`com.hbm.config.MiningConfig` class. If both are present, the HBM
-`excavatorBedrockDrops` entries seed the file at a one-percent chance per stone block.
-Hard minerals use deeper Y ranges, while progressively softer deposits can appear higher.
-An existing file, including an intentionally empty list, is never overwritten; use
-`/stonedrop` or edit the JSON to customize the generated defaults.
+During post-initialization, Xenofactions checks the Forge mod loader for the optional HBM mod.
+When HBM is loaded, Xenofactions reads `com.hbm.config.MiningConfig.excavatorBedrockDrops`
+with reflection after HBM has initialized it. Entries must use HBM's documented
+`modid:item metadata minimumAmount maximumAmount` format, are resolved through the Forge 1.7.10
+item registry (including block items such as `hbm:tile.ore_uranium`), and are added at a
+one-percent chance per normal-stone block within the generated material-based Y range.
+
+Administrator entries loaded from `config/stonedrops.json` are preserved. Missing automatic HBM
+entries are appended without duplicating an existing item/metadata/NBT combination. An existing
+empty JSON list is treated as an intentional administrator configuration and is not overwritten.
+An empty file or malformed JSON is logged as a recovery case; if valid HBM entries are available,
+the malformed file is backed up and `stonedrops.json` is rewritten safely with the recovered
+automatic entries. The success log message is:
+
+```text
+[XF] Registered <count> automatic HBM stone drops from MiningConfig.excavatorBedrockDrops.
+```

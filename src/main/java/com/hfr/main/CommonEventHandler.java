@@ -965,6 +965,9 @@ public class CommonEventHandler {
 		if(world.isRemote)
 			return;
 		
+		if(event.getPlayer() != null && event.getPlayer().capabilities.isCreativeMode)
+			return;
+		
 		if(event.block != Blocks.stone)
 			return;
 
@@ -977,13 +980,16 @@ public class CommonEventHandler {
 
 		// Custom drop logic
 		// Make sure there's actually a custom item configured
-		if (!MainRegistry.customDrops.isEmpty() && !MainRegistry.customDropChances.isEmpty()) {
+		int customDropCount = Math.min(MainRegistry.customDrops.size(), MainRegistry.customDropChances.size());
+		customDropCount = Math.min(customDropCount, MainRegistry.customDropMinYs.size());
+		customDropCount = Math.min(customDropCount, MainRegistry.customDropMaxYs.size());
+		if (customDropCount > 0) {
 			// Assign the first entry in the list to the old variables for compatibility
 			MainRegistry.customDropStack = MainRegistry.customDrops.get(0);
 			MainRegistry.customDropChance = MainRegistry.customDropChances.get(0);
 
 			// Process the list for all custom drops
-			for (int i = 0; i < MainRegistry.customDrops.size(); i++) {
+			for (int i = 0; i < customDropCount; i++) {
 				ItemStack drop = MainRegistry.customDrops.get(i);
 				double chance = MainRegistry.customDropChances.get(i);
 				Integer minY = MainRegistry.customDropMinYs.get(i);
