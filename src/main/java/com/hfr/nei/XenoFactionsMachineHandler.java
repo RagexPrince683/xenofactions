@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Locale;
 
 @SideOnly(Side.CLIENT)
-public class XenoFactionsMachineHandler extends TemplateRecipeHandler {
+public abstract class XenoFactionsMachineHandler extends TemplateRecipeHandler {
     public static final String BLAST = "hfr.blast_furnace";
     public static final String FOUNDRY_MELT = "hfr.foundry_melting";
     public static final String FOUNDRY_CAST = "hfr.foundry_casting";
@@ -33,7 +33,12 @@ public class XenoFactionsMachineHandler extends TemplateRecipeHandler {
     private static final DecimalFormat NUM = new DecimalFormat("0.######", DecimalFormatSymbols.getInstance(Locale.US));
     private final String id;
 
-    public XenoFactionsMachineHandler(String id) { this.id = id; }
+    protected XenoFactionsMachineHandler(String id) {
+        if (id == null || id.isEmpty()) {
+            throw new IllegalArgumentException("NEI machine handler id must not be null or empty");
+        }
+        this.id = id;
+    }
     public String getRecipeName() { return tr("hfr.nei." + key() + ".title"); }
     public String getGuiTexture() { return "textures/gui/options_background.png"; }
     public String getOverlayIdentifier() { return id; }

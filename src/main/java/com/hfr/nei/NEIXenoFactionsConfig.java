@@ -17,11 +17,11 @@ public class NEIXenoFactionsConfig implements IConfigureNEI {
         XenoFactionsStoneDropHandler handler = new XenoFactionsStoneDropHandler();
         API.registerRecipeHandler(handler);
         API.registerUsageHandler(handler);
-        register(new XenoFactionsMachineHandler(XenoFactionsMachineHandler.BLAST), new ItemStack(ModBlocks.machine_blastfurnace));
-        register(new XenoFactionsMachineHandler(XenoFactionsMachineHandler.FOUNDRY_MELT), new ItemStack(ModBlocks.machine_foundry));
-        register(new XenoFactionsMachineHandler(XenoFactionsMachineHandler.FOUNDRY_CAST), new ItemStack(ModBlocks.machine_foundry));
-        register(new XenoFactionsMachineHandler(XenoFactionsMachineHandler.NET), new ItemStack(ModBlocks.machine_net));
-        register(new XenoFactionsMachineHandler(XenoFactionsMachineHandler.WIND), new ItemStack(ModBlocks.machine_windmill));
+        register(new XenoFactionsBlastFurnaceHandler(), new ItemStack(ModBlocks.machine_blastfurnace));
+        register(new XenoFactionsFoundryMeltingHandler(), new ItemStack(ModBlocks.machine_foundry));
+        register(new XenoFactionsFoundryCastingHandler(), new ItemStack(ModBlocks.machine_foundry));
+        register(new XenoFactionsFishingNetHandler(), new ItemStack(ModBlocks.machine_net));
+        register(new XenoFactionsWindmillHandler(), new ItemStack(ModBlocks.machine_windmill));
     }
 
     private void register(XenoFactionsMachineHandler handler, ItemStack catalyst) {
