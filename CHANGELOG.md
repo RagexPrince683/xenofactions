@@ -1,3 +1,11 @@
+## Safe two-phase City Center relocation
+
+- Replaced normal leader City Center breaking with a leader-only confirmation popup and persistent, server-authoritative pending relocation. The old center and claims remain active until an atomic placement succeeds.
+- Added stable city UUIDs, bound/recoverable relocation tokens, same-dimension and full-radius validation, protected-zone/city collision checks, rollback, preserved tile inventory and city level/name, guarded old-block removal, and translated faction homes.
+- Added configurable horizontal Prestige pricing (10 free blocks, then 50 base plus 1 per extra block), a three-move rolling 24-hour limit, a 256-block maximum, and 30-minute harmless pending expiration.
+- Guaranteed that a faction with zero live cities may found its first settlement for zero Prestige and without spare upkeep capacity; normal settlement upkeep is still added after placement.
+- Added `/c city cancelmove` and `/c city recovermove` to command help, completion, command GUI data, and documentation.
+
 ## Build grace home validation, city Prestige scaling, and regular disband penalties
 
 - Added server-side build grace home validation so `/c gracebuild` requires an explicitly set faction home that still resolves to owned faction territory, and active grace ends when that home claim is lost or transferred.

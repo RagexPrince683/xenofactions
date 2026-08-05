@@ -53,6 +53,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
@@ -75,6 +76,9 @@ import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.event.world.BlockEvent.BreakEvent;
+import com.hfr.packet.PacketDispatcher;
+import com.hfr.packet.client.CityRelocationGuiPacket;
+import com.hfr.tileentity.clowder.TileEntityFlag;
 import net.minecraftforge.event.world.BlockEvent.PlaceEvent;
 import net.minecraftforge.event.world.ExplosionEvent.Detonate;
 import net.minecraft.entity.Entity;
@@ -309,6 +313,17 @@ public void handleChatServer(ServerChatEvent event) {
 				
 				EntityPlayer player = ((BreakEvent)event).getPlayer();
 				Clowder clowder = Clowder.getClowderFromPlayer(player);
+				if(b == ModBlocks.clowder_flag && !player.inventory.hasItem(ModItems.debug)) {
+					event.setCanceled(true);
+					String relocationError = CityCenterRelocationManager.validateStart(player, event.world.provider.dimensionId, x, y, z);
+					if(relocationError != null) player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + relocationError));
+					else if(player instanceof net.minecraft.entity.player.EntityPlayerMP) {
+						TileEntity te = event.world.getTileEntity(x, y, z);
+						String cityName = te instanceof TileEntityFlag ? ((TileEntityFlag)te).name : "City";
+						PacketDispatcher.wrapper.sendTo(new CityRelocationGuiPacket(event.world.provider.dimensionId, x, y, z, cityName), (net.minecraft.entity.player.EntityPlayerMP)player);
+					} else player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Unable to open relocation confirmation."));
+					return;
+				}
 				
 				if(canBreak(player, clowder, owner, b, x, y, z)) {
 					
@@ -1391,6 +1406,9 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 
 		//new check here for safezone
 		if (event.phase == Phase.END) { // After all entities have moved
+			if(!event.world.isRemote && ClowderTerritory.getDimensionId(event.world) == 0) CityCenterRelocationManager.runScheduledTasks();
+			if(!event.world.isRemote && ClowderTerritory.getDimensionId(event.world) == 0)
+				for(Clowder faction : Clowder.clowders) CityCenterRelocationManager.hasPending(faction);
 			if(!event.world.isRemote && ClowderTerritory.getDimensionId(event.world) == 0 && ++buildGraceValidationTicks >= 1200) {
 				buildGraceValidationTicks = 0;
 				for(Clowder clowder : Clowder.clowders)

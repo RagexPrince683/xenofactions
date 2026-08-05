@@ -65,8 +65,13 @@ public class ClowderTerritory {
 	}
 
 	public static String getCityPlacementError(int dimensionId, int chunkX, int chunkZ) {
+		return getCityPlacementErrorIgnoring(dimensionId, chunkX, chunkZ, null);
+	}
+
+	public static String getCityPlacementErrorIgnoring(int dimensionId, int chunkX, int chunkZ, String ignoredCityId) {
 		for(TerritoryMeta meta : territories.values()) {
 			if(meta != null && meta.owner != null && meta.owner.zone == Zone.FACTION && meta.isCityClaim()) {
+				if(ignoredCityId != null && ignoredCityId.equals(meta.cityId)) continue;
 				if(meta.dimensionId != dimensionId)
 					continue;
 				CoordPair other = getCoordPair(meta.dimensionId, meta.flagX, meta.flagZ);
@@ -143,7 +148,8 @@ public class ClowderTerritory {
 	}
 
 	public static int renameClaimsForCity(World world, int fX, int fY, int fZ, String name) {
-		String id = cityId(getDimensionId(world), fX, fY, fZ);
+		TileEntity source = world == null ? null : world.getTileEntity(fX, fY, fZ);
+		String id = source instanceof TileEntityFlag ? ((TileEntityFlag)source).getCityId() : cityId(getDimensionId(world), fX, fY, fZ);
 		int renamed = 0;
 		for(TerritoryMeta meta : territories.values()) {
 			if(meta != null && id.equals(meta.cityId)) {
@@ -167,7 +173,12 @@ public class ClowderTerritory {
 	}
 
 	public static int removeClaimsForCity(World world, int fX, int fY, int fZ) {
-		String id = cityId(getDimensionId(world), fX, fY, fZ);
+		TileEntity source = world == null ? null : world.getTileEntity(fX, fY, fZ);
+		String id = source instanceof TileEntityFlag ? ((TileEntityFlag)source).getCityId() : cityId(getDimensionId(world), fX, fY, fZ);
+		return removeClaimsForCityId(world, id, true);
+	}
+
+	public static int removeClaimsForCityId(World world, String id, boolean reconcile) {
 		int removed = 0;
 		List<CoordPair> claims = new ArrayList(territories.keySet());
 		Clowder oldOwner = null;
@@ -179,8 +190,7 @@ public class ClowderTerritory {
 				removed++;
 			}
 		}
-		clearCityFlagOwner(world, fX, fY, fZ);
-		if(oldOwner != null) { oldOwner.reconcileCitiesFounded(world); oldOwner.endBuildGraceIfHomeInvalid(world, true); }
+		if(reconcile && oldOwner != null) { oldOwner.reconcileCitiesFounded(world); oldOwner.endBuildGraceIfHomeInvalid(world, true); }
 		if(removed > 0 && world != null)
 			ClowderData.getData(world).markDirty();
 		if(removed > 0)
@@ -194,6 +204,11 @@ public class ClowderTerritory {
 		String id = city.cityId;
 		int moved = 0;
 		Clowder oldTerritoryOwner = city.owner == null ? null : city.owner.owner;
+		if(oldTerritoryOwner != null && oldTerritoryOwner != newOwner) {
+			CityCenterRelocationManager.clear(oldTerritoryOwner, world);
+			List<Long> history = oldTerritoryOwner.cityRelocationHistory.remove(id);
+			if(history != null) newOwner.cityRelocationHistory.put(id, history);
+		}
 		for(TerritoryMeta meta : territories.values()) {
 			if(meta != null && id.equals(meta.cityId) && meta.owner != null && meta.owner.zone == Zone.FACTION) {
 				meta.owner.owner = newOwner;
@@ -240,9 +255,16 @@ public class ClowderTerritory {
 		
 		setOwnerForInts(world, coords.x, coords.z, owner, fX, fY, fZ, name);
 	}
+	public static void setOwnerForCoord(World world, CoordPair coords, Clowder owner, int fX, int fY, int fZ, String name, String stableCityId) {
+		setOwnerForInts(world, coords.x, coords.z, owner, fX, fY, fZ, name, stableCityId);
+	}
 	
 	//sets the owner of a chunk to a clowder
 	public static void setOwnerForInts(World world, int x, int z, Clowder owner, int fX, int fY, int fZ, String name) {
+		setOwnerForInts(world, x, z, owner, fX, fY, fZ, name, cityId(getDimensionId(world), fX, fY, fZ));
+	}
+
+	public static void setOwnerForInts(World world, int x, int z, Clowder owner, int fX, int fY, int fZ, String name, String stableCityId) {
 		
 		if(!XFConfig.canClaimInDimension(getDimensionId(world)))
 			return;
@@ -256,7 +278,7 @@ public class ClowderTerritory {
 		metadata.name = name;
 		metadata.cityName = name;
 		metadata.dimensionId = getDimensionId(world);
-		metadata.cityId = cityId(metadata.dimensionId, fX, fY, fZ);
+		metadata.cityId = stableCityId;
 		//fuck this goddamn shithole of a mod
 		TileEntity flag = world.getTileEntity(fX, fY, fZ);
 		if(flag != null) {

@@ -133,6 +133,8 @@ Most player-facing faction commands are under `/clowder` or `/c`:
 /c apply <faction>
 /c claim <city name>
 /c city upgrade
+/c city cancelmove
+/c city recovermove
 /c declarewar <faction>
 ```
 
