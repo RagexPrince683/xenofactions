@@ -1,3 +1,8 @@
+## Fix NEI machine handler reflection constructors
+
+- Split the shared Xenofactions machine NEI implementation into public per-category handlers with zero-argument constructors so GTNH NEI can recreate registered handlers reflectively during recipe and usage lookup.
+- Kept the shared machine recipe behavior, overlay identifiers, catalysts, rendering, copied `ItemStack` handling, and Stone Drops NEI handler behavior intact.
+
 ## Fix NEI machine handler compile error
 
 - Added explicit braces to the machine NEI recipe loading control flow to prevent dangling `else` binding in Foundry Casting and Fishing Net lookups.
