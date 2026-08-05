@@ -1,3 +1,8 @@
+## Fix NEI machine handler compile error
+
+- Added explicit braces to the machine NEI recipe loading control flow to prevent dangling `else` binding in Foundry Casting and Fishing Net lookups.
+- Preserved existing Blast Furnace, Foundry, Fishing Net, Windmill, and Stone Drop NEI display behavior.
+
 
 ## Remove Stone Drops NEI crafting grid background
 
