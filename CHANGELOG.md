@@ -181,3 +181,11 @@ Added `/stonedrops [page]` as a read-only player-accessible command for viewing 
 - Added NEI categories, catalysts, display data, and server-synchronized configuration values for the Grain Mill, University, Production Line, Temple, and Coal Mine.
 - Removed Windmill NEI category, handler registration, handler class, localization, and display snapshot field while leaving Windmill gameplay and registration unchanged.
 - Added display snapshot packet validation for incomplete payloads and documented packet field order.
+## UUID faction identity refactor
+
+- Added faction identity data version `2`, with UUID-keyed member and application records containing display-only last-known names, join timestamps, and explicit roles.
+- Faction lookup and permission APIs now authorize `OWNER`, `OFFICER`, and `MEMBER` roles by UUID. Username-only permission calls fail closed so a renamed or recycled account name cannot inherit access.
+- Claimed starter-flag identities and disband cooldown member snapshots now use UUIDs.
+- New-format loading validates UUID strings and ignores malformed records rather than granting access. Legacy name fields remain import-only staging data and are not consulted by player lookup.
+- Offline-mode servers continue to use UUIDs, but their UUIDs are derived from usernames; consequently, offline mode cannot reliably preserve identity across a username change.
+- Operator recovery syntax for unresolved migration entries is `/xc migration list <faction>` and `/xc migration bind <faction> <legacy-name> <online-player>`.

@@ -194,7 +194,7 @@ public class TileEntityConquerer extends TileEntityMachineBase implements ITerri
 						zCoord + 0.5 + range));
 
 		for(EntityPlayer player : entities) {
-			if(player instanceof EntityPlayerMP && Clowder.getClowderFromPlayer(player) == owner && owner.getPermLevel(player.getDisplayName()) >= 2)
+			if(player instanceof EntityPlayerMP && Clowder.getClowderFromPlayer(player) == owner && owner.getPermLevel(player) >= 2)
 				PacketDispatcher.wrapper.sendTo(new CityRenameGuiPacket(city.xCoord, city.yCoord, city.zCoord, city.name), (EntityPlayerMP)player);
 		}
 	}

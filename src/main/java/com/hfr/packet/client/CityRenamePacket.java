@@ -60,7 +60,7 @@ public class CityRenamePacket implements IMessage {
 				return null;
 			}
 
-			if(clowder.getPermLevel(player.getDisplayName()) < 2) {
+			if(clowder.getPermLevel(player) < 2) {
 				player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "You lack the permissions to rename cities!"));
 				return null;
 			}

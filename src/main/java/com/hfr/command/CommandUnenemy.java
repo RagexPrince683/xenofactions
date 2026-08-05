@@ -17,7 +17,7 @@ public class CommandUnenemy extends CommandBase {
 		EntityPlayer player = (EntityPlayer)sender;
 		Clowder me = Clowder.getClowderFromPlayer(player);
 		if(me == null) { sender.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "You are not in a faction!")); return; }
-		if(me.getPermLevel(player.getDisplayName()) <= 2) { sender.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "Only faction leaders can remove enemies.")); return; }
+		if(me.getPermLevel(player) <= 2) { sender.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "Only faction leaders can remove enemies.")); return; }
 		Clowder target = Clowder.getClowderFromName(String.join(" ", args));
 		if(target == null) { sender.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "Unknown faction.")); return; }
 		if(!me.isEnemyFaction(target, player.worldObj)) { sender.addChatMessage(new ChatComponentText(CommandClowder.ERROR + target.name + " is not marked as an enemy.")); return; }
