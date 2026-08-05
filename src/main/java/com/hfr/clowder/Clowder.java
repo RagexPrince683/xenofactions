@@ -3,7 +3,9 @@ package com.hfr.clowder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -13,6 +15,8 @@ import com.hfr.command.CommandClowder;
 import com.hfr.command.CommandClowderAdmin;
 import com.hfr.config.XFConfig;
 import com.hfr.data.ClowderData;
+import com.hfr.packet.PacketDispatcher;
+import com.hfr.packet.effect.AuxParticlePacketNT;
 //import com.hfr.data.MarketData.Offer;
 import com.hfr.main.MainRegistry;
 import com.hfr.util.XFLog;
@@ -145,6 +149,8 @@ public class Clowder {
 	public HashMap<Clowder, Long> allies = new HashMap();
 	public HashMap<String, Long> alliesS = new HashMap(); //string version since NBT cringe memory gay
 	public Set<String> activeWars = new HashSet();
+	public Set<String> enemyFactionUuids = new HashSet<String>();
+	public HashMap<String, Long> pendingEnemyRemovalTimes = new HashMap<String, Long>();
 	public Set<String> defendingAllies = new HashSet();
 	public HashMap<String, Long> warDeclaredAt = new HashMap();
 	public Set<String> surrenderRequests = new HashSet();
@@ -168,6 +174,7 @@ public class Clowder {
 	public static HashMap<String, Clowder> inverseMap = new HashMap();
 	public static HashSet<String> retreating = new HashSet();
 	public static HashMap<Long, ScheduledTeleport> teleports = new HashMap();
+	public static final long ENEMY_REMOVAL_DELAY_MS = 72L * 60L * 60L * 1000L;
 
 
 
@@ -978,7 +985,9 @@ public class Clowder {
 
 		vassal.suzerain = suzerain;
 
+		cleanEnemyRelationReferences(player.worldObj);
 		ClowderData.getData(player.worldObj).markDirty();
+		syncNameplateDataAll();
 	}
 
 	// war declare system
@@ -1160,7 +1169,7 @@ public class Clowder {
 
 	public void mergeWith(Clowder target, World world) {
 
-		if (target == null || target == this) return;
+		if (target == null || target.uuid.equals(this.uuid)) return;
 
 		// Cancel any active war/fabrication to avoid weird state carryover
 		//this.pussy(world);
@@ -1201,7 +1210,17 @@ public class Clowder {
 			}
 		}
 
-		// 6. Fix OTHER clowders that reference this one as ally
+		// 6. Merge one-way enemy relations by UUID and fix OTHER clowders that reference this one
+		for(String enemyUuid : this.enemyFactionUuids) {
+			if(enemyUuid != null && !enemyUuid.equals(target.uuid))
+				target.enemyFactionUuids.add(enemyUuid);
+		}
+		for(String enemyUuid : this.pendingEnemyRemovalTimes.keySet()) {
+			if(enemyUuid != null && !enemyUuid.equals(target.uuid) && !target.pendingEnemyRemovalTimes.containsKey(enemyUuid))
+				target.pendingEnemyRemovalTimes.put(enemyUuid, this.pendingEnemyRemovalTimes.get(enemyUuid));
+		}
+
+		// 6. Fix OTHER clowders that reference this one as ally/enemy
 		for (Clowder c : clowders) {
 			if (c.allies.containsKey(this)) {
 				c.allies.remove(this);
@@ -1214,6 +1233,13 @@ public class Clowder {
 			if (c.enemy == this) {
 				c.enemy = target;
 				c.enemyS = target.name;
+			}
+			if(c.enemyFactionUuids.remove(this.uuid))
+				c.enemyFactionUuids.add(target.uuid);
+			if(c.pendingEnemyRemovalTimes.containsKey(this.uuid)) {
+				Long removal = c.pendingEnemyRemovalTimes.remove(this.uuid);
+				if(!c.pendingEnemyRemovalTimes.containsKey(target.uuid))
+					c.pendingEnemyRemovalTimes.put(target.uuid, removal);
 			}
 		}
 
@@ -1267,7 +1293,9 @@ public class Clowder {
 		this.members.clear();
 		this.allies.clear();
 
+		cleanEnemyRelationReferences(world);
 		ClowderData.getData(world).markDirty();
+		syncNameplateDataAll();
 
 		return true;
 
@@ -1602,6 +1630,8 @@ public class Clowder {
 		nbt.setInteger(i + "_allies", this.alliesS.size());
 		nbt.setInteger(i + "_warps", this.warps.size());
 		nbt.setInteger(i + "_activeWars", this.activeWars.size());
+		nbt.setInteger(i + "_enemyFactionUuids", this.enemyFactionUuids.size());
+		nbt.setInteger(i + "_pendingEnemyRemovalTimes", this.pendingEnemyRemovalTimes.size());
 		nbt.setInteger(i + "_defendingAllies", this.defendingAllies.size());
 		nbt.setInteger(i + "_warDeclaredAt", this.warDeclaredAt.size());
 		nbt.setInteger(i + "_surrenderReq", this.surrenderRequests.size());
@@ -1670,6 +1700,13 @@ public class Clowder {
 
 		for (int j = 0; j < this.activeWars.size(); j++)
 			nbt.setString(i + "_" + j + "_war", (String) this.activeWars.toArray()[j]);
+		for (int j = 0; j < this.enemyFactionUuids.size(); j++)
+			nbt.setString(i + "_" + j + "_enemyFactionUuid", (String) this.enemyFactionUuids.toArray()[j]);
+		for (int j = 0; j < this.pendingEnemyRemovalTimes.size(); j++) {
+			String id = (String) this.pendingEnemyRemovalTimes.keySet().toArray()[j];
+			nbt.setString(i + "_" + j + "_pendingEnemyUuid", id);
+			nbt.setLong(i + "_" + j + "_pendingEnemyTime", this.pendingEnemyRemovalTimes.get(id));
+		}
 
 		for (int j = 0; j < this.defendingAllies.size(); j++)
 			nbt.setString(i + "_" + j + "_def", (String) this.defendingAllies.toArray()[j]);
@@ -1788,6 +1825,8 @@ public class Clowder {
 		}
 		int cwarp = nbt.getInteger(i + "_warps");
 		int cwar = nbt.getInteger(i + "_activeWars");
+		int cef = nbt.getInteger(i + "_enemyFactionUuids");
+		int cper = nbt.getInteger(i + "_pendingEnemyRemovalTimes");
 		int cdef = nbt.getInteger(i + "_defendingAllies");
 		int cdecl = nbt.getInteger(i + "_warDeclaredAt");
 		int csreq = nbt.getInteger(i + "_surrenderReq");
@@ -1829,6 +1868,14 @@ public class Clowder {
 		}
 		for (int j = 0; j < cwar; j++)
 			c.activeWars.add(nbt.getString(i + "_" + j + "_war"));
+		for (int j = 0; j < cef; j++) {
+			String id = nbt.getString(i + "_" + j + "_enemyFactionUuid");
+			if(id != null && !id.isEmpty()) c.enemyFactionUuids.add(id);
+		}
+		for (int j = 0; j < cper; j++) {
+			String id = nbt.getString(i + "_" + j + "_pendingEnemyUuid");
+			if(id != null && !id.isEmpty()) c.pendingEnemyRemovalTimes.put(id, nbt.getLong(i + "_" + j + "_pendingEnemyTime"));
+		}
 		for (int j = 0; j < cdef; j++)
 			c.defendingAllies.add(nbt.getString(i + "_" + j + "_def"));
 		for (int j = 0; j < cdecl; j++)
@@ -1918,6 +1965,110 @@ public class Clowder {
 		}
 	}
 
+	public boolean isEnemyFaction(Clowder target, World world) {
+		processExpiredEnemyRelations(world, System.currentTimeMillis());
+		return target != null && target.uuid != null && enemyFactionUuids.contains(target.uuid);
+	}
+
+	public boolean addEnemyFaction(Clowder target, World world) {
+		if(target == null || target.uuid == null || target.uuid.equals(this.uuid)) return false;
+		boolean changed = enemyFactionUuids.add(target.uuid);
+		Long removed = pendingEnemyRemovalTimes.remove(target.uuid);
+		if(changed || removed != null) markEnemyRelationsDirty(world);
+		return changed;
+	}
+
+	public boolean scheduleEnemyRemoval(Clowder target, World world) {
+		if(target == null || target.uuid == null || !enemyFactionUuids.contains(target.uuid)) return false;
+		if(pendingEnemyRemovalTimes.containsKey(target.uuid)) return false;
+		pendingEnemyRemovalTimes.put(target.uuid, System.currentTimeMillis() + ENEMY_REMOVAL_DELAY_MS);
+		markEnemyRelationsDirty(world);
+		return true;
+	}
+
+	public boolean cancelEnemyRemoval(Clowder target, World world) {
+		if(target == null || target.uuid == null) return false;
+		boolean changed = pendingEnemyRemovalTimes.remove(target.uuid) != null;
+		if(changed) markEnemyRelationsDirty(world);
+		return changed;
+	}
+
+	public long getEnemyRemovalRemaining(Clowder target, long now) {
+		if(target == null || target.uuid == null || !pendingEnemyRemovalTimes.containsKey(target.uuid)) return -1L;
+		return Math.max(0L, pendingEnemyRemovalTimes.get(target.uuid) - now);
+	}
+
+	public boolean processExpiredEnemyRelations(World world, long now) {
+		boolean changed = false;
+		Iterator<Map.Entry<String, Long>> it = pendingEnemyRemovalTimes.entrySet().iterator();
+		while(it.hasNext()) {
+			Map.Entry<String, Long> e = it.next();
+			if(e.getValue() <= now) {
+				enemyFactionUuids.remove(e.getKey());
+				it.remove();
+				changed = true;
+				notifyAll(world, new ChatComponentText(CommandClowder.INFO + "Enemy relation removal has completed."));
+			}
+		}
+		if(changed) markEnemyRelationsDirty(world);
+		return changed;
+	}
+
+	private void markEnemyRelationsDirty(World world) {
+		if(world != null) ClowderData.getData(world).markDirty();
+		syncNameplateDataAll();
+	}
+
+	public static Clowder getClowderFromUuid(String uuid) {
+		if(uuid == null || uuid.isEmpty()) return null;
+		for(Clowder c : clowders) if(uuid.equals(c.uuid)) return c;
+		return null;
+	}
+
+	public static void processExpiredEnemyRelations(World world) {
+		long now = System.currentTimeMillis();
+		for(Clowder c : new ArrayList<Clowder>(clowders)) c.processExpiredEnemyRelations(world, now);
+	}
+
+	public static void cleanEnemyRelationReferences(World world) {
+		HashSet<String> valid = new HashSet<String>();
+		for(Clowder c : clowders) valid.add(c.uuid);
+		boolean changed = false;
+		for(Clowder c : clowders) {
+			changed |= c.enemyFactionUuids.retainAll(valid);
+			changed |= c.pendingEnemyRemovalTimes.keySet().retainAll(valid);
+		}
+		if(changed && world != null) ClowderData.getData(world).markDirty();
+	}
+
+	public static void syncNameplateDataAll() {
+		MinecraftServer server = MinecraftServer.getServer();
+		if(server == null || server.getConfigurationManager() == null) return;
+		for(Object obj : server.getConfigurationManager().playerEntityList) if(obj instanceof EntityPlayerMP) syncNameplateData((EntityPlayerMP)obj);
+	}
+
+	public static void syncNameplateData(EntityPlayerMP viewer) {
+		if(viewer == null || viewer.worldObj == null) return;
+		Clowder own = getClowderFromPlayer(viewer);
+		for(Object obj : viewer.worldObj.playerEntities) if(obj instanceof EntityPlayer) {
+			EntityPlayer pl = (EntityPlayer)obj;
+			Clowder clow = getClowderFromPlayer(pl);
+			String rel = "###";
+			if(clow != null) {
+				String type = "neutral";
+				if(own != null && own.uuid != null && own.uuid.equals(clow.uuid)) type = "own";
+				else if(own != null && own.alliesS.containsKey(clow.name)) type = "ally";
+				else if(own != null && own.isEnemyFaction(clow, viewer.worldObj)) type = "enemy";
+				rel = clow.name + "|" + type;
+			}
+			NBTTagCompound data = new NBTTagCompound();
+			data.setString("type", "clowderNotif");
+			data.setString("player", pl.getUniqueID().toString());
+			data.setString("clowder", rel);
+			PacketDispatcher.wrapper.sendTo(new AuxParticlePacketNT(data, 0, 0, 0), viewer);
+		}
+	}
+
 	public static void readFromNBT(NBTTagCompound nbt) {
 
 		colours.add(ClowderTerritory.SAFEZONE_COLOR);
@@ -1938,6 +2089,7 @@ public class Clowder {
 			clowders.add(loadClowder(i, nbt));
 
 		restoreAllyReferences();
+		cleanEnemyRelationReferences(null);
 		recalculateIMap();
 	}
 

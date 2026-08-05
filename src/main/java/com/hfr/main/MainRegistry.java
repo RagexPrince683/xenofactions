@@ -19,6 +19,8 @@ import net.minecraftforge.common.ForgeChunkManager.LoadingCallback;
 import net.minecraftforge.common.ForgeChunkManager.Ticket;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
+import com.hfr.command.CommandEnemy;
+import com.hfr.command.CommandUnenemy;
 import net.minecraftforge.common.config.Property;
 import net.minecraft.item.Item;
 import net.minecraftforge.common.util.EnumHelper;
@@ -847,6 +849,8 @@ public class MainRegistry
 		event.registerServerCommand(new CommandClowder());
 		event.registerServerCommand(new CommandClowderChat());
 		event.registerServerCommand(new CommandClowderAdmin());
+		event.registerServerCommand(new CommandEnemy());
+		event.registerServerCommand(new CommandUnenemy());
 
 		// Other utility commands
 		event.registerServerCommand(new CommandXShop());

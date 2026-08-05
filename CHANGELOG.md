@@ -1,3 +1,9 @@
+# Enemy faction relations and Prestige rewards
+
+- Added persistent one-way enemy faction relations using faction UUIDs, with `/enemy <faction>` and delayed `/unenemy <faction>` commands for leaders.
+- Added configured Prestige rewards for killing active enemy faction members.
+- Updated nameplates so own/allied/enemy/neutral factions render green/blue/red/yellow.
+
 # Fix automatic HBM stone-drop integration
 
 - Fixed the real automatic HBM stone-drop failure: Xenofactions now resolves HBM's documented `modid:item metadata minimumAmount maximumAmount` specifications through the Forge 1.7.10 item/block registries after HBM post-initialization instead of relying on fragile direct item lookups.

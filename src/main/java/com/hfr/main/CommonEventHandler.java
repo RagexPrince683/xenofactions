@@ -160,36 +160,8 @@ public class CommonEventHandler {
 			long age = player.worldObj.getTotalWorldTime();
 
 			//NAMEPLATES
-			if(age % 10 == 0 && !player.worldObj.playerEntities.isEmpty() ) { //&& !player.isSneaking()
-				//so if !player.isSneaking() I thought the nameplate would be gone but apparently not
-
-				//if only I knew what was causing allied nameplates to be red
-
-				age /= 10;
-				age %= player.worldObj.playerEntities.size();
-
-				EntityPlayer pl = (EntityPlayer) player.worldObj.playerEntities.get((int)age);
-				Clowder clow = Clowder.getClowderFromPlayer(pl);
-
-
-				String name = "###";
-
-				if(clow != null)
-				{
-					name = clow.name;
-					for (Clowder A : clow.allies.keySet())
-						name = clow.name + "_" + A.name; //secretly loads entire list of allies into your fucking ID
-				}
-
-
-
-				NBTTagCompound data = new NBTTagCompound();
-				data.setString("type", "clowderNotif");
-				data.setString("player", pl.getUniqueID().toString());
-				data.setString("clowder", name);
-
-
-				PacketDispatcher.wrapper.sendTo(new AuxParticlePacketNT(data, 0, 0, 0), (EntityPlayerMP) player);
+			if(age % 10 == 0 && player instanceof EntityPlayerMP) {
+				Clowder.syncNameplateData((EntityPlayerMP) player);
 			}
 			
 			/// UPDATE CLOWDER INFO ///
