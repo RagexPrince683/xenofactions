@@ -1,4 +1,9 @@
 
+## Remove Stone Drops NEI crafting grid background
+
+- Replaced the inherited vanilla crafting table recipe background on Xenofactions Stone Drops NEI pages with a texture-free custom slot-and-arrow background.
+- Applied the same explicit background to the custom Xenofactions machine NEI handler that also inherited the unrelated vanilla crafting table texture.
+
 ## Optional Not Enough Items integration
 
 - Added development-only Not Enough Items and CodeChickenCore dependencies through GTNH Convention's non-publishable configuration while preserving the existing `devmods` remapping flow.
