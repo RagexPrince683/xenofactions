@@ -858,6 +858,7 @@ public class MainRegistry
 		event.registerServerCommand(new CommandXDebug());
 		event.registerServerCommand(new CommandXMarket());
 		event.registerServerCommand(new CommandStoneDrop());
+		event.registerServerCommand(new CommandStoneDrops());
 		MuteManager.init();
 		if(XFConfig.enableTDM)
 			TDMKitManager.init();

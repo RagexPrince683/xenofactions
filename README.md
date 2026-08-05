@@ -135,7 +135,7 @@ Most player-facing faction commands are under `/clowder` or `/c`:
 /c declarewar <faction>
 ```
 
-Administrative faction commands are under `/xclowder` or `/xc` and require permission level 3 by default. Other command families include `/cc`, `/xflags`, `/xmap`, `/stonedrop`, `/xmarket`, `/xshop`, `/xmute`, `/xignore`, `/invsee`, and optional `/tdm`.
+Administrative faction commands are under `/xclowder` or `/xc` and require permission level 3 by default. All players can inspect configured custom stone drops with `/stonedrops [page]`; `/stonedrop` remains the administrator command for adding, listing, and removing custom stone drops. Other command families include `/cc`, `/xflags`, `/xmap`, `/stonedrops`, `/stonedrop`, `/xmarket`, `/xshop`, `/xmute`, `/xignore`, `/invsee`, and optional `/tdm`.
 
 See [`docs/commands.md`](docs/commands.md) for command syntax verified from source.
 
