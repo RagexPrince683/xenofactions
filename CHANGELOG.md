@@ -13,6 +13,10 @@
 - Added configured Prestige rewards for killing active enemy faction members.
 - Updated nameplates so own/allied/enemy/neutral factions render green/blue/red/yellow.
 
+# Add public stone drops list command
+Added `/stonedrops [page]` as a read-only player-accessible command for viewing configured custom stone drops without changing the administrator `/stonedrop` command.
+- Documented chance percentages, raw chance values, item registry metadata, stack amounts, and Y ranges in the paginated stone-drop output.
+
 # Fix automatic HBM stone-drop integration
 
 - Fixed the real automatic HBM stone-drop failure: Xenofactions now resolves HBM's documented `modid:item metadata minimumAmount maximumAmount` specifications through the Forge 1.7.10 item/block registries after HBM post-initialization instead of relying on fragile direct item lookups.
