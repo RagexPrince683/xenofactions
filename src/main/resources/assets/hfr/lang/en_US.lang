@@ -705,3 +705,5 @@ hfr.nei.coal_mine.supplies=one Miner Supplies item adds one stored supply; maxim
 hfr.nei.coal_mine.canary=one Canary is consumed to prevent one hazard event
 hfr.nei.coal_mine.foundation=the full rotated MachineCoalMine/MultiblockHandler.mine footprint needs a BlockSpeedy foundation
 hfr.nei.coal_mine.clearance=the same full rotated footprint needs clearance at y + 4; hazard checks run before coal and use else-if so one tick cannot run both; unprotected hazards check every occupied Miner slot and create the runtime explosion
+
+generator.xf_earth=XF Earth (Pregenerated)

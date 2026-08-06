@@ -251,3 +251,7 @@ Regular leader-run `/c disband <faction name>` writes faction creation penalties
 
 
 The cooldown JSON contains `uuids` and normalized `nameFallbacks`; entries contain epoch-millisecond `expiresAt` and `lastKnownName`. `/xc clearcreationcooldown <player-or-uuid>` (alias `resetcreationcooldown`) works for online/offline targets and saves successful changes immediately via temporary-file replacement.
+
+## XENOFACTIONS_18_EARTH_WORLD
+
+Phase 1's template-backed Earth type is controlled by `enableEarthWorldType`, `earthWorldTypeName` (canonical value `xf_earth`), `earthRequireProfile`, `earthMissingChunkPolicy` (`FAIL` or `VOID`), `earthBoundaryMode` (`OFF`, `PROFILE`, or `CONFIG`), `earthAllowProfileMinecraftVersion`, `earthLogFallbackChunks`, and `earthBoundarySafetyMargin`. `PROFILE` derives the dimension-0 border from the validated save profile; `CONFIG` preserves the legacy administrator border coordinates; `OFF` does not activate a profile border. See [XFEARTH_INSTALLATION.md](XFEARTH_INSTALLATION.md).

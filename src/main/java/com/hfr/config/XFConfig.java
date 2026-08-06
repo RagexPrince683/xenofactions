@@ -40,6 +40,15 @@ public final class XFConfig {
 	public static final String CAT_LEGACY_CHAT = "XENOFACTIONS_15_CHAT_FILTER";
 	public static final String CAT_LEGACY_GENERAL = "XENOFACTIONS_16_GENERAL_LEGACY";
 	public static final String CAT_LEGACY_DEBUG = "XENOFACTIONS_17_DEBUG_LOGGING";
+	public static final String CAT_EARTH_WORLD = "XENOFACTIONS_18_EARTH_WORLD";
+	public static boolean enableEarthWorldType = true;
+	public static String earthWorldTypeName = "xf_earth";
+	public static boolean earthRequireProfile = true;
+	public static String earthMissingChunkPolicy = "FAIL";
+	public static String earthBoundaryMode = "PROFILE";
+	public static String earthAllowProfileMinecraftVersion = "1.7.10";
+	public static boolean earthLogFallbackChunks = true;
+	public static int earthBoundarySafetyMargin = 1;
 
 	public static boolean enableDynmapIntegration = true;
 	public static boolean enableJourneyMapIntegration = true;
@@ -155,6 +164,16 @@ public final class XFConfig {
 
 	public static void load(Configuration config) {
 		commentCategories(config);
+		enableEarthWorldType = bool(config, CAT_EARTH_WORLD, "enableEarthWorldType", true, "Registers the template-backed xf_earth overworld type.");
+		earthWorldTypeName = string(config, CAT_EARTH_WORLD, "earthWorldTypeName", "xf_earth", "Stored generator name (1-16 characters; Phase 1 uses xf_earth).");
+		if(earthWorldTypeName.length() == 0 || earthWorldTypeName.length() > 16) { warn("earthWorldTypeName must contain 1-16 characters; using xf_earth"); earthWorldTypeName = "xf_earth"; }
+		if(!"xf_earth".equals(earthWorldTypeName)) { warn("Phase 1 registers the canonical xf_earth name; configured alias ignored"); earthWorldTypeName = "xf_earth"; }
+		earthRequireProfile = bool(config, CAT_EARTH_WORLD, "earthRequireProfile", true, "Refuse an adopted Earth world without xenoearth-profile.json.");
+		earthMissingChunkPolicy = enumValue(string(config, CAT_EARTH_WORLD, "earthMissingChunkPolicy", "FAIL", "FAIL or VOID."), "FAIL", "VOID", "earthMissingChunkPolicy");
+		earthBoundaryMode = enumValue(string(config, CAT_EARTH_WORLD, "earthBoundaryMode", "PROFILE", "OFF, PROFILE, or CONFIG."), "PROFILE", "OFF,CONFIG", "earthBoundaryMode");
+		earthAllowProfileMinecraftVersion = string(config, CAT_EARTH_WORLD, "earthAllowProfileMinecraftVersion", "1.7.10", "Required profile targetMinecraftVersion.");
+		earthLogFallbackChunks = bool(config, CAT_EARTH_WORLD, "earthLogFallbackChunks", true, "Log fallback chunks once per coordinate.");
+		earthBoundarySafetyMargin = integer(config, CAT_EARTH_WORLD, "earthBoundarySafetyMargin", 1, 0, 15, "Blocks kept inward from profile edges by the existing border handler.");
 
 		enableDynmapIntegration = bool(config, CAT_MODULES, "enableDynmapIntegration", enableDynmapIntegration, "Enables optional Dynmap markers. Safe no-op when Dynmap is absent.");
 		enableJourneyMapIntegration = bool(config, CAT_MODULES, "enableJourneyMapIntegration", enableJourneyMapIntegration, "Enables optional legacy JourneyMap 5.2.x client claim overlays. Safe no-op when JourneyMap is absent or incompatible.");
@@ -297,7 +316,9 @@ public final class XFConfig {
 		config.addCustomCategoryComment(CAT_LEGACY_CHAT, "15 - Legacy chat filter settings.");
 		config.addCustomCategoryComment(CAT_LEGACY_GENERAL, "16 - Miscellaneous legacy settings that do not belong to a specific subsystem.");
 		config.addCustomCategoryComment(CAT_LEGACY_DEBUG, "17 - Legacy debug, logging, and precision-calculation settings.");
+		config.addCustomCategoryComment(CAT_EARTH_WORLD, "18 - Template-backed WorldPainter Earth overworld safeguards.");
 	}
+	private static String enumValue(String value, String def, String alternatives, String name) { String v=value.toUpperCase(); if(v.equals(def)) return v; for(String a:alternatives.split(",")) if(v.equals(a)) return v; warn(name+" is invalid; using "+def); return def; }
 
 	public static int cityRadius(CityLevel level) { return cityRadii[index(level)]; }
 	public static float cityUpgradeCost(CityLevel level) { return cityUpgradeCosts[index(level)]; }

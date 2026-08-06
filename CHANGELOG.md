@@ -1,3 +1,9 @@
+# Pull request: add template-backed XenoFactions Earth world type
+
+- Registered the `xf_earth` dimension-0 world type and a non-generating missing-chunk fallback for externally exported WorldPainter Anvil saves.
+- Added validated, save-cached Earth profiles, startup adoption checks, profile-backed reuse of the existing border, operator status/check commands, localization, configuration, and installation documentation.
+- Kept Earth in the ordinary overworld without a custom dimension or world provider and without bundling map binaries.
+
 # Pull request: add faction creation cooldown reset command
 
 - Added the admin-only `/xcfactiontimeoutcreationreset <playername>` command to reset only one online or stored offline player's faction creation cooldown with immediate persistence.

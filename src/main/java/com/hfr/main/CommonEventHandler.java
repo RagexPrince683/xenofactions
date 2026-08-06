@@ -657,7 +657,7 @@ public class CommonEventHandler {
 		// --------------------
 		// World-border logic
 		// --------------------
-		if (border) {
+		if (border && world.provider.dimensionId == 0) {
 			// take a snapshot of the entity list to avoid ConcurrentModificationException
 			List<Entity> snapshot = new ArrayList<Entity>(world.loadedEntityList);
 

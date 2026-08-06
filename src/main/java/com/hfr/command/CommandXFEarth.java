@@ -1,0 +1,11 @@
+package com.hfr.command;
+import java.io.File; import com.hfr.config.XFConfig; import com.hfr.world.earth.*;
+import net.minecraft.command.*; import net.minecraft.server.MinecraftServer; import net.minecraft.util.ChatComponentText; import net.minecraft.world.WorldServer;
+public final class CommandXFEarth extends CommandBase {
+ public String getCommandName(){return "xfearth";} public String getCommandUsage(ICommandSender s){return "/xfearth status | check <chunkX> <chunkZ>";} public int getRequiredPermissionLevel(){return 2;}
+ public void processCommand(ICommandSender s,String[] a){WorldServer w=MinecraftServer.getServer().worldServerForDimension(0);File root=w.getSaveHandler().getWorldDirectory();XFEarthProfile p=null;try{if(XFEarthProfileLoader.exists(root))p=XFEarthProfileLoader.load(root);}catch(Exception e){msg(s,"Profile error: "+e.getMessage());}
+  if(a.length==1&&"status".equalsIgnoreCase(a[0])){msg(s,"Earth world type registered: "+XFEarthRegistry.isRegistered());msg(s,"Current overworld terrain type: "+w.getWorldInfo().getTerrainType().getWorldTypeName());msg(s,"Profile path: "+XFEarthProfileLoader.path(root)); if(p!=null){msg(s,"Profile name: "+p.getProfile());msg(s,"Effective scale: "+p.getEffectiveScale());msg(s,"Block bounds: "+p.getBounds().blockString());msg(s,"Chunk bounds: "+p.getBounds().chunkString());msg(s,"Sea level: "+p.getSeaLevel());}msg(s,"Missing chunk policy: "+XFConfig.earthMissingChunkPolicy);msg(s,"Boundary mode: "+XFConfig.earthBoundaryMode);msg(s,"Correctly adopted: "+(XFEarthRegistry.get()!=null&&w.getWorldInfo().getTerrainType()==XFEarthRegistry.get()&&p!=null));return;}
+  if(a.length==3&&"check".equalsIgnoreCase(a[0])){int x=parseInt(s,a[1]),z=parseInt(s,a[2]);boolean inside=p!=null&&p.getBounds().containsChunk(x,z);File region=new File(new File(root,"region"),"r."+XFEarthBounds.chunkToRegion(x)+"."+XFEarthBounds.chunkToRegion(z)+".mca");msg(s,"Inside profile bounds: "+inside);msg(s,"Region file exists: "+region.isFile()+" (this does not prove that the specific chunk exists)");return;} throw new WrongUsageException(getCommandUsage(s));
+ }
+ private static void msg(ICommandSender s,String m){s.addChatMessage(new ChatComponentText(m));}
+}

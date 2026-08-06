@@ -437,6 +437,8 @@ public class MainRegistry
 		ModBlocks.mainRegistry();
 		ModItems.mainRegistry();
 		loadConfig(PreEvent);
+		com.hfr.world.earth.XFEarthRegistry.register();
+		MinecraftForge.EVENT_BUS.register(new com.hfr.world.earth.XFEarthWorldValidationHandler());
 		CraftingManager.mainRegistry();
 		proxy.registerRenderInfo();
 		FluidHandler.init();
@@ -867,6 +869,7 @@ public class MainRegistry
 		event.registerServerCommand(new CommandXMarket());
 		event.registerServerCommand(new CommandStoneDrop());
 		event.registerServerCommand(new CommandStoneDrops());
+		event.registerServerCommand(new com.hfr.command.CommandXFEarth());
 		MuteManager.init();
 		if(XFConfig.enableTDM)
 			TDMKitManager.init();
