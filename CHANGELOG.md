@@ -1,3 +1,7 @@
+# Pull request: add faction creation cooldown reset command
+
+- Added the admin-only `/xcfactiontimeoutcreationreset <playername>` command to reset only one online or stored offline player's faction creation cooldown with immediate persistence.
+
 # Pull request: rebuild territory after City Center relocation
 
 - City Center relocation now rebuilds the city's circular territory around the destination and removes stale territory around the old center.

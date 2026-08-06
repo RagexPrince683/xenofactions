@@ -132,12 +132,13 @@ public class FactionCreationCooldownData {
 
     public static final class ClearResult {
         public final boolean ambiguous;
+        public final boolean resolved;
         public final UUID uuid;
         public final String name;
         public final long removedExpiration;
         public final int removedEntries;
-        private ClearResult(boolean ambiguous, UUID uuid, String name, long expiration, int count) {
-            this.ambiguous = ambiguous; this.uuid = uuid; this.name = name; this.removedExpiration = expiration; this.removedEntries = count;
+        private ClearResult(boolean ambiguous, boolean resolved, UUID uuid, String name, long expiration, int count) {
+            this.ambiguous = ambiguous; this.resolved = resolved; this.uuid = uuid; this.name = name; this.removedExpiration = expiration; this.removedEntries = count;
         }
     }
 
@@ -145,12 +146,37 @@ public class FactionCreationCooldownData {
     public static ClearResult clearNormalizedName(String name) { return clearRepresentations(null, name); }
 
     public static ClearResult clearTarget(String target, World world) {
-        if(target == null || target.trim().isEmpty()) return new ClearResult(true, null, "", 0L, 0);
+        if(target == null || target.trim().isEmpty()) return new ClearResult(true, false, null, "", 0L, 0);
         try { return clearRepresentations(UUID.fromString(target.trim()), null); }
         catch(IllegalArgumentException notUuid) { }
         EntityPlayer online = world == null ? null : world.getPlayerEntityByName(target);
         GameProfile profile = online == null ? PlayerIdentityService.cachedProfile(target) : online.getGameProfile();
         return clearRepresentations(profile == null ? null : profile.getId(), profile == null ? target : profile.getName());
+    }
+
+    /** Resolves a player name from the live server, profile cache, or existing cooldown data, then clears only that identity. */
+    public static ClearResult clearPlayerName(String playerName) {
+        String normalized = PlayerIdentityService.normalizeName(playerName);
+        if(normalized.isEmpty()) return new ClearResult(false, false, null, "", 0L, 0);
+        EntityPlayer online = MinecraftServer.getServer().getConfigurationManager().func_152612_a(playerName);
+        GameProfile profile = online == null ? PlayerIdentityService.cachedProfile(playerName) : online.getGameProfile();
+        if(profile != null)
+            return clearRepresentations(profile.getId(), profile.getName());
+
+        UUID storedUuid = null;
+        String storedName = null;
+        for(Map.Entry<String, CooldownEntry> entry : DATA.entrySet()) {
+            if(entry.getValue() != null && normalized.equals(PlayerIdentityService.normalizeName(entry.getValue().lastKnownName))) {
+                if(storedUuid != null) return new ClearResult(true, true, null, playerName, 0L, 0);
+                try { storedUuid = UUID.fromString(entry.getKey()); }
+                catch(IllegalArgumentException malformed) { return new ClearResult(true, true, null, playerName, 0L, 0); }
+                storedName = entry.getValue().lastKnownName;
+            }
+        }
+        if(storedUuid != null) return clearRepresentations(storedUuid, storedName);
+        CooldownEntry fallback = FALLBACKS.get(normalized);
+        if(fallback != null) return clearRepresentations(null, fallback.lastKnownName);
+        return new ClearResult(false, false, null, playerName, 0L, 0);
     }
 
     public static ClearResult clearRepresentations(UUID uuid, String suppliedName) {
@@ -162,7 +188,7 @@ public class FactionCreationCooldownData {
             if(entry.getValue() != null && normalized.equals(PlayerIdentityService.normalizeName(entry.getValue().lastKnownName)) && !matchingUuids.contains(entry.getKey())) matchingUuids.add(entry.getKey());
         if(!normalized.isEmpty() && matchingUuids.size() > 1) {
             log("Ambiguous cooldown identity '" + normalized + "' matches " + matchingUuids.size() + " UUID entries; nothing cleared", null);
-            return new ClearResult(true, null, suppliedName, 0L, 0);
+            return new ClearResult(true, true, null, suppliedName, 0L, 0);
         }
         long expiration = 0L; int count = 0; String knownName = suppliedName;
         for(String key : matchingUuids) {
@@ -175,7 +201,7 @@ public class FactionCreationCooldownData {
             if(removed != null) { count++; expiration = Math.max(expiration, removed.expiresAt); }
         }
         if(count > 0) save();
-        return new ClearResult(false, uuid, knownName == null ? "" : knownName, expiration, count);
+        return new ClearResult(false, true, uuid, knownName == null ? "" : knownName, expiration, count);
     }
 
     public static Map<String, String> snapshotFactionMembers(Clowder clowder, World world) {
