@@ -9,6 +9,7 @@ import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.CoordPair;
 import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.clowder.ClowderEvents;
+import com.hfr.clowder.FactionCreationCooldownData;
 import com.hfr.clowder.PlayerProtectionData;
 import com.hfr.config.XFConfig;
 import com.hfr.guide.XFGuideBook;
@@ -71,6 +72,7 @@ public class CommandClowderAdmin extends CommandBase {
 		String cmd = args[0].toLowerCase();
 
 		if(cmd.equals("help") || cmd.equals("man")) { cmdHelp(sender, args.length > 1 ? args[1] : "1"); return; }
+		if(cmd.equals("clearcreationcooldown") || cmd.equals("resetcreationcooldown")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdClearCreationCooldown(sender, args[1]); return; }
 		if(cmd.equals("forcejoin") || cmd.equals("fj")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdForcejoin(sender, joinArgs(args, 1)); return; }
 		if(cmd.equals("forcekick") || cmd.equals("fk")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdForcekick(sender, args[1]); return; }
 		if(cmd.equals("forcedisband") || cmd.equals("fd")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdForcedisband(sender, joinArgs(args, 1)); return; }
@@ -177,6 +179,7 @@ public class CommandClowderAdmin extends CommandBase {
 	}
 
 	private String getUsageFor(String cmd) {
+		if(cmd.equals("clearcreationcooldown") || cmd.equals("resetcreationcooldown")) return "/xc clearcreationcooldown <player-or-uuid>";
 		if(cmd.equals("forcejoin") || cmd.equals("fj")) return "/xc forcejoin <faction>";
 		if(cmd.equals("forcekick") || cmd.equals("fk")) return "/xc forcekick <player>";
 		if(cmd.equals("forcedisband") || cmd.equals("fd")) return "/xc forcedisband <faction>";
@@ -210,6 +213,7 @@ public class CommandClowderAdmin extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forcedisband <faction>" + TITLE + " - Forcefully disbands a faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forcerename <name>" + TITLE + " - Forcefully renames your faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-hijack" + TITLE + " - Forcefully overrides faction leadership"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-clearcreationcooldown <player-or-uuid>" + TITLE + " - Clears an online or offline player creation cooldown"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-deletedata" + TITLE + " - Deletes all clowder data (CAUTION!!)"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-disband <faction>" + TITLE + " - Disbands your faction with confirmation"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-rename <name>" + TITLE + " - Renames your faction"));
@@ -273,7 +277,7 @@ public class CommandClowderAdmin extends CommandBase {
 		
 		if(clowder != null) {
 			
-			if(!clowder.isOwner(kickee.getUniqueID())) {
+			if(!clowder.isOwner(kickee)) {
 				
 				clowder.removeMember(player.worldObj, kickee.getDisplayName());
 				sender.addChatMessage(new ChatComponentText(INFO + "You have kicked " + kickee.getDisplayName() + " from the faction " + clowder.getDecoratedName() + "!"));
@@ -334,7 +338,7 @@ public class CommandClowderAdmin extends CommandBase {
 		
 		if(clowder != null) {
 			
-			if(!clowder.isOwner(player.getUniqueID())) {
+			if(!clowder.isOwner(player)) {
 				
 				clowder.transferOwnership(player.worldObj, player.getDisplayName());
 				sender.addChatMessage(new ChatComponentText(INFO + "You have assumed ownership of this faction!"));
@@ -583,13 +587,25 @@ public class CommandClowderAdmin extends CommandBase {
 		}
 	}
 	
+	private void cmdClearCreationCooldown(ICommandSender sender, String target) {
+		FactionCreationCooldownData.ClearResult result = FactionCreationCooldownData.clearTarget(target, sender.getEntityWorld());
+		if(result.ambiguous) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Player identity is malformed or ambiguous; no cooldown was cleared."));
+			return;
+		}
+		String identity = result.name == null || result.name.isEmpty() ? target : result.name;
+		if(result.uuid != null) identity += " (" + result.uuid + ")";
+		if(result.removedEntries == 0) sender.addChatMessage(new ChatComponentText(INFO + identity + " has no active faction creation cooldown."));
+		else sender.addChatMessage(new ChatComponentText(INFO + "Cleared faction creation cooldown for " + identity + "; removed expiration " + result.removedExpiration + "."));
+	}
+
 	@Override
     public List addTabCompletionOptions(ICommandSender sender, String[] args) {
 		if(args.length == 1)
 			return getListOfStringsMatchingLastWord(args, getAdminCommandNames());
 
 		String cmd = args[0].toLowerCase();
-		if(cmd.equals("forcekick") || cmd.equals("fk"))
+		if(cmd.equals("forcekick") || cmd.equals("fk") || cmd.equals("clearcreationcooldown") || cmd.equals("resetcreationcooldown"))
 			return getListOfStringsMatchingLastWord(args, MinecraftServer.getServer().getAllUsernames());
 
 		if(isFactionCompletionCommand(cmd))
@@ -599,7 +615,7 @@ public class CommandClowderAdmin extends CommandBase {
     }
 
 	private String[] getAdminCommandNames() {
-		return new String[] { "help", "forcejoin", "fj", "forcekick", "fk", "forcedisband", "fd", "forcerename", "fr",
+		return new String[] { "help", "clearcreationcooldown", "resetcreationcooldown", "forcejoin", "fj", "forcekick", "fk", "forcedisband", "fd", "forcerename", "fr",
 				"hijack", "hi", "deletedata", "deldat", "setclaim", "sc", "addprestige", "ap", "disband", "rename",
 				"warenable", "wardisable", "newplayerprotection", "resetnewplayerprotection", "endnewplayerprotection",
 				"skipwarcooldowns", "ignorewarcooldowncheck", "ignorewaronlinecheck", "ignorewarstatecheck",

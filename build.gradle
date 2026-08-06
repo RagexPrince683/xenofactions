@@ -68,6 +68,8 @@ tasks.named('compileJava') {
 
 tasks.named('runClient') {
     dependsOn(prepareDevModsTask)
+    username.set(providers.gradleProperty('devUsername').orElse('DevPlayer'))
+    userUUID.set(providers.gradleProperty('devUuid').orElse('45564450-4c41-5945-5200-000000000001'))
 }
 
 tasks.withType(JavaCompile).configureEach {

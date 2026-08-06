@@ -981,6 +981,8 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 	@SubscribeEvent
 	public void onPlayerLogin(PlayerLoggedInEvent event) {
 
+		Clowder loginFaction = Clowder.getClowderFromPlayer(event.player);
+		if(loginFaction != null) loginFaction.updateLastKnownName(event.player);
 		if(event.player instanceof EntityPlayerMP) Clowder.syncNameplateDataAll();
 
 		if(event.player != null)

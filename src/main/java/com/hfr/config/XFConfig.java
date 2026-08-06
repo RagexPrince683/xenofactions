@@ -30,6 +30,7 @@ public final class XFConfig {
 	public static final String CAT_CUSTOM_FLAGS = "XENOFACTIONS_08_CUSTOM_FLAGS";
 	public static final String CAT_DYNMAP = "XENOFACTIONS_09_DYNMAP";
 	public static final String CAT_JOURNEYMAP = "XENOFACTIONS_09B_JOURNEYMAP_CLIENT";
+	public static final String CAT_PLAYER_IDENTITY = "XENOFACTIONS_09C_PLAYER_IDENTITY";
 
 	public static final String CAT_LEGACY_MACHINES = "XENOFACTIONS_10_MACHINES_POWER";
 	public static final String CAT_LEGACY_DEFENSE = "XENOFACTIONS_11_RADAR_FORCEFIELD";
@@ -56,6 +57,7 @@ public final class XFConfig {
 	public static boolean enableNEIIntegration = true;
 	public static boolean warEnabledDefault = false;
 	public static boolean enableDebugLogging = false;
+	public static String playerIdentityMode = "AUTO";
 
 	public static float startingPrestige = 250F;
 	public static float basePrestigeGen = 25F;
@@ -161,6 +163,7 @@ public final class XFConfig {
 		enableConquestFlagsCommand = bool(config, CAT_MODULES, "enableConquestFlagsCommand", enableConquestFlagsCommand, "Enables the /xflags command that grants conquest flags while wars are enabled.");
 		enableGuideBook = bool(config, CAT_MODULES, "enableGuideBook", enableGuideBook, "Registers the optional Guide-API Xenofactions Handbook when Guide-API is installed.");
 		enableNEIIntegration = bool(config, CAT_MODULES, "enableNEIIntegration", enableNEIIntegration, "Enables optional Not Enough Items recipe/usage display handlers when NEI is installed.");
+		playerIdentityMode = string(config, CAT_PLAYER_IDENTITY, "playerIdentityMode", playerIdentityMode, "AUTO uses NAME in deobfuscated development or offline-mode servers and UUID otherwise. UUID is secure; NAME is development/offline compatibility only.");
 
 		startingPrestige = flt(config, CAT_PRESTIGE_GENERATION, "startingPrestige", startingPrestige, 0F, 1000000F, "Prestige granted to newly-created factions.");
 		basePrestigeGen = flt(config, CAT_PRESTIGE_GENERATION, "basePrestigeGeneration", basePrestigeGen, 0F, 100000F, "Base hourly prestige generation for factions.");
@@ -283,6 +286,7 @@ public final class XFConfig {
 		config.addCustomCategoryComment(CAT_CUSTOM_FLAGS, "08 - Custom faction flag import safety limits and cache/reload behaviour.");
 		config.addCustomCategoryComment(CAT_DYNMAP, "09 - Optional Dynmap marker styling, labels, and refresh timing.");
 		config.addCustomCategoryComment(CAT_JOURNEYMAP, "09B - Optional JourneyMap 5.2.x client claim overlay styling and city territory labels.");
+		config.addCustomCategoryComment(CAT_PLAYER_IDENTITY, "09C - Server player identity policy. NAME is only for development/offline compatibility; UUID is secure production behavior.");
 		config.addCustomCategoryComment(CAT_LEGACY_MACHINES, "10 - Legacy machine and power settings moved under the Xenofactions category flow.");
 		config.addCustomCategoryComment(CAT_LEGACY_DEFENSE, "11 - Legacy radar and forcefield settings.");
 		config.addCustomCategoryComment(CAT_LEGACY_WEAPONS, "12 - Legacy missile, nuke, railgun, and explosive weapon settings.");
