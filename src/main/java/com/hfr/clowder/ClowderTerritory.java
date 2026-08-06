@@ -2,7 +2,11 @@ package com.hfr.clowder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.hfr.config.XFConfig;
 import com.hfr.data.ClowderData;
@@ -32,6 +36,68 @@ public class ClowderTerritory {
 	public static final int WILDERNESS_COLOR = 0xFFFFFF;
 	
 	public static HashMap<CoordPair, TerritoryMeta> territories = new HashMap();
+
+	/**
+	 * The canonical City Center shape.  Block-to-chunk conversion intentionally
+	 * goes through getCoordPair so old worlds retain the mod's legacy +1 and
+	 * integer-division behaviour at negative coordinates.
+	 */
+	public static Set<CoordPair> getCityClaimCoordinates(int dimensionId, int flagX, int flagZ, int radius) {
+		Set<CoordPair> result = new LinkedHashSet<CoordPair>();
+		int boundedRadius = Math.min(radius, CityLevel.maxRadius());
+		for(int x = -CityLevel.maxRadius(); x <= CityLevel.maxRadius(); x++) {
+			for(int z = -CityLevel.maxRadius(); z <= CityLevel.maxRadius(); z++) {
+				if(Math.sqrt((double)x * x + (double)z * z) < boundedRadius)
+					result.add(getCoordPair(dimensionId, flagX + x * 16, flagZ + z * 16));
+			}
+		}
+		return result;
+	}
+
+	/** Atomically replaces one city's claims without touching occupied or unrelated coordinates. */
+	public static Set<CoordPair> rebuildCityClaims(Map<CoordPair, TerritoryMeta> territory, Clowder faction,
+		String cityId, int dimensionId, int flagX, int flagY, int flagZ, String cityName, int cityLevel, int radius) {
+		if(territory == null || faction == null || cityId == null || cityId.isEmpty())
+			throw new IllegalArgumentException("invalid city rebuild arguments");
+		Set<CoordPair> expected = getCityClaimCoordinates(dimensionId, flagX, flagZ, radius);
+		for(CoordPair coordinate : expected) {
+			TerritoryMeta existing = territory.get(coordinate);
+			if(existing != null && !cityId.equals(existing.cityId))
+				throw new IllegalStateException("city rebuild overlaps occupied territory at " + coordinate);
+		}
+
+		Map<CoordPair, TerritoryMeta> replacement = new HashMap<CoordPair, TerritoryMeta>(territory);
+		for(CoordPair coordinate : new ArrayList<CoordPair>(replacement.keySet())) {
+			TerritoryMeta meta = replacement.get(coordinate);
+			if(meta != null && coordinate.dimensionId == dimensionId && cityId.equals(meta.cityId)) replacement.remove(coordinate);
+		}
+		for(CoordPair coordinate : expected) {
+			TerritoryMeta meta = new TerritoryMeta(new Ownership(Zone.FACTION, faction), flagX, flagY, flagZ);
+			meta.dimensionId = dimensionId; meta.name = cityName; meta.cityName = cityName;
+			meta.cityId = cityId; meta.cityLevel = cityLevel;
+			replacement.put(coordinate, meta);
+		}
+		verifyCityClaims(replacement, faction, cityId, dimensionId, flagX, flagY, flagZ, cityName, cityLevel, expected);
+		territory.clear(); territory.putAll(replacement);
+		return expected;
+	}
+
+	public static void verifyCityClaims(Map<CoordPair, TerritoryMeta> territory, Clowder faction, String cityId,
+		int dimensionId, int flagX, int flagY, int flagZ, String cityName, int cityLevel, Set<CoordPair> expected) {
+		Set<CoordPair> actual = new HashSet<CoordPair>();
+		for(Map.Entry<CoordPair, TerritoryMeta> entry : territory.entrySet()) {
+			TerritoryMeta meta = entry.getValue();
+			if(meta == null || !cityId.equals(meta.cityId)) continue;
+			if(entry.getKey().dimensionId != dimensionId || meta.dimensionId != dimensionId || meta.owner == null
+				|| meta.owner.zone != Zone.FACTION || meta.owner.owner != faction || meta.flagX != flagX
+				|| meta.flagY != flagY || meta.flagZ != flagZ || !cityName.equals(meta.name)
+				|| !cityName.equals(meta.cityName) || meta.cityLevel != cityLevel)
+				throw new IllegalStateException("rebuilt city metadata verification failed at " + entry.getKey());
+			actual.add(entry.getKey());
+		}
+		if(!actual.equals(expected) || !actual.contains(getCoordPair(dimensionId, flagX, flagZ)))
+			throw new IllegalStateException("rebuilt city territory geometry verification failed");
+	}
 	
 	//the chunk coords in the CodePair wrapper class
 	public static CoordPair getCoordPair(int x, int z) { return getCoordPair(0, x, z); }

@@ -188,8 +188,13 @@ public final class CityCenterRelocationManager {
     private static boolean commit(EntityPlayerMP player, int tokenSlot, Clowder faction, World world, int x, int y, int z, float cost) {
         TileEntityFlag oldFlag = (TileEntityFlag)world.getTileEntity(faction.relocationX, faction.relocationY, faction.relocationZ);
         NBTTagCompound saved = new NBTTagCompound(); oldFlag.writeToNBT(saved);
+        int oldBlockMetadata = world.getBlockMetadata(faction.relocationX, faction.relocationY, faction.relocationZ);
         Map<CoordPair, TerritoryMeta> oldTerritory = copyTerritory();
         int oldHomeX=faction.homeX, oldHomeY=faction.homeY, oldHomeZ=faction.homeZ, oldHomeDim=faction.homeDim; boolean oldHomeSet=faction.homeSet;
+        String oldRelocationId=faction.relocationId, oldRelocationCityId=faction.relocationCityId;
+        long oldRelocationStarted=faction.relocationStarted, oldRelocationExpires=faction.relocationExpires;
+        List<Long> oldHistory=faction.cityRelocationHistory.get(oldRelocationCityId);
+        oldHistory=oldHistory == null ? null : new ArrayList<Long>(oldHistory);
         ItemStack savedToken = player.inventory.mainInventory[tokenSlot].copy();
         boolean charged = false, consumed = false; String phase = "placing destination";
         try {
@@ -200,13 +205,16 @@ public final class CityCenterRelocationManager {
             phase = "restoring destination tile";
             TileEntityFlag newFlag=(TileEntityFlag)te; newFlag.readFromNBT(destinationNbt); newFlag.setCityId(faction.relocationCityId);
             newFlag.restoreOwnerForRelocation(faction); newFlag.markDirty(); world.markBlockForUpdate(x, y, z);
-            phase = "updating city metadata";
-            updateMovedCityClaims(faction, faction.relocationCityId, world.provider.dimensionId, x, y, z, newFlag.name, newFlag.cityLevel.ordinal());
-            if(ClowderTerritory.findCityMeta(faction.relocationCityId, world.provider.dimensionId, x, y, z, faction.uuid) == null)
-                throw new IllegalStateException("destination claim metadata was not updated");
+            phase = "rebuilding city territory";
+            ClowderTerritory.rebuildCityClaims(ClowderTerritory.territories, faction, faction.relocationCityId,
+                world.provider.dimensionId, x, y, z, newFlag.name, newFlag.cityLevel.ordinal(), newFlag.getRadius());
+            faction.reconcileCitiesFounded(world);
             phase = "removing source";
             GUARDED_REMOVAL.set(key(world,faction.relocationX,faction.relocationY,faction.relocationZ));
-            try { world.setBlockToAir(faction.relocationX,faction.relocationY,faction.relocationZ); } finally { GUARDED_REMOVAL.remove(); }
+            try {
+                if(!world.setBlockToAir(faction.relocationX,faction.relocationY,faction.relocationZ))
+                    throw new IllegalStateException("source City Center could not be removed");
+            } finally { GUARDED_REMOVAL.remove(); }
             moveHomeIfNeeded(faction, oldTerritory, oldHomeX, oldHomeY, oldHomeZ, oldHomeDim, x, y, z, world);
             ClowderData.getData(world).markDirty(); com.hfr.dynmap.XFDynmapIntegration.markDirty();
             world.markBlockForUpdate(x, y, z);
@@ -230,11 +238,17 @@ public final class CityCenterRelocationManager {
             }
             if(world.getBlock(x,y,z)==ModBlocks.clowder_flag) { GUARDED_REMOVAL.set(key(world,x,y,z)); try { world.setBlockToAir(x,y,z); } finally { GUARDED_REMOVAL.remove(); } }
             ClowderTerritory.territories.clear(); ClowderTerritory.territories.putAll(oldTerritory);
-            if(world.getBlock(faction.relocationX,faction.relocationY,faction.relocationZ)!=ModBlocks.clowder_flag) world.setBlock(faction.relocationX,faction.relocationY,faction.relocationZ,ModBlocks.clowder_flag);
+            if(world.getBlock(faction.relocationX,faction.relocationY,faction.relocationZ)!=ModBlocks.clowder_flag)
+                world.setBlock(faction.relocationX,faction.relocationY,faction.relocationZ,ModBlocks.clowder_flag,oldBlockMetadata,3);
             TileEntity restored=world.getTileEntity(faction.relocationX,faction.relocationY,faction.relocationZ); if(restored instanceof TileEntityFlag) ((TileEntityFlag)restored).readFromNBT(saved);
             world.markBlockForUpdate(faction.relocationX,faction.relocationY,faction.relocationZ);
             faction.homeX=oldHomeX; faction.homeY=oldHomeY; faction.homeZ=oldHomeZ; faction.homeDim=oldHomeDim; faction.homeSet=oldHomeSet;
-            faction.save(world); ClowderData.getData(world).markDirty();
+            faction.relocationId=oldRelocationId; faction.relocationCityId=oldRelocationCityId;
+            faction.relocationStarted=oldRelocationStarted; faction.relocationExpires=oldRelocationExpires;
+            if(oldHistory == null) faction.cityRelocationHistory.remove(oldRelocationCityId);
+            else faction.cityRelocationHistory.put(oldRelocationCityId,oldHistory);
+            faction.reconcileCitiesFounded(world);
+            faction.save(world); ClowderData.getData(world).markDirty(); com.hfr.dynmap.XFDynmapIntegration.markDirty();
             return fail(player, "The relocation failed and the original city was restored.");
         }
     }
@@ -243,22 +257,15 @@ public final class CityCenterRelocationManager {
         Map<CoordPair, TerritoryMeta> result = new HashMap<CoordPair, TerritoryMeta>();
         for(Map.Entry<CoordPair, TerritoryMeta> entry : ClowderTerritory.territories.entrySet()) {
             TerritoryMeta meta = entry.getValue();
-            if(meta == null) { result.put(entry.getKey(), null); continue; }
-            TerritoryMeta copy = new TerritoryMeta(meta.owner, meta.flagX, meta.flagY, meta.flagZ);
+            CoordPair key = entry.getKey();
+            CoordPair copiedKey = new CoordPair(key.dimensionId, key.x, key.z);
+            if(meta == null) { result.put(copiedKey, null); continue; }
+            ClowderTerritory.Ownership ownership = meta.owner == null ? null : new ClowderTerritory.Ownership(meta.owner.zone, meta.owner.owner);
+            TerritoryMeta copy = new TerritoryMeta(ownership, meta.flagX, meta.flagY, meta.flagZ);
             copy.dimensionId=meta.dimensionId; copy.name=meta.name; copy.cityId=meta.cityId;
-            copy.cityName=meta.cityName; copy.cityLevel=meta.cityLevel; result.put(entry.getKey(), copy);
+            copy.cityName=meta.cityName; copy.cityLevel=meta.cityLevel; result.put(copiedKey, copy);
         }
         return result;
-    }
-
-    private static void updateMovedCityClaims(Clowder faction, String cityId, int dim, int x, int y, int z, String name, int level) {
-        int changed=0;
-        for(TerritoryMeta meta : ClowderTerritory.territories.values()) if(meta != null && cityId.equals(meta.cityId)) {
-            if(meta.owner == null || meta.owner.zone != Zone.FACTION || !sameFaction(meta.owner.owner, faction))
-                throw new IllegalStateException("moved city claim owner changed");
-            meta.dimensionId=dim; meta.flagX=x; meta.flagY=y; meta.flagZ=z; meta.name=name; meta.cityName=name; meta.cityLevel=level; changed++;
-        }
-        if(changed == 0) throw new IllegalStateException("moved city has no territory metadata");
     }
 
     private static void moveHomeIfNeeded(Clowder f, Map<CoordPair,TerritoryMeta> oldClaims, int hx,int hy,int hz,int hd,int nx,int ny,int nz,World world) {

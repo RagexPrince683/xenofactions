@@ -398,17 +398,12 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 		if(placementError != null && ClowderTerritory.getMetaFromIntCoords(worldObj, xCoord, zCoord) == null)
 			return;
 		
+		java.util.Set<CoordPair> expected = ClowderTerritory.getCityClaimCoordinates(worldObj.provider.dimensionId, xCoord, zCoord, rad);
 		for(int x = -CityLevel.maxRadius(); x <= CityLevel.maxRadius(); x++) {
 			for(int z = -CityLevel.maxRadius(); z <= CityLevel.maxRadius(); z++) {
-
-				int posX = xCoord + x * 16;
-				int posZ = zCoord + z * 16;
-				CoordPair loc = ClowderTerritory.getCoordPair(worldObj, posX, posZ);
-				
+				CoordPair loc = ClowderTerritory.getCoordPair(worldObj, xCoord + x * 16, zCoord + z * 16);
 				TerritoryMeta meta = ClowderTerritory.getMetaFromCoords(loc);
-				
-				double dist = Math.sqrt(Math.pow(x, 2) + Math.pow(z, 2));
-				if(dist < rad) {
+				if(expected.contains(loc)) {
 					if(meta == null || !meta.checkPersistence(worldObj, loc) || (meta.flagX == xCoord && meta.flagY == yCoord && meta.flagZ == zCoord)) {
 						ClowderTerritory.setOwnerForCoord(worldObj, loc, owner, xCoord, yCoord, zCoord, name, getCityId());
 						TerritoryMeta newMeta = ClowderTerritory.getMetaFromCoords(loc);
