@@ -41,6 +41,30 @@ public final class CityCenterRelocationManager {
     public static void schedule(Runnable task) { if(task != null) SERVER_TASKS.add(task); }
     public static void runScheduledTasks() { Runnable task; while((task = SERVER_TASKS.poll()) != null) task.run(); }
 
+    /**
+     * Returns whether a City Center has lost its faction. This is deliberately
+     * based on the registered faction list rather than names, so it also handles
+     * stale tile references left by disbanding and null references restored from
+     * old saves.
+     */
+    public static boolean isOrphaned(TileEntityFlag flag) {
+        return flag != null && !isLiveFactionOwner(flag.owner, Clowder.clowders);
+    }
+
+    static boolean isLiveFactionOwner(Clowder owner, Iterable<Clowder> registeredFactions) {
+        if(owner == null || registeredFactions == null) return false;
+        String ownerUuid = normalizedUuid(owner.uuid);
+        for(Clowder registered : registeredFactions) {
+            if(registered == owner) return true;
+            if(registered != null && !ownerUuid.isEmpty() && ownerUuid.equals(normalizedUuid(registered.uuid))) return true;
+        }
+        return false;
+    }
+
+    private static String normalizedUuid(String uuid) {
+        return uuid == null ? "" : uuid.trim();
+    }
+
     public static double horizontalDistance(int x1, int z1, int x2, int z2) {
         long dx = (long)x2 - x1, dz = (long)z2 - z1;
         return Math.sqrt(dx * dx + dz * dz);
