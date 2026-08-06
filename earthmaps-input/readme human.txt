@@ -1,0 +1,1 @@
+put in assets in earthmaps -> bundled
