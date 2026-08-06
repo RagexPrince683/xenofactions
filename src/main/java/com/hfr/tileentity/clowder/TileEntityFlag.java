@@ -322,6 +322,13 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 		
 		this.markDirty();
 	}
+
+	/** Restores the canonical owner during relocation without capture/transfer accounting. */
+	public void restoreRelocationOwner(Clowder c) {
+		owner = c;
+		ownerName = c == null ? "" : c.name;
+		markDirty();
+	}
 	
 	public void setMode(int mode) {
 		// City Centers always use the current city level for radius/upkeep.
