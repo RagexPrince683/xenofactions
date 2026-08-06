@@ -67,4 +67,5 @@ saves/
 /eclipse/asm/ccl_modular
 /hbm/eclipse
 /hbm/
+/earthmaps-input/*.xfmap
 /eclipse

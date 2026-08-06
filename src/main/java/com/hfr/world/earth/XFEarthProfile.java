@@ -8,7 +8,7 @@ public final class XFEarthProfile {
     int minimumSurfaceY, maximumSurfaceY, seaLevel;
     String projection, populationMode; boolean caves, ores, lava, structures, vegetation;
     private transient XFEarthBounds bounds;
-    void validate(String allowedVersion) {
+    public void validate(String allowedVersion) {
         if(formatVersion!=1) bad("unsupported formatVersion: "+formatVersion);
         if(!allowedVersion.equals(targetMinecraftVersion)) bad("targetMinecraftVersion must be "+allowedVersion);
         if(width<=0||height<=0||width%16!=0||height%16!=0) bad("width and height must be positive multiples of 16");
@@ -16,10 +16,10 @@ public final class XFEarthProfile {
         if(minimumSurfaceY<1||maximumSurfaceY>254||minimumSurfaceY>maximumSurfaceY) bad("surface range must be within 1..254");
         if(seaLevel<minimumSurfaceY||seaLevel>maximumSurfaceY) bad("seaLevel must lie inside surface range");
         if(!"pregenerated".equals(populationMode)) bad("populationMode must be pregenerated");
-        if(caves||ores||lava||structures) bad("caves, ores, lava, and structures must all be false");
         if(profile==null||profile.trim().isEmpty()) bad("profile name is required");
         bounds=new XFEarthBounds(minimumX,maximumX,minimumZ,maximumZ);
     }
+    public void validateForPack(com.hfr.world.earth.pack.XFEarthMapManifest m){validate("1.7.10");if(width!=m.width||height!=m.height||effectiveScale!=m.effectiveScale)bad("profile dimensions/scale disagree with manifest");}
     private static void bad(String message){throw new IllegalArgumentException("Invalid XenoEarth profile: "+message);}
     public String getProfile(){return profile;} public int getEffectiveScale(){return effectiveScale;} public int getWidth(){return width;} public int getHeight(){return height;}
     public int getSeaLevel(){return seaLevel;} public XFEarthBounds getBounds(){return bounds;}

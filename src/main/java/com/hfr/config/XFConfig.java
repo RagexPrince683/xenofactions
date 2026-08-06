@@ -42,7 +42,12 @@ public final class XFConfig {
 	public static final String CAT_LEGACY_DEBUG = "XENOFACTIONS_17_DEBUG_LOGGING";
 	public static final String CAT_EARTH_WORLD = "XENOFACTIONS_18_EARTH_WORLD";
 	public static boolean enableEarthWorldType = true;
-	public static String earthWorldTypeName = "xf_earth";
+	public static String earthWorldTypeName = "earthmap";
+	public static String earthDefaultPackId = "xf-earth-16k-clean";
+	public static String earthBundledCacheDirectory = "";
+	public static String earthLocalMapDirectory = "";
+	public static boolean earthRequireVerifiedHashes = true;
+	public static boolean earthAllowUnverifiedLocalPacks = false;
 	public static boolean earthRequireProfile = true;
 	public static String earthMissingChunkPolicy = "FAIL";
 	public static String earthBoundaryMode = "PROFILE";
@@ -165,9 +170,12 @@ public final class XFConfig {
 	public static void load(Configuration config) {
 		commentCategories(config);
 		enableEarthWorldType = bool(config, CAT_EARTH_WORLD, "enableEarthWorldType", true, "Registers the template-backed xf_earth overworld type.");
-		earthWorldTypeName = string(config, CAT_EARTH_WORLD, "earthWorldTypeName", "xf_earth", "Stored generator name (1-16 characters; Phase 1 uses xf_earth).");
-		if(earthWorldTypeName.length() == 0 || earthWorldTypeName.length() > 16) { warn("earthWorldTypeName must contain 1-16 characters; using xf_earth"); earthWorldTypeName = "xf_earth"; }
-		if(!"xf_earth".equals(earthWorldTypeName)) { warn("Phase 1 registers the canonical xf_earth name; configured alias ignored"); earthWorldTypeName = "xf_earth"; }
+		earthWorldTypeName = "earthmap";
+		earthDefaultPackId = string(config, CAT_EARTH_WORLD, "earthDefaultPackId", "xf-earth-16k-clean", "Map pack selected when generator options are empty or invalid.");
+		earthBundledCacheDirectory = string(config, CAT_EARTH_WORLD, "earthBundledCacheDirectory", "", "Blank uses .minecraft/xenofactions/earthmaps/cache.");
+		earthLocalMapDirectory = string(config, CAT_EARTH_WORLD, "earthLocalMapDirectory", "", "Blank uses .minecraft/xenofactions/earthmaps.");
+		earthRequireVerifiedHashes = bool(config, CAT_EARTH_WORLD, "earthRequireVerifiedHashes", true, "Require manifest and archive hashes.");
+		earthAllowUnverifiedLocalPacks = bool(config, CAT_EARTH_WORLD, "earthAllowUnverifiedLocalPacks", false, "Unsafe development escape hatch for local packs.");
 		earthRequireProfile = bool(config, CAT_EARTH_WORLD, "earthRequireProfile", true, "Refuse an adopted Earth world without xenoearth-profile.json.");
 		earthMissingChunkPolicy = enumValue(string(config, CAT_EARTH_WORLD, "earthMissingChunkPolicy", "FAIL", "FAIL or VOID."), "FAIL", "VOID", "earthMissingChunkPolicy");
 		earthBoundaryMode = enumValue(string(config, CAT_EARTH_WORLD, "earthBoundaryMode", "PROFILE", "OFF, PROFILE, or CONFIG."), "PROFILE", "OFF,CONFIG", "earthBoundaryMode");

@@ -22,3 +22,12 @@
 The default `FAIL` policy deliberately stops access when an expected in-bounds chunk is absent. `VOID` is an explicit diagnostic escape hatch, not a repair. Region-file existence reported by `/xfearth check` does not prove that a particular chunk is present in that region.
 
 Production save data, `.world` projects, and `.mca` files are deployed separately and must not be committed to Xenofactions or bundled in its jar.
+
+## New map-pack workflow
+
+The supported `earthmap` Singleplayer installer, `.xfmap` security model, local-pack
+workflow, and bundled release procedure are documented in
+[XFEARTH_WORLD_TYPE.md](XFEARTH_WORLD_TYPE.md),
+[XFEARTH_MAP_PACK_FORMAT.md](XFEARTH_MAP_PACK_FORMAT.md), and
+[XFEARTH_BUNDLED_RELEASE.md](XFEARTH_BUNDLED_RELEASE.md). The older manual
+WorldPainter adoption notes above remain useful only for pre-pack saves.
