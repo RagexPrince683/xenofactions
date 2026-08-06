@@ -7,10 +7,10 @@ import com.hfr.config.XFConfig;
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.CoordPair;
-import com.hfr.main.MainRegistry;
+import com.hfr.packet.PacketDispatcher;
+import com.hfr.packet.client.CityCenterGuiPacket;
 import com.hfr.tileentity.clowder.TileEntityFlag;
 
-import cpw.mods.fml.common.network.internal.FMLNetworkHandler;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.Material;
@@ -54,17 +54,21 @@ public class Flag extends BlockContainer {
 		if(world.isRemote)
 			return true;
 
+		if(world.getBlock(x, y, z) != ModBlocks.clowder_flag || player.getDistanceSq(x + 0.5D, y + 0.5D, z + 0.5D) > 64.0D)
+			return false;
+
 		TileEntity tile = world.getTileEntity(x, y, z);
-		if(tile instanceof TileEntityFlag) {
-			TileEntityFlag flag = (TileEntityFlag)tile;
-			if(flag.owner == null || !flag.canSeeSky()) {
-				world.func_147480_a(x, y, z, false);
-				return true;
-			}
+		if(!(tile instanceof TileEntityFlag))
+			return false;
+
+		TileEntityFlag flag = (TileEntityFlag)tile;
+		if(flag.owner == null || !flag.canSeeSky()) {
+			world.func_147480_a(x, y, z, false);
+			return true;
 		}
 
-		if(!player.isSneaking()) {
-			FMLNetworkHandler.openGui(player, MainRegistry.instance, ModBlocks.guiID_flag, world, x, y, z);
+		if(!player.isSneaking() && player instanceof net.minecraft.entity.player.EntityPlayerMP) {
+			PacketDispatcher.wrapper.sendTo(new CityCenterGuiPacket(world.provider.dimensionId, x, y, z), (net.minecraft.entity.player.EntityPlayerMP)player);
 			return true;
 		}
 

@@ -20,7 +20,6 @@ import com.hfr.inventory.gui.GUIDieselGen;
 import com.hfr.inventory.gui.GUIDistillery;
 import com.hfr.inventory.gui.GUIEFurnace;
 import com.hfr.inventory.gui.GUIFactory;
-import com.hfr.inventory.gui.GUIFlag;
 import com.hfr.inventory.gui.GUIForceField;
 import com.hfr.inventory.gui.GUIFoundry;
 import com.hfr.inventory.gui.GUIGrainmill;
@@ -190,15 +189,6 @@ public class GUIHandler implements IGuiHandler {
 				if(entity instanceof TileEntityMachineEMP)
 				{
 					return new ContainerMachineEMP(player.inventory, (TileEntityMachineEMP) entity);
-				}
-				return null;
-			}
-
-			case ModBlocks.guiID_flag:
-			{
-				if(entity instanceof TileEntityFlag)
-				{
-					return new ContainerFlag(player.inventory, (TileEntityFlag) entity);
 				}
 				return null;
 			}
@@ -516,15 +506,6 @@ public class GUIHandler implements IGuiHandler {
 					if(entity instanceof TileEntityMachineEMP)
 					{
 						return new GUIMachineEMP(player.inventory, (TileEntityMachineEMP) entity);
-					}
-					return null;
-				}
-				
-				case ModBlocks.guiID_flag:
-				{
-					if(entity instanceof TileEntityFlag)
-					{
-						return new GUIFlag(player.inventory, (TileEntityFlag) entity);
 					}
 					return null;
 				}

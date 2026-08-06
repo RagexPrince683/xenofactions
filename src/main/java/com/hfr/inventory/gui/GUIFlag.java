@@ -6,35 +6,51 @@ import org.lwjgl.opengl.GL11;
 
 import com.hfr.clowder.Clowder;
 import com.hfr.config.XFConfig;
-import com.hfr.inventory.container.ContainerFlag;
 import com.hfr.lib.RefStrings;
 import com.hfr.tileentity.clowder.TileEntityFlag;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.util.ResourceLocation;
 
-public class GUIFlag extends GuiContainer {
+public class GUIFlag extends GuiScreen {
 
 	public static ResourceLocation texture = new ResourceLocation(RefStrings.MODID + ":textures/gui/gui_flag_new.png");
 	private static final int HELP_X = 10;
 	private static final int HELP_Y = 9;
 	private static final int HELP_SIZE = 18;
 	private TileEntityFlag diFurnace;
+	private int guiLeft;
+	private int guiTop;
+	private int xSize = 216;
+	private int ySize = 216;
 
-	public GUIFlag(InventoryPlayer invPlayer, TileEntityFlag tedf) {
-		super(new ContainerFlag(invPlayer, tedf));
+	public GUIFlag(TileEntityFlag tedf) {
 		diFurnace = tedf;
-
-		this.xSize = 216;
-		this.ySize = 216;
 	}
 
 	@Override
-	protected void drawGuiContainerForegroundLayer(int x, int y) {
+	public void initGui() {
+		super.initGui();
+		guiLeft = (width - xSize) / 2;
+		guiTop = (height - ySize) / 2;
+	}
+
+	@Override
+	public boolean doesGuiPauseGame() {
+		return false;
+	}
+
+	@Override
+	public void drawScreen(int x, int y, float partialTicks) {
+		drawDefaultBackground();
+		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+		Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
+		drawScaledTexture(guiLeft, guiTop, xSize, ySize);
+		GL11.glPushMatrix();
+		GL11.glTranslatef(guiLeft, guiTop, 0.0F);
 
 		String name = I18n.format(diFurnace.getInventoryName());
 		drawTextBackground(45, 3, 132, 14);
@@ -58,15 +74,11 @@ public class GUIFlag extends GuiContainer {
 		this.fontRendererObj.drawString("Required: " + Clowder.round(prestigeReq), 50, 86, color);
 
 		if(isHelpHovered(x, y)) {
-			this.func_146283_a(Arrays.asList(new String[] {"Flag functions", "Claims are city-based", "Use /c city upgrade to level up", "Each level adds 1 chunk radius", "Capital max radius: 6 chunks", "Founding and upgrades require prestige"}), x - guiLeft, y - guiTop);
+			GL11.glPopMatrix();
+			this.func_146283_a(Arrays.asList(new String[] {"Flag functions", "Claims are city-based", "Use /c city upgrade to level up", "Each level adds 1 chunk radius", "Capital max radius: 6 chunks", "Founding and upgrades require prestige"}), x, y);
+			return;
 		}
-	}
-
-	@Override
-	protected void drawGuiContainerBackgroundLayer(float p_146976_1_, int p_146976_2_, int p_146976_3_) {
-		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-		Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
-		drawScaledTexture(guiLeft, guiTop, xSize, ySize);
+		GL11.glPopMatrix();
 	}
 
 	private boolean isHelpHovered(int x, int y) {

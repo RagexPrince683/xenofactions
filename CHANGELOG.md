@@ -1,3 +1,8 @@
+# Pull request: prevent relocated City Center GUI crashes
+
+- Changed the slotless City Center interface into an informational screen so opening it no longer replaces the player's active inventory container or crashes after relocation.
+- Made successful relocation token consumption clear and immediately synchronize the authorized server inventory slot, without consuming tokens for failed moves.
+
 # Pull request: fix relocated City Center territory lookup
 
 - Fixed the shifted block-to-chunk conversion mismatch that made relocated City Centers at affected X coordinates look unclaimed, and made territory ownership reads use the same legacy-compatible shifted X/Z rule as claim writes.

@@ -22,6 +22,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.play.server.S2FPacketSetSlot;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
@@ -121,12 +122,14 @@ public final class CityCenterRelocationManager {
         if(!faction.activeWars.isEmpty()) { clear(faction, world); return fail(player, "The move was canceled because your faction entered a war."); }
         NBTTagCompound tag = token.stackTagCompound;
         if(!faction.relocationId.equals(tag.getString("relocationId")) || !faction.uuid.equals(tag.getString("factionUuid")) || !faction.relocationCityId.equals(tag.getString("cityId"))) return fail(player, "This relocation token does not match the pending move.");
+        int tokenSlot = findAuthorizedTokenSlot(player, token, faction);
+        if(tokenSlot < 0) return fail(player, "The authorized relocation token is no longer in your inventory.");
         String error = validateDestination(faction, world, x, y, z);
         if(error != null) return fail(player, error);
         double distance = horizontalDistance(faction.relocationX, faction.relocationZ, x, z);
         float cost = calculateCost(distance);
         if(faction.getPrestige() < cost) return fail(player, "This move costs " + cost + " prestige; your faction cannot afford it.");
-        return commit(player, token, faction, world, x, y, z, cost);
+        return commit((EntityPlayerMP)player, tokenSlot, faction, world, x, y, z, cost);
     }
 
     private static String validateDestination(Clowder faction, World world, int x, int y, int z) {
@@ -149,7 +152,7 @@ public final class CityCenterRelocationManager {
         return spacing;
     }
 
-    private static boolean commit(EntityPlayer player, ItemStack token, Clowder faction, World world, int x, int y, int z, float cost) {
+    private static boolean commit(EntityPlayerMP player, int tokenSlot, Clowder faction, World world, int x, int y, int z, float cost) {
         TileEntityFlag oldFlag = (TileEntityFlag)world.getTileEntity(faction.relocationX, faction.relocationY, faction.relocationZ);
         NBTTagCompound saved = new NBTTagCompound(); oldFlag.writeToNBT(saved);
         Map<CoordPair, TerritoryMeta> oldTerritory = new HashMap<CoordPair, TerritoryMeta>(ClowderTerritory.territories);
@@ -172,9 +175,10 @@ public final class CityCenterRelocationManager {
             GUARDED_REMOVAL.set(key(world,faction.relocationX,faction.relocationY,faction.relocationZ));
             try { world.setBlockToAir(faction.relocationX,faction.relocationY,faction.relocationZ); } finally { GUARDED_REMOVAL.remove(); }
             moveHomeIfNeeded(faction, oldTerritory, oldHomeX, oldHomeY, oldHomeZ, oldHomeDim, x, y, z, world);
-            recordSuccess(faction, faction.relocationCityId, System.currentTimeMillis());
-            clear(faction, world); token.stackSize--;
             ClowderData.getData(world).markDirty(); com.hfr.dynmap.XFDynmapIntegration.markDirty();
+            if(!consumeAuthorizedToken(player, tokenSlot, faction)) throw new IllegalStateException("authorized relocation token changed");
+            recordSuccess(faction, faction.relocationCityId, System.currentTimeMillis());
+            clear(faction, world);
             message(player, "City Center relocated successfully for " + cost + " prestige.");
             return true;
         } catch(Throwable failure) {
@@ -197,6 +201,35 @@ public final class CityCenterRelocationManager {
         f.homeX=tx; f.homeY=hy; f.homeZ=tz; f.homeDim=world.provider.dimensionId;
         if(translated==null || !f.relocationCityId.equals(translated.cityId)) { f.homeX=nx; f.homeY=ny+1; f.homeZ=nz; }
         f.save(world); f.notifyAll(world,new ChatComponentText(EnumChatFormatting.YELLOW+"Faction home moved with the relocated City Center."));
+    }
+
+    private static int findAuthorizedTokenSlot(EntityPlayer player, ItemStack token, Clowder faction) {
+        int slot = player.inventory.currentItem;
+        if(slot < 0 || slot >= player.inventory.mainInventory.length) return -1;
+        ItemStack candidate = player.inventory.mainInventory[slot];
+        return candidate == token && isAuthorizedToken(candidate, faction) ? slot : -1;
+    }
+
+    private static boolean isAuthorizedToken(ItemStack stack, Clowder faction) {
+        if(!isToken(stack) || stack.stackSize <= 0 || faction == null) return false;
+        NBTTagCompound tag = stack.stackTagCompound;
+        return faction.relocationId.equals(tag.getString("relocationId"))
+            && faction.uuid.equals(tag.getString("factionUuid"))
+            && faction.relocationCityId.equals(tag.getString("cityId"));
+    }
+
+    private static boolean consumeAuthorizedToken(EntityPlayerMP player, int slot, Clowder faction) {
+        if(slot < 0 || slot >= player.inventory.mainInventory.length) return false;
+        ItemStack stack = player.inventory.mainInventory[slot];
+        if(!isAuthorizedToken(stack, faction)) return false;
+        if(stack.stackSize == 1) player.inventory.mainInventory[slot] = null;
+        else stack.stackSize--;
+        player.inventory.markDirty();
+        int containerSlot = slot < 9 ? 36 + slot : slot;
+        player.playerNetServerHandler.sendPacket(new S2FPacketSetSlot(0, containerSlot, player.inventory.mainInventory[slot]));
+        if(player.inventoryContainer != null) player.inventoryContainer.detectAndSendChanges();
+        if(player.openContainer != null && player.openContainer != player.inventoryContainer) player.openContainer.detectAndSendChanges();
+        return true;
     }
 
     public static String cooldownError(Clowder faction, String cityId, long now) {
