@@ -47,7 +47,16 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 		return cityId;
 	}
 
+	/** Returns persisted identity without synthesizing a coordinate-based legacy ID. */
+	public String getStableCityId() { return cityId == null ? "" : cityId; }
+
 	public void setCityId(String id) { cityId = id == null ? "" : id; markDirty(); }
+	/** Relocation restore must not run setOwner's faction-accounting side effects. */
+	public void restoreOwnerForRelocation(Clowder faction) {
+		owner = faction;
+		ownerName = faction == null ? "" : faction.name;
+		markDirty();
+	}
 	public void createCityId() { cityId = UUID.randomUUID().toString(); markDirty(); }
 	
 	private int timer = 0;
@@ -384,8 +393,7 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	public void generateClaim() {
 		
 		int rad = Math.min(getRadius(), CityLevel.maxRadius());
-		CoordPair center = ClowderTerritory.getCoordPair(worldObj, xCoord, zCoord);
-		String placementError = ClowderTerritory.getCityPlacementError(worldObj, center.x, center.z);
+		String placementError = ClowderTerritory.getCityPlacementError(worldObj, xCoord >> 4, zCoord >> 4);
 		if(placementError != null && ClowderTerritory.getMetaFromIntCoords(worldObj, xCoord, zCoord) == null)
 			return;
 		

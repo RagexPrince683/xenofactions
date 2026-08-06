@@ -107,11 +107,12 @@ public final class XFConfig {
 	public static float cityFoundingCostGrowth = 0.50F;
 	public static boolean cityRelocationEnabled = true;
 	public static int cityRelocationFreeDistanceBlocks = 10;
-	public static float cityRelocationBasePrestigeCost = 50F;
-	public static float cityRelocationPrestigePerExtraBlock = 1F;
+	public static float cityRelocationBasePrestigeCost = 0F;
+	public static float cityRelocationPrestigePerExtraBlock = 30F;
 	public static int cityRelocationMaxDistanceBlocks = 256;
 	public static int cityRelocationMoveLimit = 3;
-	public static int cityRelocationWindowHours = 24;
+	public static int cityRelocationWindowHours = 168;
+	public static int cityRelocationRepeatCooldownMinutes = 30;
 	public static int cityRelocationPendingMinutes = 30;
 
 	public static int warOnlinePlayerThreshold = 2;
@@ -217,6 +218,7 @@ public final class XFConfig {
 		cityRelocationMaxDistanceBlocks = integer(config, CAT_CLAIMS, "cityRelocationMaxDistanceBlocks", cityRelocationMaxDistanceBlocks, 0, 100000, "Maximum horizontal City Center relocation distance.");
 		cityRelocationMoveLimit = integer(config, CAT_CLAIMS, "cityRelocationMoveLimit", cityRelocationMoveLimit, 1, 100, "Successful moves allowed for each stable city ID inside the rolling window.");
 		cityRelocationWindowHours = integer(config, CAT_CLAIMS, "cityRelocationWindowHours", cityRelocationWindowHours, 1, 8760, "Rolling City Center move-limit window in hours.");
+		cityRelocationRepeatCooldownMinutes = integer(config, CAT_CLAIMS, "cityRelocationRepeatCooldownMinutes", cityRelocationRepeatCooldownMinutes, 0, 10080, "Minutes the third move must wait after the second successful move in the rolling window.");
 		cityRelocationPendingMinutes = integer(config, CAT_CLAIMS, "cityRelocationPendingMinutes", cityRelocationPendingMinutes, 1, 10080, "Minutes before an uncompleted relocation request expires harmlessly.");
 		cityRadii = intList(config, CAT_CLAIMS, "cityRadii", cityRadii, 1, maxCityRadius, "City radii by level: settlement,town,city,metropolis,capital.");
 		cityUpgradeCosts = floatList(config, CAT_CLAIMS, "cityUpgradeCosts", cityUpgradeCosts, 0F, 1000000F, "City upgrade/founding prestige costs by level.");
