@@ -1,3 +1,9 @@
+# Pull request: complete the Earth Map pack installer and bundled release workflow
+
+- Renamed and expanded the dimension-0 world type to `earthmap`, added its Singleplayer customization and asynchronous create/install flow, and retained non-generating missing-chunk and profile-border behavior.
+- Added the secure, hashed `.xfmap` repository, bundled cache, verifier, cancellation-safe installer, template `level.dat` patcher, local/external provider support, and content-mod compatibility checks.
+- Added deterministic Python map-pack tooling and tests, opt-in bundled-release Gradle tasks, private map input documentation, and full user/operator/format documentation without committing map binaries.
+
 # Pull request: add template-backed XenoFactions Earth world type
 
 - Registered the `xf_earth` dimension-0 world type and a non-generating missing-chunk fallback for externally exported WorldPainter Anvil saves.

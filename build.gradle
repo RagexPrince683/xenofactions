@@ -83,3 +83,60 @@ tasks.named('processResources') {
         expand(version: project.version, mcversion: providers.gradleProperty('minecraftVersion').get())
     }
 }
+
+def earthCleanInput = providers.gradleProperty('earthCleanMap').orElse('').map { it.trim() }
+def earthPopulatedInput = providers.gradleProperty('earthPopulatedMap').orElse('').map { it.trim() }
+def earthGenerated = layout.buildDirectory.dir('generated/earthmaps')
+
+tasks.register('validateEarthMapInputs') {
+    group = 'earth maps'
+    description = 'Validates that both real .xfmap inputs are present and internally valid.'
+    doLast {
+        [[earthCleanInput.get(), 'xf-earth-16k-clean'], [earthPopulatedInput.get(), 'xf-earth-16k-populated']].each { spec ->
+            if (!spec[0]) throw new GradleException("Missing -Pearth${spec[1].contains('clean') ? 'Clean' : 'Populated'}Map=<path>")
+            File archive = file(spec[0])
+            if (!archive.isFile()) throw new GradleException("Earth map does not exist: ${archive}")
+            def zip = new java.util.zip.ZipFile(archive)
+            try {
+                def entry = zip.getEntry('earth-map-pack.json')
+                if (entry == null) throw new GradleException("${archive.name} has no earth-map-pack.json")
+                def manifest = new groovy.json.JsonSlurper().parse(zip.getInputStream(entry))
+                if (manifest.formatVersion != 1 || manifest.minecraftVersion != '1.7.10' || manifest.id != spec[1])
+                    throw new GradleException("${archive.name} manifest must identify ${spec[1]} format 1 for Minecraft 1.7.10")
+                ['xenoearth-profile.json', 'template-level.dat'].each { if (zip.getEntry(it) == null) throw new GradleException("${archive.name} is missing ${it}") }
+            } finally { zip.close() }
+        }
+    }
+}
+
+tasks.register('generateBundledEarthMapIndex') {
+    dependsOn 'validateEarthMapInputs'
+    outputs.file(earthGenerated.map { it.file('builtin-earthmaps.json') })
+    doLast {
+        File dir = earthGenerated.get().asFile; dir.mkdirs()
+        def digest = { File f -> java.security.MessageDigest.getInstance('SHA-256').digest(f.bytes).encodeHex().toString() }
+        def packs = [[earthCleanInput.get(), 'xf-earth-16k-clean', 'earth-16k-clean.xfmap', 0], [earthPopulatedInput.get(), 'xf-earth-16k-populated', 'earth-16k-populated.xfmap', 1]].collect { x ->
+            File f=file(x[0]); [id:x[1], resourcePath:"assets/hfr/earthmaps/bundled/${x[2]}", archiveSize:f.length(), archiveSha256:digest(f), displayOrder:x[3]]
+        }
+        new File(dir, 'builtin-earthmaps.json').text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson([formatVersion:1,packs:packs])) + '\n'
+    }
+}
+
+tasks.register('jarWithEarthMaps', Jar) {
+    group = 'earth maps'; description = 'Builds the release JAR containing both supplied, validated Earth map archives.'
+    dependsOn tasks.named('jar'), tasks.named('generateBundledEarthMapIndex')
+    archiveClassifier.set('with-earthmaps')
+    from(zipTree(tasks.named('jar').get().archiveFile))
+    from(earthCleanInput) { into 'assets/hfr/earthmaps/bundled'; rename { 'earth-16k-clean.xfmap' } }
+    from(earthPopulatedInput) { into 'assets/hfr/earthmaps/bundled'; rename { 'earth-16k-populated.xfmap' } }
+    from(earthGenerated) { into 'assets/hfr/earthmaps/bundled' }
+}
+
+if (providers.gradleProperty('includeBundledEarthMaps').orElse('false').get().toBoolean()) {
+    tasks.named('processResources') {
+        dependsOn 'generateBundledEarthMapIndex'
+        from(earthCleanInput) { into 'assets/hfr/earthmaps/bundled'; rename { 'earth-16k-clean.xfmap' } }
+        from(earthPopulatedInput) { into 'assets/hfr/earthmaps/bundled'; rename { 'earth-16k-populated.xfmap' } }
+        from(earthGenerated) { into 'assets/hfr/earthmaps/bundled' }
+    }
+}

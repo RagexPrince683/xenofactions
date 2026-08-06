@@ -85,6 +85,7 @@ public class ClientProxy extends ServerProxy
 	@Override
 	public void registerRenderInfo()
 	{
+		net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(new com.hfr.client.earth.XFEarthCreateWorldHandler());
 		new EventHandlerClient().register();
 		com.hfr.client.journeymap.XFJourneyMapIntegration.register();
 		
@@ -475,4 +476,3 @@ public class ClientProxy extends ServerProxy
 		}
 	}
 }
-
