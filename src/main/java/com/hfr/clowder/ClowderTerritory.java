@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import com.hfr.blocks.ModBlocks;
 import com.hfr.config.XFConfig;
 import com.hfr.data.ClowderData;
 import com.hfr.main.MainRegistry;
@@ -87,7 +88,7 @@ public class ClowderTerritory {
 	public static List<TerritoryMeta> getCityClaims(Clowder owner) {
 		HashMap<String, TerritoryMeta> cities = new HashMap();
 		for(TerritoryMeta meta : territories.values()) {
-			if(meta != null && meta.owner != null && meta.owner.zone == Zone.FACTION && meta.owner.owner == owner && meta.isCityClaim()) {
+			if(meta != null && meta.owner != null && meta.owner.zone == Zone.FACTION && Clowder.sameFaction(meta.owner.owner, owner) && meta.isCityClaim()) {
 				refreshCityMetaFromTile(meta);
 				TerritoryMeta existing = cities.get(meta.cityId);
 				if(existing == null || meta.cityLevel > existing.cityLevel || (meta.flagX == existing.flagX && meta.flagY == existing.flagY && meta.flagZ == existing.flagZ))
@@ -196,6 +197,39 @@ public class ClowderTerritory {
 		if(removed > 0)
 		com.hfr.dynmap.XFDynmapIntegration.markDirty();
 		return removed;
+	}
+
+	/** Replaces all claims for one stable city with the relocated flag's complete claim set. */
+	public static void rebuildRelocatedCityClaims(World world, TileEntityFlag flag, Clowder owner, String stableCityId) {
+		if(world == null || flag == null || owner == null || stableCityId == null || stableCityId.isEmpty())
+			throw new IllegalArgumentException("invalid relocated city state");
+		int radius = Math.min(flag.getRadius(), CityLevel.maxRadius());
+		for(int x = -radius; x <= radius; x++) {
+			for(int z = -radius; z <= radius; z++) {
+				if(Math.sqrt(x * x + z * z) >= radius)
+					continue;
+				TerritoryMeta existing = territories.get(getCoordPair(world, flag.xCoord + x * 16, flag.zCoord + z * 16));
+				if(existing != null && !stableCityId.equals(existing.cityId))
+					throw new IllegalStateException("relocated city claim conflicts with another city");
+			}
+		}
+		removeClaimsForCityId(world, stableCityId, false);
+		for(int x = -radius; x <= radius; x++) {
+			for(int z = -radius; z <= radius; z++) {
+				if(Math.sqrt(x * x + z * z) >= radius)
+					continue;
+				CoordPair claim = getCoordPair(world, flag.xCoord + x * 16, flag.zCoord + z * 16);
+				setOwnerForCoord(world, claim, owner, flag.xCoord, flag.yCoord, flag.zCoord, flag.name, stableCityId);
+				TerritoryMeta meta = territories.get(claim);
+				meta.cityName = flag.name;
+				meta.cityLevel = flag.cityLevel.ordinal();
+			}
+		}
+		CoordPair center = getCoordPair(world, flag.xCoord, flag.zCoord);
+		if(!territories.containsKey(center))
+			throw new IllegalStateException("relocated city center claim was not generated");
+		ClowderData.getData(world).markDirty();
+		com.hfr.dynmap.XFDynmapIntegration.markDirty();
 	}
 
 	public static int transferCity(World world, TerritoryMeta city, Clowder newOwner) {
@@ -723,7 +757,10 @@ public class ClowderTerritory {
 					
 					double dist = Math.sqrt(Math.pow(origin.x - claim.x, 2) + Math.pow(origin.z - claim.z, 2));
 					
-					if(flag.getOwner() != own) {
+					if(flag instanceof TileEntityFlag && (world.getBlock(flagX, flagY, flagZ) != ModBlocks.clowder_flag
+							|| cityId == null || cityId.isEmpty() || !cityId.equals(((TileEntityFlag)flag).getCityId()))) {
+						return false;
+					} else if(!Clowder.sameFaction(flag.getOwner(), own)) {
 						return false;
 					} else if(dist >= r) {
 						

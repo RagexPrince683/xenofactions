@@ -1,3 +1,8 @@
+# Pull request: keep relocated City Centers valid for later moves
+
+- Fixed relocated City Centers becoming invalid when a restored tile retained a non-canonical faction object and territory persistence compared that owner by Java object identity, which could remove the destination claim metadata after a tile tick or persistence pass.
+- Relocation now restores the canonical tile owner without faction-accounting side effects, rebuilds all claims by the stable city ID, verifies destination metadata before and after old-block removal, and permits another valid relocation while retaining strict UUID, city ID, and coordinate checks.
+
 # Pull request: prevent relocated City Center GUI crashes
 
 - Changed the slotless City Center interface into an informational screen so opening it no longer replaces the player's active inventory container or crashes after relocation.

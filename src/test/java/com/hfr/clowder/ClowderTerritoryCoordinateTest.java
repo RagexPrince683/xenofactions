@@ -12,8 +12,8 @@ import com.hfr.clowder.ClowderTerritory.TerritoryMeta;
 import com.hfr.clowder.ClowderTerritory.Zone;
 
 public class ClowderTerritoryCoordinateTest {
-    private static final int[] BLOCK_COORDINATES = {-17, -16, -15, -1, 0, 15, 16, 31};
-    private static final int[] SHIFTED_CHUNKS = {-1, 0, 0, 0, 0, 1, 1, 2};
+    private static final int[] BLOCK_COORDINATES = {-17, -16, -15, -2, -1, 0, 15, 16, 31};
+    private static final int[] SHIFTED_CHUNKS = {-1, 0, 0, 0, 0, 0, 1, 1, 2};
 
     @After
     public void clearTerritories() {
