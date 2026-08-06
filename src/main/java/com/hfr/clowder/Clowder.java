@@ -42,16 +42,6 @@ import net.minecraftforge.common.util.ForgeDirection;
 //but with cats!
 public class Clowder {
 
-	/** Stable faction comparison for persisted gameplay state. */
-	public static boolean sameFaction(Clowder first, Clowder second) {
-		if(first == second)
-			return true;
-		return first != null && second != null
-				&& first.uuid != null && !first.uuid.isEmpty()
-				&& second.uuid != null && !second.uuid.isEmpty()
-				&& first.uuid.equals(second.uuid);
-	}
-
 	public HashMap<Clowder, Long> potentialMerges = new HashMap<>();
 
 	public static HashSet<Integer> colours = new HashSet<Integer>();

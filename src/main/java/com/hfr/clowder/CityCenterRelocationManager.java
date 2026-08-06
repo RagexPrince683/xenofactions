@@ -75,62 +75,12 @@ public final class CityCenterRelocationManager {
         TileEntity te = player.worldObj.getTileEntity(x, y, z);
         if(!(te instanceof TileEntityFlag)) return "The source City Center is invalid.";
         TileEntityFlag flag = (TileEntityFlag)te;
-        String invalidReason = getInvalidCityCenterReason(player.worldObj, faction, dim, x, y, z, flag);
-        if(invalidReason != null && isAuthoritativeRelocatedTile(faction, flag)
-            && repairRelocatedMetadata(player.worldObj, faction, flag, x, y, z)) {
-            invalidReason = getInvalidCityCenterReason(player.worldObj, faction, dim, x, y, z, flag);
-            if(invalidReason == null)
-                com.hfr.main.MainRegistry.logger.info("Repaired stale relocated City Center state for city " + flag.getCityId() + ".");
-        }
-        if(invalidReason != null) {
-            com.hfr.main.MainRegistry.logger.warn("Rejected City Center relocation at " + dim + ":" + x + "," + y + "," + z + ": " + invalidReason);
+        TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords(player.worldObj, x, z);
+        if(!sameFaction(flag.owner, faction) || !flag.isClaimed || flag.height < 1F || meta == null || meta.owner == null
+            || !sameFaction(meta.owner.owner, faction) || !flag.getCityId().equals(meta.cityId)
+            || meta.dimensionId != dim || meta.flagX != x || meta.flagY != y || meta.flagZ != z)
             return "This is not a claimed City Center owned by your faction.";
-        }
         return cooldownError(faction, flag.getCityId(), System.currentTimeMillis());
-    }
-
-    static String getInvalidCityCenterReason(World world, Clowder faction, int dim, int x, int y, int z, TileEntityFlag flag) {
-        if(world.getBlock(x, y, z) != ModBlocks.clowder_flag) return "block is not a City Center";
-        if(flag == null) return "tile is not a City Center tile";
-        if(!Clowder.sameFaction(flag.owner, faction)) return "tile faction UUID differs";
-        if(!flag.isClaimed) return "tile is not claimed";
-        if(flag.height < 1F) return "tile flag is lowered";
-        String cityId = flag.getCityId();
-        if(cityId == null || cityId.isEmpty()) return "tile stable city ID is empty";
-        TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords(world, x, z);
-        return getMetadataInvalidReason(faction, dim, x, y, z, cityId, meta);
-    }
-
-    static String getMetadataInvalidReason(Clowder faction, int dim, int x, int y, int z, String cityId, TerritoryMeta meta) {
-        if(meta == null) return "center territory metadata is missing";
-        if(meta.owner == null || meta.owner.owner == null) return "center territory owner is missing";
-        if(!Clowder.sameFaction(meta.owner.owner, faction)) return "metadata faction UUID differs";
-        if(!cityId.equals(meta.cityId)) return "metadata stable city ID differs";
-        if(meta.dimensionId != dim) return "metadata dimension differs";
-        if(meta.flagX != x) return "metadata flag X differs";
-        if(meta.flagY != y) return "metadata flag Y differs";
-        if(meta.flagZ != z) return "metadata flag Z differs";
-        return null;
-    }
-
-    private static boolean isAuthoritativeRelocatedTile(Clowder faction, TileEntityFlag flag) {
-        return flag != null && Clowder.sameFaction(flag.owner, faction) && flag.isClaimed && flag.height >= 1F
-            && flag.getCityId() != null && !flag.getCityId().isEmpty();
-    }
-
-    private static boolean repairRelocatedMetadata(World world, Clowder faction, TileEntityFlag flag, int x, int y, int z) {
-        TerritoryMeta center = ClowderTerritory.getMetaFromIntCoords(world, x, z);
-        if(center != null && center.cityId != null && !center.cityId.isEmpty() && !flag.getCityId().equals(center.cityId)) return false;
-        for(TerritoryMeta meta : ClowderTerritory.territories.values()) {
-            if(meta != null && meta.dimensionId == world.provider.dimensionId && meta.flagX == x && meta.flagY == y && meta.flagZ == z
-                && meta.cityId != null && !meta.cityId.isEmpty() && !flag.getCityId().equals(meta.cityId)) return false;
-        }
-        try {
-            ClowderTerritory.rebuildRelocatedCityClaims(world, flag, faction, flag.getCityId());
-            return true;
-        } catch(RuntimeException conflict) {
-            return false;
-        }
     }
 
     public static boolean start(EntityPlayerMP player, int dim, int x, int y, int z) {
@@ -191,7 +141,7 @@ public final class CityCenterRelocationManager {
         for(int dx=-2; dx<=2; dx++) for(int dz=-2; dz<=2; dz++)
             if(!world.canBlockSeeTheSky(x+dx, y+1, z+dz) || !world.getBlock(x+dx,y-1,z+dz).isSideSolid(world,x+dx,y-1,z+dz,UP)) return "The City Center requires a sky-accessible 5 by 5 foundation.";
         TileEntity oldTe = world.getTileEntity(faction.relocationX, faction.relocationY, faction.relocationZ);
-        if(world.getBlock(faction.relocationX, faction.relocationY, faction.relocationZ) != ModBlocks.clowder_flag || !(oldTe instanceof TileEntityFlag) || !Clowder.sameFaction(((TileEntityFlag)oldTe).owner, faction) || !faction.relocationCityId.equals(((TileEntityFlag)oldTe).getCityId())) return "The source City Center changed; the move cannot continue.";
+        if(world.getBlock(faction.relocationX, faction.relocationY, faction.relocationZ) != ModBlocks.clowder_flag || !(oldTe instanceof TileEntityFlag) || !sameFaction(((TileEntityFlag)oldTe).owner, faction) || !faction.relocationCityId.equals(((TileEntityFlag)oldTe).getCityId())) return "The source City Center changed; the move cannot continue.";
         int radius = ((TileEntityFlag)oldTe).getRadius();
         for(int dx=-radius; dx<=radius; dx++) for(int dz=-radius; dz<=radius; dz++) if(Math.sqrt(dx*dx+dz*dz)<radius) {
             TerritoryMeta meta = ClowderTerritory.getMetaFromCoords(ClowderTerritory.getCoordPair(world, x+dx*16, z+dz*16));
@@ -212,17 +162,20 @@ public final class CityCenterRelocationManager {
             if(!world.setBlock(x, y, z, ModBlocks.clowder_flag, world.getBlockMetadata(faction.relocationX, faction.relocationY, faction.relocationZ), 3)) throw new IllegalStateException("destination could not be placed");
             TileEntity te = world.getTileEntity(x,y,z); if(!(te instanceof TileEntityFlag)) throw new IllegalStateException("destination tile missing");
             saved.setInteger("x", x); saved.setInteger("y", y); saved.setInteger("z", z);
-            TileEntityFlag newFlag=(TileEntityFlag)te; newFlag.readFromNBT(saved); newFlag.restoreRelocationOwner(faction); newFlag.setCityId(faction.relocationCityId); newFlag.markDirty(); world.markBlockForUpdate(x, y, z);
+            TileEntityFlag newFlag=(TileEntityFlag)te; newFlag.readFromNBT(saved); newFlag.setCityId(faction.relocationCityId); newFlag.markDirty();
             faction.addPrestige(-cost, world); charged = true;
-            ClowderTerritory.rebuildRelocatedCityClaims(world, newFlag, faction, faction.relocationCityId);
-            requireValidDestination(world, faction, newFlag, x, y, z, "before old City Center removal");
+            ClowderTerritory.removeClaimsForCityId(world, faction.relocationCityId, false);
+            newFlag.generateClaim();
+            TerritoryMeta centerMeta = ClowderTerritory.getMetaFromIntCoords(world, x, z);
+            if(centerMeta == null || centerMeta.owner == null || !sameFaction(centerMeta.owner.owner, faction)
+                || !faction.relocationCityId.equals(centerMeta.cityId) || centerMeta.dimensionId != world.provider.dimensionId
+                || centerMeta.flagX != x || centerMeta.flagY != y || centerMeta.flagZ != z)
+                throw new IllegalStateException("destination claim metadata was not generated");
             newFlag.markDirty();
             GUARDED_REMOVAL.set(key(world,faction.relocationX,faction.relocationY,faction.relocationZ));
             try { world.setBlockToAir(faction.relocationX,faction.relocationY,faction.relocationZ); } finally { GUARDED_REMOVAL.remove(); }
-            requireValidDestination(world, faction, newFlag, x, y, z, "after old City Center removal");
             moveHomeIfNeeded(faction, oldTerritory, oldHomeX, oldHomeY, oldHomeZ, oldHomeDim, x, y, z, world);
             ClowderData.getData(world).markDirty(); com.hfr.dynmap.XFDynmapIntegration.markDirty();
-            requireValidDestination(world, faction, newFlag, x, y, z, "after relocation state changes");
             if(!consumeAuthorizedToken(player, tokenSlot, faction)) throw new IllegalStateException("authorized relocation token changed");
             recordSuccess(faction, faction.relocationCityId, System.currentTimeMillis());
             clear(faction, world);
@@ -233,20 +186,11 @@ public final class CityCenterRelocationManager {
             if(world.getBlock(x,y,z)==ModBlocks.clowder_flag) { GUARDED_REMOVAL.set(key(world,x,y,z)); try { world.setBlockToAir(x,y,z); } finally { GUARDED_REMOVAL.remove(); } }
             ClowderTerritory.territories.clear(); ClowderTerritory.territories.putAll(oldTerritory);
             if(world.getBlock(faction.relocationX,faction.relocationY,faction.relocationZ)!=ModBlocks.clowder_flag) world.setBlock(faction.relocationX,faction.relocationY,faction.relocationZ,ModBlocks.clowder_flag);
-            TileEntity restored=world.getTileEntity(faction.relocationX,faction.relocationY,faction.relocationZ); if(restored instanceof TileEntityFlag) { ((TileEntityFlag)restored).readFromNBT(saved); ((TileEntityFlag)restored).restoreRelocationOwner(faction); }
+            TileEntity restored=world.getTileEntity(faction.relocationX,faction.relocationY,faction.relocationZ); if(restored instanceof TileEntityFlag) ((TileEntityFlag)restored).readFromNBT(saved);
             faction.homeX=oldHomeX; faction.homeY=oldHomeY; faction.homeZ=oldHomeZ; faction.homeDim=oldHomeDim; faction.homeSet=oldHomeSet;
             faction.save(world); ClowderData.getData(world).markDirty();
             return fail(player, "The relocation failed and the original city was restored.");
         }
-    }
-
-    private static void requireValidDestination(World world, Clowder faction, TileEntityFlag flag, int x, int y, int z, String phase) {
-        TileEntity current = world.getTileEntity(x, y, z);
-        String reason = current instanceof TileEntityFlag
-            ? getInvalidCityCenterReason(world, faction, world.provider.dimensionId, x, y, z, (TileEntityFlag)current)
-            : "destination tile is missing";
-        if(reason != null || current != flag)
-            throw new IllegalStateException(phase + ": " + (reason == null ? "destination tile instance changed" : reason));
     }
 
     private static void moveHomeIfNeeded(Clowder f, Map<CoordPair,TerritoryMeta> oldClaims, int hx,int hy,int hz,int hd,int nx,int ny,int nz,World world) {
@@ -300,5 +244,8 @@ public final class CityCenterRelocationManager {
     public static boolean isGuardedRemoval(World w,int x,int y,int z){return key(w,x,y,z).equals(GUARDED_REMOVAL.get());}
     private static String key(World w,int x,int y,int z){return System.identityHashCode(w)+":"+w.provider.dimensionId+":"+x+":"+y+":"+z;}
     private static boolean fail(EntityPlayer p,String s){message(p,s);return false;}
+    private static boolean sameFaction(Clowder first, Clowder second) {
+        return first == second || first != null && second != null && first.uuid != null && first.uuid.equals(second.uuid);
+    }
     private static void message(EntityPlayer p,String s){if(p!=null)p.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+s));}
 }
