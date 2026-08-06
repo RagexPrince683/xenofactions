@@ -384,7 +384,8 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	public void generateClaim() {
 		
 		int rad = Math.min(getRadius(), CityLevel.maxRadius());
-		String placementError = ClowderTerritory.getCityPlacementError(worldObj, xCoord >> 4, zCoord >> 4);
+		CoordPair center = ClowderTerritory.getCoordPair(worldObj, xCoord, zCoord);
+		String placementError = ClowderTerritory.getCityPlacementError(worldObj, center.x, center.z);
 		if(placementError != null && ClowderTerritory.getMetaFromIntCoords(worldObj, xCoord, zCoord) == null)
 			return;
 		

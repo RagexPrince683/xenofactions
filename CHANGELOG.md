@@ -1,3 +1,8 @@
+# Pull request: fix relocated City Center territory lookup
+
+- Fixed the shifted block-to-chunk conversion mismatch that made relocated City Centers at affected X coordinates look unclaimed, and made territory ownership reads use the same legacy-compatible shifted X/Z rule as claim writes.
+- Verified relocation commit metadata against the faction UUID, stable city ID, dimension, and new flag coordinates before removing the old center, preserving rollback when claim generation is incomplete.
+
 # Pull request: configurable development identity and cooldown administration
 
 - Added centralized `AUTO`/`UUID`/`NAME` faction identity resolution while retaining UUID-secure packaged online production behavior.

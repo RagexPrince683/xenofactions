@@ -357,10 +357,7 @@ public class ClowderTerritory {
 	public static Ownership getOwnerFromInts(World world, int x, int z) { return getOwnerFromInts(getDimensionId(world), x, z); }
 
 	public static Ownership getOwnerFromInts(int dimensionId, int x, int z) {
-
-		z += 1;
-		
-		return getOwner(dimensionId, x / 16, z / 16);
+		return getOwnerFromCoords(getCoordPair(dimensionId, x, z));
 	}
 	
 	//returns the ownership information of the chunk
@@ -408,10 +405,7 @@ public class ClowderTerritory {
 	public static TerritoryMeta getMetaFromIntCoords(World world, int x, int z) { return getMetaFromIntCoords(getDimensionId(world), x, z); }
 
 	public static TerritoryMeta getMetaFromIntCoords(int dimensionId, int x, int z) {
-
-		z += 1;
-		
-		return getMetaFromInts(dimensionId, x / 16, z / 16);
+		return getMetaFromCoords(getCoordPair(dimensionId, x, z));
 	}
 	
 	//returns the ownership information of the chunk
