@@ -1,3 +1,7 @@
+# Pull request: rebuild territory after City Center relocation
+
+- City Center relocation now rebuilds the city's circular territory around the destination and removes stale territory around the old center.
+
 # Pull request: remove orphaned City Centers safely
 
 - Orphaned City Centers left behind by disbanded factions can now be broken and removed without dropping a City Center item or starting relocation.
