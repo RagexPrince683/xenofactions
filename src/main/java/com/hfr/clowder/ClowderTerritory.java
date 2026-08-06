@@ -122,6 +122,18 @@ public class ClowderTerritory {
 		return null;
 	}
 
+	/** Exact source lookup used by relocation; it intentionally does not repair or rebuild claims. */
+	public static TerritoryMeta findCityMeta(String cityId, int dimensionId, int flagX, int flagY, int flagZ, String factionUuid) {
+		if(cityId == null || cityId.isEmpty() || factionUuid == null || factionUuid.isEmpty()) return null;
+		for(TerritoryMeta meta : territories.values()) {
+			Clowder owner = meta == null || meta.owner == null ? null : meta.owner.owner;
+			if(meta != null && cityId.equals(meta.cityId) && meta.dimensionId == dimensionId
+				&& meta.flagX == flagX && meta.flagY == flagY && meta.flagZ == flagZ
+				&& owner != null && factionUuid.equals(owner.uuid)) return meta;
+		}
+		return null;
+	}
+
 	public static TerritoryMeta getCityByName(String cityName) {
 		if(cityName == null)
 			return null;
@@ -357,7 +369,10 @@ public class ClowderTerritory {
 	public static Ownership getOwnerFromInts(World world, int x, int z) { return getOwnerFromInts(getDimensionId(world), x, z); }
 
 	public static Ownership getOwnerFromInts(int dimensionId, int x, int z) {
-		return getOwnerFromCoords(getCoordPair(dimensionId, x, z));
+
+		z += 1;
+
+		return getOwner(dimensionId, x / 16, z / 16);
 	}
 	
 	//returns the ownership information of the chunk
@@ -405,7 +420,10 @@ public class ClowderTerritory {
 	public static TerritoryMeta getMetaFromIntCoords(World world, int x, int z) { return getMetaFromIntCoords(getDimensionId(world), x, z); }
 
 	public static TerritoryMeta getMetaFromIntCoords(int dimensionId, int x, int z) {
-		return getMetaFromCoords(getCoordPair(dimensionId, x, z));
+
+		z += 1;
+
+		return getMetaFromInts(dimensionId, x / 16, z / 16);
 	}
 	
 	//returns the ownership information of the chunk

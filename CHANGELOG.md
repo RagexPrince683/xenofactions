@@ -3,11 +3,6 @@
 - Changed the slotless City Center interface into an informational screen so opening it no longer replaces the player's active inventory container or crashes after relocation.
 - Made successful relocation token consumption clear and immediately synchronize the authorized server inventory slot, without consuming tokens for failed moves.
 
-# Pull request: fix relocated City Center territory lookup
-
-- Fixed the shifted block-to-chunk conversion mismatch that made relocated City Centers at affected X coordinates look unclaimed, and made territory ownership reads use the same legacy-compatible shifted X/Z rule as claim writes.
-- Verified relocation commit metadata against the faction UUID, stable city ID, dimension, and new flag coordinates before removing the old center, preserving rollback when claim generation is incomplete.
-
 # Pull request: configurable development identity and cooldown administration
 
 - Added centralized `AUTO`/`UUID`/`NAME` faction identity resolution while retaining UUID-secure packaged online production behavior.
@@ -17,9 +12,8 @@
 
 ## Safe two-phase City Center relocation
 
-- Replaced normal leader City Center breaking with a leader-only confirmation popup and persistent, server-authoritative pending relocation. The old center and claims remain active until an atomic placement succeeds.
+- Replaced normal owner City Center breaking with an owner-only confirmation popup and persistent, server-authoritative pending relocation. The old center and claims remain active until an atomic placement succeeds.
 - Added stable city UUIDs, bound/recoverable relocation tokens, same-dimension and full-radius validation, protected-zone/city collision checks, rollback, preserved tile inventory and city level/name, guarded old-block removal, and translated faction homes.
-- Added configurable horizontal Prestige pricing (10 free blocks, then 50 base plus 1 per extra block), a three-move rolling 24-hour limit, a 256-block maximum, and 30-minute harmless pending expiration.
 - Guaranteed that a faction with zero live cities may found its first settlement for zero Prestige and without spare upkeep capacity; normal settlement upkeep is still added after placement.
 - Added `/c city cancelmove` and `/c city recovermove` to command help, completion, command GUI data, and documentation.
 
@@ -125,6 +119,16 @@ Added `/stonedrops [page]` as a read-only player-accessible command for viewing 
   `devmods/deobf` handling for jars that are already development-mapped.
 - Kept generated jars under `build`, excluded development mods from publishing,
   and added a Gradle-backed IDE client run configuration and documentation.
+
+# Pull request: restore safe, repeatable City Center relocation
+
+- Restored the City Center break warning popup, including its confirmation and cancel actions, while retaining the safe read-only right-click City Center GUI and inventory synchronization.
+- Restricted starting and completing relocation to the faction owner using persisted UUID identity; officers, members, outsiders, fake players, and automation are rejected.
+- Limited each stable city ID to three successful moves in a rolling seven-day (168-hour) window, with a 30-minute wait between the second and third successful moves.
+- Changed relocation pricing to zero Prestige through 10 horizontal blocks and `ceil(horizontal distance - 10) * 30` Prestige beyond that distance, with no base charge.
+- Required the destination to remain within territory belonging to the moved stable city ID and prevented overlap with other cities, factions, safe zones, and war zones.
+- Preserved the stable city ID, faction UUID, city name, city level, inventory, flag state, and all matching city metadata across repeated relocation; rollback restores the original City Center without charging Prestige, consuming the token, or recording a move.
+- Restored the pre-`f3a05f5` territory coordinate lookup, claim generation, and city-spacing behavior and removed the coordinate-boundary regression test introduced with that failed fix.
 
 # Fix claim overlay packet decoding for Forge 1.7.10
 
