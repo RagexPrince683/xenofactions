@@ -314,11 +314,17 @@ public void handleChatServer(ServerChatEvent event) {
 				EntityPlayer player = ((BreakEvent)event).getPlayer();
 				Clowder clowder = Clowder.getClowderFromPlayer(player);
 				if(b == ModBlocks.clowder_flag && !player.inventory.hasItem(ModItems.debug)) {
+					TileEntity te = event.world.getTileEntity(x, y, z);
+					if(!event.world.isRemote && te instanceof TileEntityFlag && CityCenterRelocationManager.isOrphaned((TileEntityFlag)te)) {
+						event.setCanceled(true);
+						// The false argument suppresses harvesting while func_147480_a still invokes Flag.breakBlock.
+						event.world.func_147480_a(x, y, z, false);
+						return;
+					}
 					event.setCanceled(true);
 					String relocationError = CityCenterRelocationManager.validateStart(player, event.world.provider.dimensionId, x, y, z);
 					if(relocationError != null) player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + relocationError));
 					else if(player instanceof net.minecraft.entity.player.EntityPlayerMP) {
-						TileEntity te = event.world.getTileEntity(x, y, z);
 						String cityName = te instanceof TileEntityFlag ? ((TileEntityFlag)te).name : "City";
 						PacketDispatcher.wrapper.sendTo(new CityRelocationGuiPacket(event.world.provider.dimensionId, x, y, z, cityName), (net.minecraft.entity.player.EntityPlayerMP)player);
 					} else player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Unable to open relocation confirmation."));

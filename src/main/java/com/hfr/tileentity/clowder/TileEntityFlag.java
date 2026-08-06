@@ -8,6 +8,7 @@ import java.util.UUID;
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderFlag;
 import com.hfr.clowder.CityLevel;
+import com.hfr.clowder.CityCenterRelocationManager;
 import com.hfr.config.XFConfig;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.CoordPair;
@@ -96,7 +97,7 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 		if(!worldObj.isRemote) {
 			
 			//remove disbanded clowders
-			if(!Clowder.clowders.contains(owner) && owner != null) {
+			if(owner != null && CityCenterRelocationManager.isOrphaned(this)) {
 				MainRegistry.logger.info("Deleting clowder from flag " + xCoord + " " + yCoord + " " + zCoord + " due to clowder not being in the clowder list! (disband?)");
 				owner = null;
 			}

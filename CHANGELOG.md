@@ -1,3 +1,7 @@
+# Pull request: remove orphaned City Centers safely
+
+- Orphaned City Centers left behind by disbanded factions can now be broken and removed without dropping a City Center item or starting relocation.
+
 # Pull request: prevent relocated City Center GUI crashes
 
 - Changed the slotless City Center interface into an informational screen so opening it no longer replaces the player's active inventory container or crashes after relocation.
