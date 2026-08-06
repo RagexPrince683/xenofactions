@@ -11,6 +11,8 @@ import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import com.google.gson.Gson;
@@ -60,7 +62,7 @@ public class FactionCreationCooldownData {
             reader.close();
             DATA = store == null || store.uuids == null ? new HashMap<String, CooldownEntry>() : store.uuids;
             FALLBACKS = store == null || store.nameFallbacks == null ? new HashMap<String, CooldownEntry>() : store.nameFallbacks;
-            cleanExpired(System.currentTimeMillis());
+            if(cleanExpired(System.currentTimeMillis())) save();
         } catch(Exception e) {
             log("Failed to load faction creation cooldowns", e);
             DATA = new HashMap<String, CooldownEntry>();
@@ -88,21 +90,92 @@ public class FactionCreationCooldownData {
         }
     }
 
+    public static long getCooldownUntil(EntityPlayer player) {
+        boolean changed = cleanExpired(System.currentTimeMillis());
+        CooldownEntry entry = null;
+        if(player != null && PlayerIdentityService.usesNames()) {
+            String name = PlayerIdentityService.normalizeName(PlayerIdentityService.profileName(player));
+            entry = FALLBACKS.get(name);
+            for(CooldownEntry candidate : DATA.values()) {
+                if(candidate != null && name.equals(PlayerIdentityService.normalizeName(candidate.lastKnownName))) {
+                    if(entry != null && entry != candidate) entry = entry.expiresAt >= candidate.expiresAt ? entry : candidate;
+                    else entry = candidate;
+                }
+            }
+        } else if(player != null && PlayerIdentityService.uuid(player) != null) {
+            entry = DATA.get(PlayerIdentityService.uuid(player).toString());
+        }
+        if(changed) save();
+        return entry == null ? 0L : entry.expiresAt;
+    }
+
+    /** Retains the old UUID-only read API for callers and data tooling. */
     public static long getCooldownUntil(UUID uuid) {
-        cleanExpired(System.currentTimeMillis());
+        boolean changed = cleanExpired(System.currentTimeMillis());
         CooldownEntry entry = uuid == null ? null : DATA.get(uuid.toString());
+        if(changed) save();
         return entry == null ? 0L : entry.expiresAt;
     }
 
     public static void migrateFallback(EntityPlayer player) {
-        if(player == null || player.getUniqueID() == null)
-            return;
-        String key = normalize(player.getDisplayName());
-        CooldownEntry fallback = FALLBACKS.remove(key);
-        if(fallback != null) {
-            putUuid(player.getUniqueID(), player.getDisplayName(), fallback.expiresAt);
+        if(player == null) return;
+        UUID uuid = PlayerIdentityService.uuid(player);
+        String name = PlayerIdentityService.profileName(player);
+        if(uuid == null || PlayerIdentityService.normalizeName(name).isEmpty()) return;
+        CooldownEntry fallback = FALLBACKS.get(PlayerIdentityService.normalizeName(name));
+        if(fallback != null && !PlayerIdentityService.usesNames()) {
+            FALLBACKS.remove(PlayerIdentityService.normalizeName(name));
+            putUuid(uuid, name, fallback.expiresAt);
             save();
         }
+    }
+
+    public static final class ClearResult {
+        public final boolean ambiguous;
+        public final UUID uuid;
+        public final String name;
+        public final long removedExpiration;
+        public final int removedEntries;
+        private ClearResult(boolean ambiguous, UUID uuid, String name, long expiration, int count) {
+            this.ambiguous = ambiguous; this.uuid = uuid; this.name = name; this.removedExpiration = expiration; this.removedEntries = count;
+        }
+    }
+
+    public static ClearResult clear(UUID uuid) { return clearRepresentations(uuid, null); }
+    public static ClearResult clearNormalizedName(String name) { return clearRepresentations(null, name); }
+
+    public static ClearResult clearTarget(String target, World world) {
+        if(target == null || target.trim().isEmpty()) return new ClearResult(true, null, "", 0L, 0);
+        try { return clearRepresentations(UUID.fromString(target.trim()), null); }
+        catch(IllegalArgumentException notUuid) { }
+        EntityPlayer online = world == null ? null : world.getPlayerEntityByName(target);
+        GameProfile profile = online == null ? PlayerIdentityService.cachedProfile(target) : online.getGameProfile();
+        return clearRepresentations(profile == null ? null : profile.getId(), profile == null ? target : profile.getName());
+    }
+
+    public static ClearResult clearRepresentations(UUID uuid, String suppliedName) {
+        cleanExpired(System.currentTimeMillis());
+        String normalized = PlayerIdentityService.normalizeName(suppliedName);
+        List<String> matchingUuids = new ArrayList<String>();
+        if(uuid != null && DATA.containsKey(uuid.toString())) matchingUuids.add(uuid.toString());
+        if(!normalized.isEmpty()) for(Map.Entry<String, CooldownEntry> entry : DATA.entrySet())
+            if(entry.getValue() != null && normalized.equals(PlayerIdentityService.normalizeName(entry.getValue().lastKnownName)) && !matchingUuids.contains(entry.getKey())) matchingUuids.add(entry.getKey());
+        if(!normalized.isEmpty() && matchingUuids.size() > 1) {
+            log("Ambiguous cooldown identity '" + normalized + "' matches " + matchingUuids.size() + " UUID entries; nothing cleared", null);
+            return new ClearResult(true, null, suppliedName, 0L, 0);
+        }
+        long expiration = 0L; int count = 0; String knownName = suppliedName;
+        for(String key : matchingUuids) {
+            CooldownEntry removed = DATA.remove(key);
+            if(removed != null) { count++; expiration = Math.max(expiration, removed.expiresAt); if(knownName == null || knownName.isEmpty()) knownName = removed.lastKnownName; }
+        }
+        String finalName = PlayerIdentityService.normalizeName(knownName);
+        if(!finalName.isEmpty()) {
+            CooldownEntry removed = FALLBACKS.remove(finalName);
+            if(removed != null) { count++; expiration = Math.max(expiration, removed.expiresAt); }
+        }
+        if(count > 0) save();
+        return new ClearResult(false, uuid, knownName == null ? "" : knownName, expiration, count);
     }
 
     public static Map<String, String> snapshotFactionMembers(Clowder clowder, World world) {
@@ -163,18 +236,19 @@ public class FactionCreationCooldownData {
         return null;
     }
 
-    private static void cleanExpired(long now) {
-        clean(DATA, now);
-        clean(FALLBACKS, now);
+    private static boolean cleanExpired(long now) {
+        return clean(DATA, now) | clean(FALLBACKS, now);
     }
 
-    private static void clean(Map<String, CooldownEntry> map, long now) {
+    private static boolean clean(Map<String, CooldownEntry> map, long now) {
+        int oldSize = map.size();
         Map<String, CooldownEntry> keep = new HashMap<String, CooldownEntry>();
         for(Map.Entry<String, CooldownEntry> entry : map.entrySet())
             if(entry.getValue() != null && entry.getValue().expiresAt > now)
                 keep.put(entry.getKey(), entry.getValue());
         map.clear();
         map.putAll(keep);
+        return oldSize != map.size();
     }
 
     public static String formatRemaining(long ms) {
@@ -186,7 +260,7 @@ public class FactionCreationCooldownData {
         return days + "d " + hours + "h " + minutes + "m";
     }
 
-    private static String normalize(String name) { return name == null ? "" : name.trim().toLowerCase(); }
+    private static String normalize(String name) { return PlayerIdentityService.normalizeName(name); }
 
     private static void log(String msg, Throwable t) {
         if(MainRegistry.logger != null) {

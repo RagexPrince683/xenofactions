@@ -961,8 +961,14 @@ public class Clowder {
 			return false;
 
 
-		members.put(name, time());
-		legacyInverseMap.put(name, this);
+		EntityPlayer player = world.getPlayerEntityByName(name);
+		UUID uuid = PlayerIdentityService.uuid(player);
+		String profileName = PlayerIdentityService.profileName(player);
+		if(uuid == null || profileName.isEmpty()) return false;
+		members.put(profileName, time());
+		memberRecords.put(uuid, new FactionMemberRecord(uuid, profileName, time(), FactionRole.MEMBER));
+		legacyInverseMap.put(profileName, this);
+		recalculateIMap();
 
 		ClowderData.getData(world).markDirty();
 
@@ -977,6 +983,11 @@ public class Clowder {
 		members.remove(name);
 		officers.remove(name);
 		legacyInverseMap.remove(name);
+		String normalized = PlayerIdentityService.normalizeName(name);
+		UUID removeUuid = null;
+		for(FactionMemberRecord record : memberRecords.values()) if(normalized.equals(PlayerIdentityService.normalizeName(record.lastKnownName))) { if(removeUuid != null) return false; removeUuid = record.playerUuid; }
+		if(removeUuid != null) memberRecords.remove(removeUuid);
+		recalculateIMap();
 
 		ClowderData.getData(world).markDirty();
 
@@ -1018,11 +1029,12 @@ public class Clowder {
 
 	public boolean transferOwnership(World world, String key) {
 
-		if (members.get(key) == null)
-			return false;
-
+		FactionMemberRecord next = findMemberByName(key);
+		if(next == null) return false;
+		for(FactionMemberRecord record : memberRecords.values()) if(record.role == FactionRole.OWNER) record.role = FactionRole.OFFICER;
+		next.role = FactionRole.OWNER;
 		officers.remove(key);
-		leader = key;
+		leader = next.lastKnownName;
 		ClowderData.getData(world).markDirty();
 
 		return true;
@@ -1034,6 +1046,8 @@ public class Clowder {
 			return;
 
 		officers.add(name);
+		FactionMemberRecord record = findMemberByName(name);
+		if(record != null && record.role == FactionRole.MEMBER) record.role = FactionRole.OFFICER;
 		this.save(world);
 	}
 
@@ -1043,12 +1057,25 @@ public class Clowder {
 			return;
 
 		officers.remove(name);
+		FactionMemberRecord record = findMemberByName(name);
+		if(record != null && record.role == FactionRole.OFFICER) record.role = FactionRole.MEMBER;
 		this.save(world);
 	}
 
 	public int getPermLevel(String name) {
-		// Deliberately fail closed. Usernames must never authorize faction actions.
-		return 0;
+		if(!PlayerIdentityService.usesNames()) return 0;
+		FactionMemberRecord record = findMemberByName(name);
+		return record == null ? 0 : record.role.getPermissionLevel();
+	}
+
+	private FactionMemberRecord findMemberByName(String name) {
+		String key = PlayerIdentityService.normalizeName(name);
+		FactionMemberRecord match = null;
+		for(FactionMemberRecord record : memberRecords.values()) if(key.equals(PlayerIdentityService.normalizeName(record.lastKnownName))) {
+			if(match != null) { if(MainRegistry.logger != null) MainRegistry.logger.error("Ambiguous member name '" + key + "' in " + this.name); return null; }
+			match = record;
+		}
+		return match;
 	}
 
 	public FactionMemberRecord getMember(UUID playerUuid) { return memberRecords.get(playerUuid); }
@@ -1056,12 +1083,31 @@ public class Clowder {
 	public boolean isOwner(UUID playerUuid) { FactionMemberRecord r = getMember(playerUuid); return r != null && r.role == FactionRole.OWNER; }
 	public boolean isOfficer(UUID playerUuid) { FactionMemberRecord r = getMember(playerUuid); return r != null && r.role == FactionRole.OFFICER; }
 	public int getPermLevel(UUID playerUuid) { FactionMemberRecord r = getMember(playerUuid); return r == null ? 0 : r.role.getPermissionLevel(); }
-	public int getPermLevel(EntityPlayer player) { return player == null ? 0 : getPermLevel(player.getUniqueID()); }
+	public int getPermLevel(EntityPlayer player) {
+		FactionMemberRecord record = findMember(player);
+		return record == null ? 0 : record.role.getPermissionLevel();
+	}
+
+	public FactionMemberRecord findMember(EntityPlayer player) {
+		if(player == null) return null;
+		if(!PlayerIdentityService.usesNames()) return getMember(PlayerIdentityService.uuid(player));
+		String key = PlayerIdentityService.normalizeName(PlayerIdentityService.profileName(player));
+		FactionMemberRecord match = null;
+		for(FactionMemberRecord candidate : memberRecords.values()) {
+			if(candidate == null || !key.equals(PlayerIdentityService.normalizeName(candidate.lastKnownName))) continue;
+			if(match != null) {
+				if(MainRegistry.logger != null) MainRegistry.logger.error("Ambiguous faction member name '" + key + "' in " + name + "; authorization denied.");
+				return null;
+			}
+			match = candidate;
+		}
+		return match;
+	}
 
 	public boolean updateLastKnownName(EntityPlayer player) {
 		if (player == null) return false;
-		FactionMemberRecord record = getMember(player.getUniqueID());
-		String name = player.getGameProfile().getName();
+		FactionMemberRecord record = findMember(player);
+		String name = PlayerIdentityService.profileName(player);
 		if (record == null || name == null || name.equals(record.lastKnownName)) return false;
 		record.lastKnownName = name;
 		ClowderData data = ClowderData.getData(player.worldObj);
@@ -1184,7 +1230,7 @@ public class Clowder {
 	}
 
 	public boolean isOwner(EntityPlayer player) {
-		return player != null && isOwner(player.getUniqueID());
+		return player != null && getPermLevel(player) == FactionRole.OWNER.getPermissionLevel();
 	}
 
 	public void mergeWith(Clowder target, World world) {
@@ -2252,7 +2298,19 @@ public class Clowder {
 	}
 
 	public static Clowder getClowderFromPlayer(EntityPlayer player) {
-		return player == null ? null : getClowderFromPlayerUuid(player.getUniqueID());
+		if(player == null) return null;
+		if(!PlayerIdentityService.usesNames()) return getClowderFromPlayerUuid(PlayerIdentityService.uuid(player));
+		String key = PlayerIdentityService.normalizeName(PlayerIdentityService.profileName(player));
+		Clowder match = null;
+		for(Clowder faction : clowders) {
+			if(faction.findMember(player) == null) continue;
+			if(match != null) {
+				if(MainRegistry.logger != null) MainRegistry.logger.error("Ambiguous player name '" + key + "' occurs in multiple factions; authorization denied.");
+				return null;
+			}
+			match = faction;
+		}
+		return match;
 	}
 
 	public static Clowder getClowderFromPlayerUuid(UUID playerUuid) { return playerUuid == null ? null : inverseMap.get(playerUuid); }

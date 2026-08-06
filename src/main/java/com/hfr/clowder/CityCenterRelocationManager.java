@@ -67,7 +67,7 @@ public final class CityCenterRelocationManager {
         if(!XFConfig.cityRelocationEnabled) return "City Center relocation is disabled.";
         if(player == null || player instanceof net.minecraftforge.common.util.FakePlayer) return "Only a real faction leader may relocate a City Center.";
         Clowder faction = Clowder.getClowderFromPlayer(player);
-        if(faction == null || !faction.isOwner(player.getUniqueID())) return "Only the faction leader may relocate a City Center.";
+        if(faction == null || !faction.isOwner(player)) return "Only the faction leader may relocate a City Center.";
         if(!faction.activeWars.isEmpty()) { clear(faction, player.worldObj); return "City Centers cannot be moved during an active war."; }
         if(hasPending(faction)) return "Your faction already has a pending City Center move.";
         if(player.worldObj.provider.dimensionId != dim || player.worldObj.getBlock(x, y, z) != ModBlocks.clowder_flag) return "The source City Center no longer exists.";
@@ -115,7 +115,7 @@ public final class CityCenterRelocationManager {
         if(world.isRemote) return true;
         if(!(player instanceof EntityPlayerMP) || player instanceof net.minecraftforge.common.util.FakePlayer) return fail(player, "Relocation tokens may only be placed by a real player.");
         Clowder faction = Clowder.getClowderFromPlayer(player);
-        if(faction == null || !faction.isOwner(player.getUniqueID()) || !hasPending(faction)) return fail(player, "This relocation token is no longer authorized.");
+        if(faction == null || !faction.isOwner(player) || !hasPending(faction)) return fail(player, "This relocation token is no longer authorized.");
         if(!faction.activeWars.isEmpty()) { clear(faction, world); return fail(player, "The move was canceled because your faction entered a war."); }
         NBTTagCompound tag = token.stackTagCompound;
         if(!faction.relocationId.equals(tag.getString("relocationId")) || !faction.uuid.equals(tag.getString("factionUuid")) || !faction.relocationCityId.equals(tag.getString("cityId"))) return fail(player, "This relocation token does not match the pending move.");

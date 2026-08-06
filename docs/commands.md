@@ -121,6 +121,7 @@ Usage: `/xclowder help`; aliases: `/xclowder`, `/xc`; permission level: 3.
 | `/xc endnewplayerprotection` | End starter protection timers. |
 | `/xc resetbuildgrace <faction>` or `/xc rbg <faction>` | Reset faction build grace. |
 | `/xc endbuildgrace <faction>` or `/xc ebg <faction>` | End faction build grace. |
+| `/xc clearcreationcooldown <player-or-uuid>` or `/xc resetcreationcooldown ...` | Clear one online or offline player creation cooldown. UUIDs, live/cached profiles, and stored names are supported; ambiguity fails closed. |
 | `/xc warenable` | Enable war declarations. |
 | `/xc wardisable` | Disable war declarations and clear active wars. |
 | `/xc skipwarcooldowns` | Toggle global war cooldown bypass. |

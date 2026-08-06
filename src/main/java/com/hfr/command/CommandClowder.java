@@ -406,7 +406,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		if(factionName.isEmpty()) { sender.addChatMessage(new ChatComponentText(ERROR + "Faction name cannot be empty.")); return; }
 		FactionCreationCooldownData.migrateFallback(player);
-		long cooldownUntil = FactionCreationCooldownData.getCooldownUntil(player.getUniqueID());
+		long cooldownUntil = FactionCreationCooldownData.getCooldownUntil(player);
 		if(cooldownUntil > System.currentTimeMillis()) { sender.addChatMessage(new ChatComponentText(ERROR + "You cannot create a faction for " + FactionCreationCooldownData.formatRemaining(cooldownUntil - System.currentTimeMillis()) + ". You may still apply to or join factions.")); return; }
 
 		if(Clowder.getClowderFromPlayer(player) == null) {

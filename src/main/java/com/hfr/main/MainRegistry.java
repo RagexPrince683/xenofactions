@@ -3,6 +3,7 @@ package com.hfr.main;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.block.Block;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
@@ -850,6 +851,7 @@ public class MainRegistry
 
 	@Mod.EventHandler
 	public void serverStarting(FMLServerStartingEvent event) {
+		com.hfr.clowder.PlayerIdentityService.initialize(MinecraftServer.getServer());
 		// Main faction system commands
 		event.registerServerCommand(new CommandClowder());
 		event.registerServerCommand(new CommandClowderChat());

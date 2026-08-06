@@ -1,3 +1,10 @@
+# Pull request: configurable development identity and cooldown administration
+
+- Added centralized `AUTO`/`UUID`/`NAME` faction identity resolution while retaining UUID-secure packaged online production behavior.
+- Added stable `devUsername`/`devUuid` client properties and documented GTNH/RFG development launch behavior.
+- Added `/xc clearcreationcooldown <player-or-uuid>` and its reset alias with offline lookup, ambiguity protection, completion, and immediate persistence.
+- Made creation cooldown lookup and expired-entry cleanup follow the effective identity mode.
+
 ## Safe two-phase City Center relocation
 
 - Replaced normal leader City Center breaking with a leader-only confirmation popup and persistent, server-authoritative pending relocation. The old center and claims remain active until an atomic placement succeeds.

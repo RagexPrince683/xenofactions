@@ -8,6 +8,14 @@ config/hfr.cfg
 
 Restart the server after changing configuration unless the generated config comment explicitly says otherwise.
 
+## Player identity
+
+`XENOFACTIONS_09C_PLAYER_IDENTITY.playerIdentityMode` accepts case-insensitive `AUTO`, `UUID`, or `NAME` and defaults to `AUTO`. `AUTO` selects `NAME` in Forge's deobfuscated development environment or with `online-mode=false`, and `UUID` on a packaged online-mode server. Invalid values fail closed to `UUID`. Startup logs both modes and warns prominently for `NAME`; debug logging does not affect selection.
+
+`UUID` uses the authenticated UUID and is secure production behavior; last-known names never authorize. `NAME` uses the trimmed, `Locale.ROOT`-lowercase `GameProfile` name so test membership survives transient UUID changes, but cannot protect against username reuse or changes. Ambiguous stored names fail closed.
+
+`runClient` uses `DevPlayer` and deterministic UUID `45564450-4c41-5945-5200-000000000001`. Override them with `gradle runClient -PdevUsername=PlayerOne -PdevUuid=<standard-uuid>`; RFG supplies `--username` and `--uuid`. Without explicit identity the underlying launcher may generate `Player###`-style identities that are not guaranteed stable between launches. No credentials are required.
+
 ## Main feature toggles
 
 Category: `XENOFACTIONS_01_MODULES`
@@ -239,3 +247,6 @@ automatic entries. The success log message is:
 ## Faction creation cooldown data
 
 Regular leader-run `/c disband <faction name>` writes faction creation penalties to `clowder_faction_creation_cooldowns.json` in the server root. Entries are absolute real-time expiration timestamps keyed by player UUID where possible, with last-known names and normalized-name fallbacks for unresolved offline profiles. These cooldowns block only `/c create`; applications, invitations, and joining are unchanged.
+
+
+The cooldown JSON contains `uuids` and normalized `nameFallbacks`; entries contain epoch-millisecond `expiresAt` and `lastKnownName`. `/xc clearcreationcooldown <player-or-uuid>` (alias `resetcreationcooldown`) works for online/offline targets and saves successful changes immediately via temporary-file replacement.
