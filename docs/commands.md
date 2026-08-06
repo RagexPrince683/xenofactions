@@ -131,6 +131,8 @@ Usage: `/xclowder help`; aliases: `/xclowder`, `/xc`; permission level: 3.
 | `/xc ignorewarstatecheck` | Toggle at-war state check bypass. |
 | `/xc enablelegacywar` | Toggle legacy war mode, bypassing modern checks. |
 
+The standalone `/xcfactiontimeoutcreationreset <playername>` command also requires permission level 3. It resets only that player's faction creation cooldown, accepts online players and offline players known to the server profile cache or cooldown store, and can be run by an admin player or the server console.
+
 ## Faction chat: `/cc`
 
 Usage: `/cc <message>`; permission level: 0.

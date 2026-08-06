@@ -856,6 +856,7 @@ public class MainRegistry
 		event.registerServerCommand(new CommandClowder());
 		event.registerServerCommand(new CommandClowderChat());
 		event.registerServerCommand(new CommandClowderAdmin());
+		event.registerServerCommand(new CommandFactionCreationTimeoutReset());
 		event.registerServerCommand(new CommandEnemy());
 		event.registerServerCommand(new CommandUnenemy());
 
