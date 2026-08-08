@@ -88,8 +88,8 @@ Usage: `/clowder help`; aliases: `/clowder`, `/c`; permission level: 0.
 | `/c ally <faction>` or `/c befriend <faction>` | Request an alliance. |
 | `/c acceptally <faction>` or `/c acceptfriend <faction>` | Accept an alliance request. |
 | `/c unally <faction>` or `/c unfriend <faction>` | Break an alliance. |
-| `/enemy <faction>` | Leader-only one-way enemy marker. It is separate from wars, costs no Prestige, and enemy kills grant faction Prestige. |
-| `/unenemy <faction>` | Leader-only enemy removal request. The enemy relation remains active for 72 real hours before expiring. |
+| `/c enemy <faction>` | Leader-only one-way enemy marker. It is separate from wars, costs no Prestige, and enemy kills grant faction Prestige. |
+| `/c unenemy <faction>` | Leader-only enemy removal request. The enemy relation remains active for 72 real hours before expiring. |
 | `/c declarewar <faction>` | Declare war when war mode/rules allow. |
 | `/c peace <faction> {city}` | Request peace, optionally including a city transfer. |
 | `/c acceptpeace <faction>` | Accept peace. |
@@ -131,7 +131,7 @@ Usage: `/xclowder help`; aliases: `/xclowder`, `/xc`; permission level: 3.
 | `/xc ignorewarstatecheck` | Toggle at-war state check bypass. |
 | `/xc enablelegacywar` | Toggle legacy war mode, bypassing modern checks. |
 
-The standalone `/xcfactiontimeoutcreationreset <playername>` command also requires permission level 3. It resets only that player's faction creation cooldown, accepts online players and offline players known to the server profile cache or cooldown store, and can be run by an admin player or the server console.
+The `/xc factiontimeoutcreationreset <playername>` command also requires permission level 3. It resets only that player's faction creation cooldown, accepts online players and offline players known to the server profile cache or cooldown store, and can be run by an admin player or the server console.
 
 ## Faction chat: `/cc`
 
@@ -162,7 +162,7 @@ Usage: `/cc <message>`; permission level: 0.
 | `/xflags` | Player | Open/list faction flag functionality. |
 | `/xmulti` | Player | Utility command registered for all players. |
 | `/xdebug <param>` | Player | Debug command registered for all players; server policy should control use. |
-| `/stonedrops [page]` | Player | Read-only list of custom stone drops, including chance, raw chance, item registry name, metadata, stack amount, and Y range. All players and the server console can use this command. |
+| `/c stonedrops [page]` | Player | Read-only list of custom stone drops, including chance, raw chance, item registry name, metadata, stack amount, and Y range. All players and the server console can use this command. |
 | `/stonedrop <rarity> [minY] [maxY]` | Admin/moderator default | Administrator command to add held item/block as a custom stone drop. |
 | `/stonedrop list` | Admin/moderator default | Administrator command to list configured custom stone drops. |
 | `/stonedrop remove <index>` | Admin/moderator default | Administrator command to remove a custom stone drop. |

@@ -137,6 +137,10 @@ public class CommandClowder extends CommandBase {
 
 		String cmd = args[0].toLowerCase();
 
+		if(cmd.equals("enemy")) { EnemyCommandHandler.execute(sender, Arrays.copyOfRange(args, 1, args.length)); return; }
+		if(cmd.equals("unenemy")) { UnenemyCommandHandler.execute(sender, Arrays.copyOfRange(args, 1, args.length)); return; }
+		if(cmd.equals("stonedrops")) { StoneDropsCommandHandler.execute(sender, Arrays.copyOfRange(args, 1, args.length)); return; }
+
 		if(cmd.equals("help") || cmd.equals("man")) {
 			cmdHelp(sender, args.length > 1 ? args[1] : "1");
 			return;
@@ -284,6 +288,9 @@ public class CommandClowder extends CommandBase {
 		if(cmd.equals("surrender")) return "/c surrender <faction>";
 		if(cmd.equals("acceptsurrender")) return "/c acceptsurrender <faction>";
 		if(cmd.equals("defendally")) return "/c defendally <ally>";
+		if(cmd.equals("enemy")) return "/c enemy <faction>";
+		if(cmd.equals("unenemy")) return "/c unenemy <faction>";
+		if(cmd.equals("stonedrops")) return "/c stonedrops [page]";
 		return getCommandUsage(null);
 	}
 
@@ -364,8 +371,8 @@ public class CommandClowder extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-allywarp <faction>" + TITLE + " - Teleports to an ally rally point"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-merge <faction>" + TITLE + " - Requests to merge into another faction"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-acceptmerge <faction>" + TITLE + " - Accepts a merge request"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "/enemy <faction>" + TITLE + " - Marks a faction as an enemy; enemy kills grant Prestige"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "/unenemy <faction>" + TITLE + " - Starts 72h enemy removal; separate from wars"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-enemy <faction>" + TITLE + " - Marks a faction as an enemy; enemy kills grant Prestige"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-unenemy <faction>" + TITLE + " - Starts 72h enemy removal; separate from wars"));
 			sender.addChatMessage(new ChatComponentText(INFO + "/clowder help 6"));
 		}
 
@@ -381,6 +388,9 @@ public class CommandClowder extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-acceptsurrender <faction>" + TITLE + " - Accepts enemy surrender"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-defendally <ally>" + TITLE + " - Joins an ally's active wars"));
 			sender.addChatMessage(new ChatComponentText(INFO + "/xmap for a claim map, /xflags for conquest flags, /xmulti for a multitool."));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-enemy <faction>" + TITLE + " - Marks a one-way enemy faction"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-unenemy <faction>" + TITLE + " - Starts the delayed enemy removal"));
+			sender.addChatMessage(new ChatComponentText(COMMAND + "-stonedrops {page}" + TITLE + " - Lists configured stone drops"));
 		}
 	}
 
@@ -2175,6 +2185,9 @@ private void cmdCreate(ICommandSender sender, String name) {
 		if(isPlayerCompletionCommand(cmd))
 			return getListOfStringsMatchingLastWord(args, MinecraftServer.getServer().getAllUsernames());
 
+		if(cmd.equals("enemy") || cmd.equals("unenemy"))
+			return getListOfStringsMatchingLastWord(args, getFactionCompletionNames());
+
 		if(isFactionCompletionCommand(cmd))
 			return getListOfStringsMatchingLastWord(args, getFactionCompletionNames());
 
@@ -2283,7 +2296,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 	}
 
 	private String[] getPlayerCommandNames() {
-		return new String[] { "help", "create", "disband", "info", "list", "comrades", "alliance", "allies", "allylist", "leave", "apply",
+		return new String[] { "help", "enemy", "unenemy", "stonedrops", "create", "disband", "info", "list", "comrades", "alliance", "allies", "allylist", "leave", "apply",
 				"applicants", "accept", "deny", "kick", "owner", "promote", "demote", "rename", "color", "motd",
 				"listflags", "flag", "gracebuild", "sethome", "home", "setwarp", "addwarp", "delwarp", "warp", "warps",
 				"claim", "city", "nameclaim", "balance", "deposit", "withdraw", "befriend", "ally", "acceptfriend",

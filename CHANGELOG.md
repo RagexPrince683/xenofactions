@@ -1,3 +1,7 @@
+# PR: Command namespace cleanup
+
+- Grouped recent player faction commands under `/c` and administrator/Earth commands under `/xc`, removing their standalone roots.
+
 # Pull request: complete the Earth Map pack installer and bundled release workflow
 
 - Renamed and expanded the dimension-0 world type to `earthmap`, added its Singleplayer customization and asynchronous create/install flow, and retained non-generating missing-chunk and profile-border behavior.
@@ -12,7 +16,7 @@
 
 # Pull request: add faction creation cooldown reset command
 
-- Added the admin-only `/xcfactiontimeoutcreationreset <playername>` command to reset only one online or stored offline player's faction creation cooldown with immediate persistence.
+- Added the admin-only `/xc factiontimeoutcreationreset <playername>` command to reset only one online or stored offline player's faction creation cooldown with immediate persistence.
 
 # Pull request: rebuild territory after City Center relocation
 
@@ -86,12 +90,12 @@
 
 # Enemy faction relations and Prestige rewards
 
-- Added persistent one-way enemy faction relations using faction UUIDs, with `/enemy <faction>` and delayed `/unenemy <faction>` commands for leaders.
+- Added persistent one-way enemy faction relations using faction UUIDs, with `/c enemy <faction>` and delayed `/c unenemy <faction>` commands for leaders.
 - Added configured Prestige rewards for killing active enemy faction members.
-- Updated nameplates so own/allied/enemy/neutral factions render green/blue/red/yellow.
+- Updated nameplates so own/allied/c enemy/neutral factions render green/blue/red/yellow.
 
 # Add public stone drops list command
-Added `/stonedrops [page]` as a read-only player-accessible command for viewing configured custom stone drops without changing the administrator `/stonedrop` command.
+Added `/c stonedrops [page]` as a read-only player-accessible command for viewing configured custom stone drops without changing the administrator `/stonedrop` command.
 - Documented chance percentages, raw chance values, item registry metadata, stack amounts, and Y ranges in the paginated stone-drop output.
 
 # Fix automatic HBM stone-drop integration

@@ -149,7 +149,7 @@ Most player-facing faction commands are under `/clowder` or `/c`:
 /c declarewar <faction>
 ```
 
-Administrative faction commands are under `/xclowder` or `/xc` and require permission level 3 by default. The standalone admin command `/xcfactiontimeoutcreationreset <playername>` resets only the named player's faction creation cooldown and works for stored offline players. All players can inspect configured custom stone drops with `/stonedrops [page]`; `/stonedrop` remains the administrator command for adding, listing, and removing custom stone drops. Other command families include `/cc`, `/xflags`, `/xmap`, `/stonedrops`, `/stonedrop`, `/xmarket`, `/xshop`, `/xmute`, `/xignore`, `/invsee`, and optional `/tdm`.
+Administrative faction commands are under `/xclowder` or `/xc` and require permission level 3 by default. The admin subcommand `/xc factiontimeoutcreationreset <playername>` resets only the named player's faction creation cooldown and works for stored offline players. All players can inspect configured custom stone drops with `/c stonedrops [page]`; `/stonedrop` remains the administrator command for adding, listing, and removing custom stone drops. Other command families include `/cc`, `/xflags`, `/xmap`, `/c stonedrops`, `/stonedrop`, `/xmarket`, `/xshop`, `/xmute`, `/xignore`, `/invsee`, and optional `/tdm`.
 
 See [`docs/commands.md`](docs/commands.md) for command syntax verified from source.
 

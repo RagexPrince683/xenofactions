@@ -33,8 +33,8 @@ border adoption. Nether and End are untouched.
 ## Dedicated servers
 
 Install/extract and verify a pack while the world is offline, then set
-`level-type=earthmap`. Use `/xfearth status`, `/xfearth packs`, or
-`/xfearth verify <pack-id>` for administration; verification never downloads or
+`level-type=earthmap`. Use `/xc earth status`, `/xc earth packs`, or
+`/xc earth verify <pack-id>` for administration; verification never downloads or
 extracts a live world. Clients receive ordinary chunks and never need or receive
 the archive.
 
