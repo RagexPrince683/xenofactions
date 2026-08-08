@@ -1,3 +1,11 @@
+# Pull request: restore canonical faction roles after UUID identity refactor
+
+- Fixed global chat and the XF menu to resolve live players through their canonical `FactionMemberRecord`, so UUID-mode owners and officers no longer appear as citizens.
+- Centralized role display, owner name, member count, and member-list data on canonical records rather than deprecated username collections.
+- Corrected promote, demote, ownership-target, kick, leave, merge, disband, and online membership paths so permissions and membership changes take effect immediately and persist from UUID records.
+- Preserved NAME and AUTO identity behavior by resolving both modes to the same member record before checking its `FactionRole`; username-only permission lookup remains fail-closed outside NAME mode.
+- Retained legacy leader/member/officer fields strictly as old-save migration and compatibility mirrors.
+
 # PR: Command namespace cleanup
 
 - Grouped recent player faction commands under `/c` and administrator/Earth commands under `/xc`, removing their standalone roots.

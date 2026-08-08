@@ -213,14 +213,14 @@ public void handleChatServer(ServerChatEvent event) {
 
 	if (clowder != null) {
 
-		int permLevel = clowder.getPermLevel(playerName);
+		FactionRole role = clowder.getRole(sender);
 		String clowderName = clowder.getDecoratedName();
 
-		if (permLevel > 2) {
+		if (role == FactionRole.OWNER) {
 			factionLine = EnumChatFormatting.GOLD + "[ " + clowderName + " Leader ]";
-		} else if (permLevel > 1) {
+		} else if (role == FactionRole.OFFICER) {
 			factionLine = EnumChatFormatting.BLUE + "[ " + clowderName + " Officer ]";
-		} else {
+		} else if (role == FactionRole.MEMBER) {
 			factionLine = EnumChatFormatting.DARK_GREEN + "[ " + clowderName + " Citizen ]";
 		}
 	}
@@ -1293,7 +1293,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 			
 			Clowder clowder = Clowder.getClowderFromPlayer(player);
 			
-			if(clowder != null && clowder.members.get(name) != null) {
+			if(clowder != null && clowder.findMember(player) != null) {
 				
 				EntityPlayerMP mp = (EntityPlayerMP)player;
 				
