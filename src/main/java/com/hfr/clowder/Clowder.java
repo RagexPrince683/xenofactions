@@ -1041,24 +1041,19 @@ public class Clowder {
 	}
 
 	public void promote(World world, String name) {
-
-		if (!members.containsKey(name))
-			return;
-
-		officers.add(name);
 		FactionMemberRecord record = findMemberByName(name);
-		if(record != null && record.role == FactionRole.MEMBER) record.role = FactionRole.OFFICER;
+		if(record == null || record.role != FactionRole.MEMBER) return;
+		record.role = FactionRole.OFFICER;
+		officers.add(record.lastKnownName); // legacy save compatibility only
 		this.save(world);
 	}
 
 	public void demote(World world, String name) {
 
-		if (!members.containsKey(name))
-			return;
-
-		officers.remove(name);
 		FactionMemberRecord record = findMemberByName(name);
-		if(record != null && record.role == FactionRole.OFFICER) record.role = FactionRole.MEMBER;
+		if(record == null || record.role != FactionRole.OFFICER) return;
+		record.role = FactionRole.MEMBER;
+		officers.remove(record.lastKnownName); // legacy save compatibility only
 		this.save(world);
 	}
 
@@ -1068,7 +1063,8 @@ public class Clowder {
 		return record == null ? 0 : record.role.getPermissionLevel();
 	}
 
-	private FactionMemberRecord findMemberByName(String name) {
+	/** Resolves a command-supplied member name to the canonical record. Not suitable for authorizing the sender. */
+	public FactionMemberRecord findMemberByName(String name) {
 		String key = PlayerIdentityService.normalizeName(name);
 		FactionMemberRecord match = null;
 		for(FactionMemberRecord record : memberRecords.values()) if(key.equals(PlayerIdentityService.normalizeName(record.lastKnownName))) {
@@ -1079,6 +1075,18 @@ public class Clowder {
 	}
 
 	public FactionMemberRecord getMember(UUID playerUuid) { return memberRecords.get(playerUuid); }
+	public FactionRole getRole(UUID playerUuid) { FactionMemberRecord r = getMember(playerUuid); return r == null ? null : r.role; }
+	public FactionRole getRole(EntityPlayer player) { FactionMemberRecord r = findMember(player); return r == null ? null : r.role; }
+	public String getOwnerName() {
+		for(FactionMemberRecord record : memberRecords.values()) if(record.role == FactionRole.OWNER) return record.lastKnownName;
+		return "<unresolved legacy owner>";
+	}
+	public int getMemberCount() { return memberRecords.size(); }
+	public List<String> getMemberNames() {
+		List<String> names = new ArrayList<String>();
+		for(FactionMemberRecord record : memberRecords.values()) names.add(record.lastKnownName);
+		return names;
+	}
 	public boolean hasMember(UUID playerUuid) { return playerUuid != null && memberRecords.containsKey(playerUuid); }
 	public boolean isOwner(UUID playerUuid) { FactionMemberRecord r = getMember(playerUuid); return r != null && r.role == FactionRole.OWNER; }
 	public boolean isOfficer(UUID playerUuid) { FactionMemberRecord r = getMember(playerUuid); return r != null && r.role == FactionRole.OFFICER; }
@@ -1086,6 +1094,12 @@ public class Clowder {
 	public int getPermLevel(EntityPlayer player) {
 		FactionMemberRecord record = findMember(player);
 		return record == null ? 0 : record.role.getPermissionLevel();
+	}
+
+	public static String getRoleDisplayName(FactionRole role) {
+		if(role == FactionRole.OWNER) return "Leader";
+		if(role == FactionRole.OFFICER) return "Officer";
+		return "Citizen";
 	}
 
 	public FactionMemberRecord findMember(EntityPlayer player) {
@@ -1236,6 +1250,14 @@ public class Clowder {
 	public void mergeWith(Clowder target, World world) {
 
 		if (target == null || target.uuid.equals(this.uuid)) return;
+		// Canonical transfer. The absorbed owner intentionally becomes an officer,
+		// matching the historical merge design; the target owner remains unique.
+		for(FactionMemberRecord source : new ArrayList<FactionMemberRecord>(memberRecords.values())) {
+			if(target.memberRecords.containsKey(source.playerUuid)) continue;
+			FactionRole role = source.role == FactionRole.OWNER ? FactionRole.OFFICER : source.role;
+			target.memberRecords.put(source.playerUuid,
+					new FactionMemberRecord(source.playerUuid, source.lastKnownName, source.joinedAt, role));
+		}
 
 		// Cancel any active war/fabrication to avoid weird state carryover
 		//this.pussy(world);
@@ -1357,6 +1379,8 @@ public class Clowder {
 		recalculateIMap();
 		this.leader = "";
 		this.members.clear();
+		this.memberRecords.clear();
+		this.applicationsByUuid.clear();
 		this.allies.clear();
 
 		cleanEnemyRelationReferences(world);
@@ -1368,7 +1392,11 @@ public class Clowder {
 	}
 
 	public boolean valid() {
-		return this.leader != "" && clowders.contains(this);
+		for(FactionMemberRecord record : memberRecords.values())
+			if(record.role == FactionRole.OWNER) return clowders.contains(this);
+		// An unresolved pre-UUID save stays loadable until the migration binder
+		// creates canonical records; legacy data never overrides existing records.
+		return memberRecords.isEmpty() && leader != null && !leader.isEmpty() && clowders.contains(this);
 	}
 
 	public boolean isRaidable() {
@@ -2065,7 +2093,7 @@ public class Clowder {
 
 	public void notifyLeader(World world, ChatComponentText message) {
 
-		notifyPlayer(world, this.leader, message);
+		notifyPlayer(world, getOwnerName(), message);
 	}
 
 	public void notifyAll(World world, ChatComponentText message) {

@@ -11,6 +11,9 @@ import com.hfr.blocks.BlockDummyable;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.FactionCreationCooldownData;
+import com.hfr.clowder.FactionMemberRecord;
+import com.hfr.clowder.FactionRole;
+import com.hfr.clowder.PlayerIdentityService;
 import com.hfr.clowder.Clowder.ScheduledTeleport;
 import com.hfr.clowder.ClowderFlag;
 import com.hfr.clowder.flag.CustomFlagService;
@@ -566,7 +569,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 			sender.addChatMessage(new ChatComponentText(TITLE + clowder.getDecoratedName()));
 
-			for(String s : clowder.members.keySet())
+			for(String s : clowder.getMemberNames())
 				sender.addChatMessage(new ChatComponentText(LIST + s));
 
 		} else {
@@ -798,10 +801,10 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 			sender.addChatMessage(new ChatComponentText(TITLE + clowder.getDecoratedName()));
 			sender.addChatMessage(new ChatComponentText(TITLE + clowder.motd));
-			sender.addChatMessage(new ChatComponentText(LIST + "Owner: " + clowder.leader));
-			sender.addChatMessage(new ChatComponentText(LIST + "Players considered online: " + clowder.getPlayersOnline() + "/" + clowder.members.keySet().size()));
+			sender.addChatMessage(new ChatComponentText(LIST + "Owner: " + clowder.getOwnerName()));
+			sender.addChatMessage(new ChatComponentText(LIST + "Players considered online: " + clowder.getPlayersOnline() + "/" + clowder.getMemberCount()));
 			sender.addChatMessage(new ChatComponentText(LIST + "Raidable? " + clowder.isRaidable()));
-			sender.addChatMessage(new ChatComponentText(LIST + "Members: " + clowder.members.size()));
+			sender.addChatMessage(new ChatComponentText(LIST + "Members: " + clowder.getMemberCount()));
 			sender.addChatMessage(new ChatComponentText(LIST + "Prestige: " + clowder.round(clowder.getPrestige())));
 			sender.addChatMessage(new ChatComponentText(LIST + " -generating: " + clowder.round(clowder.getPrestigeGen()) + " per hour"));
 			sender.addChatMessage(new ChatComponentText(LIST + " -requires: " + clowder.round(clowder.getPrestigeReq()) + " at all times"));
@@ -835,8 +838,8 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 			sender.addChatMessage(new ChatComponentText(TITLE + clowder.getDecoratedName()));
 			sender.addChatMessage(new ChatComponentText(TITLE + clowder.motd));
-			sender.addChatMessage(new ChatComponentText(LIST + "Owner: " + clowder.leader));
-			sender.addChatMessage(new ChatComponentText(LIST + "Members: " + clowder.members.size()));
+			sender.addChatMessage(new ChatComponentText(LIST + "Owner: " + clowder.getOwnerName()));
+			sender.addChatMessage(new ChatComponentText(LIST + "Members: " + clowder.getMemberCount()));
 			sender.addChatMessage(new ChatComponentText(LIST + "Prestige: " + clowder.round(clowder.getPrestige())));
 			sender.addChatMessage(new ChatComponentText(LIST + "Color: " + Integer.toHexString(clowder.color).toUpperCase()));
 			sender.addChatMessage(new ChatComponentText(LIST + "Enemies: " + formatEnemyList(clowder)));
@@ -893,7 +896,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		for(Clowder c : Clowder.clowders) {
 
 			sender.addChatMessage(new ChatComponentText(TITLE + c.getDecoratedName() + " - " + c.motd));
-			sender.addChatMessage(new ChatComponentText(LIST + c.members.size() + " members"));
+			sender.addChatMessage(new ChatComponentText(LIST + c.getMemberCount() + " members"));
 		}
 
 		if(Clowder.clowders.isEmpty()) {
@@ -938,7 +941,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 			if(clowder.getPermLevel(player) > 2) {
 
-				if(clowder.members.get(owner) != null) {
+				if(clowder.findMemberByName(owner) != null) {
 
 					clowder.transferOwnership(player.worldObj, owner);
 					sender.addChatMessage(new ChatComponentText(INFO + "Transfered leadership to player " + owner + "!"));
@@ -990,7 +993,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 			if(clowder.getPermLevel(player) < 3) {
 
-				clowder.removeMember(player.worldObj, player.getDisplayName());
+				clowder.removeMember(player.worldObj, PlayerIdentityService.profileName(player));
 				sender.addChatMessage(new ChatComponentText(CRITICAL + "You left this faction!"));
 
 			} else {
@@ -1106,9 +1109,9 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 			if(clowder.getPermLevel(player) > 1) {
 
-				if(clowder.members.get(kickee) != null) {
+				if(clowder.findMemberByName(kickee) != null) {
 
-					if(player.getDisplayName().equals(kickee)) {
+					if(clowder.findMember(player) == clowder.findMemberByName(kickee)) {
 
 						sender.addChatMessage(new ChatComponentText(CRITICAL + "You can not kick yourself, idiot!"));
 
@@ -1817,9 +1820,10 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 			if(clowder.getPermLevel(player) > 2) {
 
-				if(clowder.members.get(promotee) != null) {
+				FactionMemberRecord target = clowder.findMemberByName(promotee);
+				if(target != null) {
 
-					if(clowder.getPermLevel(promotee) == 1) {
+					if(target.role == FactionRole.MEMBER) {
 
 						clowder.promote(player.worldObj, promotee);
 
@@ -1849,18 +1853,19 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 			if(clowder.getPermLevel(player) > 2) {
 
-				if(clowder.members.get(demotee) != null) {
+				FactionMemberRecord target = clowder.findMemberByName(demotee);
+				if(target != null) {
 
-					if(demotee.equals(player.getDisplayName())) {
+					if(target == clowder.findMember(player)) {
 						sender.addChatMessage(new ChatComponentText(ERROR + "You can't demote yourself!"));
 						return;
 					}
 
-					if(clowder.getPermLevel(demotee) == 2) {
+					if(target.role == FactionRole.OFFICER) {
 
 						clowder.demote(player.worldObj, demotee);
 
-					} else if(clowder.getPermLevel(demotee) != 3) {
+					} else if(target.role != FactionRole.OWNER) {
 						sender.addChatMessage(new ChatComponentText(ERROR + "This player is already demoted!"));
 					} else {
 						sender.addChatMessage(new ChatComponentText(ERROR + "Are you seriously trying to demote the faction's leader?"));
