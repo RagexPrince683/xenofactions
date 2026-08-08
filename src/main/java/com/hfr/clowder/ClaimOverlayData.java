@@ -37,8 +37,8 @@ public final class ClaimOverlayData {
 			Clowder faction = meta.owner.owner;
 			String groupId = groupId(dimensionId, meta);
 			Bounds bound = bounds.get(groupId);
-			int labelX = bound == null ? coord.x * 16 + 8 : bound.labelX();
-			int labelZ = bound == null ? coord.z * 16 + 8 : bound.labelZ();
+			int labelX = bound == null ? coordinateCenter(coord.x) : bound.labelX();
+			int labelZ = bound == null ? coordinateCenter(coord.z) : bound.labelZ();
 			claims.add(new Claim(dimensionId, coord.x, coord.z, groupId, faction.color & 0xFFFFFF, cleanLabel(meta.cityName), labelX, labelZ));
 		}
 		return Collections.unmodifiableList(claims);
@@ -55,13 +55,22 @@ public final class ClaimOverlayData {
 		return trimmed.length() > max ? trimmed.substring(0, max) : trimmed;
 	}
 
+	private static int coordinateCenter(int coordinate) {
+		return (int)Math.round(TerritoryCoordinateBounds.forCoordinate(coordinate).center());
+	}
+
 	private static final class Bounds {
 		final TerritoryMeta meta; int minX = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
 		Bounds(TerritoryMeta meta) { this.meta = meta; }
 		void include(int x, int z) { if(x < minX) minX = x; if(z < minZ) minZ = z; if(x > maxX) maxX = x; if(z > maxZ) maxZ = z; }
 		boolean hasValidFlag() { return meta.flagY >= 0; }
-		int labelX() { return hasValidFlag() ? meta.flagX : (minX * 16 + (maxX - minX + 1) * 8); }
-		int labelZ() { return hasValidFlag() ? meta.flagZ : (minZ * 16 + (maxZ - minZ + 1) * 8); }
+		int labelX() { return hasValidFlag() ? meta.flagX : groupCenter(minX, maxX); }
+		int labelZ() { return hasValidFlag() ? meta.flagZ : groupCenter(minZ, maxZ); }
+		int groupCenter(int min, int max) {
+			long lower = TerritoryCoordinateBounds.forCoordinate(min).minInclusive;
+			long upper = TerritoryCoordinateBounds.forCoordinate(max).maxExclusive;
+			return (int)Math.round((lower + upper) / 2D);
+		}
 	}
 
 	public static long chunkKey(int x, int z) {
@@ -72,7 +81,7 @@ public final class ClaimOverlayData {
 		public final int dimensionId, chunkX, chunkZ, color, labelX, labelZ;
 		public final String groupId, label;
 		public Claim(int dimensionId, int chunkX, int chunkZ, String groupId, int color) {
-			this(dimensionId, chunkX, chunkZ, groupId, color, "", chunkX * 16 + 8, chunkZ * 16 + 8);
+			this(dimensionId, chunkX, chunkZ, groupId, color, "", coordinateCenter(chunkX), coordinateCenter(chunkZ));
 		}
 		public Claim(int dimensionId, int chunkX, int chunkZ, String groupId, int color, String label, int labelX, int labelZ) {
 			this.dimensionId = dimensionId; this.chunkX = chunkX; this.chunkZ = chunkZ;

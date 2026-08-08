@@ -11,6 +11,8 @@ import org.lwjgl.opengl.GL11;
 import com.hfr.client.journeymap.ClientClaimOverlayCache.Snapshot;
 import com.hfr.client.journeymap.ClientClaimOverlayCache.TerritoryGroup;
 import com.hfr.clowder.ClaimOverlayData.Claim;
+import com.hfr.clowder.TerritoryCoordinateBounds;
+import com.hfr.clowder.TerritoryCoordinateBounds.Bounds;
 import com.hfr.config.XFConfig;
 
 import net.minecraft.client.Minecraft;
@@ -58,10 +60,12 @@ final class JourneyMapClaimDrawHandler implements InvocationHandler {
 		}
 	}
 	private void renderClaim(Object grid, Claim claim, Snapshot snapshot, double xo, double yo, int width, int height) throws Exception {
-		double x = claim.chunkX * 16D, z = claim.chunkZ * 16D;
+		Bounds xBounds = TerritoryCoordinateBounds.forCoordinate(claim.chunkX), zBounds = TerritoryCoordinateBounds.forCoordinate(claim.chunkZ);
+		double x = xBounds.minInclusive, z = zBounds.minInclusive;
+		double maxWorldX = xBounds.maxExclusive, maxWorldZ = zBounds.maxExclusive;
 		// Invoke the required public conversion, then use its uncropped companion so partially visible claims retain all corners.
 		reflection.getPixel.invoke(grid, x, z);
-		Point2D p0 = point(grid, x, z), p1 = point(grid, x + 16D, z), p2 = point(grid, x + 16D, z + 16D), p3 = point(grid, x, z + 16D);
+		Point2D p0 = point(grid, x, z), p1 = point(grid, maxWorldX, z), p2 = point(grid, maxWorldX, maxWorldZ), p3 = point(grid, x, maxWorldZ);
 		double minX = Math.min(Math.min(p0.getX(), p1.getX()), Math.min(p2.getX(), p3.getX())) + xo, maxX = Math.max(Math.max(p0.getX(), p1.getX()), Math.max(p2.getX(), p3.getX())) + xo;
 		double minY = Math.min(Math.min(p0.getY(), p1.getY()), Math.min(p2.getY(), p3.getY())) + yo, maxY = Math.max(Math.max(p0.getY(), p1.getY()), Math.max(p2.getY(), p3.getY())) + yo;
 		if(maxX < -8 || maxY < -8 || minX > width + 8 || minY > height + 8) return;
@@ -76,8 +80,12 @@ final class JourneyMapClaimDrawHandler implements InvocationHandler {
 	}
 	private void renderLabel(Object grid, TerritoryGroup group, double xo, double yo, int width, int height) throws Exception {
 		if(group.label == null || group.label.length() == 0) return;
-		Point2D b0 = point(grid, group.minChunkX * 16D, group.minChunkZ * 16D), b1 = point(grid, (group.maxChunkX + 1) * 16D, group.minChunkZ * 16D);
-		Point2D b2 = point(grid, (group.maxChunkX + 1) * 16D, (group.maxChunkZ + 1) * 16D), b3 = point(grid, group.minChunkX * 16D, (group.maxChunkZ + 1) * 16D);
+		Bounds minXBounds = TerritoryCoordinateBounds.forCoordinate(group.minChunkX), maxXBounds = TerritoryCoordinateBounds.forCoordinate(group.maxChunkX);
+		Bounds minZBounds = TerritoryCoordinateBounds.forCoordinate(group.minChunkZ), maxZBounds = TerritoryCoordinateBounds.forCoordinate(group.maxChunkZ);
+		double minWorldX = minXBounds.minInclusive, maxWorldX = maxXBounds.maxExclusive;
+		double minWorldZ = minZBounds.minInclusive, maxWorldZ = maxZBounds.maxExclusive;
+		Point2D b0 = point(grid, minWorldX, minWorldZ), b1 = point(grid, maxWorldX, minWorldZ);
+		Point2D b2 = point(grid, maxWorldX, maxWorldZ), b3 = point(grid, minWorldX, maxWorldZ);
 		double minX = Math.min(Math.min(b0.getX(), b1.getX()), Math.min(b2.getX(), b3.getX())) + xo, maxX = Math.max(Math.max(b0.getX(), b1.getX()), Math.max(b2.getX(), b3.getX())) + xo;
 		double minY = Math.min(Math.min(b0.getY(), b1.getY()), Math.min(b2.getY(), b3.getY())) + yo, maxY = Math.max(Math.max(b0.getY(), b1.getY()), Math.max(b2.getY(), b3.getY())) + yo;
 		if(maxX < 0 || maxY < 0 || minX > width || minY > height || maxX - minX < 12D || maxY - minY < 8D) return;
