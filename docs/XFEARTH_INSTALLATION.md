@@ -19,7 +19,7 @@
 8. Test the smoke map before preview or production.
 9. Never start a production Earth world with an empty or incomplete `region` directory.
 
-The default `FAIL` policy deliberately stops access when an expected in-bounds chunk is absent. `VOID` is an explicit diagnostic escape hatch, not a repair. Region-file existence reported by `/xc earth check` does not prove that a particular chunk is present in that region.
+The default `FAIL` policy deliberately stops access when an expected in-bounds chunk is absent. `VOID` is an explicit diagnostic escape hatch, not a repair. `/xc earth check <chunkX> <chunkZ>` requires integer chunk coordinates. Region-file existence reported by the command does not prove that a particular chunk is present in that region.
 
 Production save data, `.world` projects, and `.mca` files are deployed separately and must not be committed to Xenofactions or bundled in its jar.
 
