@@ -1,3 +1,8 @@
+# Pull request: fix JourneyMap minimap claim clipping
+
+- Kept JourneyMap's depth-based minimap mask active while faction claim fills, borders, and labels render, preventing overlay geometry from escaping circular and rectangular minimap interiors without adding a separate clipping system.
+- Preserved fullscreen claim rendering and the corrected legacy territory-coordinate bounds by limiting the change to Xenofactions-owned OpenGL state.
+
 # Pull request: fix JourneyMap faction claim alignment
 
 - Corrected JourneyMap claim polygons, exposed borders, and territory-label bounds to use the exact inverse of Xenofactions' legacy `+1` and truncating integer coordinate conversion instead of treating stored territory coordinates as vanilla chunks.
