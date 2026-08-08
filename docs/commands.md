@@ -159,9 +159,9 @@ Usage: `/cc <message>`; permission level: 0.
 | `/xunmute <player>` | Admin/moderator default | Unmute a player. |
 | `/invsee <player> [armorslots]` | Level 2 | View another player's inventory or armor slots. |
 | `/xmap` | Player | Give yourself a claim map item. |
-| `/xflags` | Player | Open/list faction flag functionality. |
-| `/xmulti` | Player | Utility command registered for all players. |
-| `/xdebug <param>` | Player | Debug command registered for all players; server policy should control use. |
+| `/xflags` | Player | Give yourself conquest flags for use against active war enemies. |
+| `/xmulti` | Player | Give yourself a multitool. |
+| `/xdebug <player>` | Player | Show a faction member's stored logout timestamp in raw and formatted forms. |
 | `/c stonedrops [page]` | Player | Read-only list of custom stone drops, including chance, raw chance, item registry name, metadata, stack amount, and Y range. All players and the server console can use this command. |
 | `/stonedrop <rarity> [minY] [maxY]` | Admin/moderator default | Administrator command to add held item/block as a custom stone drop. |
 | `/stonedrop list` | Admin/moderator default | Administrator command to list configured custom stone drops. |
@@ -172,7 +172,7 @@ Usage: `/cc <message>`; permission level: 0.
 | `/xmarket triggerstock ...` | Level 3 | Trigger stock movement/events. |
 | `/xmarket setshares ...` | Level 3 | Set player stock shares. |
 | `/xmarket getshares ...` | Level 3 | Inspect player stock shares. |
-| `/xplayer <mode> [player]` | Level 3 | Player administration utility. |
+| `/xplayer <cbt\|ramranch\|fps\|tilt\|shader\|vomit> <player>` | Level 3 | Toggle low-FPS, screen-tilt, or rapidly alternating shader effects for a player. |
 
 ## Optional TDM: `/tdm`
 
