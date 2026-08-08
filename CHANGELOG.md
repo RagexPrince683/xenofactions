@@ -1,3 +1,7 @@
+# Pull request: fix Earth chunk-check command compilation
+
+- Qualified the Minecraft command integer parser used by `/xc earth check`, allowing the standalone Earth command handler to compile while retaining standard invalid-coordinate command errors.
+
 # Pull request: restore canonical faction roles after UUID identity refactor
 
 - Fixed global chat and the XF menu to resolve live players through their canonical `FactionMemberRecord`, so UUID-mode owners and officers no longer appear as citizens.
