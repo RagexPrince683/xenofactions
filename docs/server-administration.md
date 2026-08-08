@@ -29,13 +29,13 @@
 /xc wardisable
 /xc addprestige <faction> <amount>
 /xc setclaim <wild/safe/war> <s/c> <radius>
-/xcfactiontimeoutcreationreset <playername>
+/xc factiontimeoutcreationreset <playername>
 /stonedrop list
 /invsee <player>
 /xmute <player> <seconds|perm> [reason]
 ```
 
-`/xcfactiontimeoutcreationreset <playername>` is admin-only and resets only the specified player's faction creation cooldown. It does not alter faction membership or any other cooldown, and it supports stored offline players.
+`/xc factiontimeoutcreationreset <playername>` is admin-only and resets only the specified player's faction creation cooldown. It does not alter faction membership or any other cooldown, and it supports stored offline players.
 
 ## Backups
 

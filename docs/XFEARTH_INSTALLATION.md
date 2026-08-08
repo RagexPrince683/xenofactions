@@ -15,11 +15,11 @@
 4. On a dedicated server, set `level-type=xf_earth` in `server.properties`.
 5. Copy the save into the directory selected by the server's `level-name`.
 6. Back up the world before starting it.
-7. Start the server and run `/xfearth status` as an operator.
+7. Start the server and run `/xc earth status` as an operator.
 8. Test the smoke map before preview or production.
 9. Never start a production Earth world with an empty or incomplete `region` directory.
 
-The default `FAIL` policy deliberately stops access when an expected in-bounds chunk is absent. `VOID` is an explicit diagnostic escape hatch, not a repair. Region-file existence reported by `/xfearth check` does not prove that a particular chunk is present in that region.
+The default `FAIL` policy deliberately stops access when an expected in-bounds chunk is absent. `VOID` is an explicit diagnostic escape hatch, not a repair. Region-file existence reported by `/xc earth check` does not prove that a particular chunk is present in that region.
 
 Production save data, `.world` projects, and `.mca` files are deployed separately and must not be committed to Xenofactions or bundled in its jar.
 

@@ -1,7 +1,6 @@
 package com.hfr.command;
 
 import com.hfr.main.MainRegistry;
-import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -12,7 +11,9 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
-public class CommandStoneDrops extends CommandBase {
+public final class StoneDropsCommandHandler {
+
+    private StoneDropsCommandHandler() { }
 
     private static final int ENTRIES_PER_PAGE = 8;
     private static final String ERROR = EnumChatFormatting.RED.toString();
@@ -22,28 +23,7 @@ public class CommandStoneDrops extends CommandBase {
     private static final String COMMAND = EnumChatFormatting.RED.toString();
     private static final DecimalFormat PERCENT_FORMAT = new DecimalFormat("0.######", DecimalFormatSymbols.getInstance(Locale.US));
 
-    @Override
-    public String getCommandName() {
-        return "stonedrops";
-    }
-
-    @Override
-    public String getCommandUsage(ICommandSender sender) {
-        return "/stonedrops [page]";
-    }
-
-    @Override
-    public int getRequiredPermissionLevel() {
-        return 0;
-    }
-
-    @Override
-    public boolean canCommandSenderUseCommand(ICommandSender sender) {
-        return true;
-    }
-
-    @Override
-    public void processCommand(ICommandSender sender, String[] args) {
+    public static void execute(ICommandSender sender, String[] args) {
         if (args.length > 1) {
             sendUsage(sender);
             return;
@@ -91,27 +71,27 @@ public class CommandStoneDrops extends CommandBase {
         }
 
         if (page < totalPages) {
-            sender.addChatMessage(new ChatComponentText(COMMAND + "/stonedrops " + (page + 1) + INFO + " - next page"));
+            sender.addChatMessage(new ChatComponentText(COMMAND + "/c stonedrops " + (page + 1) + INFO + " - next page"));
         }
         if (page > 1) {
-            sender.addChatMessage(new ChatComponentText(COMMAND + "/stonedrops " + (page - 1) + INFO + " - previous page"));
+            sender.addChatMessage(new ChatComponentText(COMMAND + "/c stonedrops " + (page - 1) + INFO + " - previous page"));
         }
     }
 
-    private int getValidEntryCount() {
+    private static int getValidEntryCount() {
         return Math.min(Math.min(MainRegistry.customDrops.size(), MainRegistry.customDropChances.size()),
                 Math.min(MainRegistry.customDropMinYs.size(), MainRegistry.customDropMaxYs.size()));
     }
 
-    private void sendUsage(ICommandSender sender) {
-        sender.addChatMessage(new ChatComponentText(ERROR + "Usage: " + getCommandUsage(sender)));
+    private static void sendUsage(ICommandSender sender) {
+        sender.addChatMessage(new ChatComponentText(ERROR + "Usage: " + "/c stonedrops [page]"));
     }
 
-    private void sendInvalidPage(ICommandSender sender) {
-        sender.addChatMessage(new ChatComponentText(ERROR + "Invalid page. Use a positive whole number, e.g. /stonedrops 1"));
+    private static void sendInvalidPage(ICommandSender sender) {
+        sender.addChatMessage(new ChatComponentText(ERROR + "Invalid page. Use a positive whole number, e.g. /c stonedrops 1"));
     }
 
-    private String getDisplayName(ItemStack stack) {
+    private static String getDisplayName(ItemStack stack) {
         if (stack == null || stack.getItem() == null) {
             return "Unknown item";
         }
@@ -123,11 +103,11 @@ public class CommandStoneDrops extends CommandBase {
         }
     }
 
-    private int getStackAmount(ItemStack stack) {
+    private static int getStackAmount(ItemStack stack) {
         return stack == null ? 0 : stack.stackSize;
     }
 
-    private String getRegistryName(ItemStack stack) {
+    private static String getRegistryName(ItemStack stack) {
         if (stack == null || stack.getItem() == null) {
             return "unknown";
         }
@@ -135,18 +115,18 @@ public class CommandStoneDrops extends CommandBase {
         return registryName == null || registryName.length() == 0 ? "unknown" : registryName;
     }
 
-    private int getMetadata(ItemStack stack) {
+    private static int getMetadata(ItemStack stack) {
         return stack == null ? 0 : stack.getItemDamage();
     }
 
-    private String formatChance(Double chance) {
+    private static String formatChance(Double chance) {
         if (chance == null) {
             return "unknown per stone block";
         }
         return PERCENT_FORMAT.format(chance.doubleValue() * 100.0D) + "% per stone block";
     }
 
-    private String formatYRange(Integer minY, Integer maxY) {
+    private static String formatYRange(Integer minY, Integer maxY) {
         if (minY == null || maxY == null) {
             return "Any height";
         }

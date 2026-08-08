@@ -1,10 +1,7 @@
 package com.hfr.command;
 
-import java.util.List;
-
 import com.hfr.clowder.FactionCreationCooldownData;
 
-import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -12,27 +9,13 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 
-public class CommandFactionCreationTimeoutReset extends CommandBase {
+public final class FactionCreationTimeoutResetHandler {
 
-    @Override
-    public String getCommandName() {
-        return "xcfactiontimeoutcreationreset";
-    }
+    private FactionCreationTimeoutResetHandler() { }
 
-    @Override
-    public String getCommandUsage(ICommandSender sender) {
-        return "/xcfactiontimeoutcreationreset <playername>";
-    }
-
-    @Override
-    public int getRequiredPermissionLevel() {
-        return 3;
-    }
-
-    @Override
-    public void processCommand(ICommandSender sender, String[] args) {
+    public static void execute(ICommandSender sender, String[] args) {
         if(args.length != 1 || !args[0].matches("[A-Za-z0-9_]{1,16}"))
-            throw new WrongUsageException(getCommandUsage(sender));
+            throw new WrongUsageException("/xc factiontimeoutcreationreset <player>");
 
         FactionCreationCooldownData.ClearResult result = FactionCreationCooldownData.clearPlayerName(args[0]);
         if(result.ambiguous) {
@@ -56,10 +39,4 @@ public class CommandFactionCreationTimeoutReset extends CommandBase {
             target.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN + "An admin reset your faction creation cooldown."));
     }
 
-    @Override
-    public List addTabCompletionOptions(ICommandSender sender, String[] args) {
-        if(args.length == 1)
-            return getListOfStringsMatchingLastWord(args, MinecraftServer.getServer().getAllUsernames());
-        return null;
-    }
 }
