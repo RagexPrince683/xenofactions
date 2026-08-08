@@ -1,3 +1,8 @@
+# Pull request: complete Xenofactions command GUI localization
+
+- Completed localization for the remaining Admin and TDM command GUI entries, including City Center cancel-move and recover-move commands.
+- Added source-level validation to require an English name and description for every command catalog entry.
+
 # Pull request: fix Earth chunk-check command compilation
 
 - Qualified the Minecraft command integer parser used by `/xc earth check`, allowing the standalone Earth command handler to compile while retaining standard invalid-coordinate command errors.
