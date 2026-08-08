@@ -1,3 +1,8 @@
+# Pull request: show command-specific help in the Xenofactions GUI
+
+- Replaced generic legacy-execution text in the Xenofactions command GUI with concise descriptions of each command's actual behavior.
+- Aligned faction and administrator GUI help with the current grouped `/c` and `/xc` commands and clarified utility-command documentation.
+
 # Pull request: complete Xenofactions command GUI localization
 
 - Completed localization for the remaining Admin and TDM command GUI entries, including City Center cancel-move and recover-move commands.
