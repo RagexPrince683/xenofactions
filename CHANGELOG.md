@@ -1,3 +1,8 @@
+# Pull request: fix JourneyMap faction claim alignment
+
+- Corrected JourneyMap claim polygons, exposed borders, and territory-label bounds to use the exact inverse of Xenofactions' legacy `+1` and truncating integer coordinate conversion instead of treating stored territory coordinates as vanilla chunks.
+- Covered positive, negative, axis-crossing, and near-origin territory bounds with focused regression tests while preserving real flag-block label positions and the reflection-only JourneyMap integration.
+
 # Pull request: show command-specific help in the Xenofactions GUI
 
 - Replaced generic legacy-execution text in the Xenofactions command GUI with concise descriptions of each command's actual behavior.
