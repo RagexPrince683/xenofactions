@@ -1,3 +1,9 @@
+# Pull request: fix Forge 1.7.10 Wall Art compilation
+
+- Updated Wall Art support checks to use Forge 1.7.10 `ForgeDirection` values for each neighboring wall face.
+- Removed the unreferenced legacy image-placement helper that still wrote deleted URL, name, and string-owner fields directly into Wall Art tile entities.
+- Preserved the server-authoritative Wall Art service, metadata-only tile entities, and the `wall_image_block` registry identity.
+
 # Pull request: fix development runClient identities
 
 - Restored GTNH's blank-name `Developer<random numbers>` behavior for default development clients.
