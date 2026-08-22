@@ -86,6 +86,8 @@ import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.event.entity.living.LivingSpawnEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.BlockEvent.BreakEvent;
+import net.minecraftforge.event.world.WorldEvent;
+import com.hfr.wallart.WallArtService;
 
 
 import static com.hfr.main.MainRegistry.border;
@@ -652,6 +654,7 @@ public class CommonEventHandler {
 
 		World world = event.world;
 		CustomFlagService.tickMainThread();
+		if(world.provider.dimensionId == 0) WallArtService.tick();
 		handleOutOfBoundsRegions(world);
 
 		// --------------------
@@ -726,6 +729,11 @@ public class CommonEventHandler {
 			/// AUTOMATA ///
 			ExplosionController.automaton(world);
 		}
+	}
+
+	@SubscribeEvent
+	public void onWallArtRootUnload(WorldEvent.Unload event) {
+		if(event.world != null && !event.world.isRemote && event.world.provider.dimensionId == 0) WallArtService.shutdown();
 	}
 
 	private void handleOutOfBoundsRegions(World world) {

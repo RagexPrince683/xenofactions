@@ -1,208 +1,63 @@
 package com.hfr.tileentity;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.DynamicTexture;
+import java.util.UUID;
+
+import com.hfr.wallart.WallArtConstants;
+
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.AxisAlignedBB;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
-// inside TileEntityWallImage.java (existing imports kept)
+/** The single, metadata-only controller for a complete Wall Art display. */
 public class TileEntityWallImage extends TileEntity {
-    public String ownerUUID = "";
-    public String imageName = "";
-    public String imageURL = "";
-    public String textureKey = "";
+    private UUID displayId;
+    private UUID ownerId;
+    private String imageHash = "";
+    private int facing = 2;
+    private int width = 1;
+    private int height = 1;
+    private long requestGeneration;
 
-    // NEW: track which index from owner's list is currently applied (-1 = none)
-    public int currentIndex = -1;
+    public UUID getDisplayId() { return displayId; }
+    public UUID getOwnerId() { return ownerId; }
+    public String getImageHash() { return imageHash; }
+    public int getFacing() { return facing; }
+    public int getDisplayWidth() { return width; }
+    public int getDisplayHeight() { return height; }
+    public long getRequestGeneration() { return requestGeneration; }
+    public void initialize(UUID display, UUID owner, int face) { displayId = display; ownerId = owner; facing = WallArtConstants.validFacing(face) ? face : 2; }
+    public long beginRequest() { return ++requestGeneration; }
+    public void configure(int newWidth, int newHeight, String hash) { width = WallArtConstants.validSize(newWidth, newHeight) ? newWidth : 1; height = WallArtConstants.validSize(newWidth, newHeight) ? newHeight : 1; imageHash = WallArtConstants.validHash(hash) ? hash : ""; markDirty(); }
 
-    @SideOnly(Side.CLIENT)
-    public ResourceLocation texture;
-    @SideOnly(Side.CLIENT)
-    public boolean downloading = false;
-
-    // change client cache to key by textureKey if present else url
-    @SideOnly(Side.CLIENT)
-    public static final Map<String, ResourceLocation> clientCache = new HashMap<String, ResourceLocation>();
-
-    private BufferedImage pendingImage;
-
-
-    @Override
-    public Packet getDescriptionPacket() {
-        NBTTagCompound tag = new NBTTagCompound();
-        writeToNBT(tag);
-        return new S35PacketUpdateTileEntity(xCoord, yCoord, zCoord, 1, tag);
+    @Override public Packet getDescriptionPacket() { NBTTagCompound n = new NBTTagCompound(); writeToNBT(n); return new S35PacketUpdateTileEntity(xCoord, yCoord, zCoord, 1, n); }
+    @Override public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity packet) { readFromNBT(packet.func_148857_g()); }
+    @Override public void readFromNBT(NBTTagCompound n) {
+        super.readFromNBT(n);
+        displayId = readUuid(n.getString("wallArtId")); ownerId = readUuid(n.getString("wallArtOwner"));
+        facing = WallArtConstants.validFacing(n.getInteger("wallArtFacing")) ? n.getInteger("wallArtFacing") : 2;
+        int w = n.getInteger("wallArtWidth"), h = n.getInteger("wallArtHeight");
+        width = WallArtConstants.validSize(w, h) ? w : 1; height = WallArtConstants.validSize(w, h) ? h : 1;
+        imageHash = WallArtConstants.validHash(n.getString("wallArtHash")) ? n.getString("wallArtHash") : "";
+        requestGeneration = n.getLong("wallArtGeneration");
+        // Legacy URL/image fields are deliberately ignored: clients must never fetch them.
     }
-
-    @Override
-    public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity pkt) {
-        readFromNBT(pkt.func_148857_g());
+    @Override public void writeToNBT(NBTTagCompound n) {
+        super.writeToNBT(n);
+        n.setString("wallArtId", displayId == null ? "" : displayId.toString());
+        n.setString("wallArtOwner", ownerId == null ? "" : ownerId.toString());
+        n.setInteger("wallArtFacing", facing); n.setInteger("wallArtWidth", width); n.setInteger("wallArtHeight", height);
+        n.setString("wallArtHash", imageHash == null ? "" : imageHash); n.setLong("wallArtGeneration", requestGeneration);
     }
+    private static UUID readUuid(String value) { try { return value == null || value.length() == 0 ? null : UUID.fromString(value); } catch(IllegalArgumentException e) { return null; } }
 
-    @Override
-    public void readFromNBT(NBTTagCompound tag) {
-        super.readFromNBT(tag);
-        ownerUUID = tag.getString("owner");
-        imageName = tag.getString("iname");
-        imageURL = tag.getString("iurl");
-        textureKey = tag.getString("tkey");
-        currentIndex = tag.hasKey("cindex") ? tag.getInteger("cindex") : -1;
+    @Override public AxisAlignedBB getRenderBoundingBox() {
+        double minX = xCoord, maxX = xCoord + 1, minZ = zCoord, maxZ = zCoord + 1;
+        if(facing == 2) maxX = xCoord + width; else if(facing == 3) minX = xCoord - width + 1;
+        else if(facing == 4) minZ = zCoord - width + 1; else if(facing == 5) maxZ = zCoord + width;
+        return AxisAlignedBB.getBoundingBox(minX, yCoord, minZ, maxX, yCoord + height, maxZ);
     }
-
-    @Override
-    public void writeToNBT(NBTTagCompound tag) {
-        super.writeToNBT(tag);
-        tag.setString("owner", ownerUUID == null ? "" : ownerUUID);
-        tag.setString("iname", imageName == null ? "" : imageName);
-        tag.setString("iurl", imageURL == null ? "" : imageURL);
-        tag.setString("tkey", textureKey == null ? "" : textureKey);
-        tag.setInteger("cindex", currentIndex);
-    }
-
-    private static BufferedImage scaleAndPad(BufferedImage input, int targetSize) {
-        int ow = input.getWidth();
-        int oh = input.getHeight();
-
-        // scale proportionally so neither dimension exceeds targetSize
-        double scale = Math.min((double) targetSize / ow, (double) targetSize / oh);
-        int nw = (int) (ow * scale);
-        int nh = (int) (oh * scale);
-
-        // create a transparent square canvas
-        BufferedImage out = new BufferedImage(targetSize, targetSize, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = out.createGraphics();
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-
-        // draw centered
-        int x = (targetSize - nw) / 2;
-        int y = (targetSize - nh) / 2;
-        g.drawImage(input, x, y, nw, nh, null);
-        g.dispose();
-
-        return out;
-    }
-
-
-    @Override
-    public void updateEntity() {
-        if (worldObj == null || !worldObj.isRemote) return; // only run client-side
-
-        // 1. If we have a texture ready in cache, use it
-        if (texture == null && imageURL != null && imageURL.length() > 0) {
-            final String cacheKey = (textureKey != null && textureKey.length() > 0) ? textureKey : imageURL;
-
-            if (clientCache.containsKey(cacheKey)) {
-                texture = clientCache.get(cacheKey);
-            } else {
-                // 2. Start download thread if not already downloading
-                if (!downloading) {
-                    downloading = true;
-                    final String url = imageURL;
-
-                    new Thread(() -> {
-                        try {
-                            BufferedImage img = ImageIO.read(new URL(url));
-                            if (img == null) throw new IOException("ImageIO returned null for " + url);
-
-                            // scale and pad
-                            BufferedImage scaled = scaleAndPad(img, 256);
-
-                            // store pending image to be picked up by main thread
-                            pendingImage = scaled;
-
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        } finally {
-                            downloading = false; // allow future retries
-                        }
-                    }, "WallImageDownloader-" + hashCode()).start();
-                }
-            }
-        }
-
-        // 3. If the pending image is ready, create DynamicTexture on main thread
-        if (pendingImage != null) {
-            DynamicTexture dyn = new DynamicTexture(pendingImage);
-
-            // unique resource location per image
-            ResourceLocation rl = new ResourceLocation("yourmodid", "wallimage_" + Math.abs((imageURL + "_" + currentIndex).hashCode()));
-
-            Minecraft.getMinecraft().getTextureManager().loadTexture(rl, dyn);
-
-            clientCache.put((textureKey != null && textureKey.length() > 0) ? textureKey : imageURL, rl);
-            texture = rl;
-
-            pendingImage = null; // clear after upload
-        }
-    }
-
-
-    @SideOnly(Side.CLIENT)
-    public ResourceLocation getTexture() {
-        if (texture == null && (textureKey != null && textureKey.length() > 0)) {
-            texture = clientCache.get(textureKey);
-        } else if (texture == null && imageURL != null) {
-            texture = clientCache.get(imageURL);
-        }
-        return texture;
-    }
-
-    // add your scaleAndMaybePad helper here (or keep the one you already added)
-
-    //no longer used:
-   // @SideOnly(Side.CLIENT)
-   // private static BufferedImage scaleAndMaybePad(BufferedImage src, int maxDim, boolean padSquare) {
-   //     // same code as previously provided — keep it here
-   //     int w = src.getWidth();
-   //     int h = src.getHeight();
-   //     float scale = 1.0f;
-   //     if (w > maxDim || h > maxDim) {
-   //         if (w >= h) scale = (float) maxDim / (float) w;
-   //         else scale = (float) maxDim / (float) h;
-   //     }
-   //     int newW = Math.max(1, Math.round(w * scale));
-   //     int newH = Math.max(1, Math.round(h * scale));
-//
-   //     BufferedImage tmp = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
-   //     Graphics2D g2 = tmp.createGraphics();
-   //     g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-   //     g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-   //     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-   //     g2.drawImage(src, 0, 0, newW, newH, null);
-   //     g2.dispose();
-//
-   //     if (padSquare) {
-   //         int side = Math.max(newW, newH);
-   //         BufferedImage square = new BufferedImage(side, side, BufferedImage.TYPE_INT_ARGB);
-   //         Graphics2D g = square.createGraphics();
-   //         g.setComposite(AlphaComposite.Clear);
-   //         g.fillRect(0, 0, side, side);
-   //         g.setComposite(AlphaComposite.SrcOver);
-   //         int ox = (side - newW) / 2;
-   //         int oy = (side - newH) / 2;
-   //         g.drawImage(tmp, ox, oy, null);
-   //         g.dispose();
-   //         return square;
-   //     } else {
-   //         return tmp;
-   //     }
-   // }
-
-
+    @Override public double getMaxRenderDistanceSquared() { return 16384.0D; }
 }
-

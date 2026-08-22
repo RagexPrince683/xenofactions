@@ -8,6 +8,7 @@ import com.hfr.clowder.ClaimOverlayData.Claim;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
+import com.hfr.tileentity.TileEntityWallImage;
 
 public class ServerProxy
 {
@@ -36,4 +37,6 @@ public class ServerProxy
 
 	public void effectNT(NBTTagCompound nbt) { }
 	public void receiveClaimOverlay(int dimension, int generation, int part, int parts, List<Claim> claims) { }
+	public void openWallArtGui(TileEntityWallImage tile) { }
+	public void acceptWallArtChunk(String hash, int index, int total, int fullLength, byte[] bytes) { }
 }

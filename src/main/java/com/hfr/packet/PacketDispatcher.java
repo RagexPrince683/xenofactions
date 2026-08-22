@@ -5,6 +5,7 @@ import com.hfr.main.MainRegistry;
 import com.hfr.packet.client.*;
 import com.hfr.packet.effect.*;
 import com.hfr.packet.tile.*;
+import com.hfr.packet.wallart.*;
 
 import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -80,7 +81,9 @@ public class PacketDispatcher {
 		wrapper.registerMessage(AuxParticlePacketNT.Handler.class, AuxParticlePacketNT.class, i++, Side.CLIENT);
 		wrapper.registerMessage(ReseatRequestPacket.Handler.class, ReseatRequestPacket.class, i++, Side.SERVER);
 
-		wrapper.registerMessage(PacketAddImage.Handler.class, PacketAddImage.class, i++, Side.SERVER);
+		wrapper.registerMessage(WallArtConfigurePacket.Handler.class, WallArtConfigurePacket.class, i++, Side.SERVER);
+		wrapper.registerMessage(WallArtImageRequestPacket.Handler.class, WallArtImageRequestPacket.class, i++, Side.SERVER);
+		wrapper.registerMessage(WallArtImageChunkPacket.Handler.class, WallArtImageChunkPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(TDMKitGuiPacket.Handler.class, TDMKitGuiPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(TDMKitSelectPacket.Handler.class, TDMKitSelectPacket.class, i++, Side.SERVER);
 		wrapper.registerMessage(TDMStatusPacket.Handler.class, TDMStatusPacket.class, i++, Side.CLIENT);

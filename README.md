@@ -181,3 +181,8 @@ The command is parsed, but source currently returns “This command is currently
 
 ### Is there a guide book?
 The code has a guide-book toggle and fallback help references. If guide content or distribution differs on your server, use `/c help` and the documentation in this repository as the authoritative fallback.
+# Wall Art
+
+The **Wall Art** block is a single wall-mounted controller that renders one image surface from 1x1 through 5x5 blocks. Each player may own at most 30 configured displays per Minecraft save; a display counts once regardless of its dimensions, and the quota is shared across that save's dimensions.
+
+Enter an HTTPS image URL by using the placed controller. Wall Art uses the same host whitelist and SSRF protections as custom faction flags. The dedicated server downloads, validates, decodes, scales, hashes, and stores a static PNG under the current save. Clients never contact the remote image host: they request bounded chunks by the server-issued SHA-256 content hash and share a bounded texture cache between displays.

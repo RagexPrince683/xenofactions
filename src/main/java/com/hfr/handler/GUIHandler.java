@@ -677,7 +677,6 @@ public class GUIHandler implements IGuiHandler {
 					}
 				}
 
-				//case CommandXCustomImage.
 
 			}
 		} else {

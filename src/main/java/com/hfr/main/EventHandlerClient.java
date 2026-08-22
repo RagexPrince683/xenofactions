@@ -415,6 +415,7 @@ public class EventHandlerClient {
 	@SubscribeEvent
 	public void onClientDisconnect(ClientDisconnectionFromServerEvent event) {
 		lookup.clear();
+		com.hfr.client.wallart.WallArtTextureCache.clear();
 		com.hfr.stonedrops.StoneDropDisplaySnapshot.clearClientSnapshot();
 		MachineDisplaySnapshot.clearClientSnapshot();
 	}
