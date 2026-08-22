@@ -232,8 +232,8 @@ public class ModBlocks {
 				.setResistance(1.0F)
 				.setStepSound(soundTypeWood) // treat like wood; change if you want
 				.setCreativeTab(MainRegistry.tab)
-				// texture name is optional (TESR will render dynamic texture) but keep a fallback
-				.setBlockTextureName(RefStrings.MODID + ":wall_image_fallback");
+				// Neutral fallback for the item and unconfigured controller; the TESR still renders configured images.
+				.setBlockTextureName(RefStrings.MODID + ":concrete_flat");
 
 		//GameRegistry.registerBlock(wallImageBlock, "wall_image_block");
 		//GameRegistry.registerTileEntity(TileEntityWallImage.class, "tile_wall_image");

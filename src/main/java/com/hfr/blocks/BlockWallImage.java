@@ -34,6 +34,22 @@ public class BlockWallImage extends BlockContainer {
                 || world.isSideSolid(x, y, z - 1, ForgeDirection.SOUTH)
                 || world.isSideSolid(x, y, z + 1, ForgeDirection.NORTH));
     }
+    @Override
+    public void onNeighborBlockChange(World world, int x, int y, int z, Block neighbor) {
+        if (!world.isRemote && !canBlockStay(world, x, y, z)) {
+            dropBlockAsItem(world, x, y, z, world.getBlockMetadata(x, y, z), 0);
+            world.setBlockToAir(x, y, z);
+        }
+    }
+    private boolean canBlockStay(World world, int x, int y, int z) {
+        switch (world.getBlockMetadata(x, y, z)) {
+            case 2: return world.isSideSolid(x, y, z - 1, ForgeDirection.SOUTH);
+            case 3: return world.isSideSolid(x, y, z + 1, ForgeDirection.NORTH);
+            case 4: return world.isSideSolid(x - 1, y, z, ForgeDirection.EAST);
+            case 5: return world.isSideSolid(x + 1, y, z, ForgeDirection.WEST);
+            default: return false;
+        }
+    }
     @Override public void setBlockBoundsBasedOnState(IBlockAccess w,int x,int y,int z){switch(w.getBlockMetadata(x,y,z)){case 2:setBlockBounds(0,0,0,1,1,THICK);break;case 3:setBlockBounds(0,0,1-THICK,1,1,1);break;case 4:setBlockBounds(0,0,0,THICK,1,1);break;case 5:setBlockBounds(1-THICK,0,0,1,1,1);break;default:setBlockBounds(0,0,0,1,1,1);}}
     @Override public boolean isOpaqueCube(){return false;} @Override public boolean renderAsNormalBlock(){return false;}
 }

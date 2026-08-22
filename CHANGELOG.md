@@ -1,3 +1,10 @@
+# Pull request: fix Wall Art block and configuration GUI
+
+- Centered and restored the Wall Art URL, display-size, and download controls by separating display dimensions from the inherited GUI screen dimensions.
+- Preserved URL text and selected dimensions across GUI resizing, and added an inline prompt for empty submissions.
+- Replaced the missing fallback texture reference with the existing neutral concrete panel texture while retaining dynamic image rendering.
+- Made wall-mounted controllers drop when their supporting wall is removed using Forge 1.7.10 side-solid checks.
+
 # Pull request: fix Forge 1.7.10 Wall Art compilation
 
 - Updated Wall Art support checks to use Forge 1.7.10 `ForgeDirection` values for each neighboring wall face.
