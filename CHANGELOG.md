@@ -1,3 +1,9 @@
+# Pull request: fix development runClient identities
+
+- Restored GTNH's blank-name `Developer<random numbers>` behavior for default development clients.
+- Assigned one fresh random UUID during each Gradle invocation before the run task finalizes its properties, while retaining validated independent `devUsername` and `devUuid` overrides.
+- Kept `runClient` identity logging read-only so task execution no longer attempts to mutate finalized Gradle properties.
+
 # Pull request: isolate faction saves and randomize development players
 
 - Reset all faction, membership, diplomacy, claim, cooldown, protection, and overlay runtime state at the logical-server overworld lifecycle boundary, while retaining one shared database across dimensions.

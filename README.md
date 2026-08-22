@@ -81,8 +81,8 @@ bytecode, and MCP stable mappings 12. Start the IDE client with the checked-in
 gradle runClient
 ```
 
-Each `runClient` launch uses a new random, credential-free development username and UUID for multiplayer and faction
-testing. Use `gradle runClient -PdevUsername=PlayerOne -PdevUuid=<standard-uuid>` to fix either or both values; an
+Each independent `runClient` invocation uses GTNH's credential-free `Developer<random numbers>` name and a fresh
+random UUID for multiplayer and faction testing. Use `gradle runClient -PdevUsername=PlayerOne -PdevUuid=<standard-uuid>` to fix either or both values; an
 omitted value remains random. These map to Minecraft 1.7.10's supported `--username` and `--uuid` arguments. Never
 commit account tokens or passwords.
 

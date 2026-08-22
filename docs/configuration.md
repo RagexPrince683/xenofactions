@@ -14,7 +14,7 @@ Restart the server after changing configuration unless the generated config comm
 
 `UUID` uses the authenticated UUID and is secure production behavior; last-known names never authorize. `NAME` uses the trimmed, `Locale.ROOT`-lowercase `GameProfile` name so test membership survives transient UUID changes, but cannot protect against username reuse or changes. Ambiguous stored names fail closed.
 
-Every `runClient` execution generates a random development username and UUID. For deterministic multiplayer or faction testing, override either value with `gradle runClient -PdevUsername=PlayerOne -PdevUuid=<standard-uuid>`; only omitted values remain random. No credentials are required.
+Every independent `runClient` invocation uses GTNH's credential-free `Developer<random numbers>` name and a fresh random UUID. For deterministic multiplayer or faction testing, override either value with `gradle runClient -PdevUsername=PlayerOne -PdevUuid=<standard-uuid>`; an omitted username keeps the GTNH-generated name and an omitted UUID remains random. Explicit usernames must contain at most 16 letters, digits, or underscores.
 
 ## Main feature toggles
 
