@@ -70,6 +70,7 @@ tasks.named('runClient') {
     dependsOn(prepareDevModsTask)
     username.set(providers.gradleProperty('devUsername').orElse('DevPlayer'))
     userUUID.set(providers.gradleProperty('devUuid').orElse('45564450-4c41-5945-5200-000000000001'))
+    //todo fix UUID for multiple runclients/name
 }
 
 tasks.withType(JavaCompile).configureEach {
