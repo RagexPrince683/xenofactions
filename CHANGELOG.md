@@ -1,3 +1,9 @@
+# Pull request: isolate faction saves and randomize development players
+
+- Reset all faction, membership, diplomacy, claim, cooldown, protection, and overlay runtime state at the logical-server overworld lifecycle boundary, while retaining one shared database across dimensions.
+- Bound cached faction data and auxiliary JSON persistence to the active save so a new or reopened world cannot inherit another world's state.
+- Give each `runClient` execution a validated random development username and UUID by default, while preserving independent `devUsername` and `devUuid` overrides.
+
 # Pull request: fix JourneyMap minimap claim clipping
 
 - Kept JourneyMap's depth-based minimap mask active while faction claim fills, borders, and labels render, preventing overlay geometry from escaping circular and rectangular minimap interiors without adding a separate clipping system.

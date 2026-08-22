@@ -93,6 +93,11 @@ public class ClowderEvents {
 	public static boolean newPlayerProtectionEnabled = false;
 	private static final String XENO_PROT = "xeno_player_prot";
 
+	public static void resetWorldState() {
+		buildGraceValidationTicks = 0;
+		newPlayerProtectionEnabled = false;
+	}
+
 	// Load MCHeli classes dynamically via ReflectionUtils
 	public static final Class<?> MCH_CONFIG = ReflectionUtils.getClass("mcheli.MCH_Config");
 	public static final Class<?> MCH_ENTITY_BULLET = ReflectionUtils.getClass("mcheli.weapon.MCH_EntityBullet");
@@ -113,6 +118,7 @@ public class ClowderEvents {
 	// Event handlers for world load/unload
 	@SubscribeEvent
 	public void clowderLoadEvent(WorldEvent.Load event) {
+		if (event.world.isRemote) return;
 		if (event.world.provider.dimensionId == 0) {
 			// Ensure the MCHeli classes are available before proceeding with further logic
 			if (MCH_ENTITY_AIRCRAFT != null) {
@@ -122,12 +128,16 @@ public class ClowderEvents {
 				XFLog.debug("[Clowder] MCH_EntityAircraft class is available.");
 			}
 
+			ClowderData.resetWorldState();
 			ClowderData.getData(event.world);
+			PlayerProtectionData.load();
+			FactionCreationCooldownData.load();
 		}
 	}
 
 	@SubscribeEvent
 	public void clowderLoadEvent(WorldEvent.Unload event) {
+		if (event.world.isRemote) return;
 		if (event.world.provider.dimensionId == 0) {
 			// Ensure MCHeli classes are available for unloading event
 			if (MCH_ENTITY_AIRCRAFT != null) {
@@ -135,7 +145,12 @@ public class ClowderEvents {
 				XFLog.debug("[Clowder] MCH_EntityAircraft is still available during world unload.");
 			}
 
-			ClowderData.getData(event.world).markDirty();
+			ClowderData active = ClowderData.getData(event.world);
+			if(active != null) active.markDirty();
+			PlayerProtectionData.save();
+			FactionCreationCooldownData.save();
+			event.world.perWorldStorage.saveAllData();
+			ClowderData.release(event.world);
 		}
 	}
 

@@ -68,9 +68,23 @@ tasks.named('compileJava') {
 
 tasks.named('runClient') {
     dependsOn(prepareDevModsTask)
-    username.set(providers.gradleProperty('devUsername').orElse('DevPlayer'))
-    userUUID.set(providers.gradleProperty('devUuid').orElse('45564450-4c41-5945-5200-000000000001'))
-    //todo fix UUID for multiple runclients/name
+    doFirst {
+        def selectedUsername = providers.gradleProperty('devUsername').orNull
+        def selectedUuid = providers.gradleProperty('devUuid').orNull
+        if (selectedUsername != null && !(selectedUsername ==~ /[A-Za-z0-9_]{1,16}/))
+            throw new GradleException('devUsername must contain 1-16 letters, digits, or underscores.')
+        if (selectedUuid != null) {
+            try { java.util.UUID.fromString(selectedUuid) }
+            catch (IllegalArgumentException ignored) { throw new GradleException('devUuid must be a standard UUID, for example 12345678-1234-1234-1234-123456789abc.') }
+        }
+        if (selectedUsername == null)
+            selectedUsername = 'Dev' + java.util.UUID.randomUUID().toString().replace('-', '').substring(0, 10).toUpperCase(Locale.ROOT)
+        if (selectedUuid == null)
+            selectedUuid = java.util.UUID.randomUUID().toString()
+        username.set(selectedUsername)
+        userUUID.set(selectedUuid)
+        logger.lifecycle("Development player: ${selectedUsername} (${selectedUuid})")
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {

@@ -50,8 +50,16 @@ public class FactionCreationCooldownData {
     }
 
     private static File file() {
-        return MinecraftServer.getServer().getFile("clowder_faction_creation_cooldowns.json");
+		World overworld = net.minecraftforge.common.DimensionManager.getWorld(0);
+		return overworld == null
+			? MinecraftServer.getServer().getFile("clowder_faction_creation_cooldowns.json")
+			: new File(overworld.getSaveHandler().getWorldDirectory(), "clowder_faction_creation_cooldowns.json");
     }
+
+	public static void resetWorldState() {
+		DATA = new HashMap<String, CooldownEntry>();
+		FALLBACKS = new HashMap<String, CooldownEntry>();
+	}
 
     public static void load() {
         try {

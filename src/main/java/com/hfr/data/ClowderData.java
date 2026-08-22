@@ -74,14 +74,38 @@ public class ClowderData extends WorldSavedData {
 	}
 
 	
-	static ClowderData data = null;
+	private static ClowderData data = null;
+	private static World storageOwner = null;
+
+	/** Clears every process-static value which belongs to one Minecraft save. */
+	public static void resetWorldState() {
+		data = null;
+		storageOwner = null;
+		Clowder.resetWorldState();
+		ClowderTerritory.resetWorldState();
+		CommandClowderAdmin.WARENABLED = XFConfig.warEnabledDefault;
+		CommandClowderAdmin.WAR_COOLDOWNS_DISABLED = false;
+		CommandClowderAdmin.WAR_ONLINE_CHECK_DISABLED = false;
+		CommandClowderAdmin.WAR_STATE_CHECK_DISABLED = false;
+		CommandClowderAdmin.LEGACY_WAR_ENABLED = false;
+		com.hfr.clowder.ClowderEvents.resetWorldState();
+		com.hfr.clowder.PlayerProtectionData.resetWorldState();
+		com.hfr.clowder.FactionCreationCooldownData.resetWorldState();
+		com.hfr.journeymap.ClaimOverlaySync.resetWorldState();
+		com.hfr.dynmap.XFDynmapIntegration.markDirty();
+	}
+
+	public static void release(World world) {
+		if(world != null && world == storageOwner)
+			resetWorldState();
+	}
 	
 	public static ClowderData getData(World worldObj) {
 
 		//initializeDiplomacy(worldObj);
 		//there's no way this works but let's try it
 		if(worldObj == null)
-			return data;
+			return null;
 
 		World storageWorld = worldObj;
 		if(worldObj.provider != null && worldObj.provider.dimensionId != 0) {
@@ -90,11 +114,18 @@ public class ClowderData extends WorldSavedData {
 				storageWorld = overworld;
 		}
 
+		if(storageOwner != storageWorld) {
+			resetWorldState();
+			storageOwner = storageWorld;
+		}
+		if(data != null)
+			return data;
+
 		data = (ClowderData)storageWorld.perWorldStorage.loadData(ClowderData.class, "hfr_clowder");
 		if(data == null) {
-			CommandClowderAdmin.WARENABLED = XFConfig.warEnabledDefault;
-			storageWorld.perWorldStorage.setData("hfr_clowder", new ClowderData("hfr_clowder"));
-			data = (ClowderData)storageWorld.perWorldStorage.loadData(ClowderData.class, "hfr_clowder");
+			data = new ClowderData("hfr_clowder");
+			storageWorld.perWorldStorage.setData("hfr_clowder", data);
+			data.markDirty();
 		}
 
 		return data;
