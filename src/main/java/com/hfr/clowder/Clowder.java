@@ -2429,6 +2429,19 @@ public class Clowder {
 	// the thing that adds prestige to prestige bank - allah note
 	private static int saveCooldown = 20; // ticks
 
+	public static void resetWorldState() {
+		clowders.clear();
+		clearIdentityMaps();
+		colours.clear();
+		colours.add(ClowderTerritory.SAFEZONE_COLOR);
+		colours.add(ClowderTerritory.WARZONE_COLOR);
+		colours.add(ClowderTerritory.WILDERNESS_COLOR);
+		retreating.clear();
+		teleports.clear();
+		forceOnline = false;
+		saveCooldown = 20;
+	}
+
 	public static void updatePrestige(World world) {
 		for (Clowder clowder : clowders) {
 			if (clowder.valid()) {

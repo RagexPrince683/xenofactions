@@ -14,7 +14,7 @@ Restart the server after changing configuration unless the generated config comm
 
 `UUID` uses the authenticated UUID and is secure production behavior; last-known names never authorize. `NAME` uses the trimmed, `Locale.ROOT`-lowercase `GameProfile` name so test membership survives transient UUID changes, but cannot protect against username reuse or changes. Ambiguous stored names fail closed.
 
-`runClient` uses `DevPlayer` and deterministic UUID `45564450-4c41-5945-5200-000000000001`. Override them with `gradle runClient -PdevUsername=PlayerOne -PdevUuid=<standard-uuid>`; RFG supplies `--username` and `--uuid`. Without explicit identity the underlying launcher may generate `Player###`-style identities that are not guaranteed stable between launches. No credentials are required.
+Every `runClient` execution generates a random development username and UUID. For deterministic multiplayer or faction testing, override either value with `gradle runClient -PdevUsername=PlayerOne -PdevUuid=<standard-uuid>`; only omitted values remain random. No credentials are required.
 
 ## Main feature toggles
 

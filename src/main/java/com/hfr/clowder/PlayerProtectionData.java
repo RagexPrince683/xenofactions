@@ -17,9 +17,14 @@ public class PlayerProtectionData {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    private static final File FILE = new File(
-            MinecraftServer.getServer().getFile("clowder_player_protection.json").getAbsolutePath()
-    );
+    private static File file() {
+		net.minecraft.world.World overworld = net.minecraftforge.common.DimensionManager.getWorld(0);
+		return overworld == null
+				? MinecraftServer.getServer().getFile("clowder_player_protection.json")
+				: new File(overworld.getSaveHandler().getWorldDirectory(), "clowder_player_protection.json");
+	}
+
+	public static void resetWorldState() { DATA = new HashMap<String, ProtectionEntry>(); }
 
     public static class ProtectionEntry {
 
@@ -41,12 +46,13 @@ public class PlayerProtectionData {
 
         try {
 
-            if(!FILE.exists()) {
+			File file = file();
+			if(!file.exists()) {
                 save();
                 return;
             }
 
-            FileReader reader = new FileReader(FILE);
+			FileReader reader = new FileReader(file);
 
             DATA = GSON.fromJson(
                     reader,
@@ -68,7 +74,7 @@ public class PlayerProtectionData {
 
         try {
 
-            FileWriter writer = new FileWriter(FILE);
+			FileWriter writer = new FileWriter(file());
 
             GSON.toJson(DATA, writer);
 

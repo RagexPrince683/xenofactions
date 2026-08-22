@@ -877,8 +877,6 @@ public class MainRegistry
 		if(XFConfig.enableTDM)
 			event.registerServerCommand(new CommandTDM());
 		MarketData.loadMarketData();
-		PlayerProtectionData.load();
-		FactionCreationCooldownData.load();
 
 		//and now we just pray that the market data does not cope over serverside
 

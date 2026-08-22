@@ -24,6 +24,7 @@ public class ClaimOverlaySync {
 	private static int debounce, generation;
 	public static synchronized void markAllDirty() { allDirty = true; debounce = 20; }
 	public static synchronized void markDirty(int dimension) { DIRTY.add(Integer.valueOf(dimension)); debounce = 20; }
+	public static synchronized void resetWorldState() { DIRTY.clear(); allDirty = true; debounce = 0; generation = 0; }
 
 	@SubscribeEvent public void login(PlayerLoggedInEvent event) { if(event.player instanceof EntityPlayerMP) send((EntityPlayerMP)event.player); }
 	@SubscribeEvent public void changed(PlayerChangedDimensionEvent event) { if(event.player instanceof EntityPlayerMP) send((EntityPlayerMP)event.player); }

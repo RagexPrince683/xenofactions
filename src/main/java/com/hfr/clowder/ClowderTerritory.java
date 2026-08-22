@@ -862,6 +862,11 @@ public class ClowderTerritory {
 	
 	private static final int cycle = MainRegistry.territoryAmount;
 	private static int ptr = 0;
+
+	public static void resetWorldState() {
+		territories.clear();
+		ptr = 0;
+	}
 	
 	//i called it an automaton because it mindlessly iterates through the persistence checks without the common handler having to do anything in addition
 	public static void persistenceAutomaton(World world) {

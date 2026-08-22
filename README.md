@@ -81,11 +81,10 @@ bytecode, and MCP stable mappings 12. Start the IDE client with the checked-in
 gradle runClient
 ```
 
-The GTNH/RFG launcher otherwise supplies a generated `Player###` username and development UUID; that generated
-identity is not a durable contract and may differ between launches. Xenofactions configures stable, credential-free
-defaults (`DevPlayer`, UUID `45564450-4c41-5945-5200-000000000001`). Override independent clients with
-`gradle runClient -PdevUsername=PlayerOne -PdevUuid=<standard-uuid>`. These map to Minecraft 1.7.10's supported
-`--username` and `--uuid` arguments. Never commit account tokens or passwords.
+Each `runClient` launch uses a new random, credential-free development username and UUID for multiplayer and faction
+testing. Use `gradle runClient -PdevUsername=PlayerOne -PdevUuid=<standard-uuid>` to fix either or both values; an
+omitted value remains random. These map to Minecraft 1.7.10's supported `--username` and `--uuid` arguments. Never
+commit account tokens or passwords.
 
 Faction identity defaults to `AUTO`: deobfuscated development and `online-mode=false` servers use normalized profile
 names, while packaged `online-mode=true` servers retain secure UUID authorization. Explicit `NAME` is only for
