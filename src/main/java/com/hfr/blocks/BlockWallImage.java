@@ -41,7 +41,7 @@ public class BlockWallImage extends BlockContainer {
             world.setBlockToAir(x, y, z);
         }
     }
-    private boolean canBlockStay(World world, int x, int y, int z) {
+    public boolean canBlockStay(World world, int x, int y, int z) {
         switch (world.getBlockMetadata(x, y, z)) {
             case 2: return world.isSideSolid(x, y, z - 1, ForgeDirection.SOUTH);
             case 3: return world.isSideSolid(x, y, z + 1, ForgeDirection.NORTH);
