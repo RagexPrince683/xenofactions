@@ -881,10 +881,6 @@ public class MainRegistry
 		//and now we just pray that the market data does not cope over serverside
 
 		//I'm flying too high
-		//MinecraftServer.getServer().getCommandManager().registerCommand(new CommandXCustomImage());
-		//todo readd custom images, temp hotfix for server missing perm
-		//event.registerServerCommand(new CommandXCustomImage());
-
 	}
 
 	//only one thing

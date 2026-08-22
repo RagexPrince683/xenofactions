@@ -66,6 +66,8 @@ import cpw.mods.fml.relauncher.ReflectionHelper;
 
 public class ClientProxy extends ServerProxy
 {
+	@Override public void openWallArtGui(TileEntityWallImage tile) { Minecraft.getMinecraft().displayGuiScreen(new com.hfr.inventory.gui.GuiWallArt(tile)); }
+	@Override public void acceptWallArtChunk(String hash, int index, int total, int fullLength, byte[] bytes) { com.hfr.client.wallart.WallArtTextureCache.accept(hash,index,total,fullLength,bytes); }
 	@Override
 	public void receiveClaimOverlay(final int dimension, final int generation, final int part, final int parts, final List<com.hfr.clowder.ClaimOverlayData.Claim> claims) {
 		Minecraft.getMinecraft().func_152344_a(new Runnable() { @Override public void run() {
@@ -101,7 +103,6 @@ public class ClientProxy extends ServerProxy
 		RenderingRegistry.registerBlockHandler(new RenderSandbags());
 		RenderingRegistry.registerBlockHandler(new RenderRope());
 
-		//ClientRegistry.bindTileEntitySpecialRenderer(TileEntityWallImage.class, new TileEntityWallImageRenderer());
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityWallImage.class, new RenderWallImage());
 
 

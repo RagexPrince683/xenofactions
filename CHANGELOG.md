@@ -282,3 +282,10 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - New-format loading validates UUID strings and ignores malformed records rather than granting access. Legacy name fields remain import-only staging data and are not consulted by player lookup.
 - Offline-mode servers continue to use UUIDs, but their UUIDs are derived from usernames; consequently, offline mode cannot reliably preserve identity across a username change.
 - Operator recovery syntax for unresolved migration entries is `/xc migration list <faction>` and `/xc migration bind <faction> <legacy-name> <online-player>`.
+# Server-safe Wall Art system
+
+- Replaced the legacy client-side Wall Image downloader and per-player URL list with a server-authoritative Wall Art controller.
+- Added 1x1 through 5x5 display sizing, per-save UUID ownership and a 30-display quota shared across dimensions.
+- Added bounded asynchronous HTTPS validation, save-local SHA-256 image deduplication, indexed overlap/reference records, and orphan cleanup.
+- Added validated, chunked image transfer and a shared 64 MiB client texture cache with disconnect cleanup.
+- Preserved the `wall_image_block` registry name while migrating unsupported legacy tile metadata to an unconfigured display.
