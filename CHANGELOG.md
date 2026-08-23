@@ -1,3 +1,9 @@
+# Pull request: secure and distribute Wall Art controllers
+
+- Made Wall Art configuration opening server-authoritative and restricted it to the controller's UUID owner, with localized denial feedback.
+- Added the missing Wall Art block display name and a localized `/xwallart` confirmation.
+- Added the permission-free `/xwallart` player command, including safe item dropping when the inventory is full.
+
 # Pull request: fix Wall Art collision and wall orientation
 
 - Made Wall Art non-colliding like vanilla 1.7.10 vines while retaining its thin metadata-oriented selection and ray-trace bounds.

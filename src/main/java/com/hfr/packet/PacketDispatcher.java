@@ -82,6 +82,7 @@ public class PacketDispatcher {
 		wrapper.registerMessage(ReseatRequestPacket.Handler.class, ReseatRequestPacket.class, i++, Side.SERVER);
 
 		wrapper.registerMessage(WallArtConfigurePacket.Handler.class, WallArtConfigurePacket.class, i++, Side.SERVER);
+		wrapper.registerMessage(WallArtOpenGuiPacket.Handler.class, WallArtOpenGuiPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(WallArtImageRequestPacket.Handler.class, WallArtImageRequestPacket.class, i++, Side.SERVER);
 		wrapper.registerMessage(WallArtImageChunkPacket.Handler.class, WallArtImageChunkPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(TDMKitGuiPacket.Handler.class, TDMKitGuiPacket.class, i++, Side.CLIENT);
