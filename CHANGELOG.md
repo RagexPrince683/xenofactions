@@ -1,3 +1,10 @@
+# Pull request: fix Wall Art image importing
+
+- Separated bounded Wall Art source downloads and source-dimension safety checks from the much smaller custom faction flag import limits.
+- Added metadata-first PNG/JPEG decoding with source subsampling so normal high-resolution photographs are efficiently scaled into the selected 128x128 through 640x640 Wall Art canvas.
+- Improved direct HTTPS image handling with byte-based format detection, query-safe parsed-host validation, per-redirect SSRF checks, bounded streamed downloads, image-oriented request headers, and clearer errors for HTML or unsupported payloads.
+- Retained server-worker processing, final-image hashing, bounded PNG storage and transfer, and the existing HTTPS host whitelist.
+
 # Pull request: fix Wall Art block and configuration GUI
 
 - Centered and restored the Wall Art URL, display-size, and download controls by separating display dimensions from the inherited GUI screen dimensions.
