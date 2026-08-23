@@ -1,11 +1,120 @@
 package com.hfr.client.wallart;
-import java.awt.image.BufferedImage;import java.io.ByteArrayInputStream;import java.util.*;import javax.imageio.ImageIO;import com.hfr.packet.PacketDispatcher;import com.hfr.packet.wallart.WallArtImageRequestPacket;import com.hfr.wallart.WallArtConstants;import cpw.mods.fml.relauncher.Side;import cpw.mods.fml.relauncher.SideOnly;import net.minecraft.client.Minecraft;import net.minecraft.client.renderer.texture.DynamicTexture;import net.minecraft.util.ResourceLocation;
-@SideOnly(Side.CLIENT) public final class WallArtTextureCache {
- private static final long BUDGET=64L*1024L*1024L;private static long used;private static final LinkedHashMap<String,Entry>CACHE=new LinkedHashMap<String,Entry>(16,.75F,true);private static final Set<String>PENDING=new HashSet<String>();private static final Map<String,Assembly>ASSEMBLIES=new HashMap<String,Assembly>();
- public static ResourceLocation get(String hash){if(!WallArtConstants.validHash(hash))return null;Entry e=CACHE.get(hash);if(e!=null)return e.location;if(PENDING.add(hash))PacketDispatcher.wrapper.sendToServer(new WallArtImageRequestPacket(hash));return null;}
- public static void accept(final String hash,final int index,final int total,final int full,final byte[] bytes){Minecraft.getMinecraft().func_152344_a(new Runnable(){public void run(){Assembly a=ASSEMBLIES.get(hash);if(a==null){a=new Assembly(total,full);ASSEMBLIES.put(hash,a);}if(a.total!=total||a.full!=full||a.parts[index]!=null)return;a.parts[index]=bytes;a.received+=bytes.length;a.count++;if(a.received>a.full){ASSEMBLIES.remove(hash);PENDING.remove(hash);return;}if(a.count==a.total){ASSEMBLIES.remove(hash);PENDING.remove(hash);if(a.received!=a.full)return;byte[] all=new byte[a.full];int p=0;for(byte[] part:a.parts){System.arraycopy(part,0,all,p,part.length);p+=part.length;}upload(hash,all);}}});}
- private static void upload(String hash,byte[] png){try{BufferedImage image=ImageIO.read(new ByteArrayInputStream(png));if(image==null||image.getWidth()>640||image.getHeight()>640)return;long size=(long)image.getWidth()*image.getHeight()*4;while(used+size>BUDGET&&!CACHE.isEmpty()){Map.Entry<String,Entry> eldest=CACHE.entrySet().iterator().next();Minecraft.getMinecraft().getTextureManager().deleteTexture(eldest.getValue().location);used-=eldest.getValue().bytes;CACHE.remove(eldest.getKey());}DynamicTexture texture=new DynamicTexture(image);ResourceLocation location=Minecraft.getMinecraft().getTextureManager().getDynamicTextureLocation("wallart/"+hash,texture);CACHE.put(hash,new Entry(location,size));used+=size;image.flush();}catch(Exception ignored){}}
- public static void clear(){for(Entry e:CACHE.values())Minecraft.getMinecraft().getTextureManager().deleteTexture(e.location);CACHE.clear();PENDING.clear();ASSEMBLIES.clear();used=0;}
- private static final class Entry{final ResourceLocation location;final long bytes;Entry(ResourceLocation l,long b){location=l;bytes=b;}}private static final class Assembly{final int total,full;final byte[][]parts;int count,received;Assembly(int t,int f){total=t;full=f;parts=new byte[t][];}}
- private WallArtTextureCache(){}
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.util.*;
+import javax.imageio.ImageIO;
+import com.hfr.packet.PacketDispatcher;
+import com.hfr.packet.wallart.WallArtImageRequestPacket;
+import com.hfr.wallart.WallArtConstants;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.util.ResourceLocation;
+@SideOnly(Side.CLIENT)
+public final class WallArtTextureCache {
+  private static final long BUDGET = 64L * 1024L * 1024L;
+  private static long used;
+  private static final LinkedHashMap<String, Entry> CACHE =
+      new LinkedHashMap<String, Entry>(16, .75F, true);
+  private static final Set<String> PENDING = new HashSet<String>();
+  private static final Map<String, Assembly> ASSEMBLIES =
+      new HashMap<String, Assembly>();
+  public static ResourceLocation get(String hash) {
+    if (!WallArtConstants.validHash(hash))
+      return null;
+    Entry e = CACHE.get(hash);
+    if (e != null)
+      return e.location;
+    if (PENDING.add(hash))
+      PacketDispatcher.wrapper.sendToServer(
+          new WallArtImageRequestPacket(hash));
+    return null;
+  }
+  public static void accept(final String hash, final int index, final int total,
+                            final int full, final byte[] bytes) {
+    Minecraft.getMinecraft().func_152344_a(new Runnable() {
+      public void run() {
+        Assembly a = ASSEMBLIES.get(hash);
+        if (a == null) {
+          a = new Assembly(total, full);
+          ASSEMBLIES.put(hash, a);
+        }
+        if (a.total != total || a.full != full || a.parts[index] != null)
+          return;
+        a.parts[index] = bytes;
+        a.received += bytes.length;
+        a.count++;
+        if (a.received > a.full) {
+          ASSEMBLIES.remove(hash);
+          PENDING.remove(hash);
+          return;
+        }
+        if (a.count == a.total) {
+          ASSEMBLIES.remove(hash);
+          PENDING.remove(hash);
+          if (a.received != a.full)
+            return;
+          byte[] all = new byte[a.full];
+          int p = 0;
+          for (byte[] part : a.parts) {
+            System.arraycopy(part, 0, all, p, part.length);
+            p += part.length;
+          }
+          upload(hash, all);
+        }
+      }
+    });
+  }
+  private static void upload(String hash, byte[] png) {
+    try {
+      BufferedImage image = ImageIO.read(new ByteArrayInputStream(png));
+      if (image == null || image.getWidth() > 640 || image.getHeight() > 640)
+        return;
+      long size = (long)image.getWidth() * image.getHeight() * 4;
+      while (used + size > BUDGET && !CACHE.isEmpty()) {
+        Map.Entry<String, Entry> eldest = CACHE.entrySet().iterator().next();
+        Minecraft.getMinecraft().getTextureManager().deleteTexture(
+            eldest.getValue().location);
+        used -= eldest.getValue().bytes;
+        CACHE.remove(eldest.getKey());
+      }
+      DynamicTexture texture = new DynamicTexture(image);
+      ResourceLocation location =
+          Minecraft.getMinecraft()
+              .getTextureManager()
+              .getDynamicTextureLocation("wallart/" + hash, texture);
+      CACHE.put(hash, new Entry(location, size));
+      used += size;
+      image.flush();
+    } catch (Exception ignored) {
+    }
+  }
+  public static void clear() {
+    for (Entry e : CACHE.values())
+      Minecraft.getMinecraft().getTextureManager().deleteTexture(e.location);
+    CACHE.clear();
+    PENDING.clear();
+    ASSEMBLIES.clear();
+    used = 0;
+  }
+  private static final class Entry {
+    final ResourceLocation location;
+    final long bytes;
+    Entry(ResourceLocation l, long b) {
+      location = l;
+      bytes = b;
+    }
+  }
+  private static final class Assembly {
+    final int total, full;
+    final byte[][] parts;
+    int count, received;
+    Assembly(int t, int f) {
+      total = t;
+      full = f;
+      parts = new byte[t][];
+    }
+  }
+  private WallArtTextureCache() {}
 }

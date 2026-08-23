@@ -153,6 +153,30 @@ Category: `XENOFACTIONS_08_CUSTOM_FLAGS`
 | `importRateLimitSeconds` | `60` | Per-player/faction import rate limit. |
 | `reloadMissingFileClearsMetadata` | `true` | Clear stale metadata if reload cannot find cached image. |
 
+## Wall Art
+
+Category: `XENOFACTIONS_08B_WALL_ART`
+
+Wall Art has an independent source policy; existing custom-flag host settings do not
+restrict Wall Art. Hosts are matched exactly after lowercase and trailing-dot
+normalization. Every HTML-resolved image and redirect is checked again.
+
+| Key | Default | Meaning |
+| --- | ---: | --- |
+| `allowedImageHosts` | `postimg.cc`, `i.postimg.cc`, `postimages.org` | Exact HTTPS page and image hosts allowed for Wall Art imports. |
+| `maxSourceBytes` | `16777216` | Maximum remote image size; HTML resolution is separately capped at 512 KiB. |
+| `maxSourceDimension` | `8192` | Maximum source width or height before decode. |
+| `maxSourcePixels` | `67108864` | Maximum source pixel count before decode. |
+| `downloadTimeoutMs` | `10000` | Connect and read timeout. |
+| `maxRedirects` | `3` | Maximum manually validated HTTPS redirects. |
+| `successCooldownSeconds` | `5` | Delay after a successful import. |
+| `failureCooldownSeconds` | `1` | Short retry delay after a failed import. |
+
+The importer accepts either a direct PNG/JPEG resource or a bounded HTML image page.
+For a page it prefers `og:image:secure_url`, then `og:image`, then the first usable
+`img` source. It never executes page scripts, and clients only receive the processed,
+server-stored PNG.
+
 ## Dynmap
 
 Category: `XENOFACTIONS_09_DYNMAP`

@@ -1,3 +1,59 @@
 package com.hfr.render;
-import com.hfr.client.wallart.WallArtTextureCache;import com.hfr.tileentity.TileEntityWallImage;import cpw.mods.fml.relauncher.Side;import cpw.mods.fml.relauncher.SideOnly;import net.minecraft.client.Minecraft;import net.minecraft.client.renderer.Tessellator;import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;import net.minecraft.tileentity.TileEntity;import net.minecraft.util.ResourceLocation;import org.lwjgl.opengl.GL11;
-@SideOnly(Side.CLIENT) public final class RenderWallImage extends TileEntitySpecialRenderer{public void renderTileEntityAt(TileEntity raw,double x,double y,double z,float tick){if(!(raw instanceof TileEntityWallImage))return;TileEntityWallImage t=(TileEntityWallImage)raw;ResourceLocation texture=WallArtTextureCache.get(t.getImageHash());if(texture==null)return;Minecraft.getMinecraft().getTextureManager().bindTexture(texture);double w=t.getDisplayWidth(),h=t.getDisplayHeight(),eps=.002;GL11.glPushMatrix();GL11.glTranslated(x,y,z);GL11.glDisable(GL11.GL_LIGHTING);Tessellator q=Tessellator.instance;q.startDrawingQuads();switch(t.getFacing()){case 2:q.addVertexWithUV(0,0,eps,0,1);q.addVertexWithUV(w,0,eps,1,1);q.addVertexWithUV(w,h,eps,1,0);q.addVertexWithUV(0,h,eps,0,0);break;case 3:q.addVertexWithUV(1,0,1-eps,0,1);q.addVertexWithUV(1-w,0,1-eps,1,1);q.addVertexWithUV(1-w,h,1-eps,1,0);q.addVertexWithUV(1,h,1-eps,0,0);break;case 4:q.addVertexWithUV(eps,0,1,0,1);q.addVertexWithUV(eps,0,1-w,1,1);q.addVertexWithUV(eps,h,1-w,1,0);q.addVertexWithUV(eps,h,1,0,0);break;case 5:q.addVertexWithUV(1-eps,0,0,0,1);q.addVertexWithUV(1-eps,0,w,1,1);q.addVertexWithUV(1-eps,h,w,1,0);q.addVertexWithUV(1-eps,h,0,0,0);break;}q.draw();GL11.glEnable(GL11.GL_LIGHTING);GL11.glPopMatrix();}}
+import com.hfr.client.wallart.WallArtTextureCache;
+import com.hfr.tileentity.TileEntityWallImage;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ResourceLocation;
+import org.lwjgl.opengl.GL11;
+@SideOnly(Side.CLIENT)
+public final class RenderWallImage extends TileEntitySpecialRenderer {
+  public void renderTileEntityAt(TileEntity raw, double x, double y, double z,
+                                 float tick) {
+    if (!(raw instanceof TileEntityWallImage))
+      return;
+    TileEntityWallImage t = (TileEntityWallImage)raw;
+    ResourceLocation texture = WallArtTextureCache.get(t.getImageHash());
+    if (texture == null)
+      return;
+    Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
+    double w = t.getDisplayWidth(), h = t.getDisplayHeight(), eps = .002;
+    GL11.glPushMatrix();
+    GL11.glTranslated(x, y, z);
+    GL11.glDisable(GL11.GL_LIGHTING);
+    Tessellator q = Tessellator.instance;
+    q.startDrawingQuads();
+    switch (t.getFacing()) {
+    case 2:
+      q.addVertexWithUV(0, 0, eps, 0, 1);
+      q.addVertexWithUV(w, 0, eps, 1, 1);
+      q.addVertexWithUV(w, h, eps, 1, 0);
+      q.addVertexWithUV(0, h, eps, 0, 0);
+      break;
+    case 3:
+      q.addVertexWithUV(1, 0, 1 - eps, 0, 1);
+      q.addVertexWithUV(1 - w, 0, 1 - eps, 1, 1);
+      q.addVertexWithUV(1 - w, h, 1 - eps, 1, 0);
+      q.addVertexWithUV(1, h, 1 - eps, 0, 0);
+      break;
+    case 4:
+      q.addVertexWithUV(eps, 0, 1, 0, 1);
+      q.addVertexWithUV(eps, 0, 1 - w, 1, 1);
+      q.addVertexWithUV(eps, h, 1 - w, 1, 0);
+      q.addVertexWithUV(eps, h, 1, 0, 0);
+      break;
+    case 5:
+      q.addVertexWithUV(1 - eps, 0, 0, 0, 1);
+      q.addVertexWithUV(1 - eps, 0, w, 1, 1);
+      q.addVertexWithUV(1 - eps, h, w, 1, 0);
+      q.addVertexWithUV(1 - eps, h, 0, 0, 0);
+      break;
+    }
+    q.draw();
+    GL11.glEnable(GL11.GL_LIGHTING);
+    GL11.glPopMatrix();
+  }
+}

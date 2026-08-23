@@ -1,3 +1,10 @@
+# Pull request: re-audit Wall Art importing against ImageFrame
+
+- Added an independent Wall Art source policy with correct Postimages page/CDN defaults, bounded source dimensions and bytes, manual redirect limits, and separate success/failure cooldowns.
+- Added bounded HTML image-page resolution for secure OpenGraph metadata and a limited image fallback, while revalidating every resolved URL and redirect with the existing SSRF protections.
+- Switched Wall Art requests to a browser-compatible user agent, retained byte-level PNG/JPEG verification and memory-efficient source subsampling, and improved actionable HTTP, resolver, timeout, size, and decode errors.
+- Refactored the asynchronous import lifecycle and all Wall Art-specific source files for readable Java, accurate in-progress/cooldown messages, short failure retries, sanitized diagnostics, and main-thread-only world updates.
+
 # Pull request: fix Wall Art image importing
 
 - Separated bounded Wall Art source downloads and source-dimension safety checks from the much smaller custom faction flag import limits.
