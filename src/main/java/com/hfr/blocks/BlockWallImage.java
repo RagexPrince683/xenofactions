@@ -1,6 +1,7 @@
 package com.hfr.blocks;
 
-import com.hfr.main.MainRegistry;
+import com.hfr.packet.PacketDispatcher;
+import com.hfr.packet.wallart.WallArtOpenGuiPacket;
 import com.hfr.tileentity.TileEntityWallImage;
 import com.hfr.wallart.WallArtConstants;
 import com.hfr.wallart.WallArtService;
@@ -10,9 +11,11 @@ import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
@@ -60,9 +63,17 @@ public class BlockWallImage extends BlockContainer {
     if (!(te instanceof TileEntityWallImage))
       return false;
     TileEntityWallImage wall = (TileEntityWallImage)te;
-    if (world.isRemote) {
-      MainRegistry.proxy.openWallArtGui(wall);
+    if (world.isRemote)
       return true;
+    UUID owner = wall.getOwnerId();
+    if (owner != null && owner.equals(player.getUniqueID()) &&
+        player instanceof EntityPlayerMP) {
+      PacketDispatcher.wrapper.sendTo(
+          new WallArtOpenGuiPacket(world.provider.dimensionId, x, y, z),
+          (EntityPlayerMP)player);
+    } else {
+      player.addChatMessage(
+          new ChatComponentTranslation("wallart.error.not_owner"));
     }
     return true;
   }

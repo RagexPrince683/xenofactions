@@ -873,6 +873,7 @@ public class MainRegistry
 		event.registerServerCommand(new CommandXmap());
 		event.registerServerCommand(new CommandXFlags());
 		event.registerServerCommand(new CommandXMulti());
+		event.registerServerCommand(new CommandXWallArt());
 		event.registerServerCommand(new CommandInvSee());
 		if(XFConfig.enableTDM)
 			event.registerServerCommand(new CommandTDM());

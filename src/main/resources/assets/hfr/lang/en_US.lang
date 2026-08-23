@@ -793,3 +793,6 @@ hfr.nei.coal_mine.foundation=the full rotated MachineCoalMine/MultiblockHandler.
 hfr.nei.coal_mine.clearance=the same full rotated footprint needs clearance at y + 4; hazard checks run before coal and use else-if so one tick cannot run both; unprotected hazards check every occupied Miner slot and create the runtime explosion
 
 generator.earthmap=Earth Map
+tile.wall_image_block.name=Wall Art
+wallart.error.not_owner=You do not own this Wall Art.
+wallart.command.give=Giving you a Wall Art block.
