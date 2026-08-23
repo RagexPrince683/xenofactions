@@ -1,3 +1,9 @@
+# Pull request: synchronize Wall Art controller visibility
+
+- Invalidated cached client block geometry when synchronized Wall Art image, facing, or display dimensions change, so configured controllers disappear and cleared controllers reappear immediately.
+- Explicitly synchronized newly placed Wall Art tile metadata after server-side ownership and facing initialization.
+- Preserved hash-driven controller visibility, thin interaction and inventory geometry, and the existing tile renderer and server update path.
+
 # Pull request: fix Wall Art block rendering
 
 - Hid configured Wall Art controller geometry while preserving the downloaded-image TESR and the logical block's interaction bounds.

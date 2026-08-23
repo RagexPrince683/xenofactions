@@ -39,10 +39,12 @@ public class BlockWallImage extends BlockContainer {
     world.setBlockMetadataWithNotify(x, y, z, facing, 2);
     if (!world.isRemote && placer instanceof EntityPlayer) {
       TileEntity te = world.getTileEntity(x, y, z);
-      if (te instanceof TileEntityWallImage)
+      if (te instanceof TileEntityWallImage) {
         ((TileEntityWallImage)te)
             .initialize(UUID.randomUUID(), ((EntityPlayer)placer).getUniqueID(),
                         facing);
+        world.markBlockForUpdate(x, y, z);
+      }
     }
   }
   @Override
