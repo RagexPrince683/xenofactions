@@ -12,7 +12,7 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
@@ -32,11 +32,16 @@ public class BlockWallImage extends BlockContainer {
     return new TileEntityWallImage();
   }
   @Override
+  public int onBlockPlaced(World world, int x, int y, int z, int clickedSide,
+                           float hitX, float hitY, float hitZ, int metadata) {
+    return facingFromPlacedSide(clickedSide);
+  }
+  @Override
   public void onBlockPlacedBy(World world, int x, int y, int z,
                               EntityLivingBase placer, ItemStack stack) {
-    int d = MathHelper.floor_double(placer.rotationYaw * 4F / 360F + .5D) & 3;
-    int facing = d == 0 ? 3 : d == 1 ? 4 : d == 2 ? 2 : 5;
-    world.setBlockMetadataWithNotify(x, y, z, facing, 2);
+    int facing = world.getBlockMetadata(x, y, z);
+    if (!WallArtConstants.validFacing(facing))
+      return;
     if (!world.isRemote && placer instanceof EntityPlayer) {
       TileEntity te = world.getTileEntity(x, y, z);
       if (te instanceof TileEntityWallImage) {
@@ -78,6 +83,14 @@ public class BlockWallImage extends BlockContainer {
          world.isSideSolid(x, y, z + 1, ForgeDirection.NORTH));
   }
   @Override
+  public boolean canPlaceBlockOnSide(World world, int x, int y, int z,
+                                     int clickedSide) {
+    int facing = facingFromPlacedSide(clickedSide);
+    return WallArtConstants.validFacing(facing) &&
+        super.canPlaceBlockAt(world, x, y, z) &&
+        hasSupportForFacing(world, x, y, z, facing);
+  }
+  @Override
   public void onNeighborBlockChange(World world, int x, int y, int z,
                                     Block neighbor) {
     if (!world.isRemote && !canBlockStay(world, x, y, z)) {
@@ -86,7 +99,26 @@ public class BlockWallImage extends BlockContainer {
     }
   }
   public boolean canBlockStay(World world, int x, int y, int z) {
-    switch (world.getBlockMetadata(x, y, z)) {
+    return hasSupportForFacing(world, x, y, z,
+                               world.getBlockMetadata(x, y, z));
+  }
+  private static int facingFromPlacedSide(int clickedSide) {
+    switch (clickedSide) {
+    case 2:
+      return 3;
+    case 3:
+      return 2;
+    case 4:
+      return 5;
+    case 5:
+      return 4;
+    default:
+      return 0;
+    }
+  }
+  private static boolean hasSupportForFacing(World world, int x, int y, int z,
+                                             int facing) {
+    switch (facing) {
     case 2:
       return world.isSideSolid(x, y, z - 1, ForgeDirection.SOUTH);
     case 3:
@@ -115,8 +147,13 @@ public class BlockWallImage extends BlockContainer {
       setBlockBounds(1 - THICK, 0, 0, 1, 1, 1);
       break;
     default:
-      setBlockBounds(0, 0, 0, 1, 1, 1);
+      setBlockBounds(0, 0, 0, 1, 1, THICK);
     }
+  }
+  @Override
+  public AxisAlignedBB getCollisionBoundingBoxFromPool(World world, int x,
+                                                       int y, int z) {
+    return null;
   }
   @Override
   public void setBlockBoundsForItemRender() {
