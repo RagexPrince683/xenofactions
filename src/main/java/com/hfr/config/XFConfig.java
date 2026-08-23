@@ -28,6 +28,7 @@ public final class XFConfig {
 	public static final String CAT_WAR = "XENOFACTIONS_06_WAR_DIPLOMACY";
 	public static final String CAT_PROTECTION = "XENOFACTIONS_07_NEW_PLAYER_PROTECTION";
 	public static final String CAT_CUSTOM_FLAGS = "XENOFACTIONS_08_CUSTOM_FLAGS";
+	public static final String CAT_WALL_ART = "XENOFACTIONS_08B_WALL_ART";
 	public static final String CAT_DYNMAP = "XENOFACTIONS_09_DYNMAP";
 	public static final String CAT_JOURNEYMAP = "XENOFACTIONS_09B_JOURNEYMAP_CLIENT";
 	public static final String CAT_PLAYER_IDENTITY = "XENOFACTIONS_09C_PLAYER_IDENTITY";
@@ -153,6 +154,15 @@ public final class XFConfig {
 	public static int customFlagMaxRedirects = 3;
 	public static long customFlagRateLimitMs = 60000L;
 	public static boolean customFlagReloadMissingClearsMetadata = true;
+	public static String[] wallArtAllowedHosts = new String[] { "postimg.cc", "i.postimg.cc", "postimages.org" };
+	public static Set<String> wallArtAllowedHostSet = new HashSet<String>();
+	public static int wallArtMaxSourceBytes = 16 * 1024 * 1024;
+	public static int wallArtMaxSourceDimension = 8192;
+	public static long wallArtMaxSourcePixels = 64L * 1024L * 1024L;
+	public static int wallArtDownloadTimeoutMs = 10000;
+	public static int wallArtMaxRedirects = 3;
+	public static long wallArtSuccessCooldownMs = 5000L;
+	public static long wallArtFailureCooldownMs = 1000L;
 
 	public static String dynmapMarkerSetId = "xenofactions_cities";
 	public static String dynmapMarkerSetLabel = "Faction Cities";
@@ -277,6 +287,16 @@ public final class XFConfig {
 		customFlagRateLimitMs = seconds(config, CAT_CUSTOM_FLAGS, "importRateLimitSeconds", 60D, 0D, 3600D, "Per-player per-faction flag import rate limit.");
 		customFlagReloadMissingClearsMetadata = bool(config, CAT_CUSTOM_FLAGS, "reloadMissingFileClearsMetadata", customFlagReloadMissingClearsMetadata, "When /c flag reload finds no cached file, clear stale metadata.");
 
+		wallArtAllowedHosts = stringList(config, CAT_WALL_ART, "allowedImageHosts", wallArtAllowedHosts, "Exact HTTPS hosts allowed for Wall Art pages and images.");
+		rebuildWallArtHostSet();
+		wallArtMaxSourceBytes = integer(config, CAT_WALL_ART, "maxSourceBytes", wallArtMaxSourceBytes, 1024, 64 * 1024 * 1024, "Maximum downloaded Wall Art source size in bytes.");
+		wallArtMaxSourceDimension = integer(config, CAT_WALL_ART, "maxSourceDimension", wallArtMaxSourceDimension, 128, 32768, "Maximum source width or height before decoding.");
+		wallArtMaxSourcePixels = integer(config, CAT_WALL_ART, "maxSourcePixels", (int)wallArtMaxSourcePixels, 16384, 128 * 1024 * 1024, "Maximum source pixel count.");
+		wallArtDownloadTimeoutMs = integer(config, CAT_WALL_ART, "downloadTimeoutMs", wallArtDownloadTimeoutMs, 1000, 120000, "Wall Art connect and read timeout in milliseconds.");
+		wallArtMaxRedirects = integer(config, CAT_WALL_ART, "maxRedirects", wallArtMaxRedirects, 0, 10, "Maximum manually validated HTTPS redirects.");
+		wallArtSuccessCooldownMs = seconds(config, CAT_WALL_ART, "successCooldownSeconds", 5D, 0D, 3600D, "Delay after a successful import.");
+		wallArtFailureCooldownMs = seconds(config, CAT_WALL_ART, "failureCooldownSeconds", 1D, 0D, 60D, "Short retry delay after a failed import.");
+
 		dynmapMarkerSetId = string(config, CAT_DYNMAP, "markerSetId", dynmapMarkerSetId, "Dynmap marker set ID.");
 		dynmapMarkerSetLabel = string(config, CAT_DYNMAP, "markerSetLabel", dynmapMarkerSetLabel, "Dynmap marker set label.");
 		dynmapUpdateIntervalTicks = integer(config, CAT_DYNMAP, "updateIntervalTicks", dynmapUpdateIntervalTicks, 20, 20 * 60 * 60, "Dynmap marker update interval in ticks.");
@@ -313,6 +333,7 @@ public final class XFConfig {
 		config.addCustomCategoryComment(CAT_WAR, "06 - War, raid eligibility, alliance, and diplomacy cooldown rules. Prestige war costs are in category 03.");
 		config.addCustomCategoryComment(CAT_PROTECTION, "07 - Starter player protection and faction build-grace settings.");
 		config.addCustomCategoryComment(CAT_CUSTOM_FLAGS, "08 - Custom faction flag import safety limits and cache/reload behaviour.");
+		config.addCustomCategoryComment(CAT_WALL_ART, "08B - Wall Art source security, limits, and retry behaviour.");
 		config.addCustomCategoryComment(CAT_DYNMAP, "09 - Optional Dynmap marker styling, labels, and refresh timing.");
 		config.addCustomCategoryComment(CAT_JOURNEYMAP, "09B - Optional JourneyMap 5.2.x client claim overlay styling and city territory labels.");
 		config.addCustomCategoryComment(CAT_PLAYER_IDENTITY, "09C - Server player identity policy. NAME is only for development/offline compatibility; UUID is secure production behavior.");
@@ -356,6 +377,16 @@ public final class XFConfig {
 			String h = customFlagAllowedHosts[i];
 			if(h != null && h.trim().length() > 0)
 				customFlagAllowedHostSet.add(h.trim().toLowerCase());
+		}
+	}
+
+	private static void rebuildWallArtHostSet() {
+		wallArtAllowedHostSet.clear();
+		for(String host : wallArtAllowedHosts) {
+			if(host == null) continue;
+			String normalized = host.trim().toLowerCase();
+			while(normalized.endsWith(".")) normalized = normalized.substring(0, normalized.length() - 1);
+			if(normalized.length() > 0) wallArtAllowedHostSet.add(normalized);
 		}
 	}
 
