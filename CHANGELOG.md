@@ -1,3 +1,9 @@
+# Pull request: fix Wall Art block rendering
+
+- Hid configured Wall Art controller geometry while preserving the downloaded-image TESR and the logical block's interaction bounds.
+- Added a dedicated Forge 1.7.10 block renderer for metadata-oriented thin fallback panels in the world.
+- Rendered the Wall Art inventory item as a fixed, thin vertical panel using its neutral fallback texture.
+
 # Pull request: re-audit Wall Art importing against ImageFrame
 
 - Added an independent Wall Art source policy with correct Postimages page/CDN defaults, bounded source dimensions and bytes, manual redirect limits, and separate success/failure cooldowns.
