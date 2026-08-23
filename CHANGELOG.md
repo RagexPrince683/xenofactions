@@ -1,3 +1,9 @@
+# Pull request: fix Wall Art collision and wall orientation
+
+- Made Wall Art non-colliding like vanilla 1.7.10 vines while retaining its thin metadata-oriented selection and ray-trace bounds.
+- Derived the controller's supporting-wall facing from the clicked horizontal face, rejected vertical attachment, and stopped player yaw from overwriting placement metadata.
+- Added clicked-side support validation, centralized placement/support direction mapping, and replaced invalid metadata's full-cube bounds with a safe thin panel.
+
 # Pull request: synchronize Wall Art controller visibility
 
 - Invalidated cached client block geometry when synchronized Wall Art image, facing, or display dimensions change, so configured controllers disappear and cleared controllers reappear immediately.
