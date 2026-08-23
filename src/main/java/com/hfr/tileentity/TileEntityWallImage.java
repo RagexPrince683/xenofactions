@@ -30,6 +30,7 @@ public class TileEntityWallImage extends TileEntity {
     displayId = display;
     ownerId = owner;
     facing = WallArtConstants.validFacing(face) ? face : 2;
+    markDirty();
   }
   public long beginRequest() { return ++requestGeneration; }
   public void configure(int newWidth, int newHeight, String hash) {
@@ -48,7 +49,30 @@ public class TileEntityWallImage extends TileEntity {
   @Override
   public void onDataPacket(NetworkManager net,
                            S35PacketUpdateTileEntity packet) {
+    boolean wasConfigured = WallArtConstants.validHash(imageHash);
+    String previousImageHash = imageHash;
+    int previousFacing = facing;
+    int previousWidth = width;
+    int previousHeight = height;
+
     readFromNBT(packet.func_148857_g());
+
+    boolean isConfigured = WallArtConstants.validHash(imageHash);
+    boolean imageHashChanged = previousImageHash == null
+        ? imageHash != null
+        : !previousImageHash.equals(imageHash);
+    if (wasConfigured != isConfigured || imageHashChanged ||
+        previousFacing != facing || previousWidth != width ||
+        previousHeight != height) {
+      markRenderStateChanged();
+    }
+  }
+
+  private void markRenderStateChanged() {
+    if (worldObj != null && worldObj.isRemote) {
+      worldObj.markBlockRangeForRenderUpdate(xCoord, yCoord, zCoord,
+                                             xCoord, yCoord, zCoord);
+    }
   }
   @Override
   public void readFromNBT(NBTTagCompound n) {
