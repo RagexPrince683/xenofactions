@@ -1,6 +1,8 @@
 package com.hfr.wallart;
 
 public final class WallArtConstants {
+  /** Dedicated Forge 1.7.10 render ID for the Wall Art controller. */
+  public static final int BLOCK_RENDER_ID = 10008;
   public static final int MAX_SIZE = 5, MAX_AREA = 25, MAX_PER_PLAYER = 30,
                           PIXELS_PER_BLOCK = 128;
   public static final int MAX_URL_BYTES = 2048;

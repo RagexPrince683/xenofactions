@@ -2,6 +2,7 @@ package com.hfr.blocks;
 
 import com.hfr.main.MainRegistry;
 import com.hfr.tileentity.TileEntityWallImage;
+import com.hfr.wallart.WallArtConstants;
 import com.hfr.wallart.WallArtService;
 import java.util.UUID;
 import net.minecraft.block.Block;
@@ -114,6 +115,14 @@ public class BlockWallImage extends BlockContainer {
     default:
       setBlockBounds(0, 0, 0, 1, 1, 1);
     }
+  }
+  @Override
+  public void setBlockBoundsForItemRender() {
+    setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, THICK);
+  }
+  @Override
+  public int getRenderType() {
+    return WallArtConstants.BLOCK_RENDER_ID;
   }
   @Override
   public boolean isOpaqueCube() {
