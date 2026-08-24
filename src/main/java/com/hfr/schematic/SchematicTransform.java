@@ -14,6 +14,10 @@ public final class SchematicTransform {
         int mx=mirror?s.width-1-x:x;
         switch(rotation&3){case 1:return new int[]{s.length-1-z,y,mx};case 2:return new int[]{s.width-1-mx,y,s.length-1-z};case 3:return new int[]{z,y,s.width-1-mx};default:return new int[]{mx,y,z};}
     }
+    /** The single local-cell to authoritative world-block conversion used by jobs. */
+    public static int[] worldPosition(Schematic s,int x,int y,int z,int rotation,boolean mirror,int originX,int originY,int originZ){
+        int[] p=position(s,x,y,z,rotation,mirror);return new int[]{originX+p[0],originY+p[1],originZ+p[2]};
+    }
     public static int metadata(Block block,int meta,int rotation,boolean mirror){
         if(block==null)return meta; String n=String.valueOf(Block.blockRegistry.getNameForObject(block));
         int m=meta&15, flags=m&12, facing=m&3;

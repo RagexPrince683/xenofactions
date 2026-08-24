@@ -43,11 +43,14 @@ public class SchematicRenderer {
 					
 					int meta = SchematicTransform.metadata(b,schem.getMetadata(dx,dy,dz),rotation,mirror);
 					
-					GL11.glTranslatef(pos[0], pos[1], pos[2]);
+					// 1.7.10 renderBlockAsItem emits inventory geometry around
+					// (-.5,-.5,-.5)..(.5,.5,.5).  Move that documented centre to
+					// the centre of this world block cube; no TESR/item offset applies.
+					GL11.glTranslatef(pos[0]+.5F, pos[1]+.5F, pos[2]+.5F);
 					GL11.glPushMatrix();
 					field_94145_f.renderBlockAsItem(b, meta, 1);
 					GL11.glPopMatrix();
-					GL11.glTranslatef(-pos[0], -pos[1], -pos[2]);
+					GL11.glTranslatef(-pos[0]-.5F, -pos[1]-.5F, -pos[2]-.5F);
 				}
 			}
 		}
