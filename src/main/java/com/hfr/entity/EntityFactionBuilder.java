@@ -19,19 +19,23 @@ import net.minecraft.nbt.*;
 import net.minecraft.util.*;
 import net.minecraft.world.World;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.pathfinding.PathEntity;
 import cpw.mods.fml.common.network.internal.FMLNetworkHandler;
 
 /** Persistent faction worker. All work and inventory mutation occurs on the logical server. */
 public class EntityFactionBuilder extends EntityLiving {
-    private static final int WORK_REACH=4,MAX_PATH_ATTEMPTS=5,STALL_TICKS=80;
+    private static final int WORK_REACH=4,MAX_PATH_ATTEMPTS=24,STALL_TICKS=80;
     private static final double USEFUL_MOVE_SQ=.04D,USEFUL_CLOSER=.05D;
     private UUID factionId,jobId; private int depotX,depotY,depotZ,depotDimension,pathFailures,candidateIndex,pathTargetX=Integer.MIN_VALUE,pathTargetY,pathTargetZ,lastProgressTick;
     private double lastX,lastY,lastZ,lastDistance=Double.MAX_VALUE;
+    private int[][] workCandidates;
     private BuilderState state=BuilderState.IDLE;
     private final ItemStack[] materials=new ItemStack[9];
-    public EntityFactionBuilder(World w){super(w);setSize(.6F,1.8F);}
+    public EntityFactionBuilder(World w){super(w);setSize(.6F,1.8F);getNavigator().setAvoidsWater(false);getNavigator().setCanSwim(true);}
     @Override protected void applyEntityAttributes(){super.applyEntityAttributes();getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(20);getEntityAttribute(SharedMonsterAttributes.movementSpeed).setBaseValue(.28);}
     @Override protected boolean canDespawn(){return false;}
+    /** EntityLiving only ticks its navigator and move helper through the new-AI branch. */
+    @Override protected boolean isAIEnabled(){return true;}
     public void assign(UUID faction,UUID job,int x,int y,int z,int dimension){factionId=faction;jobId=job;depotX=x;depotY=y;depotZ=z;depotDimension=dimension;state=job==null?BuilderState.IDLE:BuilderState.LOAD_JOB;resetPath();}
     public BuilderState getBuilderState(){return state;} public UUID getJobId(){return jobId;} public UUID getFactionId(){return factionId;}
     public int getDepotX(){return depotX;} public int getDepotY(){return depotY;} public int getDepotZ(){return depotZ;} public int getDepotDimension(){return depotDimension;}
@@ -55,8 +59,8 @@ public class EntityFactionBuilder extends EntityLiving {
         int total=s.width*s.height*s.length,scans=0;
         while(job.blockIndex<total&&scans++<XFConfig.builderBlockScanBudget){
             int i=job.blockIndex,z=i%s.length,y=(i/s.length)%s.height,x=i/s.length/s.height;
-            int[] transformed=com.hfr.schematic.SchematicTransform.position(s,x,y,z,job.rotation,job.mirrored);
-            int wx=job.originX+transformed[0],wy=job.originY+transformed[1],wz=job.originZ+transformed[2];
+            int[] world=com.hfr.schematic.SchematicTransform.worldPosition(s,x,y,z,job.rotation,job.mirrored,job.originX,job.originY,job.originZ);
+            int wx=world[0],wy=world[1],wz=world[2];
             if(wx!=job.targetX||wy!=job.targetY||wz!=job.targetZ)resetPath();
             job.targetX=wx;job.targetY=wy;job.targetZ=wz;job.schematicX=x;job.schematicY=y;job.schematicZ=z;
             Block wanted=s.resolveBlock(x,y,z);int meta=com.hfr.schematic.SchematicTransform.metadata(wanted,s.getMetadata(x,y,z),job.rotation,job.mirrored);
@@ -81,21 +85,30 @@ public class EntityFactionBuilder extends EntityLiving {
 
     private boolean fetchMaterial(BuilderJob job,ItemStack need){TileEntityMachineBuilder d=depot();if(d==null){setWorkState(job,BuilderState.WAITING_FOR_MATERIALS,"builder.status.waiting_materials","Builder Depot is unavailable; waiting for "+need.getDisplayName()+" x"+job.missingQuantity+".");return false;}if(getDistanceSq(depotX+.5,depotY+.5,depotZ+.5)>16){setWorkState(job,BuilderState.GETTING_MATERIALS,"builder.status.getting_materials","Fetching "+need.getDisplayName()+" from Depot at "+coord(depotX,depotY,depotZ));if(getNavigator().noPath())getNavigator().tryMoveToXYZ(depotX+.5,depotY,depotZ+.5,1);return false;}int capacity=capacityFor(need);int amount=Math.min(Math.min(need.getMaxStackSize(),job.missingQuantity),capacity);int taken=d.takeMaterial(need,amount);if(taken>0){add(need,taken);XFLog.debug("Fetched "+job.requiredItem+":"+job.requiredMeta+" x"+taken);return true;}setWorkState(job,BuilderState.WAITING_FOR_MATERIALS,"builder.status.waiting_materials",waiting(job,need));return false;}
     private boolean moveToWork(BuilderJob job,int tx,int ty,int tz){
-        int[][] candidates=candidates(tx,ty,tz);if(candidates.length==0){pathError(job,tx,ty,tz,"No safe reachable work position near");return false;}
+        // This is deliberately checked independently of candidate coordinates: reach, not
+        // standing on one particular node, is what permits a construction action.
+        if(canWork(tx,ty,tz)){getNavigator().clearPathEntity();return true;}
         boolean sameTarget=pathTargetX==tx&&pathTargetY==ty&&pathTargetZ==tz;
+        if(!sameTarget)workCandidates=candidates(tx,ty,tz);
+        int[][] candidates=workCandidates==null?new int[0][]:workCandidates;if(candidates.length==0){pathError(job,tx,ty,tz,"No safe work position near");return false;}
         if(sameTarget&&!getNavigator().noPath()){
             double moved=(posX-lastX)*(posX-lastX)+(posY-lastY)*(posY-lastY)+(posZ-lastZ)*(posZ-lastZ);double distance=getDistanceSq(job.workX+.5,job.workY,job.workZ+.5);
+            XFLog.debug(pathDebug(tx,ty,tz,job.workX,job.workY,job.workZ,true)+" navigatorPath=true moved="+Math.sqrt(moved)+" remaining="+Math.sqrt(distance));
             if(moved>=USEFUL_MOVE_SQ||distance<lastDistance-USEFUL_CLOSER){lastX=posX;lastY=posY;lastZ=posZ;lastDistance=distance;lastProgressTick=ticksExisted;return false;}
             if(ticksExisted-lastProgressTick<STALL_TICKS)return false;
             XFLog.debug("Builder movement stalled at "+posX+","+posY+","+posZ+"; trying alternate work position");getNavigator().clearPathEntity();
         }
         if(!sameTarget){candidateIndex=0;pathFailures=0;pathTargetX=tx;pathTargetY=ty;pathTargetZ=tz;}else if(getNavigator().noPath()&&pathFailures>0)candidateIndex++;
-        while(candidateIndex<candidates.length&&pathFailures<MAX_PATH_ATTEMPTS){int[] c=candidates[candidateIndex];job.workX=c[0];job.workY=c[1];job.workZ=c[2];boolean ok=getNavigator().tryMoveToXYZ(c[0]+.5,c[1],c[2]+.5,1);pathFailures++;job.pathFailures=pathFailures;XFLog.debug("Selected work position "+c[0]+","+c[1]+","+c[2]+"; path request "+(ok?"succeeded":"failed"));if(ok){lastX=posX;lastY=posY;lastZ=posZ;lastDistance=getDistanceSq(c[0]+.5,c[1],c[2]+.5);lastProgressTick=ticksExisted;setWorkState(job,BuilderState.MOVE_TO_SITE,"builder.status.moving","Moving to build site: "+coord(tx,ty,tz)+"; work position: "+coord(c[0],c[1],c[2]));return false;}candidateIndex++;}
+        // Test one distinct candidate per work cycle.  getPathToXYZ proves connectivity and
+        // setPath installs that same path, avoiding a second PathFinder run and an immediate
+        // burst through every geometrically-near choice.
+        if(candidateIndex<candidates.length&&pathFailures<MAX_PATH_ATTEMPTS){int[] c=candidates[candidateIndex];job.workX=c[0];job.workY=c[1];job.workZ=c[2];PathEntity path=getNavigator().getPathToXYZ(c[0]+.5,c[1],c[2]+.5);boolean ok=path!=null&&getNavigator().setPath(path,1);pathFailures++;job.pathFailures=pathFailures;XFLog.debug(pathDebug(tx,ty,tz,c[0],c[1],c[2],ok)+" navigatorPath="+!getNavigator().noPath()+" valid=true pathNodes="+(path==null?0:path.getCurrentPathLength()));if(ok){lastX=posX;lastY=posY;lastZ=posZ;lastDistance=getDistanceSq(c[0]+.5,c[1],c[2]+.5);lastProgressTick=ticksExisted;setWorkState(job,BuilderState.MOVE_TO_SITE,"builder.status.moving","Moving to build site: "+coord(tx,ty,tz)+"; work position: "+coord(c[0],c[1],c[2]));return false;}return false;}
         pathError(job,tx,ty,tz,"Could not reach a work position within "+WORK_REACH+" blocks of");return false;
     }
-    private int[][] candidates(int tx,int ty,int tz){List<int[]> out=new ArrayList<int[]>();for(int dy=-1;dy<=1;dy++)for(int r=1;r<=WORK_REACH;r++)for(int dx=-r;dx<=r;dx++)for(int dz=-r;dz<=r;dz++){if(Math.max(Math.abs(dx),Math.abs(dz))!=r)continue;int x=tx+dx,y=ty+dy,z=tz+dz;if(distanceSq(x+.5,y+1.62,z+.5,tx+.5,ty+.5,tz+.5)<=WORK_REACH*WORK_REACH&&validStand(x,y,z))out.add(new int[]{x,y,z});}Collections.sort(out,new Comparator<int[]>(){public int compare(int[] a,int[] b){return Double.compare(getDistanceSq(a[0]+.5,a[1],a[2]+.5),getDistanceSq(b[0]+.5,b[1],b[2]+.5));}});return out.toArray(new int[out.size()][]);}
+    private int[][] candidates(int tx,int ty,int tz){List<int[]> out=new ArrayList<int[]>();for(int dy=-3;dy<=3;dy++)for(int r=0;r<=WORK_REACH;r++)for(int dx=-r;dx<=r;dx++)for(int dz=-r;dz<=r;dz++){if(Math.max(Math.abs(dx),Math.abs(dz))!=r)continue;int x=tx+dx,y=ty+dy,z=tz+dz;boolean inReach=distanceSq(x+.5,y+getEyeHeight(),z+.5,tx+.5,ty+.5,tz+.5)<=WORK_REACH*WORK_REACH;boolean valid=inReach&&validStand(x,y,z);if(valid)out.add(new int[]{x,y,z});}Collections.sort(out,new Comparator<int[]>(){public int compare(int[] a,int[] b){return Double.compare(getDistanceSq(a[0]+.5,a[1],a[2]+.5),getDistanceSq(b[0]+.5,b[1],b[2]+.5));}});return out.toArray(new int[out.size()][]);}
     private boolean validStand(int x,int y,int z){if(y<=0||y+1>=worldObj.getHeight()||!worldObj.blockExists(x,y,z))return false;Block floor=worldObj.getBlock(x,y-1,z);if(floor==Blocks.air||!floor.getMaterial().blocksMovement())return false;AxisAlignedBB box=AxisAlignedBB.getBoundingBox(x+.2,y,z+.2,x+.8,y+1.8,z+.8);return worldObj.getCollidingBoundingBoxes(this,box).isEmpty();}
     private boolean canWork(int x,int y,int z){if(distanceSq(posX,posY+getEyeHeight(),posZ,x+.5,y+.5,z+.5)>WORK_REACH*WORK_REACH)return false;MovingObjectPosition hit=worldObj.rayTraceBlocks(Vec3.createVectorHelper(posX,posY+getEyeHeight(),posZ),Vec3.createVectorHelper(x+.5,y+.5,z+.5));return hit==null||(hit.blockX==x&&hit.blockY==y&&hit.blockZ==z);}
+    private String pathDebug(int tx,int ty,int tz,int x,int y,int z,boolean path){return "Builder pos="+posX+","+posY+","+posZ+" target="+tx+","+ty+","+tz+" candidate="+x+","+y+","+z+" path="+path+" AI="+isAIEnabled()+" avoidsWater="+getNavigator().getAvoidsWater()+" canSwim=true";}
     private void pathError(BuilderJob job,int x,int y,int z,String reason){job.pathFailures=pathFailures;String attempted=job.workX+", "+job.workY+", "+job.workZ;setWorkState(job,BuilderState.PATHFINDING_ERROR,"builder.status.cannot_reach",reason+" "+x+", "+y+", "+z+" after "+pathFailures+" attempts. Last attempted work coordinate: "+attempted+".");getNavigator().clearPathEntity();XFLog.debug("No reachable work position near "+x+","+y+","+z);}
     private void placementFailure(BuilderJob job,BuilderPlacement.Result result,int x,int y,int z,String action){job.blockedX=x;job.blockedY=y;job.blockedZ=z;BuilderState next=result==BuilderPlacement.Result.INVALID_TERRITORY||result==BuilderPlacement.Result.PROTECTED_BLOCK?BuilderState.INVALID_TERRITORY:result==BuilderPlacement.Result.UNSUPPORTED_BLOCK?BuilderState.UNSUPPORTED_BLOCK:BuilderState.PAUSED;setWorkState(job,next,"builder.status."+action+"_failed",capitalize(result.name().toLowerCase().replace('_',' '))+" while attempting to "+action+" at "+coord(x,y,z)+".");}
     private int remainingNeed(Schematic s,BuilderJob job,ItemStack need){int count=0,total=s.width*s.height*s.length;for(int i=job.blockIndex;i<total;i++){int z=i%s.length,y=(i/s.length)%s.height,x=i/s.length/s.height;Block b=s.resolveBlock(x,y,z);if(b==null||b==Blocks.air)continue;int m=com.hfr.schematic.SchematicTransform.metadata(b,s.getMetadata(x,y,z),job.rotation,job.mirrored);ItemStack n=BuilderMaterialResolver.resolve(b,m);if(n!=null&&n.isItemEqual(need))count++;}return Math.max(0,count-countMaterial(materials,need));}
@@ -110,7 +123,7 @@ public class EntityFactionBuilder extends EntityLiving {
     private void pause(BuilderJob j,BuilderState s){setWorkState(j,s,"builder.status.paused","Work paused.");}
     private void setWorkState(BuilderJob j,BuilderState next,String reason,String detail){if(state!=next)XFLog.debug("Builder "+getUniqueID()+" state "+state+" -> "+next+(detail.isEmpty()?"":" ("+detail+")"));state=next;if(j!=null){j.state=next;j.statusKey=reason;j.failureDetail=detail;BuilderJobData d=BuilderJobData.get(worldObj);if(d!=null)d.markDirty();}}
     private void reattach(){TileEntityMachineBuilder d=depot();if(d==null||!getUniqueID().equals(d.getAssignedBuilderId())||d.getActiveJobId()==null)return;BuilderJobData jobs=BuilderJobData.get(worldObj);BuilderJob j=jobs==null?null:jobs.get(d.getActiveJobId());if(j!=null&&(j.builderId==null||getUniqueID().equals(j.builderId))){jobId=j.jobId;j.builderId=getUniqueID();setWorkState(j,BuilderState.LOAD_JOB,"builder.status.loading","Loading Builder job.");}}
-    private void resetPath(){getNavigator().clearPathEntity();pathFailures=0;candidateIndex=0;pathTargetX=Integer.MIN_VALUE;lastDistance=Double.MAX_VALUE;}
+    private void resetPath(){getNavigator().clearPathEntity();pathFailures=0;candidateIndex=0;pathTargetX=Integer.MIN_VALUE;lastDistance=Double.MAX_VALUE;workCandidates=null;}
     private static double distanceSq(double ax,double ay,double az,double bx,double by,double bz){double x=ax-bx,y=ay-by,z=az-bz;return x*x+y*y+z*z;}
     private static String coord(int x,int y,int z){return x+", "+y+", "+z;}
     private static String blockName(Block b){return String.valueOf(GameData.getBlockRegistry().getNameForObject(b));}

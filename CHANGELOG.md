@@ -1,3 +1,9 @@
+# Pull request: fix Builder navigation and schematic preview alignment
+
+- Enabled the Forge 1.7.10 `EntityLiving` AI lifecycle so vanilla navigation and movement helpers physically move Builder NPCs exactly once per tick.
+- Configured swimming/water traversal, broadened feet-position searches, added direct reach actions, bounded distinct path retries, and movement/path diagnostics.
+- Aligned inventory-style preview geometry to exact world block cubes and documented the normalized local origin shared by preview and construction.
+
 # Pull request: fix Builder reach-based construction and movement stalls
 
 - Replaced exact-target navigation with collision-safe reachable work positions and a bounded movement watchdog with alternate-path retries.
