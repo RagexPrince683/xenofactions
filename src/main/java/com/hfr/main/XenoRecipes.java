@@ -34,6 +34,9 @@ public final class XenoRecipes {
 		shaped(ModBlocks.clowder_conquerer, " W ", " R ", " R ", 'W', Blocks.wool, 'R', Blocks.fence);
 
 
+		shaped(ModBlocks.machine_net, "WWW", "RAR", "BBB", 'W', Blocks.ladder, 'R', Blocks.iron_bars, 'B', Blocks.fence, 'A', Blocks.trapped_chest);
+
+
 		// Faction utilities.
 		// Four foundations per craft keeps large footprints practical while still requiring ironwork.
 		GameRegistry.addRecipe(new ItemStack(ModBlocks.uni_foundation, 4), "SIS", "III", "SIS",
