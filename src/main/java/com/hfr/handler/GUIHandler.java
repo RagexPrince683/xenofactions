@@ -160,7 +160,7 @@ public class GUIHandler implements IGuiHandler {
 
 			case ModBlocks.guiID_builder_npc:
 			{
-				if(entity instanceof TileEntityMachineBuilder) {TileEntityMachineBuilder d=(TileEntityMachineBuilder)entity;com.hfr.entity.EntityFactionBuilder b=d.getLoadedBuilder();if(b!=null&&d.getAssignedBuilderId()!=null&&d.getAssignedBuilderId().equals(b.getUniqueID())&&player instanceof net.minecraft.entity.player.EntityPlayerMP&&com.hfr.builder.BuilderDepotService.mayBuild((net.minecraft.entity.player.EntityPlayerMP)player,d)&&b.isUseableByPlayer(player))return new ContainerBuilderNPC(player.inventory,d,b);}
+				TileEntityMachineBuilder d=com.hfr.builder.BuilderGuiResolver.getDepot(world,x,y,z);com.hfr.entity.EntityFactionBuilder b=com.hfr.builder.BuilderGuiResolver.getAssignedBuilder(d);if(b!=null&&player instanceof net.minecraft.entity.player.EntityPlayerMP&&com.hfr.builder.BuilderDepotService.mayBuild((net.minecraft.entity.player.EntityPlayerMP)player,d)&&b.isUseableByPlayer(player))return new ContainerBuilderNPC(player.inventory,d,b);
 				return null;
 			}
 
@@ -483,7 +483,7 @@ public class GUIHandler implements IGuiHandler {
 				
 				case ModBlocks.guiID_builder_npc:
 				{
-					if(entity instanceof TileEntityMachineBuilder) {TileEntityMachineBuilder d=(TileEntityMachineBuilder)entity;com.hfr.entity.EntityFactionBuilder b=d.getLoadedBuilder();if(b!=null)return new GUIBuilderNPC(player.inventory,d,b);}
+					TileEntityMachineBuilder d=com.hfr.builder.BuilderGuiResolver.getDepot(world,x,y,z);if(d!=null&&d.getAssignedBuilderId()!=null)return new GUIBuilderNPC(player.inventory,d,com.hfr.builder.BuilderGuiResolver.getAssignedBuilder(d));
 					return null;
 				}
 

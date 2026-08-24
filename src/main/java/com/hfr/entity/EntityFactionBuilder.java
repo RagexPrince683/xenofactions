@@ -24,13 +24,14 @@ import cpw.mods.fml.common.network.internal.FMLNetworkHandler;
 
 /** Persistent faction worker. All work and inventory mutation occurs on the logical server. */
 public class EntityFactionBuilder extends EntityLiving implements net.minecraft.inventory.IInventory {
+    public static final int INVENTORY_SIZE = 27;
     private static final int WORK_REACH=4,MAX_PATH_ATTEMPTS=24,STALL_TICKS=80;
     private static final double USEFUL_MOVE_SQ=.04D,USEFUL_CLOSER=.05D;
     private UUID factionId,jobId; private int depotX,depotY,depotZ,depotDimension,pathFailures,candidateIndex,pathTargetX=Integer.MIN_VALUE,pathTargetY,pathTargetZ,lastProgressTick;
     private double lastX,lastY,lastZ,lastDistance=Double.MAX_VALUE;
     private int[][] workCandidates;
     private BuilderState state=BuilderState.IDLE;
-    private final ItemStack[] inventory=new ItemStack[27];
+    private final ItemStack[] inventory=new ItemStack[INVENTORY_SIZE];
     public EntityFactionBuilder(World w){super(w);setSize(.6F,1.8F);getNavigator().setAvoidsWater(false);getNavigator().setCanSwim(true);}
     @Override protected void applyEntityAttributes(){super.applyEntityAttributes();getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(20);getEntityAttribute(SharedMonsterAttributes.movementSpeed).setBaseValue(.28);}
     @Override protected boolean canDespawn(){return false;}
@@ -46,7 +47,7 @@ public class EntityFactionBuilder extends EntityLiving implements net.minecraft.
     public void resumeWork(){BuilderJobData d=BuilderJobData.get(worldObj);BuilderJob j=d==null?null:d.get(jobId);if(j!=null){resetPath();j.failureDetail="";j.pathFailures=0;state=BuilderState.LOAD_JOB;j.state=state;d.markDirty();}}
     public void recallToDepot(){resetPath();BuilderJobData d=BuilderJobData.get(worldObj);BuilderJob job=d==null?null:d.get(jobId);setWorkState(job,BuilderState.GETTING_MATERIALS,"builder.status.getting_materials","");getNavigator().tryMoveToXYZ(depotX+.5,depotY,depotZ+.5,1);}
     public void clearJob(){jobId=null;state=BuilderState.IDLE;resetPath();}
-    @Override public boolean interact(EntityPlayer player){if(worldObj.isRemote)return true;TileEntityMachineBuilder d=depot();if(d==null||!getUniqueID().equals(d.getAssignedBuilderId())){player.addChatMessage(new ChatComponentTranslation("builder.depot.missing"));return true;}FMLNetworkHandler.openGui(player,MainRegistry.instance,ModBlocks.guiID_builder_npc,worldObj,depotX,depotY,depotZ);return true;}
+    @Override public boolean interact(EntityPlayer player){if(worldObj.isRemote)return true;TileEntityMachineBuilder d=depot();if(BuilderGuiResolver.getAssignedBuilder(d)!=this){player.addChatMessage(new ChatComponentTranslation("builder.depot.missing"));return true;}FMLNetworkHandler.openGui(player,MainRegistry.instance,ModBlocks.guiID_builder_npc,worldObj,depotX,depotY,depotZ);return true;}
     public void detachFromDepot(){BuilderJobData data=BuilderJobData.get(worldObj);BuilderJob job=data==null?null:data.get(jobId);if(job!=null)pause(job,BuilderState.PAUSED);jobId=null;state=BuilderState.PAUSED;resetPath();}
     @Override public void onLivingUpdate(){super.onLivingUpdate();if(!worldObj.isRemote&&XFConfig.enableFactionBuilders){if(ticksExisted%10==0&&jobId!=null&&state!=BuilderState.PAUSED)pickUpNearbyItems();if(ticksExisted%XFConfig.builderWorkIntervalTicks==0)work();}}
 
@@ -135,7 +136,7 @@ public class EntityFactionBuilder extends EntityLiving implements net.minecraft.
     /** Inserts as much as possible, returning the inserted count. */
     public int insert(ItemStack source){if(source==null||source.stackSize<=0)return 0;int before=source.stackSize,left=before;for(ItemStack stack:inventory)if(stack!=null&&BuilderMaterialResolver.matches(stack,source)&&left>0){int n=Math.min(left,Math.min(stack.getMaxStackSize(),getInventoryStackLimit())-stack.stackSize);if(n>0){stack.stackSize+=n;left-=n;}}for(int i=0;i<inventory.length&&left>0;i++)if(inventory[i]==null){inventory[i]=source.copy();inventory[i].stackSize=Math.min(left,Math.min(source.getMaxStackSize(),getInventoryStackLimit()));left-=inventory[i].stackSize;}return before-left;}
     public ItemStack[] copyInventory(){ItemStack[] copy=new ItemStack[inventory.length];for(int i=0;i<copy.length;i++)copy[i]=inventory[i]==null?null:inventory[i].copy();return copy;}
-    @Override public int getSizeInventory(){return inventory.length;}
+    @Override public int getSizeInventory(){return INVENTORY_SIZE;}
     @Override public ItemStack getStackInSlot(int slot){return slot>=0&&slot<inventory.length?inventory[slot]:null;}
     @Override public ItemStack decrStackSize(int slot,int amount){ItemStack stack=getStackInSlot(slot);if(stack==null)return null;if(stack.stackSize<=amount){inventory[slot]=null;return stack;}ItemStack split=stack.splitStack(amount);if(stack.stackSize<=0)inventory[slot]=null;return split;}
     @Override public ItemStack getStackInSlotOnClosing(int slot){ItemStack stack=getStackInSlot(slot);if(stack!=null)inventory[slot]=null;return stack;}
