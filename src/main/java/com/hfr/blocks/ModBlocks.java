@@ -94,6 +94,7 @@ public class ModBlocks {
 	public static final int guiID_rods = 13;
 	public static Block builder;
 	public static final int guiID_builder = 14;
+	public static final int guiID_builder_npc = 41;
 	public static Block machine_uni;
 	public static Block machine_reserve;
 	public static final int guiID_uni = 15;

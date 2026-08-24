@@ -30,12 +30,15 @@ public class EntityFactionBuilder extends EntityLiving {
 	@Override protected boolean canDespawn(){return false;}
 	public void assign(UUID faction,UUID job,int x,int y,int z,int dimension){factionId=faction;jobId=job;depotX=x;depotY=y;depotZ=z;depotDimension=dimension;state=job==null?BuilderState.IDLE:BuilderState.LOAD_JOB;}
 	public BuilderState getBuilderState(){return state;} public UUID getJobId(){return jobId;} public UUID getFactionId(){return factionId;}
+	public int getDepotX(){return depotX;} public int getDepotY(){return depotY;} public int getDepotZ(){return depotZ;} public int getDepotDimension(){return depotDimension;}
+	public String getBuilderDisplayName(){return hasCustomNameTag()?getCustomNameTag():"Builder";}
+	public String getCarriedMaterialSummary(){StringBuilder out=new StringBuilder();for(ItemStack stack:materials)if(stack!=null){if(out.length()>0)out.append(", ");out.append(stack.getDisplayName()).append(" x").append(stack.stackSize);}return out.toString();}
 	public void setJob(UUID id){jobId=id;state=id==null?BuilderState.IDLE:BuilderState.LOAD_JOB;}
 	public void pauseWork(){BuilderJobData d=BuilderJobData.get(worldObj);BuilderJob j=d==null?null:d.get(jobId);if(j!=null)pause(j,BuilderState.PAUSED);else state=BuilderState.PAUSED;getNavigator().clearPathEntity();}
 	public void resumeWork(){BuilderJobData d=BuilderJobData.get(worldObj);BuilderJob j=d==null?null:d.get(jobId);if(j!=null){state=BuilderState.LOAD_JOB;j.state=state;d.markDirty();}}
 	public void recallToDepot(){getNavigator().clearPathEntity();state=BuilderState.GETTING_MATERIALS;getNavigator().tryMoveToXYZ(depotX+.5,depotY,depotZ+.5,1);syncState();}
 	public void clearJob(){jobId=null;state=BuilderState.IDLE;getNavigator().clearPathEntity();}
-	@Override public boolean interact(EntityPlayer player){if(worldObj.isRemote)return true;TileEntityMachineBuilder d=depot();if(d==null||!getUniqueID().equals(d.getAssignedBuilderId())){player.addChatMessage(new ChatComponentTranslation("builder.depot.missing"));return true;}FMLNetworkHandler.openGui(player,MainRegistry.instance,ModBlocks.guiID_builder,worldObj,depotX,depotY,depotZ);return true;}
+	@Override public boolean interact(EntityPlayer player){if(worldObj.isRemote)return true;TileEntityMachineBuilder d=depot();if(d==null||!getUniqueID().equals(d.getAssignedBuilderId())){player.addChatMessage(new ChatComponentTranslation("builder.depot.missing"));return true;}FMLNetworkHandler.openGui(player,MainRegistry.instance,ModBlocks.guiID_builder_npc,worldObj,depotX,depotY,depotZ);return true;}
 	public void detachFromDepot(){BuilderJobData data=BuilderJobData.get(worldObj);BuilderJob job=data==null?null:data.get(jobId);if(job!=null)pause(job,BuilderState.PAUSED);jobId=null;state=BuilderState.PAUSED;}
 	@Override public void onLivingUpdate(){super.onLivingUpdate();if(!worldObj.isRemote&&XFConfig.enableFactionBuilders&&ticksExisted%XFConfig.builderWorkIntervalTicks==0)work();}
 	private void work(){

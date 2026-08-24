@@ -26,6 +26,7 @@ import com.hfr.inventory.gui.GUIGrainmill;
 import com.hfr.inventory.gui.GUIHydro;
 import com.hfr.inventory.gui.GUILaunchPad;
 import com.hfr.inventory.gui.GUIMachineBuilder;
+import com.hfr.inventory.gui.GUIBuilderNPC;
 import com.hfr.inventory.gui.GUIMachineEMP;
 import com.hfr.inventory.gui.GUIMachineMarket;
 import com.hfr.inventory.gui.GUIMachineNet;
@@ -154,6 +155,12 @@ public class GUIHandler implements IGuiHandler {
 				{
 					return new ContainerMachineNet(player.inventory, (TileEntityMachineNet) entity);
 				}
+				return null;
+			}
+
+			case ModBlocks.guiID_builder_npc:
+			{
+				if(entity instanceof TileEntityMachineBuilder) return new ContainerBuilderNPC();
 				return null;
 			}
 
@@ -474,6 +481,12 @@ public class GUIHandler implements IGuiHandler {
 					return null;
 				}
 				
+				case ModBlocks.guiID_builder_npc:
+				{
+					if(entity instanceof TileEntityMachineBuilder) return new GUIBuilderNPC(player.inventory, (TileEntityMachineBuilder) entity);
+					return null;
+				}
+
 				case ModBlocks.guiID_builder:
 				{
 					if(entity instanceof TileEntityMachineBuilder)
