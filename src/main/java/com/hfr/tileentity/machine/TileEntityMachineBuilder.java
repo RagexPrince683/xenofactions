@@ -47,11 +47,10 @@ public class TileEntityMachineBuilder extends TileEntityMachineBase {
 	}
 
 	public boolean takeMaterial(ItemStack wanted) {
-		for(int i=1;i<slots.length;i++) if(slots[i]!=null && slots[i].isItemEqual(wanted)) {
-			if(--slots[i].stackSize<=0) slots[i]=null; markDirty(); return true;
-		}
-		return false;
+		return takeMaterial(wanted,1)>0;
 	}
+	/** Atomically removes at most amount matching items and returns the amount removed. */
+	public int takeMaterial(ItemStack wanted,int amount){int available=0;for(int i=1;i<slots.length;i++)if(slots[i]!=null&&slots[i].isItemEqual(wanted))available+=slots[i].stackSize;int take=Math.min(Math.max(0,amount),available);if(take==0)return 0;int left=take;for(int i=1;i<slots.length&&left>0;i++)if(slots[i]!=null&&slots[i].isItemEqual(wanted)){int n=Math.min(left,slots[i].stackSize);slots[i].stackSize-=n;left-=n;if(slots[i].stackSize<=0)slots[i]=null;}markDirty();return take;}
 	@Override public boolean isItemValidForSlot(int slot, ItemStack stack) { return slot > 0 && slot < slots.length; }
 	@Override public int[] getAccessibleSlotsFromSide(int side) { int[] result=new int[27]; for(int i=0;i<27;i++)result[i]=i+1; return result; }
 	public void setFactionId(UUID id){factionId=id;markDirty();}

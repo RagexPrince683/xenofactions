@@ -1,3 +1,10 @@
+# Pull request: fix Builder reach-based construction and movement stalls
+
+- Replaced exact-target navigation with collision-safe reachable work positions and a bounded movement watchdog with alternate-path retries.
+- Added pre-site bulk material fetching, remaining-quantity requests, automatic temporary-state recovery, and placement-only consumption.
+- Added precise break, placement, territory, unsupported-block, and path failure diagnostics to persistent jobs and both Builder status screens.
+- Documented the four-block work reach and that Builders currently require no tools.
+
 # Pull request: fix Builder Depot coordinate editing and preview placement
 
 - Initialized new and unselected legacy Builder plans near their owning Depot while preserving deliberately selected world-origin plans.
