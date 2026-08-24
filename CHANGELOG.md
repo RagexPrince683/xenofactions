@@ -1,3 +1,8 @@
+# Pull request: fix Builder NPC Forge 1.7.10 compilation
+
+- Resolved the shared Builder job database through Forge 1.7.10's server-side dimension manager and made unavailable or client-world lookups fail safely.
+- Restored the Minecraft item import used by the Builder's existing door and bed material mappings.
+
 # Pull request: secure and distribute Wall Art controllers
 
 - Made Wall Art configuration opening server-authoritative and restricted it to the controller's UUID owner, with localized denial feedback.
