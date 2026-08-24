@@ -719,6 +719,7 @@ public class MainRegistry
 	    EntityRegistry.registerModEntity(EntityHook.class, "entity_hfr_hook_baall", id++, this, 1000, 1, true);
 
 	    EntityRegistry.registerModEntity(EntityFarmer.class, "entity_hfr_slave", id++, this, 1000, 1, true);
+	    EntityRegistry.registerModEntity(EntityFactionBuilder.class, "entity_hfr_faction_builder", id++, this, 80, 3, true);
 
 	    EntityRegistry.registerModEntity(EntityMissileMartin.class, "entity_missile_martin", id++, this, 1000, 1, true);
 	    EntityRegistry.registerModEntity(EntityMissilePegasus.class, "entity_missile_pegasus", id++, this, 1000, 1, true);
