@@ -1769,10 +1769,10 @@ private void cmdCreate(ICommandSender sender, String name) {
 			}
 
 			Item cityCenterItem = Item.getItemFromBlock(ModBlocks.clowder_flag);
-			if(XFConfig.enableSurvivalRecipes && !consumeBlankCityCenter(player, cityCenterItem)) {
-				sender.addChatMessage(new ChatComponentText(ERROR + "Craft a City Center before using /c claim."));
-				return;
-			}
+			//if(XFConfig.enableSurvivalRecipes && !consumeBlankCityCenter(player, cityCenterItem)) {
+			//	sender.addChatMessage(new ChatComponentText(ERROR + "Craft a City Center before using /c claim."));
+			//	return;
+			//}
 			if(!XFConfig.enableSurvivalRecipes && player.inventory.hasItem(cityCenterItem)) {
 				sender.addChatMessage(new ChatComponentText(ERROR + "You already have a flag in your inventory!"));
 				return;
