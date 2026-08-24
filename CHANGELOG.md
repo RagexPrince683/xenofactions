@@ -1,3 +1,9 @@
+# Pull request: fix Builder NPC container synchronization
+
+- Unified Builder inventory sizing and container slot boundaries around the persistent 27-slot worker inventory.
+- Added shared Depot assignment resolution and a 27-slot client synchronization inventory for the short entity-tracking race during GUI opening.
+- Hardened Builder shift-click bounds and server interaction validation while retaining the complete status and control screen.
+
 # Pull request: fix Builder navigation and schematic preview alignment
 
 - Enabled the Forge 1.7.10 `EntityLiving` AI lifecycle so vanilla navigation and movement helpers physically move Builder NPCs exactly once per tick.

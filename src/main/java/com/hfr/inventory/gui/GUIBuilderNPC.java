@@ -12,7 +12,7 @@ import com.hfr.entity.EntityFactionBuilder;
 /** Compact worker status and control screen; planning remains at the Depot. */
 public class GUIBuilderNPC extends GuiContainer {
  private final TileEntityMachineBuilder depot;
- public GUIBuilderNPC(InventoryPlayer p,TileEntityMachineBuilder d,EntityFactionBuilder b){super(new ContainerBuilderNPC(p,d,b));depot=d;xSize=176;ySize=222;}
+ public GUIBuilderNPC(InventoryPlayer p,TileEntityMachineBuilder d,EntityFactionBuilder b){super(ContainerBuilderNPC.createClient(p,d,b));depot=d;xSize=176;ySize=222;}
  @Override public void initGui(){super.initGui();buttons();request();}
  private String tr(String k,Object...a){return I18n.format(k,a);}private BuilderDepotSnapshotPacket snapshot(){return BuilderDepotSnapshotPacket.get(mc.thePlayer.dimension,depot.xCoord,depot.yCoord,depot.zCoord);}
  private void buttons(){buttonList.clear();BuilderDepotSnapshotPacket s=snapshot();boolean job=s!=null&&s.total>0;add(1,8,48,52,"gui.builder.recall",s!=null);add(2,62,48,50,"gui.builder.pause",job&&!"PAUSED".equals(s.state));add(3,114,48,54,"gui.builder.resume",job&&"PAUSED".equals(s.state));}

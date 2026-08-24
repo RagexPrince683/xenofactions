@@ -1,24 +1,50 @@
 package com.hfr.inventory.container;
 
 import com.hfr.builder.BuilderDepotService;
+import com.hfr.builder.BuilderGuiResolver;
 import com.hfr.entity.EntityFactionBuilder;
 import com.hfr.tileentity.machine.TileEntityMachineBuilder;
+import com.hfr.util.XFLog;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.InventoryBasic;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 
 /** The assigned worker's inventory; the Depot inventory remains on its own screen. */
 public class ContainerBuilderNPC extends Container {
+    public static final int BUILDER_START=0;
+    public static final int BUILDER_SLOTS=EntityFactionBuilder.INVENTORY_SIZE;
+    public static final int PLAYER_MAIN_START=BUILDER_START+BUILDER_SLOTS;
+    public static final int PLAYER_MAIN_SLOTS=27;
+    public static final int PLAYER_HOTBAR_START=PLAYER_MAIN_START+PLAYER_MAIN_SLOTS;
+    public static final int PLAYER_HOTBAR_SLOTS=9;
+    public static final int TOTAL_SLOTS=PLAYER_HOTBAR_START+PLAYER_HOTBAR_SLOTS;
     private final TileEntityMachineBuilder depot;
     private final EntityFactionBuilder builder;
-    public ContainerBuilderNPC(InventoryPlayer player,TileEntityMachineBuilder depot,EntityFactionBuilder builder){
+
+    public ContainerBuilderNPC(InventoryPlayer player,TileEntityMachineBuilder depot,EntityFactionBuilder builder){this(player,depot,builder,builder);}
+    private ContainerBuilderNPC(InventoryPlayer player,TileEntityMachineBuilder depot,IInventory inventory,EntityFactionBuilder builder){
         this.depot=depot;this.builder=builder;
-        for(int row=0;row<3;row++)for(int col=0;col<9;col++)addSlotToContainer(new Slot(builder,col+row*9,8+col*18,72+row*18));
-        for(int row=0;row<3;row++)for(int col=0;col<9;col++)addSlotToContainer(new Slot(player,col+row*9+9,8+col*18,140+row*18));
-        for(int col=0;col<9;col++)addSlotToContainer(new Slot(player,col,8+col*18,198));
+        if(inventory==null||inventory.getSizeInventory()!=BUILDER_SLOTS)throw new IllegalArgumentException("Builder inventory must expose "+BUILDER_SLOTS+" slots");
+        for(int slot=BUILDER_START;slot<PLAYER_MAIN_START;slot++){int local=slot-BUILDER_START;addSlotToContainer(new Slot(inventory,local,8+(local%9)*18,72+(local/9)*18));}
+        for(int slot=PLAYER_MAIN_START;slot<PLAYER_HOTBAR_START;slot++){int local=slot-PLAYER_MAIN_START;addSlotToContainer(new Slot(player,local+9,8+(local%9)*18,140+(local/9)*18));}
+        for(int slot=PLAYER_HOTBAR_START;slot<TOTAL_SLOTS;slot++){int local=slot-PLAYER_HOTBAR_START;addSlotToContainer(new Slot(player,local,8+local*18,198));}
+        if(inventorySlots.size()!=TOTAL_SLOTS)throw new IllegalStateException("Builder container slot layout is invalid");
+        XFLog.debug("[XF Builder] Created Builder NPC container side="+(player.player.worldObj.isRemote?"CLIENT":"SERVER")+" builderSlots="+BUILDER_SLOTS+" totalSlots="+TOTAL_SLOTS);
     }
-    @Override public boolean canInteractWith(EntityPlayer player){return depot!=null&&builder!=null&&depot.getWorldObj()==player.worldObj&&depot.getAssignedBuilderId()!=null&&depot.getAssignedBuilderId().equals(builder.getUniqueID())&&depot.getLoadedBuilder()==builder&&(player.worldObj.isRemote||(player instanceof net.minecraft.entity.player.EntityPlayerMP&&BuilderDepotService.mayBuild((net.minecraft.entity.player.EntityPlayerMP)player,depot)))&&builder.isUseableByPlayer(player);}
-    @Override public ItemStack transferStackInSlot(EntityPlayer player,int index){ItemStack result=null;Slot slot=(Slot)inventorySlots.get(index);if(slot!=null&&slot.getHasStack()){ItemStack stack=slot.getStack();result=stack.copy();if(index<27){if(!mergeItemStack(stack,27,63,true))return null;}else if(!mergeItemStack(stack,0,27,false))return null;if(stack.stackSize==0)slot.putStack(null);else slot.onSlotChanged();if(stack.stackSize==result.stackSize)return null;slot.onPickupFromSlot(player,stack);}return result;}
+    /** Keep 63 network slots even if client entity tracking trails the GUI-open packet. */
+    public static ContainerBuilderNPC createClient(InventoryPlayer player,TileEntityMachineBuilder depot,EntityFactionBuilder builder){
+        if(builder!=null)return new ContainerBuilderNPC(player,depot,builder);
+        XFLog.debug("[XF Builder] Assigned Builder is not tracked client-side; using a "+BUILDER_SLOTS+"-slot synchronization inventory");
+        return new ContainerBuilderNPC(player,depot,new InventoryBasic("container.builder_npc.sync",false,BUILDER_SLOTS),null);
+    }
+    @Override public boolean canInteractWith(EntityPlayer player){return builder!=null&&BuilderGuiResolver.getAssignedBuilder(depot)==builder&&depot.getWorldObj()==player.worldObj&&(player.worldObj.isRemote||(player instanceof EntityPlayerMP&&BuilderDepotService.mayBuild((EntityPlayerMP)player,depot)))&&builder.isUseableByPlayer(player);}
+    @Override public ItemStack transferStackInSlot(EntityPlayer player,int index){
+        if(index<0||index>=inventorySlots.size())return null;ItemStack result=null;Slot slot=(Slot)inventorySlots.get(index);
+        if(slot!=null&&slot.getHasStack()){ItemStack stack=slot.getStack();result=stack.copy();if(index<PLAYER_MAIN_START){if(!mergeItemStack(stack,PLAYER_MAIN_START,TOTAL_SLOTS,true))return null;}else if(!mergeItemStack(stack,BUILDER_START,PLAYER_MAIN_START,false))return null;if(stack.stackSize==0)slot.putStack(null);else slot.onSlotChanged();if(stack.stackSize==result.stackSize)return null;slot.onPickupFromSlot(player,stack);}return result;
+    }
 }
