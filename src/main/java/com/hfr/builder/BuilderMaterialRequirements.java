@@ -10,10 +10,10 @@ import com.hfr.schematic.Schematic;
 /** Canonical, identity-based immutable material totals and unsupported mappings. */
 public final class BuilderMaterialRequirements {
     public static final class Key {
-        public final ItemStack example;private final String nbt;
-        Key(ItemStack s){example=s.copy();example.stackSize=1;nbt=s.hasTagCompound()?s.getTagCompound().toString():"";}
-        @Override public int hashCode(){return 31*(31*System.identityHashCode(example.getItem())+example.getItemDamage())+nbt.hashCode();}
-        @Override public boolean equals(Object o){if(!(o instanceof Key))return false;Key k=(Key)o;return example.getItem()==k.example.getItem()&&example.getItemDamage()==k.example.getItemDamage()&&nbt.equals(k.nbt);}
+        public final ItemStack example;private final BuilderMaterialKey identity;
+        Key(ItemStack s){example=s.copy();example.stackSize=1;identity=new BuilderMaterialKey(example);}
+        @Override public int hashCode(){return identity.hashCode();}
+        @Override public boolean equals(Object o){return o instanceof Key&&identity.equals(((Key)o).identity);}
     }
     public static final class Unsupported {public final String block;public final int metadata,quantity,x,y,z;Unsupported(String b,int m,int q,int x,int y,int z){block=b;metadata=m;quantity=q;this.x=x;this.y=y;this.z=z;}}
     public final Map<Key,Integer> totals;public final List<Unsupported> unsupported;public final int totalItems;

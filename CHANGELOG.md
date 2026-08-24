@@ -430,3 +430,10 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Added canonical identity-based material/unsupported-block accounting and unsupported mapping preflight.
 - Persisted detailed Builder targets, required materials, chunks, path failures, and localized status reasons with automatic temporary-failure recovery and load-time job reattachment.
 - Improved translucent preview visibility and bounded large-schematic rendering, and documented planning, diagnostics, and recovery behavior.
+
+# Pull request: canonical Builder materials and persistent worker inventory
+
+- Canonicalized schematic block states to inventory item identity so orientation metadata cannot split equivalent requirements.
+- Added a persistent 27-slot Builder inventory with secure GUI transfer, nearby dropped-item pickup, migration, and death drops.
+- Counted Depot and Builder stock together, added atomic capacity-aware fetching and a distinct inventory-full diagnostic.
+- Updated Builder documentation for inventory persistence, pickup, and canonical matching.
