@@ -160,7 +160,7 @@ public class GUIHandler implements IGuiHandler {
 
 			case ModBlocks.guiID_builder_npc:
 			{
-				TileEntityMachineBuilder d=com.hfr.builder.BuilderGuiResolver.getDepot(world,x,y,z);com.hfr.entity.EntityFactionBuilder b=com.hfr.builder.BuilderGuiResolver.getAssignedBuilder(d);if(b!=null&&player instanceof net.minecraft.entity.player.EntityPlayerMP&&com.hfr.builder.BuilderDepotService.mayBuild((net.minecraft.entity.player.EntityPlayerMP)player,d)&&b.isUseableByPlayer(player))return new ContainerBuilderNPC(player.inventory,d,b);
+				TileEntityMachineBuilder d=com.hfr.builder.BuilderGuiResolver.getDepot(world,x,y,z);com.hfr.entity.EntityFactionBuilder b=com.hfr.builder.BuilderGuiResolver.getAssignedBuilder(d);if(b!=null&&player instanceof net.minecraft.entity.player.EntityPlayerMP&&com.hfr.builder.BuilderDepotService.mayBuild((net.minecraft.entity.player.EntityPlayerMP)player,d)&&b.isUseableByPlayer(player)){ContainerBuilderNPC container=new ContainerBuilderNPC(player.inventory,d,b);com.hfr.util.XFLog.debug("[XF Builder] Server Builder GUI element -> ContainerBuilderNPC slots="+container.inventorySlots.size());return container;}
 				return null;
 			}
 
@@ -483,8 +483,7 @@ public class GUIHandler implements IGuiHandler {
 				
 				case ModBlocks.guiID_builder_npc:
 				{
-					TileEntityMachineBuilder d=com.hfr.builder.BuilderGuiResolver.getDepot(world,x,y,z);if(d!=null&&d.getAssignedBuilderId()!=null)return new GUIBuilderNPC(player.inventory,d,com.hfr.builder.BuilderGuiResolver.getAssignedBuilder(d));
-					return null;
+					TileEntityMachineBuilder d=com.hfr.builder.BuilderGuiResolver.getDepot(world,x,y,z);com.hfr.entity.EntityFactionBuilder b=com.hfr.builder.BuilderGuiResolver.getAssignedBuilder(d);com.hfr.util.XFLog.debug("[XF Builder] Client Builder GUI request depot="+x+","+y+","+z+" depotResolved="+(d!=null)+" assignedIdPresent="+(d!=null&&d.getAssignedBuilderId()!=null)+" builderResolved="+(b!=null)+" previousContainer="+player.openContainer.getClass().getSimpleName()+" slots="+player.openContainer.inventorySlots.size());GUIBuilderNPC gui=new GUIBuilderNPC(player.inventory,world.provider.dimensionId,x,y,z,d,b);com.hfr.util.XFLog.debug("[XF Builder] Client Builder GUI -> ContainerBuilderNPC slots="+gui.inventorySlots.inventorySlots.size());return gui;
 				}
 
 				case ModBlocks.guiID_builder:

@@ -1,3 +1,9 @@
+# Pull request: make Builder NPC GUI opening race-safe
+
+- Made the client construct the fixed 63-slot Builder NPC container from GUI-open coordinates even when Depot assignment, tile, or entity synchronization is late.
+- Kept placeholder containers open client-side while preserving strict real-Builder, Depot, range, and faction validation on the server.
+- Added debug-only GUI lifecycle diagnostics and structural checks for the vanilla 45-slot player-to-63-slot Builder window transition.
+
 # Pull request: fix Builder NPC container synchronization
 
 - Unified Builder inventory sizing and container slot boundaries around the persistent 27-slot worker inventory.
