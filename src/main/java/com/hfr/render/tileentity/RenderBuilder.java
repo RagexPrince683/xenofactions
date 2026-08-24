@@ -1,33 +1,10 @@
 package com.hfr.render.tileentity;
 
-import org.lwjgl.opengl.GL11;
-
-import com.hfr.schematic.SchematicRenderer;
 import com.hfr.tileentity.machine.TileEntityMachineBuilder;
-
-import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.tileentity.TileEntity;
 
+/** The Depot model has no preview geometry; world-space previews render from EventHandlerClient. */
 public class RenderBuilder extends TileEntitySpecialRenderer {
-
-	@Override
-	public void renderTileEntityAt(TileEntity te, double x, double y, double z, float f0) {
-		
-        GL11.glPushMatrix();
-        GL11.glTranslated(x + 0.5D, y + 0.0625D, z + 0.5D);
-        GL11.glEnable(GL11.GL_LIGHTING);
-        GL11.glEnable(GL11.GL_CULL_FACE);
-
-        TileEntityMachineBuilder builder = (TileEntityMachineBuilder)te;
-
-        GL11.glTranslated(builder.previewX-builder.xCoord, builder.previewY-builder.yCoord, builder.previewZ-builder.zCoord);
-        
-        bindTexture(TextureMap.locationBlocksTexture);
-        if(builder.preview != null)
-			SchematicRenderer.render(builder.preview, 1F, 0, 0, 0, 0, builder.previewRotation, builder.previewMirrored);
-        
-        GL11.glPopMatrix();
-	}
-
+    @Override public void renderTileEntityAt(TileEntity te,double x,double y,double z,float partialTicks) { }
 }

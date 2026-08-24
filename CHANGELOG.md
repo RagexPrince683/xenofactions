@@ -1,3 +1,10 @@
+# Pull request: fix Builder Depot coordinate editing and preview placement
+
+- Initialized new and unselected legacy Builder plans near their owning Depot while preserving deliberately selected world-origin plans.
+- Made absolute world-coordinate fields editable and debounce-persistent, with Depot reset and per-axis adjustment controls.
+- Moved persistent previews into camera-relative world rendering and made final native jobs consume the same server-owned plan.
+- Added placement diagnostics, loading feedback, localization, and Builder planning documentation.
+
 # Pull request: live-refresh native Builder schematics
 
 - Added one server-owned native schematic library rooted at Forge’s `config/schematics/` directory, with snapshot-based live reload and actionable load diagnostics.
