@@ -1738,7 +1738,12 @@ private void cmdCreate(ICommandSender sender, String name) {
 				return;
 			}
 
-			if(player.inventory.hasItem(Item.getItemFromBlock(ModBlocks.clowder_flag))) {
+			Item cityCenterItem = Item.getItemFromBlock(ModBlocks.clowder_flag);
+			if(XFConfig.enableSurvivalRecipes && !consumeBlankCityCenter(player, cityCenterItem)) {
+				sender.addChatMessage(new ChatComponentText(ERROR + "Craft a City Center before using /c claim."));
+				return;
+			}
+			if(!XFConfig.enableSurvivalRecipes && player.inventory.hasItem(cityCenterItem)) {
 				sender.addChatMessage(new ChatComponentText(ERROR + "You already have a flag in your inventory!"));
 				return;
 			}
@@ -1755,6 +1760,20 @@ private void cmdCreate(ICommandSender sender, String name) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
 		}
 	}
+
+	private boolean consumeBlankCityCenter(EntityPlayer player, Item cityCenterItem) {
+		for(int slot = 0; slot < player.inventory.mainInventory.length; slot++) {
+			ItemStack candidate = player.inventory.mainInventory[slot];
+			if(candidate == null || candidate.getItem() != cityCenterItem || candidate.hasTagCompound())
+				continue;
+			candidate.stackSize--;
+			if(candidate.stackSize <= 0)
+				player.inventory.mainInventory[slot] = null;
+			return true;
+		}
+		return false;
+	}
+
 	private void cmdCityMove(ICommandSender sender, boolean recover) {
 		EntityPlayer player = getCommandSenderAsPlayer(sender); Clowder faction = Clowder.getClowderFromPlayer(player);
 		if(faction == null || !faction.isOwner(player.getUniqueID())) { sender.addChatMessage(new ChatComponentText(ERROR + "Only the faction leader may manage City Center moves.")); return; }

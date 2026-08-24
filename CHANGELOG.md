@@ -340,3 +340,11 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Added bounded asynchronous HTTPS validation, save-local SHA-256 image deduplication, indexed overlap/reference records, and orphan cleanup.
 - Added validated, chunked image transfer and a shared 64 MiB client texture cache with disconnect cleanup.
 - Preserved the `wall_image_block` registry name while migrating unsupported legacy tile metadata to an unconfigured display.
+
+# (55d7c30 Make core Xenofactions infrastructure survival-craftable)
+
+- Audited registered blocks/items against faction, city, claim, war, prestige, machine, GUI, command, and tile-entity usage instead of generating recipes from the registries.
+- Added eleven centralized, ordinary Forge recipes for City Centers, Conquest Flags, Officer Chests, Medical and Warp Tents, Coal Mines, Production Lines, Universities, Federal Reserves, Temples, and Statues.
+- Added the default-enabled `enableSurvivalRecipes` server toggle; disabling it omits only the new recipes and preserves the previous free `/c claim` token workflow for command/shop-oriented servers.
+- Made the enabled survival workflow consume one crafted, untagged City Center when `/c claim <city name>` creates its named placement token, without consuming relocation or already-named tokens.
+- Documented recipe layouts, balance tiers, dependency safety, the survival-worthy audit, and deliberate exclusions.
