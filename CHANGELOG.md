@@ -1,3 +1,10 @@
+# Pull request: live-refresh native Builder schematics
+
+- Added one server-owned native schematic library rooted at Forge’s `config/schematics/` directory, with snapshot-based live reload and actionable load diagnostics.
+- Synchronized native schematic metadata and stable IDs to the Builder selector, including automatic polling and a manual Refresh control.
+- Removed numeric underscore filename parsing while preserving strict schematic validation and persistent job copies.
+- Documented arbitrary native filenames, the runtime directory, and live refresh behavior.
+
 # Builder GUI redesign
 
 - Split Builder worker status/control from Builder Depot planning, materials, and queue management.
