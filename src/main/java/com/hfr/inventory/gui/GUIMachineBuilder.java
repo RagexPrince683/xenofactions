@@ -1,124 +1,45 @@
 package com.hfr.inventory.gui;
 
+import java.util.*;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
-
+import com.hfr.builder.BuilderMaterialResolver;
 import com.hfr.inventory.container.ContainerMachineBuilder;
-import com.hfr.items.ModItems;
-import com.hfr.lib.RefStrings;
+import com.hfr.main.MainRegistry;
 import com.hfr.packet.PacketDispatcher;
-import com.hfr.packet.client.AuxButtonPacket;
+import com.hfr.packet.builder.*;
+import com.hfr.schematic.Schematic;
+import com.hfr.schematic.client.SchematicaCompat;
 import com.hfr.tileentity.machine.TileEntityMachineBuilder;
-import com.hfr.tileentity.machine.TileEntityMachineBuilder.SchemOffer;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.audio.PositionedSoundRecord;
+import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
 
+/** Original Xenofactions worker-management screen; no legacy offer/wrench controls. */
 public class GUIMachineBuilder extends GuiContainer {
-
-	public static ResourceLocation texture = new ResourceLocation(RefStrings.MODID + ":textures/gui/gui_builder.png");
-	private TileEntityMachineBuilder diFurnace;
-	private static int index = 0;
-	
-	public GUIMachineBuilder(InventoryPlayer invPlayer, TileEntityMachineBuilder tedf) {
-		super(new ContainerMachineBuilder(invPlayer, tedf));
-		diFurnace = tedf;
-
-		this.xSize = 176;
-		this.ySize = 168;
-	}
-	
-	@Override
-	protected void drawGuiContainerForegroundLayer(int i, int j) {
-		
-		if(TileEntityMachineBuilder.offers.size() == 0)
-			return;
-		
-		if(getSchematic(index) == null)
-			return;
-		
-		SchemOffer schem = getSchematic(index);
-
-		String name = schem.name;
-		String val = "Cost: " + schem.value;
-		
-		this.fontRendererObj.drawString(name, this.xSize / 2 - this.fontRendererObj.getStringWidth(name) / 2, 21, 4210752);
-		this.fontRendererObj.drawString(val, this.xSize / 2 - this.fontRendererObj.getStringWidth(val) / 2, 34, 4210752);
-		this.fontRendererObj.drawString(I18n.format("container.inventory"), 8, this.ySize - 96 + 2, 4210752);
-	}
-
-    protected void mouseClicked(int x, int y, int i) {
-    	super.mouseClicked(x, y, i);
-		
-		if(TileEntityMachineBuilder.offers.size() == 0)
-			return;
-		
-    	if(guiLeft + 25 <= x && guiLeft + 25 + 18 > x && guiTop + 17 < y && guiTop + 17 + 18 >= y) {
-
-			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
-			index--;
-    	}
-		
-    	if(guiLeft + 133 <= x && guiLeft + 133 + 18 > x && guiTop + 17 < y && guiTop + 17 + 18 >= y) {
-
-			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
-			index++;
-    	}
-		
-    	if(guiLeft + 61 <= x && guiLeft + 61 + 18 > x && guiTop + 52 < y && guiTop + 52 + 18 >= y) {
-
-			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
-    		PacketDispatcher.wrapper.sendToServer(new AuxButtonPacket(diFurnace.xCoord, diFurnace.yCoord, diFurnace.zCoord, getIndex(index), 0));
-    	}
-		
-    	if(guiLeft + 97 <= x && guiLeft + 97 + 18 > x && guiTop + 52 < y && guiTop + 52 + 18 >= y) {
-
-			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
-    		PacketDispatcher.wrapper.sendToServer(new AuxButtonPacket(diFurnace.xCoord, diFurnace.yCoord, diFurnace.zCoord, getIndex(index), 1));
-    	}
-		
-    	/*if(guiLeft + 133 <= x && guiLeft + 133 + 18 > x && guiTop + 52 < y && guiTop + 52 + 18 >= y) {
-
-			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
-    		PacketDispatcher.wrapper.sendToServer(new AuxButtonPacket(diFurnace.xCoord, diFurnace.yCoord, diFurnace.zCoord, getIndex(index), 2));
-    	}*/
-    }
-	
-	@Override
-	protected void drawGuiContainerBackgroundLayer(float p_146976_1_, int p_146976_2_, int p_146976_3_) {
-		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-		Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
-		drawTexturedModalRect(guiLeft, guiTop, 0, 0, xSize, ySize);
-		
-		if(TileEntityMachineBuilder.offers.size() == 0)
-			return;
-		
-		int cost = getSchematic(index).value;
-		ItemStack slot = diFurnace.slots[0];
-		
-		if(slot != null && slot.getItem() == ModItems.wrench && slot.stackSize >= cost) {
-			drawTexturedModalRect(guiLeft + 97, guiTop + 52, 176, 0, 18, 18);
-		}
-	}
-	
-	private int getIndex(int i) {
-		
-		i = i % TileEntityMachineBuilder.offers.size();
-		
-		if(i < 0) {
-			i = TileEntityMachineBuilder.offers.size() + i;
-		}
-		
-		return i;
-	}
-	
-	private SchemOffer getSchematic(int i) {
-		
-		i = getIndex(i);
-		return TileEntityMachineBuilder.offers.get(i);
-	}
+    private static final String[] PAGES={"Overview","Build","Materials","Queue"};
+    private final TileEntityMachineBuilder depot;private int page,selected,scroll,rotation;private boolean mirror;private GuiTextField fx,fy,fz;private String message="";private Schematic selectedSchematic;private final List<String> materialLines=new ArrayList<String>();
+    public GUIMachineBuilder(InventoryPlayer player,TileEntityMachineBuilder depot){super(new ContainerMachineBuilder(player,depot));this.depot=depot;xSize=256;ySize=220;}
+    @Override public void initGui(){super.initGui();Keyboard.enableRepeatEvents(true);fx=field(82,depot.xCoord+2);fy=field(112,depot.yCoord);fz=field(142,depot.zCoord+2);request();}
+    private GuiTextField field(int y,int value){GuiTextField f=new GuiTextField(fontRendererObj,guiLeft+176,guiTop+y,60,16);f.setText(String.valueOf(value));return f;}
+    private void request(){PacketDispatcher.wrapper.sendToServer(new BuilderDepotRequestPacket(mc.thePlayer.dimension,depot.xCoord,depot.yCoord,depot.zCoord));}
+    @Override public void onGuiClosed(){Keyboard.enableRepeatEvents(false);depot.preview=null;super.onGuiClosed();}
+    @Override public void updateScreen(){super.updateScreen();fx.updateCursorCounter();fy.updateCursorCounter();fz.updateCursorCounter();if(mc.thePlayer.ticksExisted%20==0)request();}
+    @Override protected void drawGuiContainerBackgroundLayer(float partial,int mouseX,int mouseY){GL11.glDisable(GL11.GL_LIGHTING);drawRect(guiLeft,guiTop,guiLeft+xSize,guiTop+ySize,0xff18222d);drawRect(guiLeft+6,guiTop+28,guiLeft+xSize-6,guiTop+ySize-6,0xff263746);for(int i=0;i<4;i++)drawRect(guiLeft+6+i*61,guiTop+7,guiLeft+64+i*61,guiTop+25,i==page?0xff4f88a8:0xff334b5c);if(page==2){drawRect(guiLeft+6,guiTop+70,guiLeft+170,guiTop+218,0xff8b8b8b);} }
+    @Override protected void drawGuiContainerForegroundLayer(int mouseX,int mouseY){fontRendererObj.drawString("Builder Depot",8,34,0xffffff);for(int i=0;i<4;i++)fontRendererObj.drawString(PAGES[i],10+i*61,12,0xffffff);BuilderDepotSnapshotPacket s=snapshot();if(page==0)overview(s);else if(page==1)build(mouseX,mouseY);else if(page==2)materials();else queue(s);if(!message.isEmpty())fontRendererObj.drawSplitString(message,8,202,238,message.startsWith("OK")?0x66ff66:0xff7777);}
+    private BuilderDepotSnapshotPacket snapshot(){BuilderDepotSnapshotPacket s=BuilderDepotSnapshotPacket.current;return s!=null&&s.x==depot.xCoord&&s.y==depot.yCoord&&s.z==depot.zCoord?s:null;}
+    private void overview(BuilderDepotSnapshotPacket s){if(s==null){line("Loading server data...",52);return;}line("Builder: "+(s.builder.isEmpty()?"Not assigned":shortId(s.builder)),52);line("Faction: "+empty(s.faction),64);line("City: "+empty(s.city),76);line("State: "+s.state,88);line("Schematic: "+empty(s.schematic),100);line("Progress: "+s.progress+" / "+s.total,112);drawRect(8,126,238,137,0xff111111);int fill=s.total<=0?0:(int)(228L*s.progress/s.total);drawRect(9,127,9+fill,136,0xff55aa66);if(s.blocked)line("Blocked: "+s.bx+", "+s.by+", "+s.bz,143);button(8,164,56,18,"Recall",true);button(68,164,48,18,"Pause",!"PAUSED".equals(s.state)&&s.total>0);button(120,164,48,18,"Resume","PAUSED".equals(s.state));button(172,164,66,18,"Cancel Job",s.total>0);}
+    private void build(int mx,int my){List<Schematic> list=MainRegistry.schems;line("Schematic library",48);int visible=5;for(int i=0;i<visible&&i+scroll<list.size();i++){Schematic s=list.get(i+scroll);drawRect(8,58+i*18,156,74+i*18,(i+scroll)==selected?0xff4f88a8:0xff314858);line(s.name,62+i*18);}button(8,150,70,18,"List up",scroll>0);button(82,150,70,18,"List down",scroll+visible<list.size());selectedSchematic=selected>=0&&selected<list.size()?list.get(selected):selectedSchematic;if(selectedSchematic!=null){line(selectedSchematic.width+" x "+selectedSchematic.height+" x "+selectedSchematic.length,166,48);}
+        line("X",166,85);line("Y",166,115);line("Z",166,145);fx.drawTextBox();fy.drawTextBox();fz.drawTextBox();line("Rotation: "+(rotation*90)+"°",166,166);button(166,176,34,18,"Rotate",true);button(204,176,34,18,mirror?"Mirror ✓":"Mirror",true);button(8,194,48,18,"Preview",selectedSchematic!=null);button(60,194,48,18,"Clear",depot.preview!=null);button(112,194,52,18,"Validate",selectedSchematic!=null);button(168,194,70,18,"Start",selectedSchematic!=null);button(8,172,144,18,SchematicaCompat.installed()?"Use Active Schematica":"Schematica unavailable",SchematicaCompat.installed());if(!SchematicaCompat.installed()&&inside(mx,my,8,172,144,18))drawHoveringText(Collections.singletonList("Install optional Schematica or Schematica Plus to import its active schematic."),mx-guiLeft,my-guiTop,fontRendererObj);}
+    private void materials(){line("Depot materials (CONTAINER permission)",48);line("Player inventory",128);int y=52;for(String value:materialLines){line(value,174,y);if((y+=11)>196)break;}if(materialLines.isEmpty())line("Select a schematic to snapshot requirements.",174,64);}
+    private void queue(BuilderDepotSnapshotPacket s){if(s==null){line("Loading server data...",52);return;}line("Active: "+empty(s.schematic)+"  "+s.state+"  "+s.progress+"/"+s.total,52);int y=72;for(int i=0;i<s.queue.size();i++){line((i+1)+". "+s.queue.get(i),8,y);button(174,y-5,18,16,"↑",i>0);button(194,y-5,18,16,"↓",i+1<s.queue.size());button(214,y-5,24,16,"X",true);y+=22;}}
+    private void cacheMaterials(){materialLines.clear();if(selectedSchematic==null)return;Map<String,Integer> totals=new LinkedHashMap<String,Integer>();for(int x=0;x<selectedSchematic.width;x++)for(int y=0;y<selectedSchematic.height;y++)for(int z=0;z<selectedSchematic.length;z++){ItemStack stack=BuilderMaterialResolver.resolve(selectedSchematic.resolveBlock(x,y,z),selectedSchematic.getMetadata(x,y,z));String key=stack==null?"Unsupported":stack.getDisplayName();totals.put(key,(totals.containsKey(key)?totals.get(key):0)+1);}for(Map.Entry<String,Integer> e:totals.entrySet())materialLines.add(("Unsupported".equals(e.getKey())?"§c":"")+e.getKey()+": required "+e.getValue());}
+    @Override protected void mouseClicked(int mx,int my,int button){if(page==2){super.mouseClicked(mx,my,button);return;}for(int i=0;i<4;i++)if(inside(mx,my,6+i*61,7,58,18)){page=i;if(page==2)cacheMaterials();return;}if(page==0){if(inside(mx,my,8,164,56,18))action(BuilderActionPacket.RECALL);else if(inside(mx,my,68,164,48,18))action(BuilderActionPacket.PAUSE);else if(inside(mx,my,120,164,48,18))action(BuilderActionPacket.RESUME);else if(inside(mx,my,172,164,66,18))action(BuilderActionPacket.CANCEL);}else if(page==1){fx.mouseClicked(mx,my,button);fy.mouseClicked(mx,my,button);fz.mouseClicked(mx,my,button);for(int i=0;i<5;i++)if(inside(mx,my,8,58+i*18,148,16)&&i+scroll<MainRegistry.schems.size()){selected=i+scroll;selectedSchematic=MainRegistry.schems.get(selected);cacheMaterials();return;}if(inside(mx,my,8,150,70,18)&&scroll>0)scroll--;else if(inside(mx,my,82,150,70,18)&&scroll+5<MainRegistry.schems.size())scroll++;else if(inside(mx,my,8,172,144,18)&&SchematicaCompat.installed()){selectedSchematic=SchematicaCompat.importActive();selected=-1;message=selectedSchematic==null?"No active schematic could be imported.":"OK: imported active schematic for preview.";cacheMaterials();}else if(inside(mx,my,166,176,34,18))rotation=(rotation+1)&3;else if(inside(mx,my,204,176,34,18))mirror=!mirror;else if(inside(mx,my,8,194,48,18))preview();else if(inside(mx,my,60,194,48,18)){depot.preview=null;message="";}else if(inside(mx,my,112,194,52,18))message=validateClient();else if(inside(mx,my,168,194,70,18))start();}else if(page==3){BuilderDepotSnapshotPacket s=snapshot();if(s!=null)for(int i=0;i<s.queue.size();i++){int y=67+i*22;if(inside(mx,my,174,y,18,16))indexed(BuilderActionPacket.UP,i);else if(inside(mx,my,194,y,18,16))indexed(BuilderActionPacket.DOWN,i);else if(inside(mx,my,214,y,24,16))indexed(BuilderActionPacket.REMOVE,i);}}}
+    private void preview(){String v=validateClient();if(!v.startsWith("OK")){message=v;return;}depot.preview=selectedSchematic;depot.previewX=num(fx);depot.previewY=num(fy);depot.previewZ=num(fz);depot.previewRotation=rotation;depot.previewMirrored=mirror;message="OK: client preview enabled.";}
+    private String validateClient(){if(selectedSchematic==null)return "Select a schematic.";try{num(fx);num(fy);num(fz);}catch(Exception e){return "X, Y, and Z must be whole numbers.";}return "OK: dimensions and placement values are valid; Start performs authoritative territory validation.";}
+    private void start(){String v=validateClient();if(!v.startsWith("OK")){message=v;return;}if(selected<0)PacketDispatcher.wrapper.sendToServer(new BuilderSchematicPacket(depot,selectedSchematic,num(fx),num(fy),num(fz),rotation,mirror));else{BuilderActionPacket p=new BuilderActionPacket(depot,BuilderActionPacket.START);p.a=num(fx);p.b=num(fy);p.c=num(fz);p.rotation=rotation;p.mirror=mirror;p.schematic=selectedSchematic.name;PacketDispatcher.wrapper.sendToServer(p);}message="OK: construction request sent.";}
+    private int num(GuiTextField f){return Integer.parseInt(f.getText());}private void action(int a){PacketDispatcher.wrapper.sendToServer(new BuilderActionPacket(depot,a));}private void indexed(int a,int i){BuilderActionPacket p=new BuilderActionPacket(depot,a);p.a=i;PacketDispatcher.wrapper.sendToServer(p);}private void button(int x,int y,int w,int h,String text,boolean enabled){drawRect(x,y,x+w,y+h,enabled?0xff4f88a8:0xff33383c);fontRendererObj.drawString(text,x+3,y+5,enabled?0xffffff:0xff777777);}private boolean inside(int mx,int my,int x,int y,int w,int h){return mx>=guiLeft+x&&mx<guiLeft+x+w&&my>=guiTop+y&&my<guiTop+y+h;}private void line(String s,int y){line(s,8,y);}private void line(String s,int x,int y){fontRendererObj.drawString(s,x,y,0xffffff);}private String empty(String s){return s==null||s.isEmpty()?"—":s;}private String shortId(String s){return s.length()>8?s.substring(0,8):s;}
+    @Override protected void keyTyped(char c,int key){if(fx.textboxKeyTyped(c,key)||fy.textboxKeyTyped(c,key)||fz.textboxKeyTyped(c,key))return;super.keyTyped(c,key);}
 }

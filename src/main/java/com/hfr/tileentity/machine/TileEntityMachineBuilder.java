@@ -30,6 +30,7 @@ public class TileEntityMachineBuilder extends TileEntityMachineBase {
 	public Schematic preview;
 	public int ox = 1;
 	public int oz = 1;
+	public int previewX, previewY, previewZ;
 	public int lock = -1;
 	public int previewRotation;
 	public boolean previewMirrored;
@@ -57,6 +58,8 @@ public class TileEntityMachineBuilder extends TileEntityMachineBase {
 	public UUID getFactionId(){return factionId;}
 	public UUID getAssignedBuilderId(){return assignedBuilderId;}
 	public UUID getActiveJobId(){return activeJobId;}
+	public String getCityId(){return cityId;}
+	public List<UUID> getQueuedJobs(){return java.util.Collections.unmodifiableList(queuedJobs);}
 	public boolean hasAssignedBuilder(){return assignedBuilderId!=null;}
 	public EntityFactionBuilder getLoadedBuilder(){
 		if(worldObj==null||assignedBuilderId==null)return null;
@@ -79,6 +82,9 @@ public class TileEntityMachineBuilder extends TileEntityMachineBase {
 	}
 	public void setActiveJob(UUID id){activeJobId=id;markDirty();}
 	public void queueJob(UUID id){if(id!=null&&!queuedJobs.contains(id)){queuedJobs.add(id);markDirty();}}
+	public boolean removeQueuedJob(int index){if(index<0||index>=queuedJobs.size())return false;queuedJobs.remove(index);markDirty();return true;}
+	public boolean moveQueuedJob(int index,int direction){int target=index+direction;if(index<0||target<0||index>=queuedJobs.size()||target>=queuedJobs.size())return false;java.util.Collections.swap(queuedJobs,index,target);markDirty();return true;}
+	public UUID advanceQueue(){activeJobId=queuedJobs.isEmpty()?null:queuedJobs.remove(0);markDirty();return activeJobId;}
 	@Override public void readFromNBT(NBTTagCompound n){super.readFromNBT(n);previewRotation=n.getByte("PreviewRotation")&3;previewMirrored=n.getBoolean("PreviewMirrored");factionId=uuid(n,"FactionUUID");assignedBuilderId=uuid(n,"AssignedBuilderUUID");activeJobId=uuid(n,"ActiveJobUUID");cityId=n.getString("BuilderCityId");queuedJobs.clear();NBTTagList q=n.getTagList("QueuedBuilderJobs",8);for(int i=0;i<q.tagCount();i++)try{queuedJobs.add(UUID.fromString(q.getStringTagAt(i)));}catch(Exception ignored){}}
 	@Override public void writeToNBT(NBTTagCompound n){super.writeToNBT(n);n.setByte("PreviewRotation",(byte)(previewRotation&3));n.setBoolean("PreviewMirrored",previewMirrored);put(n,"FactionUUID",factionId);put(n,"AssignedBuilderUUID",assignedBuilderId);put(n,"ActiveJobUUID",activeJobId);n.setString("BuilderCityId",cityId);NBTTagList q=new NBTTagList();for(UUID id:queuedJobs)q.appendTag(new net.minecraft.nbt.NBTTagString(id.toString()));n.setTag("QueuedBuilderJobs",q);}
 	private static void put(NBTTagCompound n,String k,UUID id){if(id!=null)n.setString(k,id.toString());}
@@ -91,29 +97,7 @@ public class TileEntityMachineBuilder extends TileEntityMachineBase {
 
 	@Override
 	public void updateEntity() {
-		
-		if(!worldObj.isRemote) {
-			/*worldObj.setBlockToAir(xCoord, yCoord, zCoord);
-			
-			if(!MainRegistry.schems.isEmpty())
-				SchematicPronter.pront(worldObj, xCoord, yCoord, zCoord, MainRegistry.schems.get(worldObj.rand.nextInt(MainRegistry.schems.size())));*/
-			
-			if(preview != null) {
-				if(ox > 1)
-					ox = 1;
-				if(oz > 1)
-					oz = 1;
-				if(ox < -preview.width)
-					ox = -preview.width;
-				if(oz < -preview.length)
-					oz = -preview.length;
-			} else {
-				ox = 1;
-				oz = 1;
-			}
-			
-			PacketDispatcher.wrapper.sendToAllAround(new BuilderPacket(xCoord, yCoord, zCoord, ox, oz), new TargetPoint(worldObj.provider.dimensionId, xCoord, yCoord, zCoord, 150));
-		}
+		// Builder previews are now local GUI state; persistent jobs drive all server work.
 	}
 	
 	public boolean doesIntersect() {

@@ -17,21 +17,20 @@ public class ContainerMachineBuilder extends Container {
 
 		diFurnace = tedf;
 
-		this.addSlotToContainer(new Slot(tedf, 0, 152, 62));
 		for(int i=0;i<3;i++) for(int j=0;j<9;j++)
-			this.addSlotToContainer(new Slot(tedf, 1+j+i*9, 8+j*18, 8+i*18));
+			this.addSlotToContainer(new Slot(tedf, 1+j+i*9, 8+j*18, 76+i*18));
 		
 		for(int i = 0; i < 3; i++)
 		{
 			for(int j = 0; j < 9; j++)
 			{
-				this.addSlotToContainer(new Slot(invPlayer, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
+				this.addSlotToContainer(new Slot(invPlayer, j + i * 9 + 9, 8 + j*18, 138+i*18));
 			}
 		}
 		
 		for(int i = 0; i < 9; i++)
 		{
-			this.addSlotToContainer(new Slot(invPlayer, i, 8 + i * 18, 142));
+			this.addSlotToContainer(new Slot(invPlayer, i, 8 + i*18, 196));
 		}
 	}
 
@@ -49,12 +48,12 @@ public class ContainerMachineBuilder extends Container {
 			ItemStack var5 = var4.getStack();
 			var3 = var5.copy();
 
-			if (par2 < 28) {
-				if (!this.mergeItemStack(var5, 28, this.inventorySlots.size(), true)) {
+			if (par2 < 27) {
+				if (!this.mergeItemStack(var5, 27, this.inventorySlots.size(), true)) {
 					return null;
 				}
 			} else {
-				if (!this.mergeItemStack(var5, 1, 28, false))
+				if (!this.mergeItemStack(var5, 0, 27, false))
 					return null;
 			}
 

@@ -6,6 +6,7 @@ import com.hfr.packet.client.*;
 import com.hfr.packet.effect.*;
 import com.hfr.packet.tile.*;
 import com.hfr.packet.wallart.*;
+import com.hfr.packet.builder.*;
 
 import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -96,6 +97,10 @@ public class PacketDispatcher {
 		wrapper.registerMessage(XFMenuDataPacket.Handler.class, XFMenuDataPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(StoneDropSnapshotPacket.Handler.class, StoneDropSnapshotPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(MachineDisplaySnapshotPacket.Handler.class, MachineDisplaySnapshotPacket.class, i++, Side.CLIENT);
+		wrapper.registerMessage(BuilderDepotRequestPacket.Handler.class, BuilderDepotRequestPacket.class, i++, Side.SERVER);
+		wrapper.registerMessage(BuilderDepotSnapshotPacket.Handler.class, BuilderDepotSnapshotPacket.class, i++, Side.CLIENT);
+		wrapper.registerMessage(BuilderActionPacket.Handler.class, BuilderActionPacket.class, i++, Side.SERVER);
+		wrapper.registerMessage(BuilderSchematicPacket.Handler.class, BuilderSchematicPacket.class, i++, Side.SERVER);
 
 	}
 	
