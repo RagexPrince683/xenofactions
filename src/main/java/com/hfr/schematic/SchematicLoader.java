@@ -1,106 +1,49 @@
 package com.hfr.schematic;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import cpw.mods.fml.common.registry.FMLControlledNamespacedRegistry;
+import com.hfr.config.XFConfig;
 import cpw.mods.fml.common.registry.GameData;
 import net.minecraft.block.Block;
+import net.minecraft.init.Blocks;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 
-public class SchematicLoader {
-	
-	private static final FMLControlledNamespacedRegistry<Block> BLOCK_REGISTRY = GameData.getBlockRegistry();
-	
-	public static Schematic readFromFile(File file) {
-		
-		NBTTagCompound nbt;
-		
-		try {
-			nbt = CompressedStreamTools.readCompressed(new FileInputStream(file));
-			Schematic schem = readFromNBT(nbt);
-			schem.name = file.getName().replace(".schematic", "").split("_")[0];
-			return schem;
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		return null;
-	}
-	
-	public static Schematic readFromNBT(NBTTagCompound tagCompound) {
-
-        byte localBlocks[] = tagCompound.getByteArray("Blocks");
-        byte localMetadata[] = tagCompound.getByteArray("Data");
-
-        boolean extra = false;
-        byte extraBlocks[] = null;
-        byte extraBlocksNibble[] = null;
-        if (tagCompound.hasKey("AddBlocks")) {
-            extra = true;
-            extraBlocksNibble = tagCompound.getByteArray("AddBlocks");
-            extraBlocks = new byte[extraBlocksNibble.length * 2];
-            for (int i = 0; i < extraBlocksNibble.length; i++) {
-                extraBlocks[i * 2 + 0] = (byte) ((extraBlocksNibble[i] >> 4) & 0xF);
-                extraBlocks[i * 2 + 1] = (byte) (extraBlocksNibble[i] & 0xF);
-            }
-        } else if (tagCompound.hasKey("Add")) {
-            extra = true;
-            extraBlocks = tagCompound.getByteArray("Add");
-        }
-
-        short width = tagCompound.getShort("Width");
-        short length = tagCompound.getShort("Length");
-        short height = tagCompound.getShort("Height");
-
-        Short id = null;
-        
-        Map<Short, Short> oldToNew = new HashMap<Short, Short>();
-        
-        if (tagCompound.hasKey("SchematicaMapping")) {
-            NBTTagCompound mapping = tagCompound.getCompoundTag("SchematicaMapping");
-            Set<String> names = mapping.func_150296_c();
-            for (String name : names) {
-                oldToNew.put(mapping.getShort(name), (short) BLOCK_REGISTRY.getId(name));
-            }
-        }
-
-        Schematic schematic = new Schematic(width, height, length);
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                for (int z = 0; z < length; z++) {
-                    int index = x + (y * length + z) * width;
-                    int blockID = (localBlocks[index] & 0xFF) | (extra ? ((extraBlocks[index] & 0xFF) << 8) : 0);
-                    int meta = localMetadata[index] & 0xFF;
-
-                    if ((id = oldToNew.get((short) blockID)) != null) {
-                        blockID = id;
-                    }
-
-                    schematic.setBlock(x, y, z, BLOCK_REGISTRY.getObjectById(blockID), meta);
-                }
-            }
-        }
-
-        /*NBTTagList tileEntitiesList = tagCompound.getTagList(Names.NBT.TILE_ENTITIES, Constants.NBT.TAG_COMPOUND);
-
-        for (int i = 0; i < tileEntitiesList.tagCount(); i++) {
-            try {
-                TileEntity tileEntity = NBTHelper.readTileEntityFromCompound(tileEntitiesList.getCompoundTagAt(i));
-                if (tileEntity != null) {
-                    schematic.setTileEntity(tileEntity.xCoord, tileEntity.yCoord, tileEntity.zCoord, tileEntity);
-                }
-            } catch (Exception e) {
-                Reference.logger.error("TileEntity failed to load properly!", e);
-            }
-        }*/
-
-        return schematic;
+/** Strict native MCEdit/Schematica .schematic reader. */
+public final class SchematicLoader {
+    private SchematicLoader(){}
+    public static Schematic readFromFile(File file){
+        if(file==null||!file.isFile()||file.length()>XFConfig.builderMaxUploadBytes)return null;
+        try{BufferedInputStream in=new BufferedInputStream(new FileInputStream(file));try{Schematic s=readFromNBT(CompressedStreamTools.readCompressed(in));s.name=strip(file.getName());return s;}finally{in.close();}}
+        catch(Exception e){System.err.println("Rejected schematic "+file+": "+e.getMessage());return null;}
     }
-
+    public static Schematic readFromNBT(NBTTagCompound n) throws IOException {
+        int w=n.getShort("Width")&0xffff,h=n.getShort("Height")&0xffff,l=n.getShort("Length")&0xffff;
+        validateDimensions(w,h,l); int count=checkedCount(w,h,l);
+        byte[] ids=n.getByteArray("Blocks"), data=n.getByteArray("Data");
+        if(ids.length!=count||data.length!=count)throw new IOException("Blocks/Data length does not match dimensions");
+        byte[] add=null; boolean packed=false;
+        if(n.hasKey("AddBlocks")){add=n.getByteArray("AddBlocks");packed=true;if(add.length!=(count+1)/2)throw new IOException("Invalid AddBlocks length");}
+        else if(n.hasKey("Add")){add=n.getByteArray("Add");if(add.length!=count)throw new IOException("Invalid Add length");}
+        Map<Integer,String> mapping=new HashMap<Integer,String>();
+        if(n.hasKey("SchematicaMapping")){NBTTagCompound m=n.getCompoundTag("SchematicaMapping");Set<String> keys=m.func_150296_c();for(String key:keys)mapping.put((int)m.getShort(key)&0xffff,key);}
+        Schematic out=new Schematic(w,h,l);
+        for(int y=0;y<h;y++)for(int z=0;z<l;z++)for(int x=0;x<w;x++){
+            int i=x+(y*l+z)*w, high=add==null?0:(packed?((add[i>>1]>>((i&1)*4))&15):(add[i]&255));
+            int id=(ids[i]&255)|(high<<8); String name=mapping.get(id);
+            if(name==null){Block b=GameData.getBlockRegistry().getObjectById(id);name=b==null?null:GameData.getBlockRegistry().getNameForObject(b);}
+            if(name==null||!out.setBlockName(x,y,z,name,data[i]&15))throw new IOException("Unknown block "+id+" at "+x+","+y+","+z);
+            if(out.resolveBlock(x,y,z)==Blocks.command_block)throw new IOException("Protected command block at "+x+","+y+","+z);
+        }
+        return out;
+    }
+    public static void validateDimensions(int w,int h,int l) throws IOException{if(w<=0||h<=0||l<=0||w>XFConfig.builderMaxSchematicWidth||h>XFConfig.builderMaxSchematicHeight||l>XFConfig.builderMaxSchematicLength)throw new IOException("Schematic dimensions exceed configured limits");checkedCount(w,h,l);}
+    private static int checkedCount(int w,int h,int l)throws IOException{long count=(long)w*h*l;if(count>XFConfig.builderMaxSchematicBlocks||count>Integer.MAX_VALUE)throw new IOException("Schematic block count exceeds configured limit");return(int)count;}
+    private static String strip(String n){int dot=n.toLowerCase().lastIndexOf(".schematic");return dot<0?n:n.substring(0,dot);}
 }

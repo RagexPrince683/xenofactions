@@ -32,7 +32,8 @@ public class EntityFactionBuilder extends EntityLiving {
 		int total=s.width*s.height*s.length, scans=0;
 		while(job.blockIndex<total&&scans++<XFConfig.builderBlockScanBudget){
 			int i=job.blockIndex,z=i%s.length,y=(i/s.length)%s.height,x=i/s.length/s.height;
-			int wx=job.originX+x,wy=job.originY+y,wz=job.originZ+z; Block wanted=GameData.getBlockRegistry().getObjectById(s.blocks[x][y][z]); int meta=s.metadata[x][y][z]&15;
+			int[] transformed=com.hfr.schematic.SchematicTransform.position(s,x,y,z,job.rotation,job.mirrored);
+			int wx=job.originX+transformed[0],wy=job.originY+transformed[1],wz=job.originZ+transformed[2]; Block wanted=s.resolveBlock(x,y,z); int meta=com.hfr.schematic.SchematicTransform.metadata(wanted,s.getMetadata(x,y,z),job.rotation,job.mirrored);
 			if(!worldObj.blockExists(wx,wy,wz)){pause(job,BuilderState.WAITING_FOR_CHUNK);return;}
 			if(wanted==null){pause(job,BuilderState.PAUSED);return;}
 			Block existing=worldObj.getBlock(wx,wy,wz); if(existing==wanted&&worldObj.getBlockMetadata(wx,wy,wz)==meta){job.blockIndex++;continue;}
