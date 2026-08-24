@@ -18,6 +18,8 @@ public final class BuilderDepotService {
     public static String accept(EntityPlayerMP p,TileEntityMachineBuilder d,Schematic schematic,int x,int y,int z,int rotation,boolean mirror){
         if(!mayBuild(p,d))return "You do not have BUILD permission for this Depot.";if(schematic==null)return "No schematic selected.";
         try{SchematicLoader.validateDimensions(schematic.width,schematic.height,schematic.length);}catch(IOException e){return e.getMessage();}
+		if(rotation<0||rotation>3)return "gui.builder.error.rotation";if(y<0||y+(long)schematic.height>p.worldObj.getHeight())return "gui.builder.error.world_height";
+		BuilderMaterialRequirements requirements=BuilderMaterialRequirements.calculate(schematic);if(!requirements.unsupported.isEmpty()){BuilderMaterialRequirements.Unsupported u=requirements.unsupported.get(0);return "gui.builder.error.unsupported:"+u.block+":"+u.metadata+":"+u.x+","+u.y+","+u.z;}
         UUID faction=d.getFactionId();int width=SchematicTransform.width(schematic,rotation),length=SchematicTransform.length(schematic,rotation);
         for(int dx=0;dx<width;dx++)for(int dz=0;dz<length;dz++)if(!BuilderTerritory.mayChange(p.worldObj,x+dx,z+dz,faction,false))return "Invalid territory at "+(x+dx)+", "+y+", "+(z+dz);
         SchematicStoreData store=SchematicStoreData.get(p.worldObj);BuilderJobData jobs=BuilderJobData.get(p.worldObj);if(store==null||jobs==null)return "Builder persistence is unavailable.";

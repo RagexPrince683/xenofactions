@@ -103,6 +103,9 @@ public class PacketDispatcher {
 		wrapper.registerMessage(BuilderSchematicPacket.Handler.class, BuilderSchematicPacket.class, i++, Side.SERVER);
 		wrapper.registerMessage(BuilderLibraryRequestPacket.Handler.class, BuilderLibraryRequestPacket.class, i++, Side.SERVER);
 		wrapper.registerMessage(BuilderLibraryPacket.Handler.class, BuilderLibraryPacket.class, i++, Side.CLIENT);
+		wrapper.registerMessage(BuilderPlanPacket.Handler.class, BuilderPlanPacket.class, i++, Side.SERVER);
+		wrapper.registerMessage(BuilderSchematicDataRequestPacket.Handler.class, BuilderSchematicDataRequestPacket.class, i++, Side.SERVER);
+		wrapper.registerMessage(BuilderSchematicDataChunkPacket.Handler.class, BuilderSchematicDataChunkPacket.class, i++, Side.CLIENT);
 
 	}
 	

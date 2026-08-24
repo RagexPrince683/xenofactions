@@ -25,7 +25,7 @@ public class RenderBuilder extends TileEntitySpecialRenderer {
         
         bindTexture(TextureMap.locationBlocksTexture);
         if(builder.preview != null)
-			SchematicRenderer.render(builder.preview, 1F, 0, 0, 0, 64, builder.previewRotation, builder.previewMirrored);
+			SchematicRenderer.render(builder.preview, 1F, 0, 0, 0, 0, builder.previewRotation, builder.previewMirrored);
         
         GL11.glPopMatrix();
 	}
