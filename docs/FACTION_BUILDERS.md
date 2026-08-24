@@ -37,3 +37,16 @@ Builders walk normally rather than teleporting and perform at most one world mod
 When a server accepts a job, it normalizes and hashes the schematic into the server-owned `WorldSavedData` schematic store. `BuilderJob.schematicId` references that stable hash, so imported client schematics remain resolvable after restart and identical normalized schematics are deduplicated. Jobs never retain Schematica objects or arbitrary schematic entities, and the existing safe tile-data policy remains in force.
 
 The old `SchematicPronter` methods remain only as legacy code for explicit debug/admin callers. Normal Builder Depot gameplay never invokes instant construction or deletion.
+
+## Builder screens
+
+The Builder user interface is intentionally split by responsibility:
+
+- **Builder NPC GUI = worker status and control.** Right-click the worker to inspect its friendly name, health, faction/city assignment, Depot coordinates, current state and job, carried materials, and any blocked coordinate. This screen only provides recall, pause, and resume controls. `Open Depot` is available only while the player is within the Depot's normal interaction range.
+- **Builder Depot GUI = construction planning, materials, and queue.** Right-click the Depot to use Overview, Build, Materials, and Queue. Inventory slots exist only on Materials; the other pages are planning/status views.
+
+### Selecting and placing a schematic
+
+On Build, choose **Select Schematic** to open the dedicated searchable library. Select a native Xenofactions `.schematic`, or use **Import Active** when the optional Schematica/Schematica Plus compatibility layer has an active schematic. The selection screen reports dimensions and a material summary. **Done** returns to the same Depot session without discarding its container.
+
+The Build page presents the intended order directly: select a schematic, set X/Y/Z, preview, validate, then start construction. Rotation, mirroring, preview clearing, validation state, and missing-material information remain visible before the job is submitted to the existing server-authoritative Builder workflow.

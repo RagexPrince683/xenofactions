@@ -1,3 +1,9 @@
+# Builder GUI redesign
+
+- Split Builder worker status/control from Builder Depot planning, materials, and queue management.
+- Added page-aware inventory slots, safe two-way Depot shift-click merging, real GUI buttons, searchable schematic selection, localized state text, and coordinate-qualified client snapshots.
+- Documented the new Builder screens and selection workflow.
+
 # Pull request: add the Builder city start flow
 
 - Granted one Builder Contract to a founder only after successful XF city creation, with a safe full-inventory drop fallback.
