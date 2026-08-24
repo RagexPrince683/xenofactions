@@ -280,3 +280,6 @@ The cooldown JSON contains `uuids` and normalized `nameFallbacks`; entries conta
 ## XENOFACTIONS_18_EARTH_WORLD
 
 Phase 1's template-backed Earth type is controlled by `enableEarthWorldType`, `earthWorldTypeName` (canonical value `xf_earth`), `earthRequireProfile`, `earthMissingChunkPolicy` (`FAIL` or `VOID`), `earthBoundaryMode` (`OFF`, `PROFILE`, or `CONFIG`), `earthAllowProfileMinecraftVersion`, `earthLogFallbackChunks`, and `earthBoundarySafetyMargin`. `PROFILE` derives the dimension-0 border from the validated save profile; `CONFIG` preserves the legacy administrator border coordinates; `OFF` does not activate a profile border. See [XFEARTH_INSTALLATION.md](XFEARTH_INSTALLATION.md).
+# Builder schematic limits
+
+Builder schematic processing is bounded by `builderMaxSchematicBlocks`, `builderMaxSchematicWidth`, `builderMaxSchematicHeight`, `builderMaxSchematicLength`, and `builderMaxUploadBytes` in `XENOFACTIONS_19_BUILDERS`. Defaults are 262144 blocks, 256×128×256 dimensions, and 8 MiB encoded upload data. Lower these values for smaller servers; existing persisted jobs are not replaced.

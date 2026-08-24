@@ -47,6 +47,11 @@ public final class XFConfig {
 	public static int builderWorkIntervalTicks = 10;
 	public static int builderBlockScanBudget = 64;
 	public static boolean builderAllowWilderness = false;
+	public static int builderMaxSchematicBlocks = 262144;
+	public static int builderMaxSchematicWidth = 256;
+	public static int builderMaxSchematicHeight = 128;
+	public static int builderMaxSchematicLength = 256;
+	public static int builderMaxUploadBytes = 8 * 1024 * 1024;
 	public static boolean enableEarthWorldType = true;
 	public static String earthWorldTypeName = "earthmap";
 	public static String earthDefaultPackId = "xf-earth-16k-clean";
@@ -190,6 +195,11 @@ public final class XFConfig {
 		builderWorkIntervalTicks = integer(config, CAT_BUILDERS, "builderWorkIntervalTicks", 10, 1, 1200, "Ticks between Builder work cycles.");
 		builderBlockScanBudget = integer(config, CAT_BUILDERS, "builderBlockScanBudget", 64, 1, 4096, "Maximum schematic entries examined per work cycle.");
 		builderAllowWilderness = bool(config, CAT_BUILDERS, "builderAllowWilderness", false, "Allow Builder modifications outside claimed territory.");
+		builderMaxSchematicBlocks = integer(config,CAT_BUILDERS,"builderMaxSchematicBlocks",262144,1,2000000,"Maximum normalized blocks accepted in one Builder schematic.");
+		builderMaxSchematicWidth = integer(config,CAT_BUILDERS,"builderMaxSchematicWidth",256,1,1024,"Maximum Builder schematic X dimension.");
+		builderMaxSchematicHeight = integer(config,CAT_BUILDERS,"builderMaxSchematicHeight",128,1,256,"Maximum Builder schematic Y dimension.");
+		builderMaxSchematicLength = integer(config,CAT_BUILDERS,"builderMaxSchematicLength",256,1,1024,"Maximum Builder schematic Z dimension.");
+		builderMaxUploadBytes = integer(config,CAT_BUILDERS,"builderMaxUploadBytes",8*1024*1024,1024,64*1024*1024,"Maximum encoded schematic upload size.");
 		earthWorldTypeName = "earthmap";
 		earthDefaultPackId = string(config, CAT_EARTH_WORLD, "earthDefaultPackId", "xf-earth-16k-clean", "Map pack selected when generator options are empty or invalid.");
 		earthBundledCacheDirectory = string(config, CAT_EARTH_WORLD, "earthBundledCacheDirectory", "", "Blank uses .minecraft/xenofactions/earthmaps/cache.");

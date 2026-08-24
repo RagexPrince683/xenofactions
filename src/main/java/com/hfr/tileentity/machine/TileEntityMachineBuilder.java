@@ -26,6 +26,8 @@ public class TileEntityMachineBuilder extends TileEntityMachineBase {
 	public int ox = 1;
 	public int oz = 1;
 	public int lock = -1;
+	public int previewRotation;
+	public boolean previewMirrored;
 	public static List<SchemOffer> offers = new ArrayList();
 	private UUID factionId, assignedBuilderId, activeJobId;
 	private final List<UUID> queuedJobs = new ArrayList<UUID>();
@@ -47,8 +49,8 @@ public class TileEntityMachineBuilder extends TileEntityMachineBase {
 	public void assignBuilder(UUID id){assignedBuilderId=id;markDirty();}
 	public void setActiveJob(UUID id){activeJobId=id;markDirty();}
 	public void queueJob(UUID id){if(id!=null&&!queuedJobs.contains(id)){queuedJobs.add(id);markDirty();}}
-	@Override public void readFromNBT(NBTTagCompound n){super.readFromNBT(n);factionId=uuid(n,"FactionUUID");assignedBuilderId=uuid(n,"AssignedBuilderUUID");activeJobId=uuid(n,"ActiveJobUUID");queuedJobs.clear();NBTTagList q=n.getTagList("QueuedBuilderJobs",8);for(int i=0;i<q.tagCount();i++)try{queuedJobs.add(UUID.fromString(q.getStringTagAt(i)));}catch(Exception ignored){}}
-	@Override public void writeToNBT(NBTTagCompound n){super.writeToNBT(n);put(n,"FactionUUID",factionId);put(n,"AssignedBuilderUUID",assignedBuilderId);put(n,"ActiveJobUUID",activeJobId);NBTTagList q=new NBTTagList();for(UUID id:queuedJobs)q.appendTag(new net.minecraft.nbt.NBTTagString(id.toString()));n.setTag("QueuedBuilderJobs",q);}
+	@Override public void readFromNBT(NBTTagCompound n){super.readFromNBT(n);previewRotation=n.getByte("PreviewRotation")&3;previewMirrored=n.getBoolean("PreviewMirrored");factionId=uuid(n,"FactionUUID");assignedBuilderId=uuid(n,"AssignedBuilderUUID");activeJobId=uuid(n,"ActiveJobUUID");queuedJobs.clear();NBTTagList q=n.getTagList("QueuedBuilderJobs",8);for(int i=0;i<q.tagCount();i++)try{queuedJobs.add(UUID.fromString(q.getStringTagAt(i)));}catch(Exception ignored){}}
+	@Override public void writeToNBT(NBTTagCompound n){super.writeToNBT(n);n.setByte("PreviewRotation",(byte)(previewRotation&3));n.setBoolean("PreviewMirrored",previewMirrored);put(n,"FactionUUID",factionId);put(n,"AssignedBuilderUUID",assignedBuilderId);put(n,"ActiveJobUUID",activeJobId);NBTTagList q=new NBTTagList();for(UUID id:queuedJobs)q.appendTag(new net.minecraft.nbt.NBTTagString(id.toString()));n.setTag("QueuedBuilderJobs",q);}
 	private static void put(NBTTagCompound n,String k,UUID id){if(id!=null)n.setString(k,id.toString());}
 	private static UUID uuid(NBTTagCompound n,String k){try{return UUID.fromString(n.getString(k));}catch(Exception e){return null;}}
 

@@ -16,8 +16,8 @@ public class SchematicPronter {
 			for(int dy = 0; dy < schem.height; dy++) {
 				for(int dz = 0; dz < schem.length; dz++) {
 					
-					Block b = BLOCK_REGISTRY.getObjectById(schem.blocks[dx][dy][dz]);
-					int meta = schem.metadata[dx][dy][dz];
+					Block b = schem.resolveBlock(dx,dy,dz);
+					int meta = schem.getMetadata(dx,dy,dz);
 					
 					if(b != null) {
 						world.setBlock(x + dx, y + dy, z + dz, b, meta, 3);
@@ -34,8 +34,8 @@ public class SchematicPronter {
 			for(int dy = 0; dy < schem.height; dy++) {
 				for(int dz = 0; dz < schem.length; dz++) {
 					
-					Block b = BLOCK_REGISTRY.getObjectById(schem.blocks[dx][dy][dz]);
-					int meta = schem.metadata[dx][dy][dz];
+					Block b = schem.resolveBlock(dx,dy,dz);
+					int meta = schem.getMetadata(dx,dy,dz);
 					
 					Block wb = world.getBlock(x + dx, y + dy, z + dz);
 					int wmeta = world.getBlockMetadata(x + dx, y + dy, z + dz);

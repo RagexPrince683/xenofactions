@@ -364,3 +364,9 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 * Converted the existing Builder machine into a 27-slot material depot while retaining its registry and legacy slot/NBT data.
 * Added bounded, navigated survival construction with material consumption, protected-block checks, and Xenofactions territory permissions.
 * Added Builder configuration, localization, and operator documentation. Schematic client compatibility remains reserved for Task 2.
+# Pull request: add secure Builder schematic integrations and transforms
+
+- Normalized Builder schematics around registry identities with strict native `.schematic` validation and bounded registry-name preview payloads.
+- Added shared rotation/mirroring transforms, conservative schematic limits, protected-block checks, and bounded upload sessions with expiry, duplicate rejection, and server hashes.
+- Added optional client-only reflective adapters for classic Schematica and Schematica Plus, including conditional Plus-provided `.litematic` loading without a hard dependency.
+- Documented the depot workflow, integration availability, limits, transforms, and deliberately unsupported tile/entity data.

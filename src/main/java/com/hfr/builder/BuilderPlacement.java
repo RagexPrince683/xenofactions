@@ -19,7 +19,7 @@ public final class BuilderPlacement {
 		return w.func_147480_a(x,y,z,true);
 	}
 	public static boolean place(World w,int x,int y,int z,Block block,int meta,java.util.UUID faction){
-		if(w.isRemote||block==null||!BuilderTerritory.mayChange(w,x,z,faction,false))return false;
+		if(w.isRemote||block==null||block==Blocks.command_block||block==Blocks.bedrock||!BuilderTerritory.mayChange(w,x,z,faction,false))return false;
 		Block old=w.getBlock(x,y,z); if(old!=Blocks.air&&old!=block)return false;
 		return w.setBlock(x,y,z,block,meta&15,3);
 	}
