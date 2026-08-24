@@ -19,7 +19,6 @@ public class SchematicRenderer {
 	public static void render(Schematic schem, float f0, double x, double y, double z, double cap, int rotation, boolean mirror) {
 		
 		GL11.glPushMatrix();
-		GL11.glTranslatef(0.0F, 0.0625F * 7, 0.0F);
 		GL11.glEnable(GL11.GL_BLEND);
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		GL11.glDisable(GL11.GL_ALPHA_TEST);

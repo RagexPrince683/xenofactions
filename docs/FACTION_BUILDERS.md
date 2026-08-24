@@ -49,6 +49,8 @@ The Builder user interface is intentionally split by responsibility:
 
 On Build, choose **Select Schematic** to open the dedicated searchable library. Select a native Xenofactions `.schematic`, or use **Import Active** when the optional Schematica/Schematica Plus compatibility layer has an active schematic. The selection screen reports dimensions and a material summary. **Done** returns to the same Depot session without discarding its container.
 
+New Builder plans default to a safe point near their owning Depot (`Depot X + 2`, `Depot Y`, `Depot Z + 2`). X, Y, and Z are absolute world coordinates, including zero and negative X/Z values; **Use Depot Position** restores that nearby default. The coordinate nudge controls and manual edits update the same persistent, server-authoritative plan used by both the world-space preview and the final Builder job, so construction occurs exactly where the hologram was shown.
+
 The Build page presents the intended order directly: select a schematic, set X/Y/Z, preview, validate, then start construction. Rotation, mirroring, preview clearing, validation state, and missing-material information remain visible before the job is submitted to the existing server-authoritative Builder workflow.
 
 ## Persistent planning and diagnostics

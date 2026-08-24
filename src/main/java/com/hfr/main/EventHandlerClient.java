@@ -23,6 +23,8 @@ import com.hfr.render.hud.RenderRVIOverlay;
 import com.hfr.render.hud.RenderRadarScreen;
 import com.hfr.render.util.RenderAccessoryUtility;
 import com.hfr.tileentity.machine.MachineDisplaySnapshot;
+import com.hfr.tileentity.machine.TileEntityMachineBuilder;
+import com.hfr.schematic.SchematicRenderer;
 import com.hfr.util.LoggingEngine;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture.Type;
 
@@ -38,6 +40,7 @@ import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.entity.RenderPlayer;
@@ -278,6 +281,7 @@ public class EventHandlerClient {
 		GL11.glPushMatrix();
 		
 		RenderRVIOverlay.renderIndicators(event.partialTicks);
+		renderBuilderPreviews(event.partialTicks);
 		
 		/*World world = Minecraft.getMinecraft().theWorld;
 		EntityPlayer player = Minecraft.getMinecraft().thePlayer;
@@ -320,6 +324,13 @@ public class EventHandlerClient {
 		}*/
 		
 		GL11.glPopMatrix();
+	}
+
+	/** Render plans in world space, independently of the Depot TESR's frustum. */
+	private void renderBuilderPreviews(float partialTicks) {
+		Minecraft mc=Minecraft.getMinecraft();if(mc.theWorld==null||mc.renderViewEntity==null)return;
+		Entity camera=mc.renderViewEntity;double cx=camera.lastTickPosX+(camera.posX-camera.lastTickPosX)*partialTicks,cy=camera.lastTickPosY+(camera.posY-camera.lastTickPosY)*partialTicks,cz=camera.lastTickPosZ+(camera.posZ-camera.lastTickPosZ)*partialTicks;
+		for(Object value:mc.theWorld.loadedTileEntityList)if(value instanceof TileEntityMachineBuilder){TileEntityMachineBuilder d=(TileEntityMachineBuilder)value;if(d.preview==null)continue;GL11.glPushMatrix();GL11.glTranslated(d.previewX-cx,d.previewY-cy,d.previewZ-cz);mc.getTextureManager().bindTexture(TextureMap.locationBlocksTexture);SchematicRenderer.render(d.preview,1F,0,0,0,0,d.previewRotation,d.previewMirrored);GL11.glPopMatrix();}
 	}
 	
 	private int getLocalY(World world, int x, int y, int z) {
