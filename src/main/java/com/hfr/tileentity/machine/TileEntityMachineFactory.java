@@ -1,6 +1,6 @@
 package com.hfr.tileentity.machine;
 
-import com.hfr.blocks.BlockSpeedy;
+import com.hfr.blocks.FoundationSupport;
 import com.hfr.items.ModItems;
 import com.hfr.main.MainRegistry;
 
@@ -96,7 +96,7 @@ public class TileEntityMachineFactory extends TileEntityMachineBase implements I
 
 		for(int x = -4; x <= 4; x++)
 			for(int z = -4; z <= 4; z++)
-				if(!(worldObj.getBlock(xCoord + x, yCoord - 1, zCoord + z) instanceof BlockSpeedy))
+				if(!FoundationSupport.isValid(worldObj.getBlock(xCoord + x, yCoord - 1, zCoord + z)))
 					return false;
 		
 		if(storage.getEnergyStored() < MainRegistry.factoryConsumption)
@@ -125,6 +125,10 @@ public class TileEntityMachineFactory extends TileEntityMachineBase implements I
 		return access;
 	}
 	
+	@Override public boolean canExtractItem(int slot, ItemStack stack, int side) {
+		return side == 0 && slot >= 0 && slot < 4 && stack != null && stack.getItem() == ModItems.cog;
+	}
+
 	@Override
 	public AxisAlignedBB getRenderBoundingBox() {
 		return TileEntity.INFINITE_EXTENT_AABB;

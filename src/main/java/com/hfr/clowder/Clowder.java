@@ -154,6 +154,8 @@ public class Clowder {
 	public Set<String> potentialFriends = new HashSet();
 	public HashMap<Clowder, Long> allies = new HashMap();
 	public HashMap<String, Long> alliesS = new HashMap(); //string version since NBT cringe memory gay
+	private final Map<FactionPermission, Boolean> allyPermissions = defaultPermissions(true);
+	private final Map<FactionPermission, Boolean> neutralPermissions = defaultPermissions(false);
 	public Set<String> activeWars = new HashSet();
 	public Set<String> enemyFactionUuids = new HashSet<String>();
 	public HashMap<String, Long> pendingEnemyRemovalTimes = new HashMap<String, Long>();
@@ -188,6 +190,36 @@ public class Clowder {
 	public static HashSet<UUID> retreating = new HashSet<UUID>();
 	public static HashMap<Long, ScheduledTeleport> teleports = new HashMap();
 	public static final long ENEMY_REMOVAL_DELAY_MS = 72L * 60L * 60L * 1000L;
+
+	private static Map<FactionPermission, Boolean> defaultPermissions(boolean ally) {
+		Map<FactionPermission, Boolean> result = new java.util.EnumMap<FactionPermission, Boolean>(FactionPermission.class);
+		for(FactionPermission permission : FactionPermission.values())
+			result.put(permission, Boolean.valueOf(ally && (permission == FactionPermission.INTERACT || permission == FactionPermission.SWITCH)));
+		return result;
+	}
+
+	public boolean getTerritoryPermission(FactionRelationship relationship, FactionPermission permission) {
+		Boolean value = (relationship == FactionRelationship.ALLY ? allyPermissions : neutralPermissions).get(permission);
+		return value != null && value.booleanValue();
+	}
+
+	public void setTerritoryPermission(FactionRelationship relationship, FactionPermission permission, boolean allowed, World world) {
+		(relationship == FactionRelationship.ALLY ? allyPermissions : neutralPermissions).put(permission, Boolean.valueOf(allowed));
+		ClowderData.getData(world).markDirty();
+	}
+
+	public boolean isAtWarWith(Clowder other) {
+		if(other == null) return false;
+		return activeWars.contains(other.name) || activeWars.contains(other.uuid) || other.activeWars.contains(name) || other.activeWars.contains(uuid)
+				|| enemyFactionUuids.contains(other.uuid) || other.enemyFactionUuids.contains(uuid);
+	}
+
+	/** Resolves only normal visitors; members and war opponents remain under legacy rules. */
+	public boolean canVisitorAccess(Clowder actor, FactionPermission permission) {
+		if(actor == this) return true;
+		if(actor != null && isAtWarWith(actor)) return false;
+		return getTerritoryPermission(actor != null && allies.containsKey(actor) ? FactionRelationship.ALLY : FactionRelationship.NEUTRAL, permission);
+	}
 
 
 
@@ -1774,6 +1806,10 @@ public class Clowder {
 		nbt.setInteger(i + "_officers", this.officers.size());
 		nbt.setInteger(i + "_potentialFriends", this.potentialFriends.size());
 		nbt.setInteger(i + "_allies", this.alliesS.size());
+		for(FactionPermission permission : FactionPermission.values()) {
+			nbt.setBoolean(i + "_permissionAlly_" + permission.name(), getTerritoryPermission(FactionRelationship.ALLY, permission));
+			nbt.setBoolean(i + "_permissionNeutral_" + permission.name(), getTerritoryPermission(FactionRelationship.NEUTRAL, permission));
+		}
 		nbt.setInteger(i + "_warps", this.warps.size());
 		nbt.setInteger(i + "_activeWars", this.activeWars.size());
 		nbt.setInteger(i + "_enemyFactionUuids", this.enemyFactionUuids.size());
@@ -1982,6 +2018,12 @@ public class Clowder {
 		int co = nbt.getInteger(i + "_officers");
 		int cpf = nbt.getInteger(i + "_potentialFriends");
 		int ca = nbt.getInteger(i + "_allies");
+		for(FactionPermission permission : FactionPermission.values()) {
+			String allyKey = i + "_permissionAlly_" + permission.name();
+			String neutralKey = i + "_permissionNeutral_" + permission.name();
+			if(nbt.hasKey(allyKey)) c.allyPermissions.put(permission, Boolean.valueOf(nbt.getBoolean(allyKey)));
+			if(nbt.hasKey(neutralKey)) c.neutralPermissions.put(permission, Boolean.valueOf(nbt.getBoolean(neutralKey)));
+		}
 		if(ca == 0 && nbt.getInteger(i + "_members") > 0 && nbt.hasKey(i + "_0_ally")) {
 			ca = nbt.getInteger(i + "_members");
 			if(MainRegistry.logger != null)

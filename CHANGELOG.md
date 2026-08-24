@@ -348,3 +348,13 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Added the default-enabled `enableSurvivalRecipes` server toggle; disabling it omits only the new recipes and preserves the previous free `/c claim` token workflow for command/shop-oriented servers.
 - Made the enabled survival workflow consume one crafted, untagged City Center when `/c claim <city name>` creates its named placement token, without consuming relocation or already-named tokens.
 - Documented recipe layouts, balance tiers, dependency safety, the survival-worthy audit, and deliberate exclusions.
+
+# Xenofactions territory permissions and hopper automation
+
+## a4543aa Add faction permissions and hopper automation
+
+- Deprecated the registered Federal Reserve without removing its save-compatible registry entry; removed its recipe, creative exposure, Prestige generation, output, lore, mace role, and GUI access.
+- Added the centralized, config-gated four-Foundation survival recipe and made vanilla hoppers valid through the shared foundation predicate.
+- Added safe sided hopper contracts for the Grain Mill, Blast Furnace, Coal Mine, and Production Line after auditing the existing Foundry and unfinished/non-processing machines.
+- Added faction-owned ally and neutral BUILD, DESTROY, CONTAINER, INTERACT, and SWITCH policies, persistent migration-safe defaults, centralized event resolution, officer commands, and tab completion.
+- Documented recipes, legacy behavior, automation coverage, permission defaults, precedence, commands, and migration behavior.

@@ -27,6 +27,9 @@ public final class XenoRecipes {
 				'G', Items.gold_ingot, 'R', Items.redstone, 'I', Items.iron_ingot, 'S', Items.stick);
 
 		// Faction utilities.
+		// Four foundations per craft keeps large footprints practical while still requiring ironwork.
+		GameRegistry.addRecipe(new ItemStack(ModBlocks.uni_foundation, 4), "SIS", "III", "SIS",
+				'S', Blocks.stonebrick, 'I', Items.iron_ingot);
 		shaped(ModBlocks.officer_chest, "I I", "ICI", "IRI", 'I', Items.iron_ingot, 'C', Blocks.chest, 'R', Items.redstone);
 		shaped(ModBlocks.med_tent, "WWW", "WRW", "S S", 'W', Blocks.wool, 'R', Items.golden_apple, 'S', Items.stick);
 		shaped(ModBlocks.tp_tent, "WWW", "PEP", "SRS", 'W', Blocks.wool, 'P', Items.ender_pearl,
@@ -39,8 +42,6 @@ public final class XenoRecipes {
 				'C', Blocks.crafting_table, 'M', ModItems.components_mechanical, 'E', ModItems.components_electronics, 'P', Blocks.piston);
 		shaped(ModBlocks.machine_uni, "BEB", "SDS", "BKB", 'B', Blocks.bookshelf, 'E', ModItems.components_electronics,
 				'S', Blocks.stonebrick, 'D', Items.diamond, 'K', Blocks.crafting_table);
-		shaped(ModBlocks.machine_reserve, "GEG", "SCS", "ODO", 'G', Blocks.gold_block, 'E', ModItems.components_electronics,
-				'S', ModItems.components_steel, 'C', Blocks.chest, 'O', Blocks.obsidian, 'D', Items.diamond);
 		shaped(ModBlocks.machine_temple, "QGQ", "SBS", "ODO", 'Q', Blocks.quartz_block, 'G', Blocks.gold_block,
 				'S', Blocks.stonebrick, 'B', Blocks.bookshelf, 'O', Blocks.obsidian, 'D', Items.diamond);
 		shaped(ModBlocks.statue, " Q ", "QEQ", "SGS", 'Q', Blocks.quartz_block, 'E', Items.emerald,

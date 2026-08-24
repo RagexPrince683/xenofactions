@@ -13,6 +13,8 @@ import com.hfr.clowder.Clowder;
 import com.hfr.clowder.FactionCreationCooldownData;
 import com.hfr.clowder.FactionMemberRecord;
 import com.hfr.clowder.FactionRole;
+import com.hfr.clowder.FactionPermission;
+import com.hfr.clowder.FactionRelationship;
 import com.hfr.clowder.PlayerIdentityService;
 import com.hfr.clowder.Clowder.ScheduledTeleport;
 import com.hfr.clowder.ClowderFlag;
@@ -168,6 +170,7 @@ public class CommandClowder extends CommandBase {
 		if(cmd.equals("gracebuild")) { cmdGraceBuild(sender); return; }
 		if(cmd.equals("comrades")) { cmdComrades(sender); return; }
 		if(cmd.equals("alliance") || cmd.equals("allies") || cmd.equals("allylist")) { cmdAlliance(sender); return; }
+		if(cmd.equals("permissions") || cmd.equals("perms")) { cmdPermissions(sender, args); return; }
 		if(cmd.equals("color")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdColor(sender, args[1]); return; }
 
 		if(cmd.equals("info")) {
@@ -575,6 +578,33 @@ private void cmdCreate(ICommandSender sender, String name) {
 		} else {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any faction!"));
 		}
+	}
+
+	private void cmdPermissions(ICommandSender sender, String[] args) {
+		if(!(sender instanceof EntityPlayer)) { sender.addChatMessage(new ChatComponentText(ERROR + "Players only.")); return; }
+		EntityPlayer player = (EntityPlayer)sender;
+		Clowder faction = Clowder.getClowderFromPlayer(player);
+		if(faction == null) { sender.addChatMessage(new ChatComponentText(ERROR + "You are not in a faction.")); return; }
+		if(args.length == 1) {
+			for(FactionRelationship relationship : FactionRelationship.values()) {
+				StringBuilder line = new StringBuilder(INFO).append(relationship.name().toLowerCase()).append(": ");
+				for(FactionPermission permission : FactionPermission.values()) line.append(permission.name().toLowerCase()).append('=').append(faction.getTerritoryPermission(relationship, permission)).append(' ');
+				sender.addChatMessage(new ChatComponentText(line.toString()));
+			}
+			return;
+		}
+		if(args.length != 4) { sender.addChatMessage(new ChatComponentText(ERROR + "/c permissions <ally|neutral> <permission> <true|false>")); return; }
+		FactionRelationship relationship;
+		if(args[1].equalsIgnoreCase("ally")) relationship = FactionRelationship.ALLY;
+		else if(args[1].equalsIgnoreCase("neutral")) relationship = FactionRelationship.NEUTRAL;
+		else { sender.addChatMessage(new ChatComponentText(ERROR + "Relationship must be ally or neutral.")); return; }
+		FactionPermission permission = FactionPermission.parse(args[2]);
+		if(permission == null) { sender.addChatMessage(new ChatComponentText(ERROR + "Unknown permission. Use build, destroy, container, interact, or switch.")); return; }
+		if(!args[3].equalsIgnoreCase("true") && !args[3].equalsIgnoreCase("false")) { sender.addChatMessage(new ChatComponentText(ERROR + "Value must be true or false.")); return; }
+		if(faction.getPermLevel(player) < 2) { sender.addChatMessage(new ChatComponentText(ERROR + "Only faction officers and the leader may change territory permissions.")); return; }
+		boolean allowed = Boolean.parseBoolean(args[3]);
+		faction.setTerritoryPermission(relationship, permission, allowed, player.worldObj);
+		sender.addChatMessage(new ChatComponentText(INFO + relationship.name().toLowerCase() + " " + permission.name().toLowerCase() + " is now " + allowed + "."));
 	}
 
 	private void cmdAlliance(ICommandSender sender) {
@@ -2219,6 +2249,11 @@ private void cmdCreate(ICommandSender sender, String name) {
 			return getListOfStringsMatchingLastWord(args, getFlagCompletionNames());
 		if(cmd.equals("city") && args.length == 2)
 			return getListOfStringsMatchingLastWord(args, new String[] { "upgrade", "cancelmove", "recovermove" });
+		if(cmd.equals("permissions") || cmd.equals("perms")) {
+			if(args.length == 2) return getListOfStringsMatchingLastWord(args, new String[] { "ally", "neutral" });
+			if(args.length == 3) return getListOfStringsMatchingLastWord(args, new String[] { "build", "destroy", "container", "interact", "switch" });
+			if(args.length == 4) return getListOfStringsMatchingLastWord(args, new String[] { "true", "false" });
+		}
 
 		return null;
 	}
@@ -2320,7 +2355,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 	}
 
 	private String[] getPlayerCommandNames() {
-		return new String[] { "help", "enemy", "unenemy", "stonedrops", "create", "disband", "info", "list", "comrades", "alliance", "allies", "allylist", "leave", "apply",
+		return new String[] { "help", "enemy", "unenemy", "stonedrops", "create", "disband", "info", "list", "comrades", "alliance", "allies", "allylist", "permissions", "perms", "leave", "apply",
 				"applicants", "accept", "deny", "kick", "owner", "promote", "demote", "rename", "color", "motd",
 				"listflags", "flag", "gracebuild", "sethome", "home", "setwarp", "addwarp", "delwarp", "warp", "warps",
 				"claim", "city", "nameclaim", "balance", "deposit", "withdraw", "befriend", "ally", "acceptfriend",

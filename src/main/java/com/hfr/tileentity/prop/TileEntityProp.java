@@ -3,7 +3,7 @@ package com.hfr.tileentity.prop;
 import java.util.List;
 
 import com.hfr.blocks.BlockDummyable;
-import com.hfr.blocks.BlockSpeedy;
+import com.hfr.blocks.FoundationSupport;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderTerritory;
@@ -154,7 +154,7 @@ public class TileEntityProp extends TileEntity {
 
 		for(int x = -w; x <= e; x++)
 			for(int z = -n; z <= s; z++)
-				if(!(worldObj.getBlock(xCoord + x, yCoord - 1, zCoord + z) instanceof BlockSpeedy))
+				if(!FoundationSupport.isValid(worldObj.getBlock(xCoord + x, yCoord - 1, zCoord + z)))
 					return false;
 		
 		return true;

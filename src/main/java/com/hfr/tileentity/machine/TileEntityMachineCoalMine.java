@@ -1,7 +1,7 @@
 package com.hfr.tileentity.machine;
 
 import com.hfr.blocks.BlockDummyable;
-import com.hfr.blocks.BlockSpeedy;
+import com.hfr.blocks.FoundationSupport;
 import com.hfr.handler.MultiblockHandler;
 import com.hfr.items.ModItems;
 import com.hfr.main.MainRegistry;
@@ -17,6 +17,17 @@ import net.minecraft.util.AxisAlignedBB;
 import net.minecraftforge.common.util.ForgeDirection;
 
 public class TileEntityMachineCoalMine extends TileEntityMachineBase {
+	private static final int[] WORK_SLOTS = { 0, 1, 2, 3, 4 };
+	private static final int[] UTILITY_SLOTS = { 5, 6 };
+	@Override public int[] getAccessibleSlotsFromSide(int side) { return side == 0 ? WORK_SLOTS : (side == 1 ? UTILITY_SLOTS : WORK_SLOTS); }
+	@Override public boolean isItemValidForSlot(int slot, ItemStack stack) {
+		if(stack == null) return false;
+		if(slot == 5) return stack.getItem() == ModItems.miner_supplies;
+		if(slot == 6) return stack.getItem() == ModItems.canary;
+		return slot >= 0 && slot < 5 && stack.getItem() == ModItems.miner;
+	}
+	@Override public boolean canExtractItem(int slot, ItemStack stack, int side) { return side == 0 && slot < 5 && stack != null && stack.getItem() == Items.coal; }
+
 	
 	public int supplies = 0;
 	public static final int maxSupplies = 20;
@@ -101,7 +112,7 @@ public class TileEntityMachineCoalMine extends TileEntityMachineBase {
 
 		for(int x = -w; x <= e; x++)
 			for(int z = -n; z <= s; z++)
-				if(!(worldObj.getBlock(xCoord + x, yCoord - 1, zCoord + z) instanceof BlockSpeedy))
+				if(!FoundationSupport.isValid(worldObj.getBlock(xCoord + x, yCoord - 1, zCoord + z)))
 					return false;
 		
 		return true;

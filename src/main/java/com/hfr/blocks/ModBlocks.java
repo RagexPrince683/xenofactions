@@ -265,7 +265,8 @@ public class ModBlocks {
 		
 		machine_net = new MachineNet(Material.cloth).setStepSound(Block.soundTypeCloth).setBlockName("machine_net").setHardness(0.0F).setResistance(0.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_net");
 		machine_uni = new MachineUni(Material.rock).setStepSound(Block.soundTypeStone).setBlockName("machine_uni").setHardness(5.0F).setResistance(0.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_uni");
-		machine_reserve = new MachineFed(Material.rock).setStepSound(Block.soundTypeStone).setBlockName("machine_fed").setHardness(5.0F).setResistance(0.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_fed");
+		// Legacy registry placeholder: retained so existing worlds do not receive a missing block.
+		machine_reserve = new MachineFed(Material.rock).setStepSound(Block.soundTypeStone).setBlockName("machine_fed").setHardness(5.0F).setResistance(0.0F).setBlockTextureName(RefStrings.MODID + ":machine_fed");
 
 		machine_grainmill = new MachineGrainmill(Material.wood).setStepSound(soundTypeWood).setBlockName("machine_grainmill").setHardness(5.0F).setResistance(0.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_grainmill");
 		machine_blastfurnace = new MachineBlastFurnace(Material.rock).setStepSound(soundTypeConcrete).setBlockName("machine_blastfurnace").setHardness(5.0F).setResistance(0.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_blastfurnace");
