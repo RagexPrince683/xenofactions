@@ -18,12 +18,13 @@ import net.minecraft.world.World;
 
 /** Persistent faction worker. All work and inventory mutation occurs on the logical server. */
 public class EntityFactionBuilder extends EntityLiving {
-	private UUID factionId,jobId; private int depotX,depotY,depotZ,pathFailures; private BuilderState state=BuilderState.IDLE;
+	private UUID factionId,jobId; private int depotX,depotY,depotZ,depotDimension,pathFailures; private BuilderState state=BuilderState.IDLE;
 	private final ItemStack[] materials=new ItemStack[9];
 	public EntityFactionBuilder(World w){super(w);setSize(.6F,1.8F);}
 	@Override protected void applyEntityAttributes(){super.applyEntityAttributes();getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(20);getEntityAttribute(SharedMonsterAttributes.movementSpeed).setBaseValue(.28);}
 	@Override protected boolean canDespawn(){return false;}
-	public void assign(UUID faction,UUID job,int x,int y,int z){factionId=faction;jobId=job;depotX=x;depotY=y;depotZ=z;state=BuilderState.LOAD_JOB;}
+	public void assign(UUID faction,UUID job,int x,int y,int z,int dimension){factionId=faction;jobId=job;depotX=x;depotY=y;depotZ=z;depotDimension=dimension;state=job==null?BuilderState.IDLE:BuilderState.LOAD_JOB;}
+	public void detachFromDepot(){BuilderJobData data=BuilderJobData.get(worldObj);BuilderJob job=data==null?null:data.get(jobId);if(job!=null)pause(job,BuilderState.PAUSED);jobId=null;state=BuilderState.PAUSED;}
 	@Override public void onLivingUpdate(){super.onLivingUpdate();if(!worldObj.isRemote&&XFConfig.enableFactionBuilders&&ticksExisted%XFConfig.builderWorkIntervalTicks==0)work();}
 	private void work(){
 		BuilderJobData data=BuilderJobData.get(worldObj); BuilderJob job=data.get(jobId);
@@ -50,13 +51,13 @@ public class EntityFactionBuilder extends EntityLiving {
 		if(job.blockIndex>=total){state=BuilderState.COMPLETE;job.state=state;data.markDirty();}else{state=BuilderState.FIND_NEXT_BLOCK;data.markDirty();}
 	}
 	private Schematic find(String id){for(Schematic s:MainRegistry.schems)if(s!=null&&s.name.equals(id))return s;return null;}
-	private TileEntityMachineBuilder depot(){return worldObj.getTileEntity(depotX,depotY,depotZ) instanceof TileEntityMachineBuilder?(TileEntityMachineBuilder)worldObj.getTileEntity(depotX,depotY,depotZ):null;}
+	private TileEntityMachineBuilder depot(){return worldObj.provider.dimensionId==depotDimension&&worldObj.getTileEntity(depotX,depotY,depotZ) instanceof TileEntityMachineBuilder?(TileEntityMachineBuilder)worldObj.getTileEntity(depotX,depotY,depotZ):null;}
 	private static int findMaterial(ItemStack[] a,ItemStack n){for(int i=0;i<a.length;i++)if(a[i]!=null&&a[i].isItemEqual(n))return i;return -1;}
 	private void add(ItemStack n){for(int i=0;i<materials.length;i++)if(materials[i]==null){materials[i]=n;return;}}
 	private void pause(BuilderJob j,BuilderState s){state=s;j.state=s;BuilderJobData.get(worldObj).markDirty();}
 	private void blocked(BuilderJob j,int x,int y,int z){j.blockedX=x;j.blockedY=y;j.blockedZ=z;pause(j,BuilderState.INVALID_TERRITORY);}
-	@Override public void onDeath(DamageSource d){if(!worldObj.isRemote){BuilderJob j=BuilderJobData.get(worldObj).get(jobId);if(j!=null){j.builderId=null;pause(j,BuilderState.PAUSED);}}super.onDeath(d);}
-	@Override public void writeEntityToNBT(NBTTagCompound n){super.writeEntityToNBT(n);put(n,"FactionUUID",factionId);put(n,"JobUUID",jobId);n.setInteger("DepotX",depotX);n.setInteger("DepotY",depotY);n.setInteger("DepotZ",depotZ);n.setString("BuilderState",state.name());NBTTagList l=new NBTTagList();for(int i=0;i<materials.length;i++)if(materials[i]!=null){NBTTagCompound c=new NBTTagCompound();c.setByte("Slot",(byte)i);materials[i].writeToNBT(c);l.appendTag(c);}n.setTag("BuilderInventory",l);}
-	@Override public void readEntityFromNBT(NBTTagCompound n){super.readEntityFromNBT(n);factionId=id(n,"FactionUUID");jobId=id(n,"JobUUID");depotX=n.getInteger("DepotX");depotY=n.getInteger("DepotY");depotZ=n.getInteger("DepotZ");try{state=BuilderState.valueOf(n.getString("BuilderState"));}catch(Exception e){state=BuilderState.IDLE;}NBTTagList l=n.getTagList("BuilderInventory",10);for(int i=0;i<l.tagCount();i++){NBTTagCompound c=l.getCompoundTagAt(i);int k=c.getByte("Slot");if(k>=0&&k<materials.length)materials[k]=ItemStack.loadItemStackFromNBT(c);}}
+	@Override public void onDeath(DamageSource d){if(!worldObj.isRemote){BuilderJobData data=BuilderJobData.get(worldObj);BuilderJob j=data==null?null:data.get(jobId);if(j!=null){j.builderId=null;pause(j,BuilderState.PAUSED);}TileEntityMachineBuilder depot=depot();if(depot!=null)depot.clearBuilder(getUniqueID());}super.onDeath(d);}
+	@Override public void writeEntityToNBT(NBTTagCompound n){super.writeEntityToNBT(n);put(n,"FactionUUID",factionId);put(n,"JobUUID",jobId);n.setInteger("DepotX",depotX);n.setInteger("DepotY",depotY);n.setInteger("DepotZ",depotZ);n.setInteger("DepotDimension",depotDimension);n.setString("BuilderState",state.name());NBTTagList l=new NBTTagList();for(int i=0;i<materials.length;i++)if(materials[i]!=null){NBTTagCompound c=new NBTTagCompound();c.setByte("Slot",(byte)i);materials[i].writeToNBT(c);l.appendTag(c);}n.setTag("BuilderInventory",l);}
+	@Override public void readEntityFromNBT(NBTTagCompound n){super.readEntityFromNBT(n);factionId=id(n,"FactionUUID");jobId=id(n,"JobUUID");depotX=n.getInteger("DepotX");depotY=n.getInteger("DepotY");depotZ=n.getInteger("DepotZ");depotDimension=n.hasKey("DepotDimension")?n.getInteger("DepotDimension"):dimension;try{state=BuilderState.valueOf(n.getString("BuilderState"));}catch(Exception e){state=BuilderState.IDLE;}NBTTagList l=n.getTagList("BuilderInventory",10);for(int i=0;i<l.tagCount();i++){NBTTagCompound c=l.getCompoundTagAt(i);int k=c.getByte("Slot");if(k>=0&&k<materials.length)materials[k]=ItemStack.loadItemStackFromNBT(c);}}
 	private static void put(NBTTagCompound n,String k,UUID v){if(v!=null)n.setString(k,v.toString());}private static UUID id(NBTTagCompound n,String k){try{return UUID.fromString(n.getString(k));}catch(Exception e){return null;}}
 }

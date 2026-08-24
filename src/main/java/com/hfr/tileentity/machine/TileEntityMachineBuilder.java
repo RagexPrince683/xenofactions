@@ -5,6 +5,10 @@ import java.util.List;
 import java.util.UUID;
 
 import com.hfr.items.ModItems;
+import com.hfr.builder.BuilderJob;
+import com.hfr.builder.BuilderJobData;
+import com.hfr.builder.BuilderState;
+import com.hfr.entity.EntityFactionBuilder;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.tile.AuxGaugePacket;
 import com.hfr.packet.tile.BuilderPacket;
@@ -19,6 +23,7 @@ import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.entity.Entity;
 
 public class TileEntityMachineBuilder extends TileEntityMachineBase {
 	
@@ -30,6 +35,7 @@ public class TileEntityMachineBuilder extends TileEntityMachineBase {
 	public boolean previewMirrored;
 	public static List<SchemOffer> offers = new ArrayList();
 	private UUID factionId, assignedBuilderId, activeJobId;
+	private String cityId = "";
 	private final List<UUID> queuedJobs = new ArrayList<UUID>();
 
 	public TileEntityMachineBuilder() {
@@ -47,10 +53,34 @@ public class TileEntityMachineBuilder extends TileEntityMachineBase {
 	@Override public int[] getAccessibleSlotsFromSide(int side) { int[] result=new int[27]; for(int i=0;i<27;i++)result[i]=i+1; return result; }
 	public void setFactionId(UUID id){factionId=id;markDirty();}
 	public void assignBuilder(UUID id){assignedBuilderId=id;markDirty();}
+	public void assign(UUID faction, UUID builder, String city){factionId=faction;assignedBuilderId=builder;cityId=city==null?"":city;markDirty();}
+	public UUID getFactionId(){return factionId;}
+	public UUID getAssignedBuilderId(){return assignedBuilderId;}
+	public UUID getActiveJobId(){return activeJobId;}
+	public boolean hasAssignedBuilder(){return assignedBuilderId!=null;}
+	public EntityFactionBuilder getLoadedBuilder(){
+		if(worldObj==null||assignedBuilderId==null)return null;
+		for(Object object:worldObj.loadedEntityList)if(object instanceof EntityFactionBuilder&&assignedBuilderId.equals(((Entity)object).getUniqueID()))return (EntityFactionBuilder)object;
+		return null;
+	}
+	/** Missing is stale only when death/depot invalidation or the persistent job confirms it. */
+	public boolean clearAssignmentIfConfirmedStale(){
+		EntityFactionBuilder loaded=getLoadedBuilder(); if(loaded!=null&&!loaded.isDead)return false;
+		BuilderJobData data=worldObj==null?null:BuilderJobData.get(worldObj); BuilderJob job=data==null?null:data.get(activeJobId);
+		if(loaded==null&&(activeJobId==null||job==null||job.builderId!=null))return false;
+		assignedBuilderId=null;markDirty();return true;
+	}
+	public void clearBuilder(UUID expected){if(expected==null||expected.equals(assignedBuilderId)){assignedBuilderId=null;markDirty();}}
+	public void onDepotRemoved(){
+		EntityFactionBuilder builder=getLoadedBuilder(); if(builder!=null)builder.detachFromDepot();
+		BuilderJobData data=worldObj==null?null:BuilderJobData.get(worldObj); BuilderJob job=data==null?null:data.get(activeJobId);
+		if(job!=null){job.state=BuilderState.PAUSED;job.builderId=null;data.markDirty();}
+		assignedBuilderId=null;markDirty();
+	}
 	public void setActiveJob(UUID id){activeJobId=id;markDirty();}
 	public void queueJob(UUID id){if(id!=null&&!queuedJobs.contains(id)){queuedJobs.add(id);markDirty();}}
-	@Override public void readFromNBT(NBTTagCompound n){super.readFromNBT(n);previewRotation=n.getByte("PreviewRotation")&3;previewMirrored=n.getBoolean("PreviewMirrored");factionId=uuid(n,"FactionUUID");assignedBuilderId=uuid(n,"AssignedBuilderUUID");activeJobId=uuid(n,"ActiveJobUUID");queuedJobs.clear();NBTTagList q=n.getTagList("QueuedBuilderJobs",8);for(int i=0;i<q.tagCount();i++)try{queuedJobs.add(UUID.fromString(q.getStringTagAt(i)));}catch(Exception ignored){}}
-	@Override public void writeToNBT(NBTTagCompound n){super.writeToNBT(n);n.setByte("PreviewRotation",(byte)(previewRotation&3));n.setBoolean("PreviewMirrored",previewMirrored);put(n,"FactionUUID",factionId);put(n,"AssignedBuilderUUID",assignedBuilderId);put(n,"ActiveJobUUID",activeJobId);NBTTagList q=new NBTTagList();for(UUID id:queuedJobs)q.appendTag(new net.minecraft.nbt.NBTTagString(id.toString()));n.setTag("QueuedBuilderJobs",q);}
+	@Override public void readFromNBT(NBTTagCompound n){super.readFromNBT(n);previewRotation=n.getByte("PreviewRotation")&3;previewMirrored=n.getBoolean("PreviewMirrored");factionId=uuid(n,"FactionUUID");assignedBuilderId=uuid(n,"AssignedBuilderUUID");activeJobId=uuid(n,"ActiveJobUUID");cityId=n.getString("BuilderCityId");queuedJobs.clear();NBTTagList q=n.getTagList("QueuedBuilderJobs",8);for(int i=0;i<q.tagCount();i++)try{queuedJobs.add(UUID.fromString(q.getStringTagAt(i)));}catch(Exception ignored){}}
+	@Override public void writeToNBT(NBTTagCompound n){super.writeToNBT(n);n.setByte("PreviewRotation",(byte)(previewRotation&3));n.setBoolean("PreviewMirrored",previewMirrored);put(n,"FactionUUID",factionId);put(n,"AssignedBuilderUUID",assignedBuilderId);put(n,"ActiveJobUUID",activeJobId);n.setString("BuilderCityId",cityId);NBTTagList q=new NBTTagList();for(UUID id:queuedJobs)q.appendTag(new net.minecraft.nbt.NBTTagString(id.toString()));n.setTag("QueuedBuilderJobs",q);}
 	private static void put(NBTTagCompound n,String k,UUID id){if(id!=null)n.setString(k,id.toString());}
 	private static UUID uuid(NBTTagCompound n,String k){try{return UUID.fromString(n.getString(k));}catch(Exception e){return null;}}
 

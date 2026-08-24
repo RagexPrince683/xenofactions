@@ -92,7 +92,7 @@ public class ModBlocks {
 	public static final int guiID_rbmk = 12;
 	//public static Block rbmk_rods;
 	public static final int guiID_rods = 13;
-	//public static Block builder;
+	public static Block builder;
 	public static final int guiID_builder = 14;
 	public static Block machine_uni;
 	public static Block machine_reserve;
@@ -248,6 +248,8 @@ public class ModBlocks {
 		blast_door_dummy = new DummyBlockBlast(Material.rock).setStepSound(soundTypeMetal).setBlockName("blast_door_dummy").setHardness(10.0F).setResistance(10000.0F).setCreativeTab(null).setBlockTextureName(RefStrings.MODID + ":concrete");
 		
 		machine_radar = new MachineRadar(Material.iron).setStepSound(soundTypeMetal).setBlockName("machine_radar").setHardness(5.0F).setResistance(10.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_radar");
+		// Keep the historical "builder" registry identity: this is the Builder Depot.
+		builder = new MachineBuilder(Material.iron).setStepSound(soundTypeMetal).setBlockName("builder").setHardness(5.0F).setResistance(10.0F).setCreativeTab(MainRegistry.tab);
 		//machine_siren = new MachineSiren(Material.iron).setStepSound(soundTypeMetal).setBlockName("machine_siren").setHardness(5.0F).setResistance(10.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_siren");
 		//machine_emp = new MachineEMP(Material.iron).setStepSound(soundTypeMetal).setBlockName("machine_emp").setHardness(5.0F).setResistance(10.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_emp");
 		//machine_forcefield = new MachineForceField(Material.iron).setStepSound(soundTypeMetal).setBlockName("machine_forcefield").setLightLevel(1.0F).setHardness(5.0F).setResistance(100.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":machine_forcefield");
@@ -367,6 +369,7 @@ public class ModBlocks {
 
 
 		GameRegistry.registerBlock(machine_radar, ItemBlockUnstackable.class, machine_radar.getUnlocalizedName());
+		GameRegistry.registerBlock(builder, ItemBlockUnstackable.class, builder.getUnlocalizedName());
 
 		GameRegistry.registerBlock(box, ItemBlockLore.class, box.getUnlocalizedName());
 

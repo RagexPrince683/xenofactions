@@ -40,6 +40,7 @@ public class ModItems {
 	public static Item gas_petroleum;
 
 	public static Item farmer;
+	public static Item builder_contract;
 	public static Item miner;
 	public static Item miner_supplies;
 	public static Item canary;
@@ -313,6 +314,8 @@ public class ModItems {
 		ingot_graphene = new ItemLore().setUnlocalizedName("ingot_graphene").setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":ingot_graphene");
 		
 		farmer = new ItemContract().setUnlocalizedName("farmer").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":farmer");
+		// Reuse the established contract artwork; no additional binary asset is required.
+		builder_contract = new ItemBuilderContract().setUnlocalizedName("builder_contract").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":farmer");
 		miner = new ItemLore().setUnlocalizedName("miner").setMaxStackSize(1).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":miner");
 		miner_supplies = new ItemLore().setUnlocalizedName("miner_supplies").setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":miner_supplies");
 		canary = new ItemLore().setUnlocalizedName("canary").setMaxStackSize(4).setCreativeTab(MainRegistry.tab).setTextureName(RefStrings.MODID + ":canary");
@@ -576,6 +579,7 @@ public class ModItems {
 		GameRegistry.registerItem(crate, crate.getUnlocalizedName());
 
 		GameRegistry.registerItem(farmer, farmer.getUnlocalizedName());
+		GameRegistry.registerItem(builder_contract, builder_contract.getUnlocalizedName());
 		GameRegistry.registerItem(miner, miner.getUnlocalizedName());
 		GameRegistry.registerItem(miner_supplies, miner_supplies.getUnlocalizedName());
 		GameRegistry.registerItem(canary, canary.getUnlocalizedName());

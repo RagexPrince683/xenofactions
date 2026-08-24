@@ -90,6 +90,14 @@ public class MachineBuilder extends BlockContainer {
 			return true;
 		}
 	}
+
+	@Override
+	public void breakBlock(World world, int x, int y, int z, net.minecraft.block.Block oldBlock, int metadata) {
+		TileEntity tile = world.getTileEntity(x, y, z);
+		if(!world.isRemote && tile instanceof TileEntityMachineBuilder)
+			((TileEntityMachineBuilder)tile).onDepotRemoved();
+		super.breakBlock(world, x, y, z, oldBlock, metadata);
+	}
 	
 	@Override
 	public int getRenderType(){

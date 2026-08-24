@@ -10,6 +10,7 @@ import com.hfr.clowder.ClowderTerritory.CoordPair;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.client.CityCenterGuiPacket;
 import com.hfr.tileentity.clowder.TileEntityFlag;
+import com.hfr.items.ModItems;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
@@ -152,6 +153,12 @@ public class Flag extends BlockContainer {
 				flag.setMode(1);
 				flag.isClaimed = true;
 				flag.generateClaim();
+				// This is deliberately post-commit: failed placement paths never receive a contract.
+				if(!flag.builderStarterGranted) {
+					ItemStack contract = new ItemStack(ModItems.builder_contract);
+					if(!entityPlayer.inventory.addItemStackToInventory(contract)) entityPlayer.dropPlayerItemWithRandomChoice(contract, false);
+					flag.builderStarterGranted = true;
+				}
 			} else {
 				flag.height = 0.0F;
 				entityPlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "You won't be able to raise this flag. This may be due to:"));
