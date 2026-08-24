@@ -47,7 +47,7 @@ public final class XFConfig {
 	public static int builderWorkIntervalTicks = 10;
 	public static int builderBlockScanBudget = 64;
 	public static boolean builderAllowWilderness = false;
-	public static int builderMaxSchematicBlocks = 262144;
+	public static int builderMaxSchematicBlocks = 2000000;
 	public static int builderMaxSchematicWidth = 256;
 	public static int builderMaxSchematicHeight = 128;
 	public static int builderMaxSchematicLength = 256;
