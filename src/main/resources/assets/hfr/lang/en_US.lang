@@ -893,5 +893,6 @@ gui.builder.selection.title=Select Schematic
 gui.builder.back=Back
 gui.builder.done=Done
 gui.builder.import=Import Active
+gui.builder.refresh=Refresh
 gui.builder.clear=Clear
 builder.state.IDLE=Idle - No construction job

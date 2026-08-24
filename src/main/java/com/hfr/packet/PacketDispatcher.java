@@ -101,6 +101,8 @@ public class PacketDispatcher {
 		wrapper.registerMessage(BuilderDepotSnapshotPacket.Handler.class, BuilderDepotSnapshotPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(BuilderActionPacket.Handler.class, BuilderActionPacket.class, i++, Side.SERVER);
 		wrapper.registerMessage(BuilderSchematicPacket.Handler.class, BuilderSchematicPacket.class, i++, Side.SERVER);
+		wrapper.registerMessage(BuilderLibraryRequestPacket.Handler.class, BuilderLibraryRequestPacket.class, i++, Side.SERVER);
+		wrapper.registerMessage(BuilderLibraryPacket.Handler.class, BuilderLibraryPacket.class, i++, Side.CLIENT);
 
 	}
 	

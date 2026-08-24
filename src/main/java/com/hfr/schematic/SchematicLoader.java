@@ -18,10 +18,21 @@ import net.minecraft.nbt.NBTTagCompound;
 /** Strict native MCEdit/Schematica .schematic reader. */
 public final class SchematicLoader {
     private SchematicLoader(){}
+    public static final class LoadResult {
+        public final Schematic schematic;
+        public final String error;
+        private LoadResult(Schematic schematic,String error){this.schematic=schematic;this.error=error;}
+        public boolean succeeded(){return schematic!=null;}
+    }
     public static Schematic readFromFile(File file){
-        if(file==null||!file.isFile()||file.length()>XFConfig.builderMaxUploadBytes)return null;
-        try{BufferedInputStream in=new BufferedInputStream(new FileInputStream(file));try{Schematic s=readFromNBT(CompressedStreamTools.readCompressed(in));s.name=strip(file.getName());return s;}finally{in.close();}}
-        catch(Exception e){System.err.println("Rejected schematic "+file+": "+e.getMessage());return null;}
+        return loadFromFile(file).schematic;
+    }
+    public static LoadResult loadFromFile(File file){
+        if(file==null)return new LoadResult(null,"missing file");
+        if(!file.isFile())return new LoadResult(null,"not a regular file");
+        if(file.length()>XFConfig.builderMaxUploadBytes)return new LoadResult(null,"file exceeds configured upload limit");
+        try{BufferedInputStream in=new BufferedInputStream(new FileInputStream(file));try{Schematic s=readFromNBT(CompressedStreamTools.readCompressed(in));s.name=strip(file.getName());return new LoadResult(s,null);}finally{in.close();}}
+        catch(Exception e){String reason=e.getMessage();return new LoadResult(null,reason==null||reason.trim().isEmpty()?e.getClass().getSimpleName():reason);}
     }
     public static Schematic readFromNBT(NBTTagCompound n) throws IOException {
         int w=n.getShort("Width")&0xffff,h=n.getShort("Height")&0xffff,l=n.getShort("Length")&0xffff;

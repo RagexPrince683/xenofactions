@@ -435,6 +435,7 @@ public class MainRegistry
 		ModBlocks.mainRegistry();
 		ModItems.mainRegistry();
 		loadConfig(PreEvent);
+		SchematicLibrary.get().initialize(PreEvent.getModConfigurationDirectory());
 		com.hfr.world.earth.XFEarthRegistry.register();
 		MinecraftForge.EVENT_BUS.register(new com.hfr.world.earth.XFEarthWorldValidationHandler());
 		CraftingManager.mainRegistry();
@@ -1611,24 +1612,6 @@ public class MainRegistry
 
         config.save();
 
-        File schemDir = new File(event.getModConfigurationDirectory() + "/schematics");
-
-        if(!schemDir.exists())
-        	schemDir.mkdir();
-
-        for(File f : schemDir.listFiles()) {
-        	if(f.isFile() && f.getName().endsWith(".schematic") && f.getName().split("_").length == 2) {
-
-        		Schematic schem = SchematicLoader.readFromFile(f);
-
-        		int val = Integer.parseInt(f.getName().split("_")[1].replace("_", "").replace(".schematic", ""));
-
-        		if(schem != null) {
-        			schem.value = val;
-        			schems.add(schem);
-        		}
-        	}
-        }
 	}
 
 	public static List<Schematic> schems = new ArrayList();
