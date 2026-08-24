@@ -9,6 +9,7 @@ import com.hfr.builder.BuilderJob;
 import com.hfr.builder.BuilderJobData;
 import com.hfr.builder.BuilderState;
 import com.hfr.builder.BuilderPlan;
+import com.hfr.builder.BuilderMaterialResolver;
 import com.hfr.entity.EntityFactionBuilder;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.tile.AuxGaugePacket;
@@ -50,7 +51,8 @@ public class TileEntityMachineBuilder extends TileEntityMachineBase {
 		return takeMaterial(wanted,1)>0;
 	}
 	/** Atomically removes at most amount matching items and returns the amount removed. */
-	public int takeMaterial(ItemStack wanted,int amount){int available=0;for(int i=1;i<slots.length;i++)if(slots[i]!=null&&slots[i].isItemEqual(wanted))available+=slots[i].stackSize;int take=Math.min(Math.max(0,amount),available);if(take==0)return 0;int left=take;for(int i=1;i<slots.length&&left>0;i++)if(slots[i]!=null&&slots[i].isItemEqual(wanted)){int n=Math.min(left,slots[i].stackSize);slots[i].stackSize-=n;left-=n;if(slots[i].stackSize<=0)slots[i]=null;}markDirty();return take;}
+	public int countMaterial(ItemStack wanted){int available=0;for(int i=1;i<slots.length;i++)if(BuilderMaterialResolver.matches(slots[i],wanted))available+=slots[i].stackSize;return available;}
+	public int takeMaterial(ItemStack wanted,int amount){int take=Math.min(Math.max(0,amount),countMaterial(wanted));if(take==0)return 0;int left=take;for(int i=1;i<slots.length&&left>0;i++)if(BuilderMaterialResolver.matches(slots[i],wanted)){int n=Math.min(left,slots[i].stackSize);slots[i].stackSize-=n;left-=n;if(slots[i].stackSize<=0)slots[i]=null;}markDirty();return take;}
 	@Override public boolean isItemValidForSlot(int slot, ItemStack stack) { return slot > 0 && slot < slots.length; }
 	@Override public int[] getAccessibleSlotsFromSide(int side) { int[] result=new int[27]; for(int i=0;i<27;i++)result[i]=i+1; return result; }
 	public void setFactionId(UUID id){factionId=id;markDirty();}
