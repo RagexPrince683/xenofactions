@@ -3,7 +3,7 @@ package com.hfr.tileentity.machine;
 import java.util.List;
 
 import com.hfr.blocks.BlockDummyable;
-import com.hfr.blocks.BlockSpeedy;
+import com.hfr.blocks.FoundationSupport;
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.Ownership;
@@ -25,6 +25,15 @@ import net.minecraft.util.DamageSource;
 import net.minecraftforge.common.util.ForgeDirection;
 
 public class TileEntityMachineBlastFurnace extends TileEntityMachineBase {
+	private static final int[] PROCESS_SLOTS = { 0, 1, 2, 3, 4, 5 };
+	private static final int[] FUEL_SLOT = { 6 };
+	@Override public int[] getAccessibleSlotsFromSide(int side) { return side == 0 || side == 1 ? PROCESS_SLOTS : FUEL_SLOT; }
+	@Override public boolean isItemValidForSlot(int slot, ItemStack stack) {
+		if(stack == null) return false;
+		return slot == 6 ? stack.getItem() == Items.coal || stack.getItem() == Item.getItemFromBlock(Blocks.coal_block) : slot >= 0 && slot < 6 && (stack.getItem() == Items.iron_ingot || stack.getItem() == Item.getItemFromBlock(Blocks.iron_ore));
+	}
+	@Override public boolean canExtractItem(int slot, ItemStack stack, int side) { return side == 0 && slot < 6 && stack != null && stack.getItem() == ModItems.ingot_steel; }
+
 	
 	public Clowder owner = null;
 	
@@ -158,7 +167,7 @@ public class TileEntityMachineBlastFurnace extends TileEntityMachineBase {
 		
 		for(int x = -1; x <= 1; x++)
 			for(int z = -1; z <= 1; z++)
-				if(!(worldObj.getBlock(xCoord + x, yCoord - 1, zCoord + z) instanceof BlockSpeedy))
+				if(!FoundationSupport.isValid(worldObj.getBlock(xCoord + x, yCoord - 1, zCoord + z)))
 					return false;
 		
 		return true;

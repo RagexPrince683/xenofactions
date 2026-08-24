@@ -44,7 +44,7 @@ Category: `XENOFACTIONS_02_PRESTIGE_GENERATION`
 | `blastFurnacePrestigeGeneration` | `5` | Blast furnace contribution. |
 | `grainmillPrestigeGeneration` | `3` | Grain mill contribution. |
 | `universityPrestigeGeneration` | `60` | University contribution. |
-| `federalReservePrestigeGeneration` | `30` | Federal Reserve contribution. |
+| `federalReservePrestigeGeneration` | `30` | Legacy compatibility key; the deprecated Federal Reserve is inert and does not contribute Prestige. |
 | `templePrestigeGeneration` | `90` | Temple contribution. |
 | `statuePrestigeGeneration` | `15` | Statue contribution. |
 | `cityCenterPrestigeGeneration` | `0` | City center contribution. |

@@ -1,6 +1,6 @@
 package com.hfr.tileentity.machine;
 
-import com.hfr.blocks.BlockSpeedy;
+import com.hfr.blocks.FoundationSupport;
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.Ownership;
@@ -18,6 +18,11 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 
 public class TileEntityMachineGrainmill extends TileEntityMachineBase {
+	private static final int[] PROCESS_SLOTS = { 0, 1, 2, 3 };
+	@Override public int[] getAccessibleSlotsFromSide(int side) { return PROCESS_SLOTS; }
+	@Override public boolean isItemValidForSlot(int slot, ItemStack stack) { return stack != null && stack.getItem() == Items.wheat; }
+	@Override public boolean canExtractItem(int slot, ItemStack stack, int side) { return side == 0 && stack != null && stack.getItem() == ModItems.flour; }
+
 	
 	public Clowder owner = null;
 	
@@ -99,7 +104,7 @@ public class TileEntityMachineGrainmill extends TileEntityMachineBase {
 
 		for(int x = -1; x <= 1; x++)
 			for(int z = -1; z <= 1; z++)
-				if(!(worldObj.getBlock(xCoord + x, yCoord - 1, zCoord + z) instanceof BlockSpeedy))
+				if(!FoundationSupport.isValid(worldObj.getBlock(xCoord + x, yCoord - 1, zCoord + z)))
 					return false;
 		
 		return true;

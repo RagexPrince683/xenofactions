@@ -1,6 +1,6 @@
 package com.hfr.tileentity.machine;
 
-import com.hfr.blocks.BlockSpeedy;
+import com.hfr.blocks.FoundationSupport;
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.Ownership;
@@ -105,7 +105,7 @@ public class TileEntityMachineUni extends TileEntityMachineBase {
 
 		for(int x = -4; x <= 4; x++)
 			for(int z = -4; z <= 4; z++)
-				if(!(worldObj.getBlock(xCoord + x, yCoord - 1, zCoord + z) instanceof BlockSpeedy))
+				if(!FoundationSupport.isValid(worldObj.getBlock(xCoord + x, yCoord - 1, zCoord + z)))
 					return false;
 		
 		return true;

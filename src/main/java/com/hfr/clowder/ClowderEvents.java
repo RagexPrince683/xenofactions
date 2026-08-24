@@ -447,6 +447,9 @@ public void handleChatServer(ServerChatEvent event) {
 				return false;
 			}
 
+			if(clowder != owner.owner && (clowder == null || !owner.owner.isAtWarWith(clowder)))
+				return owner.owner.canVisitorAccess(clowder, FactionPermission.DESTROY);
+
 			if(clowder != owner.owner) {
 				if(clowder != null && !clowder.isRaidable())
 					return false;
@@ -504,6 +507,9 @@ public void handleChatServer(ServerChatEvent event) {
 
 			if(ItemMace.placeOverride.contains(b))
 				return true;
+
+			if(clowder != owner.owner && (clowder == null || !owner.owner.isAtWarWith(clowder)))
+				return owner.owner.canVisitorAccess(clowder, FactionPermission.BUILD);
 			
 			if(clowder != owner.owner && (clowder == null || !clowder.isRaidable()))
 				return false;
@@ -648,6 +654,8 @@ public void handleChatServer(ServerChatEvent event) {
 			return false;
 
 		if(owner.zone == Zone.FACTION && clowder != owner.owner) {
+			if(clowder == null || !owner.owner.isAtWarWith(clowder))
+				return owner.owner.canVisitorAccess(clowder, interactionPermission(event.world, event.x, event.y, event.z, b));
 			
 			if(clowder == null || !clowder.isRaidable() || !owner.owner.isRaidable())
 				return false;
@@ -689,6 +697,17 @@ public void handleChatServer(ServerChatEvent event) {
 		}
 		
 		return true;
+	}
+
+	private FactionPermission interactionPermission(World world, int x, int y, int z, Block block) {
+		TileEntity tile = world.getTileEntity(x, y, z);
+		if(tile instanceof net.minecraft.inventory.IInventory)
+			return FactionPermission.CONTAINER;
+		if(block instanceof net.minecraft.block.BlockDoor || block instanceof net.minecraft.block.BlockTrapDoor
+				|| block instanceof net.minecraft.block.BlockFenceGate || block instanceof net.minecraft.block.BlockButton
+				|| block instanceof net.minecraft.block.BlockLever || block instanceof net.minecraft.block.BlockPressurePlate)
+			return FactionPermission.SWITCH;
+		return FactionPermission.INTERACT;
 	}
 	
 	public static final String NBTKEY = "lastClowder";

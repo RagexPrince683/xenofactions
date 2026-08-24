@@ -25,6 +25,7 @@ Usage: `/clowder help`; aliases: `/clowder`, `/c`; permission level: 0.
 | `/c info {faction}` | Show your faction or another faction. |
 | `/c list` | List factions. |
 | `/c comrades` | List faction members. |
+| `/c permissions` or `/c perms` | View ally and neutral territory permissions. Officers/leaders may set one with `/c permissions <ally\|neutral> <permission> <true\|false>`. |
 | `/c alliance`, `/c allies`, or `/c allylist` | Show allied factions and pending alliance offers. |
 | `/c balance` | Show faction prestige/balance. |
 

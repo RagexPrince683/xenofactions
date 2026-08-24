@@ -1,7 +1,7 @@
 package com.hfr.tileentity.prop;
 
 import com.hfr.blocks.BlockDummyable;
-import com.hfr.blocks.BlockSpeedy;
+import com.hfr.blocks.FoundationSupport;
 import com.hfr.clowder.Clowder;
 import com.hfr.clowder.ClowderTerritory;
 import com.hfr.clowder.ClowderTerritory.Ownership;
@@ -92,7 +92,7 @@ public class TileEntityStatue extends TileEntityMachineBase {
 
 		for(int x = -w; x <= e; x++)
 			for(int z = -n; z <= s; z++)
-				if(!(worldObj.getBlock(xCoord + x, yCoord - 1, zCoord + z) instanceof BlockSpeedy))
+				if(!FoundationSupport.isValid(worldObj.getBlock(xCoord + x, yCoord - 1, zCoord + z)))
 					return false;
 		
 		return true;

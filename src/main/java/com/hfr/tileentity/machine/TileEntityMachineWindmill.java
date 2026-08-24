@@ -1,6 +1,6 @@
 package com.hfr.tileentity.machine;
 
-import com.hfr.blocks.BlockSpeedy;
+import com.hfr.blocks.FoundationSupport;
 import com.hfr.main.MainRegistry;
 import com.hfr.util.Location;
 
@@ -60,7 +60,7 @@ public class TileEntityMachineWindmill extends TileEntity implements IEnergyProv
 
 		for(int x = -1; x <= 1; x++)
 			for(int z = -1; z <= 1; z++)
-				if(!(worldObj.getBlock(xCoord + x, yCoord - 1, zCoord + z) instanceof BlockSpeedy))
+				if(!FoundationSupport.isValid(worldObj.getBlock(xCoord + x, yCoord - 1, zCoord + z)))
 					return false;
 		
 		return true;

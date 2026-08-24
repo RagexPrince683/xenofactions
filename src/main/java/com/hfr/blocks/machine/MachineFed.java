@@ -75,21 +75,9 @@ public class MachineFed extends BlockDummyable {
 
     @Override
     public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
-        if(world.isRemote)
-        {
-            return true;
-        } else if(!player.isSneaking())
-        {
-            int[] pos = this.findCore(world, x, y, z);
-
-            if(pos == null)
-                return false;
-
-            FMLNetworkHandler.openGui(player, MainRegistry.instance, ModBlocks.guiID_fed, world, pos[0], pos[1], pos[2]);
-            return true;
-        } else {
-            return true;
-        }
+		if(!world.isRemote)
+			player.addChatMessage(new net.minecraft.util.ChatComponentText("This Federal Reserve is a deprecated legacy block and no longer operates."));
+		return true;
     }
 
     private final Random field_149933_a = new Random();
