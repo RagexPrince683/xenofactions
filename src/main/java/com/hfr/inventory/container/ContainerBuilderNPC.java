@@ -23,6 +23,8 @@ public class ContainerBuilderNPC extends Container {
     public static final int PLAYER_HOTBAR_START=PLAYER_MAIN_START+PLAYER_MAIN_SLOTS;
     public static final int PLAYER_HOTBAR_SLOTS=9;
     public static final int TOTAL_SLOTS=PLAYER_HOTBAR_START+PLAYER_HOTBAR_SLOTS;
+    // Vanilla 1.7.10 ContainerPlayer has 45 slots. Seeing Size: 45 while applying
+    // this window's 63-stack S30 packet means the client never installed this container.
     private final TileEntityMachineBuilder depot;
     private final EntityFactionBuilder builder;
 
@@ -42,7 +44,13 @@ public class ContainerBuilderNPC extends Container {
         XFLog.debug("[XF Builder] Assigned Builder is not tracked client-side; using a "+BUILDER_SLOTS+"-slot synchronization inventory");
         return new ContainerBuilderNPC(player,depot,new InventoryBasic("container.builder_npc.sync",false,BUILDER_SLOTS),null);
     }
-    @Override public boolean canInteractWith(EntityPlayer player){return builder!=null&&BuilderGuiResolver.getAssignedBuilder(depot)==builder&&depot.getWorldObj()==player.worldObj&&(player.worldObj.isRemote||(player instanceof EntityPlayerMP&&BuilderDepotService.mayBuild((EntityPlayerMP)player,depot)))&&builder.isUseableByPlayer(player);}
+    @Override public boolean canInteractWith(EntityPlayer player){
+        // A client container is only the fixed 63-slot network mirror.  In particular, it
+        // must survive while the Depot tile/entity tracking catches up with FML's open-GUI
+        // packet.  All authorization remains on the logical server.
+        if(player.worldObj.isRemote)return true;
+        return builder!=null&&depot!=null&&BuilderGuiResolver.getAssignedBuilder(depot)==builder&&depot.getWorldObj()==player.worldObj&&player instanceof EntityPlayerMP&&BuilderDepotService.mayBuild((EntityPlayerMP)player,depot)&&builder.isUseableByPlayer(player);
+    }
     @Override public ItemStack transferStackInSlot(EntityPlayer player,int index){
         if(index<0||index>=inventorySlots.size())return null;ItemStack result=null;Slot slot=(Slot)inventorySlots.get(index);
         if(slot!=null&&slot.getHasStack()){ItemStack stack=slot.getStack();result=stack.copy();if(index<PLAYER_MAIN_START){if(!mergeItemStack(stack,PLAYER_MAIN_START,TOTAL_SLOTS,true))return null;}else if(!mergeItemStack(stack,BUILDER_START,PLAYER_MAIN_START,false))return null;if(stack.stackSize==0)slot.putStack(null);else slot.onSlotChanged();if(stack.stackSize==result.stackSize)return null;slot.onPickupFromSlot(player,stack);}return result;
