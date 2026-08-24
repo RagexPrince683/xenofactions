@@ -402,3 +402,11 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Added Builder NPC interaction with its assigned Depot and persistent normalized schematic storage for restart-safe jobs.
 - Moved preview placement, Y origin, rotation, and mirroring into the Build page and removed sneak-click preview movement.
 - Kept Depot slot 0 as hidden legacy storage while exposing material slots 1 through 27 only.
+
+# Pull request: persist and explain the Builder planning workflow
+
+- Persisted server-authoritative Depot draft selection, origin, transform, preview, and validation state with validated synchronization packets.
+- Added bounded, chunked, integrity-checked native schematic preview delivery and client caching.
+- Added canonical identity-based material/unsupported-block accounting and unsupported mapping preflight.
+- Persisted detailed Builder targets, required materials, chunks, path failures, and localized status reasons with automatic temporary-failure recovery and load-time job reattachment.
+- Improved translucent preview visibility and bounded large-schematic rendering, and documented planning, diagnostics, and recovery behavior.
