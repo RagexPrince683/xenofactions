@@ -35,8 +35,9 @@ public final class XenoRecipes {
 
 
 		shaped(ModBlocks.machine_net, "WWW", "RAR", "BBB", 'W', Blocks.ladder, 'R', Blocks.iron_bars, 'B', Blocks.fence, 'A', Blocks.trapped_chest);
-		shaped(ModBlocks.builder, "ICI", "MCM", "IRI", 'I', Items.iron_ingot, 'C', Blocks.chest,
-				'M', ModItems.components_mechanical, 'R', Items.redstone);
+		//since this is WIP/debug we are removing the recipe for this for now.
+		//shaped(ModBlocks.builder, "ICI", "MCM", "IRI", 'I', Items.iron_ingot, 'C', Blocks.chest,
+		//		'M', ModItems.components_mechanical, 'R', Items.redstone);
 
 
 		// Faction utilities.
