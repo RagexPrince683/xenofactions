@@ -2,6 +2,7 @@ package com.hfr.builder;
 
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
 import net.minecraft.item.*;
 
 /** Single conservative block-to-item mapping; unknown blocks are never free. */
