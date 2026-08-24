@@ -2,6 +2,7 @@ package com.hfr.tileentity.machine;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import com.hfr.items.ModItems;
 import com.hfr.packet.PacketDispatcher;
@@ -15,6 +16,9 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 
 public class TileEntityMachineBuilder extends TileEntityMachineBase {
 	
@@ -23,10 +27,30 @@ public class TileEntityMachineBuilder extends TileEntityMachineBase {
 	public int oz = 1;
 	public int lock = -1;
 	public static List<SchemOffer> offers = new ArrayList();
+	private UUID factionId, assignedBuilderId, activeJobId;
+	private final List<UUID> queuedJobs = new ArrayList<UUID>();
 
 	public TileEntityMachineBuilder() {
-		super(1);
+		// Slot zero remains the legacy wrench slot; 1..27 are depot materials.
+		super(28);
 	}
+
+	public boolean takeMaterial(ItemStack wanted) {
+		for(int i=1;i<slots.length;i++) if(slots[i]!=null && slots[i].isItemEqual(wanted)) {
+			if(--slots[i].stackSize<=0) slots[i]=null; markDirty(); return true;
+		}
+		return false;
+	}
+	@Override public boolean isItemValidForSlot(int slot, ItemStack stack) { return slot > 0 && slot < slots.length; }
+	@Override public int[] getAccessibleSlotsFromSide(int side) { int[] result=new int[27]; for(int i=0;i<27;i++)result[i]=i+1; return result; }
+	public void setFactionId(UUID id){factionId=id;markDirty();}
+	public void assignBuilder(UUID id){assignedBuilderId=id;markDirty();}
+	public void setActiveJob(UUID id){activeJobId=id;markDirty();}
+	public void queueJob(UUID id){if(id!=null&&!queuedJobs.contains(id)){queuedJobs.add(id);markDirty();}}
+	@Override public void readFromNBT(NBTTagCompound n){super.readFromNBT(n);factionId=uuid(n,"FactionUUID");assignedBuilderId=uuid(n,"AssignedBuilderUUID");activeJobId=uuid(n,"ActiveJobUUID");queuedJobs.clear();NBTTagList q=n.getTagList("QueuedBuilderJobs",8);for(int i=0;i<q.tagCount();i++)try{queuedJobs.add(UUID.fromString(q.getStringTagAt(i)));}catch(Exception ignored){}}
+	@Override public void writeToNBT(NBTTagCompound n){super.writeToNBT(n);put(n,"FactionUUID",factionId);put(n,"AssignedBuilderUUID",assignedBuilderId);put(n,"ActiveJobUUID",activeJobId);NBTTagList q=new NBTTagList();for(UUID id:queuedJobs)q.appendTag(new net.minecraft.nbt.NBTTagString(id.toString()));n.setTag("QueuedBuilderJobs",q);}
+	private static void put(NBTTagCompound n,String k,UUID id){if(id!=null)n.setString(k,id.toString());}
+	private static UUID uuid(NBTTagCompound n,String k){try{return UUID.fromString(n.getString(k));}catch(Exception e){return null;}}
 
 	@Override
 	public String getName() {

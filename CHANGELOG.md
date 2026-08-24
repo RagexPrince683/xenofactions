@@ -358,3 +358,9 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Added safe sided hopper contracts for the Grain Mill, Blast Furnace, Coal Mine, and Production Line after auditing the existing Foundry and unfinished/non-processing machines.
 - Added faction-owned ally and neutral BUILD, DESTROY, CONTAINER, INTERACT, and SWITCH policies, persistent migration-safe defaults, centralized event resolution, officer commands, and tab completion.
 - Documented recipes, legacy behavior, automation coverage, permission defaults, precedence, commands, and migration behavior.
+# Faction Builder NPC system
+
+* Added persistent faction Builder entities and entity-independent construction jobs.
+* Converted the existing Builder machine into a 27-slot material depot while retaining its registry and legacy slot/NBT data.
+* Added bounded, navigated survival construction with material consumption, protected-block checks, and Xenofactions territory permissions.
+* Added Builder configuration, localization, and operator documentation. Schematic client compatibility remains reserved for Task 2.

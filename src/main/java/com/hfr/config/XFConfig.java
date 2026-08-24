@@ -42,6 +42,11 @@ public final class XFConfig {
 	public static final String CAT_LEGACY_GENERAL = "XENOFACTIONS_16_GENERAL_LEGACY";
 	public static final String CAT_LEGACY_DEBUG = "XENOFACTIONS_17_DEBUG_LOGGING";
 	public static final String CAT_EARTH_WORLD = "XENOFACTIONS_18_EARTH_WORLD";
+	public static final String CAT_BUILDERS = "XENOFACTIONS_19_BUILDERS";
+	public static boolean enableFactionBuilders = true;
+	public static int builderWorkIntervalTicks = 10;
+	public static int builderBlockScanBudget = 64;
+	public static boolean builderAllowWilderness = false;
 	public static boolean enableEarthWorldType = true;
 	public static String earthWorldTypeName = "earthmap";
 	public static String earthDefaultPackId = "xf-earth-16k-clean";
@@ -181,6 +186,10 @@ public final class XFConfig {
 	public static void load(Configuration config) {
 		commentCategories(config);
 		enableEarthWorldType = bool(config, CAT_EARTH_WORLD, "enableEarthWorldType", true, "Registers the template-backed xf_earth overworld type.");
+		enableFactionBuilders = bool(config, CAT_BUILDERS, "enableFactionBuilders", true, "Enable persistent faction Builder workers.");
+		builderWorkIntervalTicks = integer(config, CAT_BUILDERS, "builderWorkIntervalTicks", 10, 1, 1200, "Ticks between Builder work cycles.");
+		builderBlockScanBudget = integer(config, CAT_BUILDERS, "builderBlockScanBudget", 64, 1, 4096, "Maximum schematic entries examined per work cycle.");
+		builderAllowWilderness = bool(config, CAT_BUILDERS, "builderAllowWilderness", false, "Allow Builder modifications outside claimed territory.");
 		earthWorldTypeName = "earthmap";
 		earthDefaultPackId = string(config, CAT_EARTH_WORLD, "earthDefaultPackId", "xf-earth-16k-clean", "Map pack selected when generator options are empty or invalid.");
 		earthBundledCacheDirectory = string(config, CAT_EARTH_WORLD, "earthBundledCacheDirectory", "", "Blank uses .minecraft/xenofactions/earthmaps/cache.");

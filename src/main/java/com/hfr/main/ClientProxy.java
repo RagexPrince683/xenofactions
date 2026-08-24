@@ -191,6 +191,7 @@ public class ClientProxy extends ServerProxy
 		RenderingRegistry.registerEntityRenderingHandler(EntityHook.class, new RenderSnowball(ModItems.hook));
 
 		RenderingRegistry.registerEntityRenderingHandler(EntityFarmer.class, new RenderFarmer());
+		RenderingRegistry.registerEntityRenderingHandler(EntityFactionBuilder.class, new RenderFactionBuilder());
 
 		RenderingRegistry.registerEntityRenderingHandler(EntityCow.class, new RenderCow(new ModelBuffalo(), 1.0F));
 		RenderingRegistry.registerEntityRenderingHandler(EntityPig.class, new RenderPig(new ModelPig(), 1.0F));
