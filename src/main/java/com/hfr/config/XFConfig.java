@@ -70,6 +70,7 @@ public final class XFConfig {
 	public static boolean enableConquestFlagsCommand = true;
 	public static boolean enableGuideBook = true;
 	public static boolean enableNEIIntegration = true;
+	public static boolean enableSurvivalRecipes = true;
 	public static boolean warEnabledDefault = false;
 	public static boolean enableDebugLogging = false;
 	public static String playerIdentityMode = "AUTO";
@@ -201,6 +202,7 @@ public final class XFConfig {
 		enableConquestFlagsCommand = bool(config, CAT_MODULES, "enableConquestFlagsCommand", enableConquestFlagsCommand, "Enables the /xflags command that grants conquest flags while wars are enabled.");
 		enableGuideBook = bool(config, CAT_MODULES, "enableGuideBook", enableGuideBook, "Registers the optional Guide-API Xenofactions Handbook when Guide-API is installed.");
 		enableNEIIntegration = bool(config, CAT_MODULES, "enableNEIIntegration", enableNEIIntegration, "Enables optional Not Enough Items recipe/usage display handlers when NEI is installed.");
+		enableSurvivalRecipes = bool(config, CAT_MODULES, "enableSurvivalRecipes", enableSurvivalRecipes, "Registers survival recipes for established Xenofactions faction infrastructure. Disable to retain command/shop distribution only.");
 		playerIdentityMode = string(config, CAT_PLAYER_IDENTITY, "playerIdentityMode", playerIdentityMode, "AUTO uses NAME in deobfuscated development or offline-mode servers and UUID otherwise. UUID is secure; NAME is development/offline compatibility only.");
 
 		startingPrestige = flt(config, CAT_PRESTIGE_GENERATION, "startingPrestige", startingPrestige, 0F, 1000000F, "Prestige granted to newly-created factions.");
