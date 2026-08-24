@@ -69,3 +69,4 @@ saves/
 /hbm/
 /earthmaps-input/*.xfmap
 /eclipse
+*.hprof
