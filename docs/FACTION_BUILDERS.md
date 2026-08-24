@@ -1,5 +1,11 @@
 # Faction Builders
 
+## Starting a Builder
+
+`Create XF city -> receive Builder Contract -> place Builder Depot -> use contract on Depot -> Builder is assigned`
+
+The existing Xenofactions city is the Town Hall equivalent. No separate Town Hall is required. Once city creation has committed successfully, its founder receives one Builder Contract (or it drops at their feet when their inventory is full). Officers or the faction leader can use that contract on the existing Builder Depot inside the faction's city territory. The assigned persistent Builder and depot then provide access to the existing schematic and construction-job system.
+
 The faction Builder is a persistent server-side worker attached to a faction, a Builder Depot, and an optional construction job. Builders use ordinary Minecraft navigation, do not naturally despawn, do not teleport to work, and pause their job when killed. A replacement Builder can be assigned the same job UUID.
 
 ## Builder Depot

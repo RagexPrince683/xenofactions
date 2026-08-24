@@ -1,3 +1,10 @@
+# Pull request: add the Builder city start flow
+
+- Granted one Builder Contract to a founder only after successful XF city creation, with a safe full-inventory drop fallback.
+- Restored the existing Builder machine as an obtainable, craftable Builder Depot and connected contracts to faction-authorized persistent Builder assignment.
+- Persisted the two-way depot, faction, Builder, dimension, city-job association and safely paused jobs on Builder death or depot removal.
+- Documented that the XF city remains the Town Hall equivalent and no additional Town Hall is required.
+
 # Pull request: fix Builder NPC Forge 1.7.10 compilation
 
 - Resolved the shared Builder job database through Forge 1.7.10's server-side dimension manager and made unavailable or client-world lookups fail safely.
