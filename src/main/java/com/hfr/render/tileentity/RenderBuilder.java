@@ -21,11 +21,11 @@ public class RenderBuilder extends TileEntitySpecialRenderer {
 
         TileEntityMachineBuilder builder = (TileEntityMachineBuilder)te;
 
-        GL11.glTranslated(builder.ox, 0, builder.oz);
+        GL11.glTranslated(builder.previewX-builder.xCoord, builder.previewY-builder.yCoord, builder.previewZ-builder.zCoord);
         
         bindTexture(TextureMap.locationBlocksTexture);
         if(builder.preview != null)
-			SchematicRenderer.render(builder.preview, 1F, x + builder.ox, y, z + builder.oz, 25, builder.previewRotation, builder.previewMirrored);
+			SchematicRenderer.render(builder.preview, 1F, 0, 0, 0, 64, builder.previewRotation, builder.previewMirrored);
         
         GL11.glPopMatrix();
 	}

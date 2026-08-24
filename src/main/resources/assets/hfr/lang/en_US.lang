@@ -826,3 +826,4 @@ builder.contract.wrong_faction=This Builder Depot does not belong to your factio
 builder.contract.insufficient_permission=Only faction officers and leaders may manage Builders.
 builder.contract.outside_territory=The Builder Depot must be inside your faction's city territory.
 builder.contract.spawn_failure=The Builder could not be spawned; the contract was not consumed.
+builder.depot.missing=This Builder has no valid assigned Depot.

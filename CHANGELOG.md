@@ -382,3 +382,10 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Added shared rotation/mirroring transforms, conservative schematic limits, protected-block checks, and bounded upload sessions with expiry, duplicate rejection, and server hashes.
 - Added optional client-only reflective adapters for classic Schematica and Schematica Plus, including conditional Plus-provided `.litematic` loading without a hard dependency.
 - Documented the depot workflow, integration availability, limits, transforms, and deliberately unsupported tile/entity data.
+# Builder Depot management and persistent job flow repair
+
+- Replaced the obsolete Builder wrench/offer chest screen with original Overview, Build, Materials, and Queue management pages.
+- Added server-authoritative Builder snapshots and actions for job creation, validation, pause, resume, cancel, recall, and queue management.
+- Added Builder NPC interaction with its assigned Depot and persistent normalized schematic storage for restart-safe jobs.
+- Moved preview placement, Y origin, rotation, and mirroring into the Build page and removed sneak-click preview movement.
+- Kept Depot slot 0 as hidden legacy storage while exposing material slots 1 through 27 only.

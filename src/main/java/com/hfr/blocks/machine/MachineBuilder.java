@@ -50,43 +50,8 @@ public class MachineBuilder extends BlockContainer {
 		if(world.isRemote)
 		{
 			return true;
-		} else if(!player.isSneaking())
-		{
-			FMLNetworkHandler.openGui(player, MainRegistry.instance, ModBlocks.guiID_builder, world, x, y, z);
-			return true;
 		} else {
-
-			TileEntityMachineBuilder builder = (TileEntityMachineBuilder)world.getTileEntity(x, y, z);
-			int i = MathHelper.floor_double(player.rotationYaw * 4.0F / 360.0F + 0.5D) & 3;
-			
-			if(builder.preview == null)
-				return false;
-			
-			if(i == 0)
-			{
-				do {
-					builder.oz++;
-				} while(builder.doesIntersect());
-			}
-			if(i == 1)
-			{
-				do {
-					builder.ox--;
-				} while(builder.doesIntersect());
-			}
-			if(i == 2)
-			{
-				do {
-					builder.oz--;
-				} while(builder.doesIntersect());
-			}
-			if(i == 3)
-			{
-				do {
-					builder.ox++;
-				} while(builder.doesIntersect());
-			}
-			
+			FMLNetworkHandler.openGui(player, MainRegistry.instance, ModBlocks.guiID_builder, world, x, y, z);
 			return true;
 		}
 	}
