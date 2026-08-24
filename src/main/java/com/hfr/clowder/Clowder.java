@@ -951,10 +951,6 @@ public class Clowder {
 		return true;
 	}
 
-	public boolean isAtWarWith(Clowder other) {
-		return other != null && activeWars.contains(other.name);
-	}
-
 	public boolean canRaid(Clowder other) {
 		if(other == null || !isAtWarWith(other))
 			return false;
