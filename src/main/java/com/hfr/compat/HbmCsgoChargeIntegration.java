@@ -25,6 +25,21 @@ public final class HbmCsgoChargeIntegration {
         return csgoCharge != null && block == csgoCharge;
     }
 
+    /**
+     * Matches an explosion whose origin is inside the tracked CSGO charge block.
+     * Forge posts ExplosionEvent.Detonate before affected blocks are removed, so
+     * checking the runtime-registry block here distinguishes the charge's own
+     * explosion from ordinary removal without linking any HBM class.
+     */
+    public static boolean isCsgoChargeDetonation(net.minecraft.world.World world, int x, int y, int z,
+                                                  double explosionX, double explosionY, double explosionZ) {
+        return world != null
+                && isCsgoCharge(world.getBlock(x, y, z))
+                && explosionX >= x && explosionX <= x + 1.0D
+                && explosionY >= y && explosionY <= y + 1.0D
+                && explosionZ >= z && explosionZ <= z + 1.0D;
+    }
+
     /** Runtime registry contract only; no HBM class is linked at compile time. */
     public static boolean isAvailable() {
         if (!resolved) resolve();

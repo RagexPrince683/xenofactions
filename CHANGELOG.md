@@ -1,3 +1,8 @@
+# Pull request: finish BOMB detonation rounds and reset client TDM state
+
+- Complete a planted HBM CSGO charge's round exactly once from its non-cancelled Forge detonation event, awarding Terrorists through the authoritative BOMB result path while preventing manual objective breaks.
+- Reset all TDM HUD and spectator-camera state on disconnect, world exit, and authoritative disabled status packets, and apply status packets on the Minecraft client thread.
+
 # Pull request: restore world-border wand selection and scope BOMB interaction freezes
 
 - Made the operator world-border wand receive canceled Forge 1.7.10 interactions and retain cancellation after recording either coordinate.

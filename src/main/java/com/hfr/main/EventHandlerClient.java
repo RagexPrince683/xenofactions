@@ -18,6 +18,8 @@ import com.hfr.packet.client.TDMMenuActionPacket;
 import com.hfr.inventory.gui.GUIXenofactionsMenu;
 import com.hfr.inventory.gui.GUIXenofactionsTutorial;
 import com.hfr.inventory.gui.GUITDMMenu;
+import com.hfr.inventory.gui.GUITDMKitSelect;
+import com.hfr.inventory.gui.GUITDMMapVote;
 import com.hfr.render.hud.RenderFlagOverlay;
 import com.hfr.render.hud.RenderRVIOverlay;
 import com.hfr.render.hud.RenderRadarScreen;
@@ -62,6 +64,7 @@ import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.world.WorldEvent;
 
 public class EventHandlerClient {
 	
@@ -96,6 +99,7 @@ public class EventHandlerClient {
 		updateTDMStatus(enabled,voting,roundSeconds,voteSeconds,redScore,blueScore,mapName,mode,bombState,redBombWins,blueBombWins,terroristTeam,bombSeconds,site,economy,buyScore,0,0);
 	}
 	public static void updateTDMStatus(boolean enabled,boolean voting,int roundSeconds,int voteSeconds,int redScore,int blueScore,String mapName,String mode,String bombState,int redBombWins,int blueBombWins,String terroristTeam,int bombSeconds,String site,boolean economy,int buyScore,int redPlayerCount,int bluePlayerCount) {
+		if(!enabled){resetTDMClientState();return;}
 		tdmHudEnabled = enabled;
 		tdmVoting = voting;
 		tdmRoundSeconds = roundSeconds;
@@ -105,6 +109,13 @@ public class EventHandlerClient {
 		tdmMapName = mapName == null ? "" : mapName;
 		tdmMode=mode;tdmBombState=bombState;tdmRedBombWins=redBombWins;tdmBlueBombWins=blueBombWins;tdmTerroristTeam=terroristTeam;tdmBombSeconds=bombSeconds;tdmBombsite=site;tdmEconomy=economy;tdmBuyScore=buyScore;tdmRedPlayerCount=redPlayerCount;tdmBluePlayerCount=bluePlayerCount;
 		if(!enabled||voting)updateTDMSpectator(-1,"");
+	}
+	public static void resetTDMClientState() {
+		tdmHudEnabled=false;tdmVoting=false;tdmRoundSeconds=0;tdmVoteSeconds=0;tdmRedScore=0;tdmBlueScore=0;tdmMapName="";
+		tdmMode="DEATHMATCH";tdmBombState="DISABLED";tdmTerroristTeam="red";tdmBombsite="";tdmSpectating="";
+		tdmRedBombWins=0;tdmBlueBombWins=0;tdmBombSeconds=0;tdmSpectatorTarget=-1;tdmBuyScore=0;tdmRedPlayerCount=0;tdmBluePlayerCount=0;tdmEconomy=false;
+		Minecraft mc=Minecraft.getMinecraft();if(mc==null)return;if(mc.thePlayer!=null)mc.renderViewEntity=mc.thePlayer;
+		if(mc.currentScreen instanceof GUITDMMenu||mc.currentScreen instanceof GUITDMKitSelect||mc.currentScreen instanceof GUITDMMapVote)mc.displayGuiScreen(null);
 	}
 	public static void updateTDMSpectator(int entityId,String name){Minecraft mc=Minecraft.getMinecraft();tdmSpectatorTarget=entityId;tdmSpectating=name==null?"":name;if(mc==null)return;if(entityId<=0){if(mc.thePlayer!=null)mc.renderViewEntity=mc.thePlayer;return;}if(mc.theWorld!=null){Entity e=mc.theWorld.getEntityByID(entityId);if(e instanceof EntityPlayer)mc.renderViewEntity= (EntityLivingBase) e;else if(mc.thePlayer!=null)mc.renderViewEntity=mc.thePlayer;}}
 
@@ -439,10 +450,16 @@ public class EventHandlerClient {
 	
 	@SubscribeEvent
 	public void onClientDisconnect(ClientDisconnectionFromServerEvent event) {
+		resetTDMClientState();
 		lookup.clear();
 		com.hfr.client.wallart.WallArtTextureCache.clear();
 		com.hfr.stonedrops.StoneDropDisplaySnapshot.clearClientSnapshot();
 		MachineDisplaySnapshot.clearClientSnapshot();
+	}
+
+	@SubscribeEvent
+	public void onClientWorldUnload(WorldEvent.Unload event) {
+		if(event.world!=null&&event.world.isRemote)resetTDMClientState();
 	}
 
 	private void renderTag(EntityPlayer player, double x, double y, double z, RendererLivingEntity renderer, String name) {
@@ -557,7 +574,7 @@ public class EventHandlerClient {
 	public void xenofactionsClientTick(ClientTickEvent event) {
 		Minecraft xfMc = Minecraft.getMinecraft();
 		boolean xfHasWorld = xfMc.theWorld != null;
-		if(!xfHasWorld&&tdmSpectatorTarget!=-1)updateTDMSpectator(-1,"");
+		if(xfHadWorld&&!xfHasWorld)resetTDMClientState();
 		if(xfHasWorld&&tdmSpectatorTarget>0&&(xfMc.renderViewEntity==null||xfMc.renderViewEntity.dimension!=xfMc.thePlayer.dimension))updateTDMSpectator(-1,"");
 		if(!xfHadWorld && xfHasWorld) xfTutorialQueued = true;
 		if(!xfHasWorld) xfTutorialQueued = false;

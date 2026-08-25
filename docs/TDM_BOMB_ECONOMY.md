@@ -9,6 +9,11 @@ Every BOMB round starts with a protected 20-second buying period. The live timer
 The buy phase (`PRE_ROUND`) and the brief `ROUND_END` intermission freeze ordinary world interaction. `WAITING_FOR_TEAMS` and `DISABLED` do not freeze world editing, and map voting does not inherit a stale BOMB interaction lock. Other protection systems, including faction territory, Safezones, and Warzones, continue to apply normally.
 
 Old TDM map NBT has no economy keys and loads with economy disabled and both rewards at zero.
+
+An HBM CSGO charge planted in a configured bombsite ends the round when its actual Forge explosion detonates. Terrorists receive the round win through the same authoritative result and intermission path used by defuses and elimination results; ordinary block removal is not a detonation.
+
+Leaving a world or server clears the client TDM HUD, scores, timers, BOMB state, and spectator camera. The next server must send its own status before any TDM HUD is shown.
+
 # Runtime mode and single-player testing
 
 Changing the selected, enabled map with `/tdm map mode <map> <deathmatch|bomb>` starts a clean match in the requested mode immediately. Changing an unselected map only updates that map's configuration.

@@ -107,6 +107,13 @@ public final class TDMBombManager {
         if(!HbmCsgoChargeIntegration.isCsgoCharge(player.worldObj.getBlock(x,y,z)))return false;
         TDMManager.awardDefuseBuyScore(player);player.worldObj.setBlockToAir(x,y,z);bomb=null;completeRound(player.worldObj,TDMManager.getCounterTerroristTeam(player.worldObj),BombRoundWinReason.BOMB_DEFUSED);return true;
     }
+    public static synchronized boolean isTrackedBomb(World world,int x,int y,int z){return state==BombRoundState.BOMB_PLANTED&&bomb!=null&&world!=null&&world.provider.dimensionId==bomb.dim&&x==bomb.x&&y==bomb.y&&z==bomb.z;}
+    /** Called only for Forge's non-cancelled detonation phase while the HBM block still exists. */
+    public static synchronized void onExplosionDetonate(World world,double x,double y,double z){
+        if(state!=BombRoundState.BOMB_PLANTED||bomb==null||world==null||world.provider.dimensionId!=bomb.dim)return;
+        if(!HbmCsgoChargeIntegration.isCsgoChargeDetonation(world,bomb.x,bomb.y,bomb.z,x,y,z))return;
+        completeRound(world,TDMManager.getTerroristTeam(world),BombRoundWinReason.BOMB_DETONATED);
+    }
     public static void eliminate(EntityPlayer p){
         if(!TDMManager.isHardcoreRespawns(p.worldObj))return; eliminated.add(key(p));
         if(!TDMManager.isBombMode(p.worldObj)||!isRoundActive())return;

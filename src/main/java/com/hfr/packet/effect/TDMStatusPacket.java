@@ -8,6 +8,7 @@ import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.client.Minecraft;
 
 public class TDMStatusPacket implements IMessage {
 
@@ -69,7 +70,8 @@ public class TDMStatusPacket implements IMessage {
         @Override
         @SideOnly(Side.CLIENT)
         public IMessage onMessage(TDMStatusPacket message, MessageContext ctx) {
-            EventHandlerClient.updateTDMStatus(message.enabled,message.voting,message.roundSeconds,message.voteSeconds,message.redScore,message.blueScore,message.mapName,message.mode,message.bombState,message.redBombWins,message.blueBombWins,message.terroristTeam,message.bombSeconds,message.plantedSite,message.economy,message.buyScore,message.redPlayerCount,message.bluePlayerCount);
+            final TDMStatusPacket status=message;
+            Minecraft.getMinecraft().func_152344_a(new Runnable(){public void run(){EventHandlerClient.updateTDMStatus(status.enabled,status.voting,status.roundSeconds,status.voteSeconds,status.redScore,status.blueScore,status.mapName,status.mode,status.bombState,status.redBombWins,status.blueBombWins,status.terroristTeam,status.bombSeconds,status.plantedSite,status.economy,status.buyScore,status.redPlayerCount,status.bluePlayerCount);}});
             return null;
         }
     }
