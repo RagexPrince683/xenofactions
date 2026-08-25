@@ -7,22 +7,9 @@ used.
 
 ## Hard-tracked lifecycle
 
-An accepted plant records its world, dimension, exact coordinates and block,
-bombsite, planter, Terrorist team/role, plant tick/round identity, and the live
-tile instance and runtime class. `HbmCsgoChargeIntegration` snapshots HBM's
-serialized `timer` fuse and `defuse` hold-progress state while the block exists.
-The adapter deliberately has no HBM imports. It logs the concrete production
-block and tile Java names once when an installed jar supplies them (production
-obfuscation means these names are properties of that jar, not a stable API).
+An accepted plant records its world, dimension, exact coordinates and block, bombsite, planter, Terrorist role, plant tick, and round identity. The no-link adapter reads the concrete tile hierarchy's actual `started` and `timer` Java fields through cached reflection; it does not use serialized `defuse` data or manufacture terminal tile states. Xenofactions latches a stopped armed fuse or an imminent detonation while the tile still exists, so the conclusion survives HBM removing the block.
 
-Every server tick checks that exact coordinate. Removal begins a five-tick,
-event-ordering-only grace period. A matching runtime result is secondary
-confirmation. After the grace period the saved lifecycle/IMC result is applied;
-an otherwise unknown removal is warning-logged once and resolves as detonation,
-so a valid objective can never leave the HUD or round in `BOMB_PLANTED` forever.
-Xenofactions cleanup invalidates the tracker before removing the block and can
-therefore never award a cleanup as a result. Ordinary players remain unable to
-break the tracked objective.
+Every server tick checks that exact coordinate. Removal begins a five-tick event-ordering grace period. Runtime IMC remains secondary confirmation. If neither IMC nor a proven live transition establishes a result, the lifecycle enters the recoverable `OBJECTIVE_ERROR` state and awards nobody rather than guessing. Ordinary players remain unable to break the tracked objective.
 
 ## Optional runtime IMC
 
@@ -41,3 +28,11 @@ Operators can run:
 A winner uses the explicit `ADMIN_FORCED` reason. `abort` changes no score. Both
 paths invalidate and remove an objective, clear transient state, enter normal
 round-end intermission, and then proceed to buy time or team waiting.
+
+## Live charge observation and custody
+
+The installed CSGO registration resolves to HBM's CSGO charge block and its `TileEntityCharge`-based tile. Xenofactions deliberately does not link those HBM classes: it caches reflective access to the tile hierarchy's real public runtime fields `started` and `timer`. A `true -> false` `started` transition while `timer > 0` latches disarm; because the tile decrements once and explodes at `timer <= 0` in the same update, an armed observation at `timer <= 1` latches imminent detonation. No fictitious terminal tile state or `defuse` NBT key is used.
+
+Bomb stacks are matched by exact registered item identity. Counter-Terrorists and spectators cannot possess them. Stale player stacks and loose objective entities are purged at safe round boundaries, and each normal playable `LIVE` round creates one fresh stack, retrying Terrorist inventories before dropping that single stack at an eligible Terrorist's feet. HBM dismantle drops are removed narrowly around the tracked plant.
+
+If the tracked block disappears without authoritative IMC, a latched disarm, or a latched detonation, Xenofactions enters `OBJECTIVE_ERROR`, logs the complete last observation, awards neither team, and awaits `/tdm forceroundend`. Unknown removal is never treated as an automatic Terrorist detonation.

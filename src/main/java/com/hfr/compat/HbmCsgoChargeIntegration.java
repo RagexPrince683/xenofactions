@@ -12,14 +12,18 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
+import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /** Optional HBM lookup for the CSGO bomb block; never links against HBM classes. */
 public final class HbmCsgoChargeIntegration {
-    public enum LifecycleState { ARMED, DEFUSING, DEFUSED, DETONATING, DETONATED, REMOVED_UNKNOWN }
     public static final class Snapshot {
-        public final LifecycleState state; public final TileEntity tile; public final Class<?> tileClass;
-        private Snapshot(LifecycleState state,TileEntity tile){this.state=state;this.tile=tile;this.tileClass=tile==null?null:tile.getClass();}
+        public final boolean blockPresent,tilePresent; public final Boolean started; public final Integer timer; public final TileEntity tile; public final Class<?> tileClass;
+        private Snapshot(boolean blockPresent,TileEntity tile,Boolean started,Integer timer){this.blockPresent=blockPresent;this.tilePresent=tile!=null;this.tile=tile;this.tileClass=tile==null?null:tile.getClass();this.started=started;this.timer=timer;}
     }
+    private static final class Fields { final Field started,timer; Fields(Class<?> c){started=find(c,"started");timer=find(c,"timer");} }
+    private static final Map<Class<?>,Fields> FIELD_CACHE=new ConcurrentHashMap<Class<?>,Fields>();
 
     private static final String HBM_MOD_ID = "hbm";
     public static final String BOMB_RESULT_KEY = "xenofactions_tdm_csgo_bomb_result";
@@ -63,21 +67,19 @@ public final class HbmCsgoChargeIntegration {
         return csgoCharge != null && block == csgoCharge;
     }
 
-    /**
-     * Narrow no-link adapter for the production CSGO charge. The live block and
-     * tile implementation names are reported once because production-obfuscated
-     * and development-remapped HBM jars use different Java names. HBM persists
-     * its fuse in {@code timer} and hold-to-defuse progress in {@code defuse};
-     * TDM retains this snapshot because HBM removes the tile on completion.
-     */
     public static Snapshot snapshot(World world,int x,int y,int z){
-        if(world==null||!isCsgoCharge(world.getBlock(x,y,z)))return new Snapshot(LifecycleState.REMOVED_UNKNOWN,null);
-        TileEntity tile=world.getTileEntity(x,y,z);if(tile==null)return new Snapshot(LifecycleState.ARMED,null);
-        NBTTagCompound tag=new NBTTagCompound();tile.writeToNBT(tag);
-        return new Snapshot(tag.hasKey("defuse",3)&&tag.getInteger("defuse")>0?LifecycleState.DEFUSING:LifecycleState.ARMED,tile);
+        if(world==null||!isCsgoCharge(world.getBlock(x,y,z)))return new Snapshot(false,null,null,null);
+        TileEntity tile=world.getTileEntity(x,y,z);if(tile==null)return new Snapshot(true,null,null,null);
+        Fields f=FIELD_CACHE.get(tile.getClass());if(f==null){f=new Fields(tile.getClass());FIELD_CACHE.put(tile.getClass(),f);}
+        return new Snapshot(true,tile,readBoolean(f.started,tile),readInt(f.timer,tile));
     }
+    private static Field find(Class<?> c,String name){for(Class<?> k=c;k!=null;k=k.getSuperclass())try{Field f=k.getDeclaredField(name);f.setAccessible(true);return f;}catch(NoSuchFieldException ignored){}return null;}
+    private static Boolean readBoolean(Field f,Object o){try{return f==null?null:Boolean.valueOf(f.getBoolean(o));}catch(IllegalAccessException e){return null;}}
+    private static Integer readInt(Field f,Object o){try{return f==null?null:Integer.valueOf(f.getInt(o));}catch(IllegalAccessException e){return null;}}
     private static boolean implementationDescribed;
-    public static synchronized void describeImplementation(World world,int x,int y,int z){if(implementationDescribed)return;implementationDescribed=true;TileEntity tile=world.getTileEntity(x,y,z);String message="Resolved HBM CSGO implementation: block="+world.getBlock(x,y,z).getClass().getName()+", tile="+(tile==null?"<none>":tile.getClass().getName())+"; lifecycle NBT: timer, defuse";if(MainRegistry.logger!=null)MainRegistry.logger.info(message);}
+    public static synchronized void describeImplementation(World world,int x,int y,int z){if(implementationDescribed)return;implementationDescribed=true;TileEntity tile=world.getTileEntity(x,y,z);String message="Resolved HBM CSGO implementation: block="+world.getBlock(x,y,z).getClass().getName()+", tile="+(tile==null?"<none>":tile.getClass().getName())+"; reflected lifecycle fields: started, timer";if(MainRegistry.logger!=null)MainRegistry.logger.info(message);}
+
+    public static boolean isCsgoChargeStack(ItemStack stack){if(stack==null)return false;if(!resolved)resolve();return csgoChargeItem!=null&&stack.getItem()==csgoChargeItem;}
 
     /** Runtime registry contract only; no HBM class is linked at compile time. */
     public static boolean isAvailable() {
