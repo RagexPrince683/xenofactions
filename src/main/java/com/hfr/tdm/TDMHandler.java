@@ -12,6 +12,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.event.world.WorldEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +27,21 @@ public class TDMHandler {
     private long lastRoundTick = -1;
     private final Map<String, Integer> pendingRespawns = new HashMap<String, Integer>();
     private final Random random = new Random();
+
+    @SubscribeEvent
+    public void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.START) {
+            TDMServerTaskQueue.runScheduledTasks();
+        }
+    }
+
+    @SubscribeEvent
+    public void onWorldUnload(WorldEvent.Unload event) {
+        if (event.world != null && !event.world.isRemote
+                && event.world.provider.dimensionId == 0) {
+            TDMServerTaskQueue.clear();
+        }
+    }
 
     @SubscribeEvent
     public void onClone(PlayerEvent.Clone event) {
