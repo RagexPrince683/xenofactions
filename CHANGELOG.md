@@ -1,3 +1,10 @@
+# Pull request: hard-track the HBM CSGO bomb lifecycle
+
+- Hard-track every accepted CSGO plant by exact block, coordinate, tile instance, lifecycle snapshot, plant tick, and round identity; bounded missing-block resolution prevents permanent `BOMB_PLANTED` rounds.
+- Retain coordinate-matched runtime IMC as secondary confirmation, invalidate objectives before Xenofactions cleanup, and add warning-once unknown-removal recovery.
+- Add operator recovery command `/tdm forceroundend <red|blue|terrorist|ct|counterterrorist|abort>` with explicit administrative wins or scoreless aborts.
+- Document exact registry resolution, runtime lifecycle snapshots, cleanup protection, and recovery behavior.
+
 # Pull request: use authoritative HBM CSGO bomb results
 
 - Added an optional Forge 1.7.10 runtime IMC receiver for HBM's authoritative `DEFUSED` and `DETONATED` CSGO charge lifecycle results.

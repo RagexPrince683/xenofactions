@@ -10,10 +10,16 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 
 /** Optional HBM lookup for the CSGO bomb block; never links against HBM classes. */
 public final class HbmCsgoChargeIntegration {
+    public enum LifecycleState { ARMED, DEFUSING, DEFUSED, DETONATING, DETONATED, REMOVED_UNKNOWN }
+    public static final class Snapshot {
+        public final LifecycleState state; public final TileEntity tile; public final Class<?> tileClass;
+        private Snapshot(LifecycleState state,TileEntity tile){this.state=state;this.tile=tile;this.tileClass=tile==null?null:tile.getClass();}
+    }
 
     private static final String HBM_MOD_ID = "hbm";
     public static final String BOMB_RESULT_KEY = "xenofactions_tdm_csgo_bomb_result";
@@ -56,6 +62,22 @@ public final class HbmCsgoChargeIntegration {
         }
         return csgoCharge != null && block == csgoCharge;
     }
+
+    /**
+     * Narrow no-link adapter for the production CSGO charge. The live block and
+     * tile implementation names are reported once because production-obfuscated
+     * and development-remapped HBM jars use different Java names. HBM persists
+     * its fuse in {@code timer} and hold-to-defuse progress in {@code defuse};
+     * TDM retains this snapshot because HBM removes the tile on completion.
+     */
+    public static Snapshot snapshot(World world,int x,int y,int z){
+        if(world==null||!isCsgoCharge(world.getBlock(x,y,z)))return new Snapshot(LifecycleState.REMOVED_UNKNOWN,null);
+        TileEntity tile=world.getTileEntity(x,y,z);if(tile==null)return new Snapshot(LifecycleState.ARMED,null);
+        NBTTagCompound tag=new NBTTagCompound();tile.writeToNBT(tag);
+        return new Snapshot(tag.hasKey("defuse",3)&&tag.getInteger("defuse")>0?LifecycleState.DEFUSING:LifecycleState.ARMED,tile);
+    }
+    private static boolean implementationDescribed;
+    public static synchronized void describeImplementation(World world,int x,int y,int z){if(implementationDescribed)return;implementationDescribed=true;TileEntity tile=world.getTileEntity(x,y,z);String message="Resolved HBM CSGO implementation: block="+world.getBlock(x,y,z).getClass().getName()+", tile="+(tile==null?"<none>":tile.getClass().getName())+"; lifecycle NBT: timer, defuse";if(MainRegistry.logger!=null)MainRegistry.logger.info(message);}
 
     /** Runtime registry contract only; no HBM class is linked at compile time. */
     public static boolean isAvailable() {

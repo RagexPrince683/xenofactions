@@ -3,6 +3,7 @@ package com.hfr.command;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.effect.TDMMenuDataPacket;
 import com.hfr.tdm.TDMKitManager;
+import com.hfr.tdm.TDMBombManager;
 import com.hfr.tdm.TDMManager;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
@@ -120,6 +121,8 @@ public class CommandTDM extends CommandBase {
             sender.addChatMessage(new ChatComponentText("Single-player BOMB testing " + (enabled.booleanValue() ? "enabled." : "disabled.")));
             return;
         }
+
+        if(args[0].equalsIgnoreCase("forceroundend")){if(args.length!=2){sender.addChatMessage(new ChatComponentText("Usage: /tdm forceroundend <red|blue|terrorist|ct|counterterrorist|abort>"));return;}String target=args[1].toLowerCase();boolean abort="abort".equals(target);TDMManager.Team winner=abort?null:("terrorist".equals(target)?TDMManager.getTerroristTeam(world):("ct".equals(target)||"counterterrorist".equals(target)?TDMManager.getCounterTerroristTeam(world):TDMManager.Team.fromName(target)));if(!abort&&winner==null){sender.addChatMessage(new ChatComponentText("Unknown round result: "+args[1]));return;}if(!TDMBombManager.forceRoundEnd(world,winner,abort)){sender.addChatMessage(new ChatComponentText("There is no active BOMB round to end."));return;}sender.addChatMessage(new ChatComponentText(abort?"BOMB round aborted.":winner.name+" administratively won the BOMB round."));return;}
 
         if (args[0].equalsIgnoreCase("forcemapvote") || args[0].equalsIgnoreCase("forcevote")) {
             if (!TDMManager.isEnabled(world)) {
@@ -278,6 +281,7 @@ public class CommandTDM extends CommandBase {
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-kit list [map|global]" + TITLE + " - Lists saved kits"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-kit remove <red|blue> <number> [map|global]" + TITLE + " - Deletes a kit"));
         sender.addChatMessage(new ChatComponentText(TITLE + "Match controls"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forceroundend <red|blue|terrorist|ct|counterterrorist|abort>" + TITLE + " - Forces or aborts the current BOMB round"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forcemapvote" + TITLE + " - Starts a 30 second map vote"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-friendlyfire <on|off>" + TITLE + " - Toggles friendly fire"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-autobalance <on|off|now>" + TITLE + " - Configures or runs auto balance"));
