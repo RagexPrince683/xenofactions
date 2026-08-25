@@ -38,7 +38,7 @@ public class TDMKitSelectPacket implements IMessage {
             TDMServerTaskQueue.schedule(new Runnable() {
                 @Override
                 public void run() {
-                    if (!isPlayerActive(player)) {
+                    if (!isPlayerConnected(player)) {
                         return;
                     }
 
@@ -53,7 +53,7 @@ public class TDMKitSelectPacket implements IMessage {
             return null;
         }
 
-        private boolean isPlayerActive(EntityPlayerMP player) {
+        private boolean isPlayerConnected(EntityPlayerMP player) {
             return player != null && player.worldObj != null
                     && player.worldObj.playerEntities.contains(player)
                     && player.playerNetServerHandler != null;

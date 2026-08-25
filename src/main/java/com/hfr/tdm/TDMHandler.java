@@ -53,12 +53,15 @@ public class TDMHandler {
     public void onClone(PlayerEvent.Clone event) {
         if (!event.wasDeath) return;
 
+        TDMManager.cancelKitSelection(event.entityPlayer);
+
         if (TDMBombManager.isEliminated(event.original) && TDMManager.isHardcoreRespawns(event.entityPlayer.worldObj)) TDMSpectatorManager.observe(event.entityPlayer);
         else queueRespawn(event.entityPlayer);
     }
 
     @SubscribeEvent
     public void onRespawn(cpw.mods.fml.common.gameevent.PlayerEvent.PlayerRespawnEvent event) {
+        TDMManager.clearKitSelectionProtection(event.player);
         if (TDMBombManager.isEliminated(event.player) && TDMManager.isHardcoreRespawns(event.player.worldObj)) TDMSpectatorManager.observe(event.player);
         else queueRespawn(event.player);
     }
@@ -84,6 +87,7 @@ public class TDMHandler {
         Integer ticksLeft = pendingRespawns.get(playerName);
         if (ticksLeft == null) return;
 
+        if (!TDMManager.isAliveForTDM(event.player)) return;
         if (TDMManager.respawnPlayer(event.player, random)) {
             pendingRespawns.remove(playerName);
             TDMManager.promptForKit(event.player);
@@ -235,6 +239,7 @@ public class TDMHandler {
     private void queueRespawn(EntityPlayer player) {
         if (player.worldObj.isRemote) return;
         if (!TDMManager.isEnabled(player.worldObj)) return;
+        if (!TDMManager.isAliveForTDM(player)) return;
         if (TDMManager.isHardcoreRespawns(player.worldObj) && TDMBombManager.isEliminated(player)) { TDMSpectatorManager.observe(player); return; }
 
         pendingRespawns.put(getKey(player), RESPAWN_RETRY_TICKS);

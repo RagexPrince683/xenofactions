@@ -6,6 +6,10 @@ BOMB maps can enable a per-map saved-kit economy with `/tdm map economy <map> <t
 
 Every BOMB round starts with a protected 20-second buying period. The live timer starts afterward. A player may purchase one eligible team kit. If none is selected, the first free eligible kit is assigned; paid kits are never assigned free while economy rules are enabled. Economy-disabled BOMB maps retain the phase but treat every kit as free. DEATHMATCH behavior is unchanged.
 
+Buy protection exists only while the authoritative BOMB state is `PRE_ROUND`. It temporarily applies invisibility, slowness, resistance, and regeneration to eligible living players, and Xenofactions explicitly removes all four effects before changing the state to `LIVE`. The pending-kit set has the narrower meaning that a player still needs to choose a kit; it cannot extend protection into `LIVE`, `BOMB_PLANTED`, `ROUND_END`, team waiting, objective recovery, or map voting. Expired selections, including a round with no free fallback kit, close the buy GUI and clear both the pending entry and all TDM-owned buy effects without purchasing a paid kit.
+
+Hardcore observer invisibility and buy-phase invisibility are independent systems. Hardcore observation uses the entity spectator flag for a player eliminated during the active round, while buy protection uses a potion effect and is cleaned at every buy-phase boundary regardless of the map's `hardcoreRespawns` setting. Dead entities are neither teleported nor prompted during buy setup; the normal Forge respawn events queue setup for Minecraft's replacement live player entity.
+
 The buy phase (`PRE_ROUND`) and the brief `ROUND_END` intermission freeze ordinary world interaction. `WAITING_FOR_TEAMS` and `DISABLED` do not freeze world editing, and map voting does not inherit a stale BOMB interaction lock. Other protection systems, including faction territory, Safezones, and Warzones, continue to apply normally.
 
 Old TDM map NBT has no economy keys and loads with economy disabled and both rewards at zero.

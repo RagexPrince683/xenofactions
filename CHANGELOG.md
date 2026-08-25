@@ -1,3 +1,9 @@
+# Pull request: contain TDM BOMB buy protection to PRE_ROUND
+
+- Separated the authoritative BOMB buy phase, pending kit choice, and temporary kit protection so stale pending selections can no longer refresh invisibility, slowness, resistance, or regeneration during live combat.
+- Made the `PRE_ROUND` to `LIVE` transition resolve free fallbacks, expire unavailable choices, close buy GUIs, synchronize inventories, and remove every TDM-owned kit potion before combat begins.
+- Prevented dead entities and late packets from entering kit selection, integrated cleanup with respawn and round boundaries independently of hardcore observer behavior, and documented the two invisibility systems.
+
 # Pull request: classify same-tick HBM CSGO dismantles as CT defuses
 
 - Added the configurable Xenofactions-only `tdmBombUnknownRemovalAsDefuse` compatibility fallback for HBM dismantles that remove `BlockChargeC4CSGO` before `TileEntityCharge`'s brief disarmed state can be sampled.
