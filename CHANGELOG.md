@@ -1,3 +1,9 @@
+# Pull request: assign the HBM CSGO bomb to a Terrorist
+
+- Assigned one exact HBM CSGO charge to a randomized, eligible Terrorist after bomb-round kit setup and the authoritative transition to live play.
+- Restricted carriers to active, non-spectating players on the configured Terrorist team in the bomb world's dimension, with randomized retries for full inventories.
+- Added cached, optional inventory-item resolution for both supported HBM CSGO charge registry names without linking HBM classes.
+
 # Pull request: add TDM bomb rounds and hardcore observers
 
 - Added per-map DEATHMATCH/BOMB modes while retaining RED and BLUE as player teams and deriving fixed Terrorist/Counter-Terrorist roles from map configuration.

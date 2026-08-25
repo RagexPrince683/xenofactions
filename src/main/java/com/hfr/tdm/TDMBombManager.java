@@ -4,10 +4,14 @@ import com.hfr.compat.HbmCsgoChargeIntegration;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.world.World;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
@@ -51,11 +55,22 @@ public final class TDMBombManager {
         TDMManager.sendStatusToAll(world);
     }
     public static void startRound(World world){
+        if(world.isRemote||state!=BombRoundState.PRE_ROUND||TDMManager.isMapVoteActive(world))return;
         TDMManager.TDMMap map=TDMManager.getSelectedMapData(world);if(map==null||map.mode!=TDMManager.TDMGameMode.BOMB)return;
-        int red=0,blue=0;for(EntityPlayerMP p:TDMManager.getOnlinePlayers()){TDMManager.Team t=TDMManager.getOrAssignPlayerTeam(p);if(t==TDMManager.Team.RED)red++;else blue++;}
+        int red=0,blue=0;for(EntityPlayerMP p:TDMManager.getOnlinePlayers())if(p.worldObj.provider.dimensionId==world.provider.dimensionId&&!TDMSpectatorManager.isObserving(p)&&!isEliminated(p)){TDMManager.Team t=TDMManager.getOrAssignPlayerTeam(p);if(t==TDMManager.Team.RED)red++;else if(t==TDMManager.Team.BLUE)blue++;}
         if(red==0||blue==0){beginBuyTime(world);return;}
         for(EntityPlayerMP p:TDMManager.getOnlinePlayers())if(p.worldObj.provider.dimensionId==world.provider.dimensionId){if(!TDMManager.hasSelectedKit(p)){TDMManager.Team t=TDMManager.getOrAssignPlayerTeam(p);int[] costs=TDMKitManager.getKitCosts(map.name,t);int fallback=-1;for(int i=0;i<costs.length;i++)if(!map.buyScoreEnabled||costs[i]==0){fallback=i;break;}if(fallback>=0)TDMManager.selectKit(p,fallback);else{p.addChatMessage(new ChatComponentText("No free kit is available for this round."));System.err.println("TDM bomb buy: no free kit for map "+map.name+" team "+t.name);}}com.hfr.packet.PacketDispatcher.wrapper.sendTo(new com.hfr.packet.effect.TDMKitGuiPacket("",new String[0]),p);}
-        state=BombRoundState.LIVE;stateEndTick=world.getTotalWorldTime()+TDMManager.getEffectiveBombRoundTicks(world,map.name);TDMManager.sendStatusToAll(world);
+        state=BombRoundState.LIVE;stateEndTick=world.getTotalWorldTime()+TDMManager.getEffectiveBombRoundTicks(world,map.name);assignBombToRandomTerrorist(world);TDMManager.sendStatusToAll(world);
+    }
+    private static boolean assignBombToRandomTerrorist(World world){
+        ItemStack available=HbmCsgoChargeIntegration.createCsgoChargeStack();
+        if(available==null){System.err.println("TDM bomb round: cannot assign hbm:tile.charge_c4csgo because its inventory item is unavailable.");return false;}
+        TDMManager.Team terrorists=TDMManager.getTerroristTeam(world);List<EntityPlayerMP> eligible=new ArrayList<EntityPlayerMP>();
+        for(EntityPlayerMP p:TDMManager.getOnlinePlayers())if(p.worldObj.provider.dimensionId==world.provider.dimensionId&&TDMManager.getOrAssignPlayerTeam(p)==terrorists&&!TDMSpectatorManager.isObserving(p)&&!isEliminated(p))eligible.add(p);
+        if(eligible.isEmpty()){System.err.println("TDM bomb round: cannot assign the CSGO bomb because no eligible Terrorist is online in dimension "+world.provider.dimensionId+".");return false;}
+        Collections.shuffle(eligible,new Random());
+        for(EntityPlayerMP p:eligible){ItemStack stack=HbmCsgoChargeIntegration.createCsgoChargeStack();if(stack!=null&&p.inventory.addItemStackToInventory(stack)){p.inventory.markDirty();p.inventoryContainer.detectAndSendChanges();p.addChatMessage(new ChatComponentText("You have the bomb."));return true;}}
+        System.err.println("TDM bomb round: no eligible Terrorist has inventory space for the CSGO bomb in dimension "+world.provider.dimensionId+".");return false;
     }
     /** Called at LOWEST priority, after an uncancelled Forge placement has been accepted. */
     public static void recordAcceptedPlant(EntityPlayer player,Block block,int x,int y,int z){
