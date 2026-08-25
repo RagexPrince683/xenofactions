@@ -4,6 +4,7 @@ import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.effect.TDMKitGuiPacket;
 import com.hfr.packet.effect.TDMMapVoteGuiPacket;
 import com.hfr.packet.effect.TDMStatusPacket;
+import com.hfr.compat.HbmCsgoChargeIntegration;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
@@ -21,6 +22,8 @@ public class TDMManager {
     public static final int MAP_VOTE_TICKS = 30 * 20;
     public static final int SCORE_LIMIT = 10000;
     public static final int POINTS_PER_KILL = 100;
+    public static final int BOMB_SCORE_LIMIT = 13;
+    public static final int BOMB_ROUND_TICKS = 120 * 20;
     public static final int TEAM_CHANGE_COOLDOWN_TICKS = 120 * 20;
     private static final Set<String> pendingKitSelection = new HashSet<String>();
     private static final Map<String, Long> nextTeamChangeTick = new HashMap<String, Long>();
@@ -50,6 +53,24 @@ public class TDMManager {
         }
     }
 
+    public enum TDMGameMode { DEATHMATCH, BOMB }
+    public enum BombRole { TERRORIST, COUNTER_TERRORIST }
+
+    public static class Bombsite {
+        public int dimension;
+        public boolean hasPos1, hasPos2;
+        public int x1, y1, z1, x2, y2, z2;
+
+        public boolean isComplete() { return hasPos1 && hasPos2; }
+        public boolean contains(int dim, int x, int y, int z) {
+            return isComplete() && dimension == dim
+                    && x >= Math.min(x1, x2) && x <= Math.max(x1, x2)
+                    && y >= Math.min(y1, y2) && y <= Math.max(y1, y2)
+                    && z >= Math.min(z1, z2) && z <= Math.max(z1, z2);
+        }
+        public void clear() { hasPos1 = hasPos2 = false; }
+    }
+
     public static class TDMMap {
         public final String name;
         public final List<SpawnPoint> spawns = new ArrayList<SpawnPoint>();
@@ -57,11 +78,48 @@ public class TDMManager {
         public int scoreLimitOverride;
         /** Zero means inherit the global setting; positive values are ticks. */
         public int roundTicksOverride;
+        public TDMGameMode mode = TDMGameMode.DEATHMATCH;
+        public Team terroristTeam = Team.RED;
+        public boolean hardcoreRespawns;
+        public int bombScoreLimitOverride;
+        public int bombRoundTicksOverride;
+        public final Bombsite bombsiteA = new Bombsite();
+        public final Bombsite bombsiteB = new Bombsite();
 
         public TDMMap(String name) {
             this.name = normalizeMapName(name);
         }
     }
+
+    public static TDMMap getMap(World world, String name) {
+        return TDMData.get(world).maps.get(normalizeMapName(name));
+    }
+    public static TDMMap getSelectedMapData(World world) { return getMap(world, getSelectedMap(world)); }
+    public static TDMGameMode getGameMode(World world) { TDMMap m=getSelectedMapData(world); return m == null ? TDMGameMode.DEATHMATCH : m.mode; }
+    public static Team getTerroristTeam(World world) { TDMMap m=getSelectedMapData(world); return m == null ? Team.RED : m.terroristTeam; }
+    public static Team getCounterTerroristTeam(World world) { return getTerroristTeam(world) == Team.RED ? Team.BLUE : Team.RED; }
+    public static BombRole getBombRole(World world, Team team) { return team == getTerroristTeam(world) ? BombRole.TERRORIST : BombRole.COUNTER_TERRORIST; }
+    public static BombRole getBombRole(EntityPlayer player) { return getBombRole(player.worldObj, getOrAssignPlayerTeam(player)); }
+    public static boolean isTerrorist(EntityPlayer player) { return getBombRole(player) == BombRole.TERRORIST; }
+    public static boolean isCounterTerrorist(EntityPlayer player) { return getBombRole(player) == BombRole.COUNTER_TERRORIST; }
+    public static boolean isHardcoreRespawns(World world) { TDMMap m=getSelectedMapData(world); return m != null && m.hardcoreRespawns; }
+    public static boolean isBombMode(World world) { return getGameMode(world) == TDMGameMode.BOMB; }
+
+    public static boolean configureMap(World world, String name, TDMGameMode mode, Team terrorists, Boolean hardcore) {
+        TDMMap map=getMap(world,name); if(map==null)return false;
+        if(mode!=null)map.mode=mode; if(terrorists!=null)map.terroristTeam=terrorists; if(hardcore!=null)map.hardcoreRespawns=hardcore.booleanValue();
+        TDMData.get(world).markDirty(); return true;
+    }
+    public static boolean setBombsite(World world,String name,boolean siteA,int corner,int dim,int x,int y,int z) {
+        TDMMap map=getMap(world,name); if(map==null)return false; Bombsite site=siteA?map.bombsiteA:map.bombsiteB;
+        if ((site.hasPos1 || site.hasPos2) && site.dimension != dim) return false;
+        site.dimension=dim; if(corner==1){site.x1=x;site.y1=y;site.z1=z;site.hasPos1=true;}else{site.x2=x;site.y2=y;site.z2=z;site.hasPos2=true;}
+        TDMData.get(world).markDirty(); return true;
+    }
+    public static boolean clearBombsite(World world,String name,boolean siteA){TDMMap m=getMap(world,name);if(m==null)return false;(siteA?m.bombsiteA:m.bombsiteB).clear();TDMData.get(world).markDirty();return true;}
+    public static String getBombsiteAt(World world,int dim,int x,int y,int z){TDMMap m=getSelectedMapData(world);if(m==null)return null;if(m.bombsiteA.contains(dim,x,y,z))return "A";if(m.bombsiteB.contains(dim,x,y,z))return "B";return null;}
+    public static int getEffectiveBombScoreLimit(World world,String name){TDMMap m=getMap(world,name);return m!=null&&m.bombScoreLimitOverride>0?m.bombScoreLimitOverride:BOMB_SCORE_LIMIT;}
+    public static int getEffectiveBombRoundTicks(World world,String name){TDMMap m=getMap(world,name);return m!=null&&m.bombRoundTicksOverride>0?m.bombRoundTicksOverride:BOMB_ROUND_TICKS;}
 
     public static class SpawnPoint {
         public final Team team;
@@ -96,6 +154,8 @@ public class TDMManager {
         if (data.enabled) {
             startRound(world, false);
         } else {
+            TDMBombManager.cleanup(world, true);
+            TDMSpectatorManager.restoreAll();
             data.roundEndTick = 0;
             data.mapVoteActive = false;
             data.mapVoteEndTick = 0;
@@ -178,7 +238,7 @@ public class TDMManager {
             return false;
         }
 
-        data.selectedMap = normalized;
+        TDMBombManager.cleanup(world,true);TDMSpectatorManager.restoreAll();data.selectedMap = normalized;
         data.markDirty();
         return true;
     }
@@ -235,7 +295,8 @@ public class TDMManager {
         TDMData data = TDMData.get(world);
         TDMMap map = data.maps.get(normalizeMapName(mapName));
         if (map == null || scoreLimit < 0) return false;
-        map.scoreLimitOverride = scoreLimit;
+        if (map.mode == TDMGameMode.BOMB) map.bombScoreLimitOverride = scoreLimit;
+        else map.scoreLimitOverride = scoreLimit;
         data.markDirty();
         return true;
     }
@@ -244,7 +305,8 @@ public class TDMManager {
         TDMData data = TDMData.get(world);
         TDMMap map = data.maps.get(normalizeMapName(mapName));
         if (map == null || roundTicks < 0) return false;
-        map.roundTicksOverride = roundTicks;
+        if (map.mode == TDMGameMode.BOMB) map.bombRoundTicksOverride = roundTicks;
+        else map.roundTicksOverride = roundTicks;
         data.markDirty();
         return true;
     }
@@ -401,6 +463,12 @@ public class TDMManager {
             return;
         }
 
+        if (isBombMode(world)) {
+            TDMBombManager.tick(world);
+            if (now % 20 == 0) sendStatusToAll(world);
+            return;
+        }
+
         if (data.roundEndTick <= 0 || now > data.roundEndTick + MAP_VOTE_TICKS) {
             startRound(world, false);
             return;
@@ -418,6 +486,11 @@ public class TDMManager {
     }
 
     public static void startRound(World world, boolean resetVotes) {
+        startMatch(world, resetVotes);
+    }
+
+    /** Starts a full map match; bomb combat rounds have their own lifecycle. */
+    public static void startMatch(World world, boolean resetVotes) {
         TDMData data = TDMData.get(world);
         data.redScore = 0;
         data.blueScore = 0;
@@ -430,6 +503,9 @@ public class TDMManager {
             data.mapVotes.clear();
         }
         data.markDirty();
+        TDMSpectatorManager.restoreAll();
+        if (isBombMode(world)) TDMBombManager.startMatch(world);
+        else TDMBombManager.cleanup(world, true);
         sendStatusToAll(world);
     }
 
@@ -439,6 +515,7 @@ public class TDMManager {
             return;
         }
 
+        if (isBombMode(world)) { sendStatusToAll(world); return; }
         if (scoringTeam == Team.RED) {
             data.redScore = addScore(data.redScore);
         } else if (scoringTeam == Team.BLUE) {
@@ -463,6 +540,9 @@ public class TDMManager {
         if (data.mapVoteActive) {
             return;
         }
+
+        TDMBombManager.cleanup(world, true);
+        TDMSpectatorManager.restoreAll();
 
         data.mapVoteActive = true;
         data.mapVoteEndTick = world.getTotalWorldTime() + MAP_VOTE_TICKS;
@@ -521,8 +601,10 @@ public class TDMManager {
                         getRemainingRoundSeconds(world),
                         getRemainingVoteSeconds(world),
                         data.redScore,
-                        data.blueScore,
-                        data.selectedMap
+                        data.blueScore, data.selectedMap,
+                        getGameMode(world).name(), TDMBombManager.getState().name(),
+                        data.redBombWins, data.blueBombWins, getTerroristTeam(world).name,
+                        TDMBombManager.getRemainingSeconds(world), TDMBombManager.getPlantedSite()
                 ), player);
             }
         }
@@ -586,6 +668,10 @@ public class TDMManager {
     public static boolean changePlayerTeamWithCooldown(EntityPlayer player) {
         if (!isEnabled(player.worldObj)) {
             player.addChatMessage(new ChatComponentText("TDM is not enabled."));
+            return false;
+        }
+        if (TDMBombManager.isRoundActive() || TDMSpectatorManager.isObserving(player)) {
+            player.addChatMessage(new ChatComponentText("Team changes are unavailable during an active bomb round."));
             return false;
         }
 
@@ -680,6 +766,7 @@ public class TDMManager {
         if (!data.enabled) {
             return 0;
         }
+        if (TDMBombManager.isRoundActive()) return 0;
 
         List<EntityPlayerMP> onlinePlayers = getOnlinePlayers();
         if (onlinePlayers.size() < 2) {
@@ -739,7 +826,7 @@ public class TDMManager {
         return null;
     }
 
-    private static List<EntityPlayerMP> getOnlinePlayers() {
+    public static List<EntityPlayerMP> getOnlinePlayers() {
         List<EntityPlayerMP> players = new ArrayList<EntityPlayerMP>();
         MinecraftServer server = MinecraftServer.getServer();
         if (server == null || server.getConfigurationManager() == null) {
@@ -758,6 +845,7 @@ public class TDMManager {
         if (!(player instanceof EntityPlayerMP)) {
             return;
         }
+        if (TDMSpectatorManager.isObserving(player)) return;
 
         Team team = getOrAssignPlayerTeam(player);
         String mapName = getSelectedMap(player.worldObj);
@@ -787,6 +875,7 @@ public class TDMManager {
     }
 
     public static boolean selectKit(EntityPlayer player, int kitIndex) {
+        if (TDMSpectatorManager.isObserving(player)) return false;
         if (!pendingKitSelection.contains(getPlayerKey(player))) {
             return false;
         }

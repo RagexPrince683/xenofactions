@@ -250,6 +250,10 @@ public class CommandTDM extends CommandBase {
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map addspawn <map> <red|blue>" + TITLE + " - Adds your position as a map spawn"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map scorelimit <map> <points|default>" + TITLE + " - Sets a map score limit"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map timer <map> <seconds|default>" + TITLE + " - Sets a map round timer"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map mode <map> <deathmatch|bomb>" + TITLE + " - Sets the map game mode"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map terroristteam <map> <red|blue>" + TITLE + " - Maps RED/BLUE to the T role"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map hardcorerespawns <map> <true|false>" + TITLE + " - Eliminates players until the round boundary"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map bombsite <map> <a|b> <pos1|pos2|clear>" + TITLE + " - Configures an objective cuboid"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-kit add <red|blue> [map|global]" + TITLE + " - Saves your inventory as a kit"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-kit list [map|global]" + TITLE + " - Lists saved kits"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-kit remove <red|blue> <number> [map|global]" + TITLE + " - Deletes a kit"));
@@ -416,7 +420,7 @@ public class CommandTDM extends CommandBase {
             return;
         }
 
-        if (!action.equals("create") && !action.equals("delete") && !action.equals("select") && !action.equals("addspawn") && !action.equals("clearspawns") && !action.equals("scorelimit") && !action.equals("timer")) {
+        if (!action.equals("create") && !action.equals("delete") && !action.equals("select") && !action.equals("addspawn") && !action.equals("clearspawns") && !action.equals("scorelimit") && !action.equals("timer") && !action.equals("mode") && !action.equals("terroristteam") && !action.equals("hardcorerespawns") && !action.equals("bombsite")) {
             sender.addChatMessage(new ChatComponentText("Unknown TDM map command: " + args[1]));
             sendMapUsage(sender);
             return;
@@ -452,6 +456,12 @@ public class CommandTDM extends CommandBase {
             configureMapSetting(sender, world, action, mapName, args);
             return;
         }
+
+        if(!TDMManager.hasMap(world,mapName)){sender.addChatMessage(new ChatComponentText("Unknown TDM map: "+mapName));return;}
+        if(action.equals("mode")){if(args.length<4){sender.addChatMessage(new ChatComponentText("Usage: /tdm map mode <map> <deathmatch|bomb>"));return;}TDMManager.TDMGameMode mode;try{mode=TDMManager.TDMGameMode.valueOf(args[3].toUpperCase());}catch(IllegalArgumentException e){sender.addChatMessage(new ChatComponentText("Mode must be deathmatch or bomb."));return;}TDMManager.configureMap(world,mapName,mode,null,null);sender.addChatMessage(new ChatComponentText("Map "+mapName+" mode: "+mode.name().toLowerCase()));return;}
+        if(action.equals("terroristteam")){if(args.length<4){sender.addChatMessage(new ChatComponentText("Usage: /tdm map terroristteam <map> <red|blue>"));return;}TDMManager.Team team=TDMManager.Team.fromName(args[3]);if(team==null){sender.addChatMessage(new ChatComponentText("Team must be red or blue."));return;}TDMManager.configureMap(world,mapName,null,team,null);sender.addChatMessage(new ChatComponentText("Map "+mapName+" Terrorists: "+team.name));return;}
+        if(action.equals("hardcorerespawns")){if(args.length<4||(!args[3].equalsIgnoreCase("true")&&!args[3].equalsIgnoreCase("false"))){sender.addChatMessage(new ChatComponentText("Usage: /tdm map hardcorerespawns <map> <true|false>"));return;}TDMManager.configureMap(world,mapName,null,null,Boolean.valueOf(args[3]));sender.addChatMessage(new ChatComponentText("Map "+mapName+" hardcore respawns: "+args[3].toLowerCase()));return;}
+        if(action.equals("bombsite")){if(args.length<5){sender.addChatMessage(new ChatComponentText("Usage: /tdm map bombsite <map> <a|b> <pos1|pos2|clear>"));return;}boolean a=args[3].equalsIgnoreCase("a");if(!a&&!args[3].equalsIgnoreCase("b")){sender.addChatMessage(new ChatComponentText("Bombsite must be A or B."));return;}if(args[4].equalsIgnoreCase("clear")){TDMManager.clearBombsite(world,mapName,a);sender.addChatMessage(new ChatComponentText("Cleared bombsite "+(a?"A":"B")+"."));return;}int corner=args[4].equalsIgnoreCase("pos1")?1:args[4].equalsIgnoreCase("pos2")?2:0;if(corner==0){sender.addChatMessage(new ChatComponentText("Use pos1, pos2, or clear."));return;}EntityPlayer p=getCommandSenderAsPlayer(sender);if(!TDMManager.setBombsite(world,mapName,a,corner,p.dimension,(int)Math.floor(p.posX),(int)Math.floor(p.posY),(int)Math.floor(p.posZ))){sender.addChatMessage(new ChatComponentText("Both bombsite corners must be in the same dimension."));return;}sender.addChatMessage(new ChatComponentText("Set bombsite "+(a?"A":"B")+" pos"+corner+"."));return;}
 
         if (action.equals("delete")) {
             if (!TDMManager.deleteMap(world, mapName)) {
@@ -537,18 +547,21 @@ public class CommandTDM extends CommandBase {
             }
             int ticks = value * 20;
             TDMManager.setMapRoundTicks(world, mapName, ticks);
-            int effectiveSeconds = TDMManager.getEffectiveRoundTicks(world, mapName) / 20;
+            boolean bomb=TDMManager.getMap(world,mapName).mode==TDMManager.TDMGameMode.BOMB;
+            int effectiveSeconds = (bomb?TDMManager.getEffectiveBombRoundTicks(world,mapName):TDMManager.getEffectiveRoundTicks(world, mapName)) / 20;
             sender.addChatMessage(new ChatComponentText("Map " + mapName + " round timer: " + (useDefault ? "default" : value + " seconds") + "; effective: " + effectiveSeconds + " seconds."));
         } else {
             TDMManager.setMapScoreLimit(world, mapName, value);
-            sender.addChatMessage(new ChatComponentText("Map " + mapName + " score limit: " + (useDefault ? "default" : Integer.toString(value)) + "; effective: " + TDMManager.getEffectiveScoreLimit(world, mapName) + "."));
+            boolean bomb=TDMManager.getMap(world,mapName).mode==TDMManager.TDMGameMode.BOMB;
+            sender.addChatMessage(new ChatComponentText("Map " + mapName + " score limit: " + (useDefault ? "default" : Integer.toString(value)) + "; effective: " + (bomb?TDMManager.getEffectiveBombScoreLimit(world,mapName):TDMManager.getEffectiveScoreLimit(world, mapName)) + "."));
         }
     }
 
     private void sendMapUsage(ICommandSender sender) {
-        sender.addChatMessage(new ChatComponentText("Usage: /tdm map <create|delete|select|addspawn|clearspawns|scorelimit|timer|list>"));
+        sender.addChatMessage(new ChatComponentText("Usage: /tdm map <create|delete|select|addspawn|clearspawns|mode|terroristteam|hardcorerespawns|bombsite|scorelimit|timer|list>"));
         sender.addChatMessage(new ChatComponentText("  /tdm map scorelimit <map> <points|default>"));
         sender.addChatMessage(new ChatComponentText("  /tdm map timer <map> <seconds|default>"));
+        sender.addChatMessage(new ChatComponentText("  /tdm map bombsite <map> <a|b> <pos1|pos2|clear>"));
     }
 
     private void sendMapList(ICommandSender sender, World world) {
@@ -561,9 +574,11 @@ public class CommandTDM extends CommandBase {
         String selected = TDMManager.getSelectedMap(world);
         sender.addChatMessage(new ChatComponentText("TDM maps (selected: " + (selected.length() == 0 ? "none" : selected) + "):"));
         for (String map : maps) {
+            TDMManager.TDMMap details=TDMManager.getMap(world,map);
+            if(details.mode==TDMManager.TDMGameMode.BOMB){sender.addChatMessage(new ChatComponentText("- "+map+": BOMB, T="+details.terroristTeam.name+", CT="+(details.terroristTeam==TDMManager.Team.RED?"blue":"red")+", hardcore="+details.hardcoreRespawns+", wins="+TDMManager.getEffectiveBombScoreLimit(world,map)+(details.bombScoreLimitOverride==0?" (default)":"")+", timer="+(TDMManager.getEffectiveBombRoundTicks(world,map)/20)+"s"+(details.bombRoundTicksOverride==0?" (default)":"")+", sites A="+details.bombsiteA.isComplete()+" B="+details.bombsiteB.isComplete()));continue;}
             boolean defaultScore = TDMManager.getScoreLimitOverride(world, map) == 0;
             boolean defaultTimer = TDMManager.getRoundTicksOverride(world, map) == 0;
-            sender.addChatMessage(new ChatComponentText("- " + map + ": score " + TDMManager.getEffectiveScoreLimit(world, map)
+            sender.addChatMessage(new ChatComponentText("- " + map + ": DEATHMATCH, hardcore="+details.hardcoreRespawns+", score " + TDMManager.getEffectiveScoreLimit(world, map)
                     + (defaultScore ? " (default)" : "") + ", round " + (TDMManager.getEffectiveRoundTicks(world, map) / 20)
                     + "s" + (defaultTimer ? " (default)" : "")));
         }

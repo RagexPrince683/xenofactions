@@ -1,6 +1,7 @@
 package com.hfr.tdm;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -8,6 +9,9 @@ import net.minecraft.util.DamageSource;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
+import net.minecraftforge.event.world.BlockEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,12 +31,14 @@ public class TDMHandler {
     public void onClone(PlayerEvent.Clone event) {
         if (!event.wasDeath) return;
 
-        queueRespawn(event.entityPlayer);
+        if (TDMBombManager.isEliminated(event.original) && TDMManager.isHardcoreRespawns(event.entityPlayer.worldObj)) TDMSpectatorManager.observe(event.entityPlayer);
+        else queueRespawn(event.entityPlayer);
     }
 
     @SubscribeEvent
     public void onRespawn(cpw.mods.fml.common.gameevent.PlayerEvent.PlayerRespawnEvent event) {
-        queueRespawn(event.player);
+        if (TDMBombManager.isEliminated(event.player) && TDMManager.isHardcoreRespawns(event.player.worldObj)) TDMSpectatorManager.observe(event.player);
+        else queueRespawn(event.player);
     }
 
     @SubscribeEvent
@@ -44,6 +50,7 @@ public class TDMHandler {
 
         if (!TDMManager.isEnabled(event.player.worldObj)) {
             pendingRespawns.remove(getKey(event.player));
+            TDMSpectatorManager.restore(event.player);
             return;
         }
 
@@ -75,6 +82,7 @@ public class TDMHandler {
         if (TDMManager.isMapVoteActive(event.entityLiving.worldObj)) return;
 
         EntityPlayer victim = (EntityPlayer) event.entityLiving;
+        TDMBombManager.eliminate(victim);
         EntityPlayer attacker = getAttackingPlayer(event.source);
         if (attacker == null || attacker == victim) return;
 
@@ -96,6 +104,7 @@ public class TDMHandler {
 
         EntityPlayer victim = (EntityPlayer) event.entityLiving;
         EntityPlayer attacker = getAttackingPlayer(event.source);
+        if (TDMSpectatorManager.isObserving(victim) || (attacker != null && TDMSpectatorManager.isObserving(attacker))) { event.setCanceled(true); return; }
         if (attacker == null || attacker == victim) return;
 
         TDMManager.Team victimTeam = TDMManager.getPlayerTeam(victim.worldObj, victim.getCommandSenderName());
@@ -104,6 +113,17 @@ public class TDMHandler {
             event.setCanceled(true);
         }
     }
+
+    @SubscribeEvent(priority=EventPriority.HIGHEST)
+    public void restrictPlace(BlockEvent.PlaceEvent event){if(event.world.isRemote)return;if(TDMSpectatorManager.isObserving(event.player)||!TDMBombManager.canPlant(event.player,event.placedBlock,event.x,event.y,event.z,true))event.setCanceled(true);}
+    @SubscribeEvent(priority=EventPriority.LOWEST,receiveCanceled=false)
+    public void acceptedPlace(BlockEvent.PlaceEvent event){if(!event.world.isRemote)TDMBombManager.recordAcceptedPlant(event.player,event.placedBlock,event.x,event.y,event.z);}
+    @SubscribeEvent(priority=EventPriority.HIGHEST)
+    public void restrictBreak(BlockEvent.BreakEvent event){if(TDMSpectatorManager.isObserving(event.getPlayer()))event.setCanceled(true);}
+    @SubscribeEvent(priority=EventPriority.HIGHEST)
+    public void restrictInteract(PlayerInteractEvent event){if(TDMSpectatorManager.isObserving(event.entityPlayer))event.setCanceled(true);}
+    @SubscribeEvent(priority=EventPriority.HIGHEST)
+    public void restrictPickup(EntityItemPickupEvent event){if(TDMSpectatorManager.isObserving(event.entityPlayer))event.setCanceled(true);}
 
 
     private void runRoundTimer(EntityPlayer player) {
@@ -158,6 +178,7 @@ public class TDMHandler {
     private void queueRespawn(EntityPlayer player) {
         if (player.worldObj.isRemote) return;
         if (!TDMManager.isEnabled(player.worldObj)) return;
+        if (TDMManager.isHardcoreRespawns(player.worldObj) && TDMBombManager.isEliminated(player)) { TDMSpectatorManager.observe(player); return; }
 
         pendingRespawns.put(getKey(player), RESPAWN_RETRY_TICKS);
     }

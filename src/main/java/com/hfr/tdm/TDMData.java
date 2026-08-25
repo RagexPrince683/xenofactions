@@ -22,6 +22,9 @@ public class TDMData extends WorldSavedData {
     public String selectedMap = "";
     public int redScore = 0;
     public int blueScore = 0;
+    public int redBombWins = 0;
+    public int blueBombWins = 0;
+    public int redBombLosses = 0, blueBombLosses = 0;
     public long roundEndTick = 0;
     public boolean mapVoteActive = false;
     public long mapVoteEndTick = 0;
@@ -66,6 +69,7 @@ public class TDMData extends WorldSavedData {
         selectedMap = nbt.hasKey("selectedMap") ? nbt.getString("selectedMap").toLowerCase() : "";
         redScore = nbt.getInteger("redScore");
         blueScore = nbt.getInteger("blueScore");
+        redBombWins=nbt.getInteger("redBombWins"); blueBombWins=nbt.getInteger("blueBombWins");redBombLosses=nbt.getInteger("redBombLosses");blueBombLosses=nbt.getInteger("blueBombLosses");
         roundEndTick = nbt.hasKey("roundEndTick") ? nbt.getLong("roundEndTick") : 0;
         mapVoteActive = nbt.getBoolean("mapVoteActive");
         mapVoteEndTick = nbt.hasKey("mapVoteEndTick") ? nbt.getLong("mapVoteEndTick") : 0;
@@ -96,6 +100,12 @@ public class TDMData extends WorldSavedData {
             TDMManager.TDMMap map = new TDMManager.TDMMap(mapName);
             map.scoreLimitOverride = mapTag.hasKey("scoreLimit") ? Math.max(0, mapTag.getInteger("scoreLimit")) : 0;
             map.roundTicksOverride = mapTag.hasKey("roundTicks") ? Math.max(0, mapTag.getInteger("roundTicks")) : 0;
+            try { map.mode=TDMManager.TDMGameMode.valueOf(mapTag.hasKey("mode")?mapTag.getString("mode"):"DEATHMATCH"); } catch(IllegalArgumentException e){map.mode=TDMManager.TDMGameMode.DEATHMATCH;}
+            TDMManager.Team terrorist=TDMManager.Team.fromName(mapTag.hasKey("terroristTeam")?mapTag.getString("terroristTeam"):"red");map.terroristTeam=terrorist==null?TDMManager.Team.RED:terrorist;
+            map.hardcoreRespawns=mapTag.hasKey("hardcoreRespawns")&&mapTag.getBoolean("hardcoreRespawns");
+            map.bombScoreLimitOverride=mapTag.hasKey("bombScoreLimit")?Math.max(0,mapTag.getInteger("bombScoreLimit")):0;
+            map.bombRoundTicksOverride=mapTag.hasKey("bombRoundTicks")?Math.max(0,mapTag.getInteger("bombRoundTicks")):0;
+            readBombsite(mapTag,"bombsiteA",map.bombsiteA);readBombsite(mapTag,"bombsiteB",map.bombsiteB);
             int mapSpawnCount = mapTag.getInteger("spawnCount");
             for (int j = 0; j < mapSpawnCount; j++) {
                 TDMManager.SpawnPoint spawn = readSpawn(mapTag.getCompoundTag("spawn" + j));
@@ -148,6 +158,7 @@ public class TDMData extends WorldSavedData {
         nbt.setString("selectedMap", selectedMap);
         nbt.setInteger("redScore", redScore);
         nbt.setInteger("blueScore", blueScore);
+        nbt.setInteger("redBombWins",redBombWins);nbt.setInteger("blueBombWins",blueBombWins);nbt.setInteger("redBombLosses",redBombLosses);nbt.setInteger("blueBombLosses",blueBombLosses);
         nbt.setLong("roundEndTick", roundEndTick);
         nbt.setBoolean("mapVoteActive", mapVoteActive);
         nbt.setLong("mapVoteEndTick", mapVoteEndTick);
@@ -163,6 +174,9 @@ public class TDMData extends WorldSavedData {
             mapTag.setString("name", map.name);
             if (map.scoreLimitOverride > 0) mapTag.setInteger("scoreLimit", map.scoreLimitOverride);
             if (map.roundTicksOverride > 0) mapTag.setInteger("roundTicks", map.roundTicksOverride);
+            mapTag.setString("mode",map.mode.name());mapTag.setString("terroristTeam",map.terroristTeam.name);mapTag.setBoolean("hardcoreRespawns",map.hardcoreRespawns);
+            if(map.bombScoreLimitOverride>0)mapTag.setInteger("bombScoreLimit",map.bombScoreLimitOverride);if(map.bombRoundTicksOverride>0)mapTag.setInteger("bombRoundTicks",map.bombRoundTicksOverride);
+            writeBombsite(mapTag,"bombsiteA",map.bombsiteA);writeBombsite(mapTag,"bombsiteB",map.bombsiteB);
             mapTag.setInteger("spawnCount", map.spawns.size());
             for (int i = 0; i < map.spawns.size(); i++) {
                 mapTag.setTag("spawn" + i, writeSpawn(map.spawns.get(i)));
@@ -225,4 +239,7 @@ public class TDMData extends WorldSavedData {
         spawnTag.setInteger("z", spawn.z);
         return spawnTag;
     }
+
+    private void readBombsite(NBTTagCompound parent,String key,TDMManager.Bombsite site){if(!parent.hasKey(key))return;NBTTagCompound t=parent.getCompoundTag(key);site.dimension=t.getInteger("dim");site.hasPos1=t.getBoolean("hasPos1");site.hasPos2=t.getBoolean("hasPos2");site.x1=t.getInteger("x1");site.y1=t.getInteger("y1");site.z1=t.getInteger("z1");site.x2=t.getInteger("x2");site.y2=t.getInteger("y2");site.z2=t.getInteger("z2");}
+    private void writeBombsite(NBTTagCompound parent,String key,TDMManager.Bombsite site){if(!site.hasPos1&&!site.hasPos2)return;NBTTagCompound t=new NBTTagCompound();t.setInteger("dim",site.dimension);t.setBoolean("hasPos1",site.hasPos1);t.setBoolean("hasPos2",site.hasPos2);t.setInteger("x1",site.x1);t.setInteger("y1",site.y1);t.setInteger("z1",site.z1);t.setInteger("x2",site.x2);t.setInteger("y2",site.y2);t.setInteger("z2",site.z2);parent.setTag(key,t);}
 }

@@ -1,3 +1,10 @@
+# Pull request: add TDM bomb rounds and hardcore observers
+
+- Added per-map DEATHMATCH/BOMB modes while retaining RED and BLUE as player teams and deriving fixed Terrorist/Counter-Terrorist roles from map configuration.
+- Added persistent A/B bombsite cuboids, separate bomb win/loss scoring and mode-specific score/timer overrides (13 wins and 120 seconds by default).
+- Added server-authoritative hardcore elimination, restricted 1.7.10 observer behavior, teammate camera packets, bomb HUD synchronization, and cleanup at round/match/map-vote boundaries.
+- Preserved PR #195's exact optional HBM registry lookup and Warzone exception; BOMB maps fail closed when `hbm:tile.charge_c4csgo` is unavailable.
+
 # Pull request: allow HBM CSGO bombs in Warzones and add per-map TDM limits
 
 - Added an optional, cached registry lookup for HBM's exact CSGO charge block and allowed only that block through Warzone placement protection.
