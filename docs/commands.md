@@ -218,3 +218,17 @@ Use `/tdm map mode <map> <deathmatch|bomb>` to select the mode and `/tdm map har
 `/tdm map scorelimit` and `/tdm map timer` retain their deathmatch meanings on deathmatch maps. On bomb maps they configure wins required (default **13**) and the pre-plant round timer (default **120 seconds**) using separate persisted overrides. `/tdm maps` shows roles, hardcore behavior, effective defaults, and bombsite readiness.
 
 HBM remains optional for Xenofactions and ordinary deathmatch. Playing a BOMB map requires HBM's exact runtime block registration `hbm:tile.charge_c4csgo` (with legacy `hbm:charge_c4csgo` fallback); no HBM classes are compile-time dependencies. After buy-time kit setup, each live round gives one CSGO charge to a random active player on the map's configured Terrorist team. The narrow PR #195 Warzone exception remains in effect outside controlled bomb rounds.
+
+### Earth boundary (`/xc worldborder`)
+
+| Command | Effect |
+| --- | --- |
+| `/xc worldborder on` | Persistently enable the existing Earth boundary. |
+| `/xc worldborder off` | Persistently disable the existing Earth boundary. |
+| `/xc worldborder status` | Show effective state, geometry, safety margin, and exemption count. |
+| `/xc worldborder wand` | Give an in-game admin the selection wand (left-click position 1; right-click position 2). |
+| `/xc worldborder exempt add <name>` | Save the selected inclusive, all-Y rectangle. |
+| `/xc worldborder exempt remove <name>` | Remove one named rectangle. |
+| `/xc worldborder exempt list` | List persistent rectangles. |
+
+All commands require current `/xc` operator authorization. The console may use on, off, status, remove, and list; wand and add require an in-game administrator. Exemptions bypass only Earth boundary enforcement and persist with runtime state. For a world without runtime saved data, the configured `earthBoundaryEnabled` value is used.

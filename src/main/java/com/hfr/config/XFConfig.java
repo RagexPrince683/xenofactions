@@ -64,6 +64,11 @@ public final class XFConfig {
 	public static String earthBoundaryMode = "PROFILE";
 	public static String earthAllowProfileMinecraftVersion = "1.7.10";
 	public static boolean earthLogFallbackChunks = true;
+	public static boolean earthBoundaryEnabled = false;
+	public static int earthBoundaryCenterX = 0;
+	public static int earthBoundaryCenterZ = 0;
+	public static int earthBoundaryRadiusX = 10000;
+	public static int earthBoundaryRadiusZ = 10000;
 	public static int earthBoundarySafetyMargin = 1;
 
 	public static boolean enableDynmapIntegration = true;

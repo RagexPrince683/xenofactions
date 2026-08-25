@@ -59,3 +59,18 @@ When validating an update, test faction claims, City Centers, homes, faction war
 Runtime admin war toggles such as `/xc warenable`, `/xc wardisable`, and war-check bypass toggles are saved with faction data and restored on restart. The `warEnabledDefault` config value only applies before a runtime value has been saved for the world.
 
 For non-overworld claims, specifically verify warp tents, medical tents, statues, and other prestige buildings. These structures should resolve the claim in their own dimension, and City Center GUIs should show prestige generation changes immediately while the actual prestige accrual interval remains unchanged. These checks do not require vanilla sky visibility, so Nether/End/LOTR dimensions with ceilings can still use them as long as the structure footprint has valid foundation blocks and the obstruction plane above it is clear. Also run `/c info` after city upgrades and prestige-building changes; it should report the upgraded city radius plus current generation/net-per-hour immediately, matching the City Center GUI. Use `/c info` or `/c allies` to verify current allies after diplomacy changes and restarts.
+
+## Runtime Earth boundary administration
+
+Xenofactions extends its existing rectangular Earth boundary; it does not use the post-1.7.10 vanilla world-border API. All commands remain under the operator-only `/xc` tree:
+
+- `/xc worldborder on` and `/xc worldborder off` immediately enable or disable enforcement.
+- `/xc worldborder status` shows the effective state, configured center, X/Z radii, safety margin, and exemption count.
+- `/xc worldborder wand` gives an in-game administrator a **World Border Exemption Wand**. Left-click a block for position 1 and right-click a block for position 2; both clicks suppress the normal block action.
+- `/xc worldborder exempt add <name>` saves the administrator's two selected corners under a case-insensitive name containing letters, numbers, `_`, or `-`.
+- `/xc worldborder exempt remove <name>` removes one saved exemption.
+- `/xc worldborder exempt list` lists every saved exemption and its dimension and X/Z bounds.
+
+Selections are per administrator and temporary. Saved regions are inclusive rectangular columns covering **all Y levels**, and apply only to Earth boundary enforcement: they do not bypass faction claims, Safezones, Warzones, block protection, TDM restrictions, or damage rules. Regions are dimension-specific.
+
+`earthBoundaryEnabled` is the default only when a world has no saved runtime choice. Runtime on/off changes and named exemptions persist in the world's `xenofactions_earth_boundary` saved data. Changing runtime state never changes the configured center, radii, or safety margin. Disabling enforcement leaves exemptions intact, ready for later re-enabling.

@@ -1604,6 +1604,14 @@ public class MainRegistry
         borderPosZ = createConfigInt(config, XFConfig.CAT_LEGACY_WORLD, "borderPosZ", "World border in the positive Z direction", 10000);
         borderNegZ = createConfigInt(config, XFConfig.CAT_LEGACY_WORLD, "borderNegZ", "World border in the negative Z direction", -10000);
 
+        // Stable names used by the Earth boundary runtime layer. The legacy endpoint
+        // properties remain authoritative so existing server configurations are unchanged.
+        XFConfig.earthBoundaryEnabled = border;
+        XFConfig.earthBoundaryCenterX = borderNegX + (borderPosX - borderNegX) / 2;
+        XFConfig.earthBoundaryCenterZ = borderNegZ + (borderPosZ - borderNegZ) / 2;
+        XFConfig.earthBoundaryRadiusX = Math.max(borderPosX - XFConfig.earthBoundaryCenterX, XFConfig.earthBoundaryCenterX - borderNegX);
+        XFConfig.earthBoundaryRadiusZ = Math.max(borderPosZ - XFConfig.earthBoundaryCenterZ, XFConfig.earthBoundaryCenterZ - borderNegZ);
+
         coalChance = createConfigDouble(config, XFConfig.CAT_LEGACY_WORLD, "coalChance", "Chance for coal when stone is mined", 0.04);
         ironChance = createConfigDouble(config, XFConfig.CAT_LEGACY_WORLD, "ironChance", "Chance for iron when stone is mined", 0.05);
         goldChance = createConfigDouble(config, XFConfig.CAT_LEGACY_WORLD, "goldChance", "Chance for gold when stone is mined", 0.01);

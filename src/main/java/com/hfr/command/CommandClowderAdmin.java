@@ -72,6 +72,7 @@ public class CommandClowderAdmin extends CommandBase {
 		String cmd = args[0].toLowerCase();
 		if(cmd.equals("factiontimeoutcreationreset")) { FactionCreationTimeoutResetHandler.execute(sender, Arrays.copyOfRange(args, 1, args.length)); return; }
 		if(cmd.equals("earth")) { EarthCommandHandler.execute(sender, Arrays.copyOfRange(args, 1, args.length)); return; }
+		if(cmd.equals("worldborder")) { WorldBorderCommandHandler.execute(sender, Arrays.copyOfRange(args, 1, args.length)); return; }
 		if(cmd.equals("help") || cmd.equals("man")) { cmdHelp(sender, args.length > 1 ? args[1] : "1"); return; }
 		if(cmd.equals("clearcreationcooldown") || cmd.equals("resetcreationcooldown")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdClearCreationCooldown(sender, args[1]); return; }
 		if(cmd.equals("forcejoin") || cmd.equals("fj")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdForcejoin(sender, joinArgs(args, 1)); return; }
@@ -182,6 +183,7 @@ public class CommandClowderAdmin extends CommandBase {
 	private String getUsageFor(String cmd) {
 		if(cmd.equals("factiontimeoutcreationreset")) return "/xc factiontimeoutcreationreset <player>";
 		if(cmd.equals("earth")) return EarthCommandHandler.USAGE;
+		if(cmd.equals("worldborder")) return WorldBorderCommandHandler.USAGE;
 		if(cmd.equals("clearcreationcooldown") || cmd.equals("resetcreationcooldown")) return "/xc clearcreationcooldown <player-or-uuid>";
 		if(cmd.equals("forcejoin") || cmd.equals("fj")) return "/xc forcejoin <faction>";
 		if(cmd.equals("forcekick") || cmd.equals("fk")) return "/xc forcekick <player>";
@@ -219,6 +221,8 @@ public class CommandClowderAdmin extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-clearcreationcooldown <player-or-uuid>" + TITLE + " - Clears an online or offline player creation cooldown"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-factiontimeoutcreationreset <player>" + TITLE + " - Resets a named player creation cooldown"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-earth <status|packs|verify|check>" + TITLE + " - Manages Earth maps"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-worldborder <on|off|status|wand>" + TITLE + " - Controls the Earth boundary"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-worldborder exempt <add|remove|list>" + TITLE + " - Manages all-Y exemption regions"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-deletedata" + TITLE + " - Deletes all clowder data (CAUTION!!)"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-disband <faction>" + TITLE + " - Disbands your faction with confirmation"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-rename <name>" + TITLE + " - Renames your faction"));
@@ -612,6 +616,10 @@ public class CommandClowderAdmin extends CommandBase {
 		String cmd = args[0].toLowerCase();
 		if(cmd.equals("earth") && args.length == 2)
 			return getListOfStringsMatchingLastWord(args, new String[] { "status", "packs", "verify", "check" });
+		if(cmd.equals("worldborder") && args.length == 2)
+			return getListOfStringsMatchingLastWord(args, new String[] { "on", "off", "status", "wand", "exempt" });
+		if(cmd.equals("worldborder") && args.length == 3 && args[1].equalsIgnoreCase("exempt"))
+			return getListOfStringsMatchingLastWord(args, new String[] { "add", "remove", "list" });
 		if(cmd.equals("earth") && args.length == 3 && args[1].equalsIgnoreCase("verify"))
 			return getListOfStringsMatchingLastWord(args, EarthCommandHandler.getPackIds());
 		if(cmd.equals("forcekick") || cmd.equals("fk") || cmd.equals("factiontimeoutcreationreset") || cmd.equals("clearcreationcooldown") || cmd.equals("resetcreationcooldown"))
@@ -624,7 +632,7 @@ public class CommandClowderAdmin extends CommandBase {
     }
 
 	private String[] getAdminCommandNames() {
-		return new String[] { "help", "factiontimeoutcreationreset", "earth", "clearcreationcooldown", "resetcreationcooldown", "forcejoin", "fj", "forcekick", "fk", "forcedisband", "fd", "forcerename", "fr",
+		return new String[] { "help", "factiontimeoutcreationreset", "earth", "worldborder", "clearcreationcooldown", "resetcreationcooldown", "forcejoin", "fj", "forcekick", "fk", "forcedisband", "fd", "forcerename", "fr",
 				"hijack", "hi", "deletedata", "deldat", "setclaim", "sc", "addprestige", "ap", "disband", "rename",
 				"warenable", "wardisable", "newplayerprotection", "resetnewplayerprotection", "endnewplayerprotection",
 				"skipwarcooldowns", "ignorewarcooldowncheck", "ignorewaronlinecheck", "ignorewarstatecheck",

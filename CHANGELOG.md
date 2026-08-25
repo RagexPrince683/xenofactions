@@ -1,3 +1,10 @@
+# Pull request: add persistent runtime Earth boundary controls
+
+- Added operator-only `/xc worldborder` runtime enable, disable, status, selection-wand, and named exemption administration.
+- Persisted explicit runtime state and validated, dimension-specific inclusive X/Z exemption columns in world saved data, with the configured enable value retained as the old-world fallback.
+- Integrated exemption checks into the existing authoritative wrap/recovery path without changing faction, protection, TDM, Builder, or JourneyMap behavior.
+- Documented server commands, all-Y wand selection, persistence, and the Earth-boundary-only scope of exemptions.
+
 # Pull request: assign the HBM CSGO bomb to a Terrorist
 
 - Assigned one exact HBM CSGO charge to a randomized, eligible Terrorist after bomb-round kit setup and the authoritative transition to live play.
