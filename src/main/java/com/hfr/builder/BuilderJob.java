@@ -5,9 +5,12 @@ import net.minecraft.nbt.NBTTagCompound;
 
 /** Persistent, entity-independent construction progress. */
 public final class BuilderJob {
+	public static final int CURRENT_WORK_ORDER = 2;
 	public UUID jobId = UUID.randomUUID(), factionId, builderId, creatorId;
 	public String cityId = "", schematicId = "";
 	public int dimension, originX, originY, originZ, depotX, depotY, depotZ, blockIndex;
+	/** Version 2 is Y, then Z, then X. blockIndex is its persistent search cursor. */
+	public int workOrderVersion=CURRENT_WORK_ORDER, completedBlocks, constructionLayer, passUnresolved;
 	public int rotation;
 	public boolean mirrored;
 	public int blockedX, blockedY, blockedZ;
@@ -21,7 +24,7 @@ public final class BuilderJob {
 		n.setString("city", cityId); n.setString("schematic", schematicId); n.setInteger("dimension",dimension);
 		n.setInteger("x",originX); n.setInteger("y",originY); n.setInteger("z",originZ);
 		n.setInteger("depotX",depotX); n.setInteger("depotY",depotY); n.setInteger("depotZ",depotZ);
-		n.setInteger("index",blockIndex); n.setString("state",state.name());
+		n.setInteger("index",blockIndex);n.setInteger("workOrderVersion",workOrderVersion);n.setInteger("completedBlocks",completedBlocks);n.setInteger("constructionLayer",constructionLayer);n.setInteger("passUnresolved",passUnresolved);n.setString("state",state.name());
 		n.setByte("rotation",(byte)(rotation&3)); n.setBoolean("mirrored",mirrored);
 		n.setInteger("blockedX",blockedX); n.setInteger("blockedY",blockedY); n.setInteger("blockedZ",blockedZ);
 		n.setInteger("targetX",targetX);n.setInteger("targetY",targetY);n.setInteger("targetZ",targetZ);n.setInteger("workX",workX);n.setInteger("workY",workY);n.setInteger("workZ",workZ);n.setInteger("schematicX",schematicX);n.setInteger("schematicY",schematicY);n.setInteger("schematicZ",schematicZ);n.setString("requiredItem",requiredItem);n.setInteger("requiredMeta",requiredMeta);n.setInteger("missingQuantity",missingQuantity);n.setString("unsupportedBlock",unsupportedBlock);n.setInteger("unsupportedMeta",unsupportedMeta);n.setInteger("pathFailures",pathFailures);n.setInteger("waitingChunkX",waitingChunkX);n.setInteger("waitingChunkZ",waitingChunkZ);n.setString("statusKey",statusKey);n.setString("failureDetail",failureDetail);return n;
@@ -31,6 +34,7 @@ public final class BuilderJob {
 		j.cityId=n.getString("city"); j.schematicId=n.getString("schematic"); j.dimension=n.getInteger("dimension");
 		j.rotation=n.getByte("rotation")&3; j.mirrored=n.getBoolean("mirrored");
 		j.originX=n.getInteger("x"); j.originY=n.getInteger("y"); j.originZ=n.getInteger("z"); j.depotX=n.getInteger("depotX"); j.depotY=n.getInteger("depotY"); j.depotZ=n.getInteger("depotZ"); j.blockIndex=n.getInteger("index");
+		if(n.hasKey("workOrderVersion")){j.workOrderVersion=n.getInteger("workOrderVersion");j.completedBlocks=n.getInteger("completedBlocks");j.constructionLayer=n.getInteger("constructionLayer");j.passUnresolved=n.getInteger("passUnresolved");}else j.workOrderVersion=0;
 		try { j.state=BuilderState.valueOf(n.getString("state")); } catch(Exception e) { j.state=BuilderState.PAUSED; }
 		j.blockedX=n.getInteger("blockedX"); j.blockedY=n.getInteger("blockedY"); j.blockedZ=n.getInteger("blockedZ");j.targetX=n.getInteger("targetX");j.targetY=n.getInteger("targetY");j.targetZ=n.getInteger("targetZ");j.workX=n.getInteger("workX");j.workY=n.getInteger("workY");j.workZ=n.getInteger("workZ");j.schematicX=n.getInteger("schematicX");j.schematicY=n.getInteger("schematicY");j.schematicZ=n.getInteger("schematicZ");j.requiredItem=n.getString("requiredItem");j.requiredMeta=n.getInteger("requiredMeta");j.missingQuantity=n.getInteger("missingQuantity");j.unsupportedBlock=n.getString("unsupportedBlock");j.unsupportedMeta=n.getInteger("unsupportedMeta");j.pathFailures=n.getInteger("pathFailures");j.waitingChunkX=n.getInteger("waitingChunkX");j.waitingChunkZ=n.getInteger("waitingChunkZ");j.statusKey=n.getString("statusKey");j.failureDetail=n.getString("failureDetail");return j;
 	}
