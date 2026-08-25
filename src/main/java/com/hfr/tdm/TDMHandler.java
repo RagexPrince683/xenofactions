@@ -1,5 +1,6 @@
 package com.hfr.tdm;
 
+import com.hfr.compat.HbmCsgoChargeIntegration;
 import com.hfr.items.ModItems;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.eventhandler.EventPriority;
@@ -32,6 +33,7 @@ public class TDMHandler {
     @SubscribeEvent
     public void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.START) {
+            HbmCsgoChargeIntegration.pollBombResults();
             TDMServerTaskQueue.runScheduledTasks();
         }
     }
@@ -154,8 +156,7 @@ public class TDMHandler {
         if (TDMSpectatorManager.isObserving(player)
                 || TDMBombManager.shouldRestrictWorldInteraction(event.world)) {
             event.setCanceled(true);
-        } else if (TDMBombManager.tryDefuse(player, event.x, event.y, event.z)
-                || TDMBombManager.isTrackedBomb(event.world, event.x, event.y, event.z)) {
+        } else if (TDMBombManager.isTrackedBomb(event.world, event.x, event.y, event.z)) {
             event.setCanceled(true);
         }
     }
