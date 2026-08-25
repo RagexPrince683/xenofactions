@@ -6,6 +6,8 @@ BOMB maps can enable a per-map saved-kit economy with `/tdm map economy <map> <t
 
 Every BOMB round starts with a protected 20-second buying period. The live timer starts afterward. A player may purchase one eligible team kit. If none is selected, the first free eligible kit is assigned; paid kits are never assigned free while economy rules are enabled. Economy-disabled BOMB maps retain the phase but treat every kit as free. DEATHMATCH behavior is unchanged.
 
+The buy phase (`PRE_ROUND`) and the brief `ROUND_END` intermission freeze ordinary world interaction. `WAITING_FOR_TEAMS` and `DISABLED` do not freeze world editing, and map voting does not inherit a stale BOMB interaction lock. Other protection systems, including faction territory, Safezones, and Warzones, continue to apply normally.
+
 Old TDM map NBT has no economy keys and loads with economy disabled and both rewards at zero.
 # Runtime mode and single-player testing
 

@@ -681,7 +681,10 @@ public class CommonEventHandler {
 	
 	//handles the anti-mob wand
 
-	@SubscribeEvent
+	@SubscribeEvent(
+			priority = EventPriority.HIGHEST,
+			receiveCanceled = true
+	)
 	public void onWorldBorderWandInteract(PlayerInteractEvent event) {
 		EntityPlayer player = event.entityPlayer;
 		if (player == null || player.worldObj.isRemote || player.getHeldItem() == null || player.getHeldItem().getItem() != ModItems.world_border_wand) return;
