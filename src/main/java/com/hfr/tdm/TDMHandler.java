@@ -14,7 +14,6 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.WorldEvent;
-import net.minecraftforge.event.world.ExplosionEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,6 +38,9 @@ public class TDMHandler {
 
     @SubscribeEvent
     public void onWorldUnload(WorldEvent.Unload event) {
+        if (event.world != null && !event.world.isRemote) {
+            TDMBombManager.onWorldUnload(event.world);
+        }
         if (event.world != null && !event.world.isRemote
                 && event.world.provider.dimensionId == 0) {
             TDMServerTaskQueue.clear();
@@ -156,11 +158,6 @@ public class TDMHandler {
                 || TDMBombManager.isTrackedBomb(event.world, event.x, event.y, event.z)) {
             event.setCanceled(true);
         }
-    }
-    @SubscribeEvent(priority=EventPriority.LOWEST,receiveCanceled=false)
-    public void onExplosionDetonate(ExplosionEvent.Detonate event) {
-        if (!event.world.isRemote) TDMBombManager.onExplosionDetonate(event.world,
-                event.explosion.explosionX, event.explosion.explosionY, event.explosion.explosionZ);
     }
     @SubscribeEvent(priority=EventPriority.HIGHEST)
     public void restrictInteract(PlayerInteractEvent event) {
