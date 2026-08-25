@@ -88,6 +88,7 @@ public class PacketDispatcher {
 		wrapper.registerMessage(WallArtImageChunkPacket.Handler.class, WallArtImageChunkPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(TDMKitGuiPacket.Handler.class, TDMKitGuiPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(TDMKitSelectPacket.Handler.class, TDMKitSelectPacket.class, i++, Side.SERVER);
+		wrapper.registerMessage(TDMKitSelectResultPacket.Handler.class, TDMKitSelectResultPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(TDMStatusPacket.Handler.class, TDMStatusPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(TDMSpectatorPacket.Handler.class, TDMSpectatorPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(TDMMapVoteGuiPacket.Handler.class, TDMMapVoteGuiPacket.class, i++, Side.CLIENT);

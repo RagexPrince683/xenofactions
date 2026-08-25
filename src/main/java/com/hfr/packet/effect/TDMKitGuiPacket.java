@@ -47,8 +47,11 @@ public class TDMKitGuiPacket implements IMessage {
 
         @Override
         @SideOnly(Side.CLIENT)
-        public IMessage onMessage(TDMKitGuiPacket message, MessageContext ctx) {
-            if(message.kitNames.length==0)Minecraft.getMinecraft().displayGuiScreen(null);else Minecraft.getMinecraft().displayGuiScreen(new GUITDMKitSelect(message.team,message.kitNames,message.costs,message.economy,message.balance,message.seconds,message.buying));
+        public IMessage onMessage(final TDMKitGuiPacket message, MessageContext ctx) {
+            Minecraft.getMinecraft().func_152344_a(new Runnable(){public void run(){
+                if(message.kitNames.length==0){if(Minecraft.getMinecraft().currentScreen instanceof GUITDMKitSelect)Minecraft.getMinecraft().displayGuiScreen(null);}
+                else Minecraft.getMinecraft().displayGuiScreen(new GUITDMKitSelect(message.team,message.kitNames,message.costs,message.economy,message.balance,message.seconds,message.buying));
+            }});
             return null;
         }
     }

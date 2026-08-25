@@ -2,6 +2,7 @@ package com.hfr.tdm;
 
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.effect.TDMKitGuiPacket;
+import com.hfr.packet.effect.TDMKitSelectResultPacket;
 import com.hfr.packet.effect.TDMMapVoteGuiPacket;
 import com.hfr.packet.effect.TDMStatusPacket;
 import com.hfr.compat.HbmCsgoChargeIntegration;
@@ -56,6 +57,7 @@ public class TDMManager {
 
     public enum TDMGameMode { DEATHMATCH, BOMB }
     public enum BombRole { TERRORIST, COUNTER_TERRORIST }
+    public enum KitSelectionResult { SUCCESS, INSUFFICIENT_FUNDS, INVALID_SELECTION, BUY_PHASE_ENDED, ALREADY_SELECTED }
 
     public static class Bombsite {
         public int dimension;
@@ -875,7 +877,8 @@ public class TDMManager {
     }
 
     public static void tickKitSelection(EntityPlayer player) {
-        if (!pendingKitSelection.contains(getPlayerKey(player))) {
+        boolean bombBuyRestricted=isEnabled(player.worldObj)&&isBombMode(player.worldObj)&&TDMBombManager.getState()==TDMBombManager.BombRoundState.PRE_ROUND&&!TDMSpectatorManager.isObserving(player);
+        if (!bombBuyRestricted&&!pendingKitSelection.contains(getPlayerKey(player))) {
             return;
         }
 
@@ -890,27 +893,28 @@ public class TDMManager {
         player.addPotionEffect(new PotionEffect(Potion.regeneration.id, 40, 4, true));
     }
 
-    public static boolean selectKit(EntityPlayer player, int kitIndex) {
-        if (TDMSpectatorManager.isObserving(player)) return false;
+    public static KitSelectionResult selectKit(EntityPlayer player, int kitIndex) {
+        if (TDMSpectatorManager.isObserving(player)) return KitSelectionResult.BUY_PHASE_ENDED;
         if (!pendingKitSelection.contains(getPlayerKey(player))) {
-            return false;
+            return KitSelectionResult.ALREADY_SELECTED;
         }
 
-        if (!isEnabled(player.worldObj)) {
+        if (!isEnabled(player.worldObj) || isMapVoteActive(player.worldObj)) {
             pendingKitSelection.remove(getPlayerKey(player));
-            return false;
+            return KitSelectionResult.BUY_PHASE_ENDED;
         }
 
         Team team = getOrAssignPlayerTeam(player); String mapName=getSelectedMap(player.worldObj);
-        boolean buying=isBombMode(player.worldObj); if(buying&&TDMBombManager.getState()!=TDMBombManager.BombRoundState.PRE_ROUND)return false;
-        int savedCost=TDMKitManager.getKitCost(mapName,team,kitIndex); if(savedCost<0)return false;
-        TDMMap map=getSelectedMapData(player.worldObj);int effectiveCost=map!=null&&map.buyScoreEnabled?savedCost:0;if(getBuyScore(player)<effectiveCost)return false;
-        if (!TDMKitManager.applyKit(mapName, team, kitIndex, player)) return false;
+        boolean buying=isBombMode(player.worldObj); if(buying&&TDMBombManager.getState()!=TDMBombManager.BombRoundState.PRE_ROUND)return KitSelectionResult.BUY_PHASE_ENDED;
+        int savedCost=TDMKitManager.getKitCost(mapName,team,kitIndex); if(savedCost<0)return KitSelectionResult.INVALID_SELECTION;
+        TDMMap map=getSelectedMapData(player.worldObj);int effectiveCost=map!=null&&map.buyScoreEnabled?savedCost:0;if(getBuyScore(player)<effectiveCost)return KitSelectionResult.INSUFFICIENT_FUNDS;
+        if (!TDMKitManager.applyKit(mapName, team, kitIndex, player)) return KitSelectionResult.INVALID_SELECTION;
         if(effectiveCost>0){TDMData d=TDMData.get(player.worldObj);d.playerBuyScores.put(getPlayerKey(player),Integer.valueOf(getBuyScore(player)-effectiveCost));d.markDirty();}
         pendingKitSelection.remove(getPlayerKey(player));
         player.removePotionEffect(Potion.resistance.id);
         player.removePotionEffect(Potion.regeneration.id);
-        return true;
+        if(player instanceof EntityPlayerMP){EntityPlayerMP mp=(EntityPlayerMP)player;mp.inventory.markDirty();mp.inventoryContainer.detectAndSendChanges();sendStatusToAll(player.worldObj);PacketDispatcher.wrapper.sendTo(new TDMKitSelectResultPacket(KitSelectionResult.SUCCESS),(EntityPlayerMP)player);}
+        return KitSelectionResult.SUCCESS;
     }
 
     private static String getPlayerKey(EntityPlayer player) {

@@ -20,10 +20,12 @@ public class TDMMenuDataPacket implements IMessage {
     public int cooldownSeconds;
     public String[] friendlyLines;
     public String[] enemyLines;
+    public boolean canOpenBuyMenu;
     public TDMMenuDataPacket() {}
     public TDMMenuDataPacket(EntityPlayerMP player, int cooldownSeconds) {
         this.cooldownSeconds = cooldownSeconds;
         this.currentTeam = TDMManager.getOrAssignPlayerTeam(player).name;
+        this.canOpenBuyMenu=TDMManager.isBombMode(player.worldObj)&&com.hfr.tdm.TDMBombManager.getState()==com.hfr.tdm.TDMBombManager.BombRoundState.PRE_ROUND&&!TDMManager.hasSelectedKit(player);
         List<String> friend = new ArrayList<String>();
         List<String> enemy = new ArrayList<String>();
         TDMManager.Team self = TDMManager.getOrAssignPlayerTeam(player);
@@ -47,6 +49,7 @@ public class TDMMenuDataPacket implements IMessage {
     public void fromBytes(ByteBuf buf){
         currentTeam = ByteBufUtils.readUTF8String(buf);
         cooldownSeconds = buf.readInt();
+        canOpenBuyMenu=buf.readBoolean();
         int friendlyCount = buf.readInt();
         friendlyLines = new String[friendlyCount];
         for(int i = 0; i < friendlyCount; i++) friendlyLines[i] = ByteBufUtils.readUTF8String(buf);
@@ -57,6 +60,7 @@ public class TDMMenuDataPacket implements IMessage {
     public void toBytes(ByteBuf buf){
         ByteBufUtils.writeUTF8String(buf, currentTeam);
         buf.writeInt(cooldownSeconds);
+        buf.writeBoolean(canOpenBuyMenu);
         buf.writeInt(friendlyLines.length);
         for(String s : friendlyLines) ByteBufUtils.writeUTF8String(buf, s);
         buf.writeInt(enemyLines.length);
@@ -67,7 +71,7 @@ public class TDMMenuDataPacket implements IMessage {
         @Override
         @SideOnly(Side.CLIENT)
         public IMessage onMessage(TDMMenuDataPacket message, MessageContext ctx) {
-            EventHandlerClient.openTDMMenu(message.currentTeam, message.cooldownSeconds, message.friendlyLines, message.enemyLines);
+            EventHandlerClient.openTDMMenu(message.currentTeam, message.cooldownSeconds, message.friendlyLines, message.enemyLines,message.canOpenBuyMenu);
             return null;
         }
     }
