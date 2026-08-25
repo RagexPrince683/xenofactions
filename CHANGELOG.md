@@ -1,3 +1,9 @@
+# Pull request: fix bottom-up reachable Builder construction
+
+- Versioned Builder work order and migrated active jobs to deterministic bottom-up Y/Z/X scheduling using the current world as construction truth.
+- Deferred temporarily unreachable targets while scanning bounded layer passes, with complete-pass failure diagnostics and Resume state reset.
+- Expanded collision-aware stair/slab work positions, face-based reach checks, placement self-collision protection, path diagnostics, and world-derived GUI progress.
+
 # Pull request: make Builder NPC GUI opening race-safe
 
 - Made the client construct the fixed 63-slot Builder NPC container from GUI-open coordinates even when Depot assignment, tile, or entity synchronization is late.
