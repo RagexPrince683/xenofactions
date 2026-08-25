@@ -29,6 +29,7 @@ public class TDMManager {
     public static final int TEAM_CHANGE_COOLDOWN_TICKS = 120 * 20;
     private static final Set<String> pendingKitSelection = new HashSet<String>();
     private static final Map<String, Long> nextTeamChangeTick = new HashMap<String, Long>();
+    private static boolean bombTestMode;
 
     public enum Team {
         RED("red"),
@@ -113,8 +114,44 @@ public class TDMManager {
 
     public static boolean configureMap(World world, String name, TDMGameMode mode, Team terrorists, Boolean hardcore) {
         TDMMap map=getMap(world,name); if(map==null)return false;
-        if(mode!=null)map.mode=mode; if(terrorists!=null)map.terroristTeam=terrorists; if(hardcore!=null)map.hardcoreRespawns=hardcore.booleanValue();
+        if(mode!=null&&!setMapMode(world,name,mode))return false; if(terrorists!=null)map.terroristTeam=terrorists; if(hardcore!=null)map.hardcoreRespawns=hardcore.booleanValue();
         TDMData.get(world).markDirty(); return true;
+    }
+
+    /** Sets map mode and, only for the selected live map, starts a clean match in that mode. */
+    public static boolean setMapMode(World world, String name, TDMGameMode mode) {
+        TDMData data = TDMData.get(world);
+        TDMMap map = data.maps.get(normalizeMapName(name));
+        if (map == null || mode == null) return false;
+        TDMGameMode oldMode = map.mode;
+        if (oldMode == mode) return true;
+        map.mode = mode;
+        data.markDirty();
+        if (!data.enabled || !data.selectedMap.equals(map.name)) return true;
+
+        // startMatch owns score, timer, spectator, vote, economy, and bomb lifecycle reset.
+        pendingKitSelection.clear();
+        closeBombBuyGuis();
+        data.roundEndTick = 0;
+        startMatch(world, false);
+        return true;
+    }
+
+    public static boolean isBombTestMode() { return bombTestMode; }
+
+    public static void setBombTestMode(World world, boolean enabled) {
+        if (bombTestMode == enabled) return;
+        bombTestMode = enabled;
+        if (isEnabled(world) && isBombMode(world)) TDMBombManager.onTestModeChanged(world, enabled);
+        sendStatusToAll(world);
+    }
+
+    public static void clearPendingKitSelections() { pendingKitSelection.clear(); }
+
+    public static void closeBombBuyGuis() {
+        for (EntityPlayerMP player : getOnlinePlayers()) {
+            PacketDispatcher.wrapper.sendTo(new TDMKitGuiPacket("", new String[0]), player);
+        }
     }
     public static boolean setBombsite(World world,String name,boolean siteA,int corner,int dim,int x,int y,int z) {
         TDMMap map=getMap(world,name); if(map==null)return false; Bombsite site=siteA?map.bombsiteA:map.bombsiteB;
@@ -143,6 +180,7 @@ public class TDMManager {
 
     public static void init() {
         tdmEnabled = false;
+        bombTestMode = false;
         pendingKitSelection.clear();
         nextTeamChangeTick.clear();
     }
@@ -614,7 +652,8 @@ public class TDMManager {
                         getGameMode(world).name(), TDMBombManager.getState().name(),
                         data.redBombWins, data.blueBombWins, getTerroristTeam(world).name,
                         TDMBombManager.getRemainingSeconds(world), TDMBombManager.getPlantedSite(),
-                        getSelectedMapData(world)!=null&&getSelectedMapData(world).buyScoreEnabled, getBuyScore(player)
+                        getSelectedMapData(world)!=null&&getSelectedMapData(world).buyScoreEnabled, getBuyScore(player),
+                        TDMBombManager.getPlayerCount(world, Team.RED), TDMBombManager.getPlayerCount(world, Team.BLUE)
                 ), player);
             }
         }
