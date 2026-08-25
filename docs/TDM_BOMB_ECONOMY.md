@@ -7,3 +7,8 @@ BOMB maps can enable a per-map saved-kit economy with `/tdm map economy <map> <t
 Every BOMB round starts with a protected 20-second buying period. The live timer starts afterward. A player may purchase one eligible team kit. If none is selected, the first free eligible kit is assigned; paid kits are never assigned free while economy rules are enabled. Economy-disabled BOMB maps retain the phase but treat every kit as free. DEATHMATCH behavior is unchanged.
 
 Old TDM map NBT has no economy keys and loads with economy disabled and both rewards at zero.
+# Runtime mode and single-player testing
+
+Changing the selected, enabled map with `/tdm map mode <map> <deathmatch|bomb>` starts a clean match in the requested mode immediately. Changing an unselected map only updates that map's configuration.
+
+BOMB normally waits for at least one eligible RED player and one eligible BLUE player. Operators may explicitly enable the transient development override with `/tdm bombtest on`; this permits one eligible player to exercise the round lifecycle without creating a fake opponent or changing team persistence. `/tdm bombtest off` safely returns a one-team test round to the normal waiting state, and the override resets when the server lifecycle initializes.

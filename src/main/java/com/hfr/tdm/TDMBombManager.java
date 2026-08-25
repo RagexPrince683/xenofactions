@@ -36,18 +36,18 @@ public final class TDMBombManager {
 
     public static void startMatch(World world){
         TDMData d=TDMData.get(world); d.redBombWins=d.blueBombWins=d.redBombLosses=d.blueBombLosses=0; d.markDirty();
-        cleanup(world,true); if(hasBothTeams(world))beginBuyTime(world);else waitForTeams(world);
+        cleanup(world,true); if(hasEnoughPlayersForBombRound(world))beginBuyTime(world);else waitForTeams(world);
         if(!HbmCsgoChargeIntegration.isAvailable()) broadcast("Bomb mode requires HBM's hbm:tile.charge_c4csgo block.");
     }
     public static void tick(World world){
         if(!TDMManager.isEnabled(world)||!TDMManager.isBombMode(world)){cleanup(world,true);return;}
         long now=world.getTotalWorldTime();
         if(pendingPlant!=null&&now>pendingPlant.tick){PendingPlant p=pendingPlant;pendingPlant=null;if(p.player.worldObj==world&&HbmCsgoChargeIntegration.isCsgoCharge(world.getBlock(p.x,p.y,p.z)))acceptPlant(p.player,p.x,p.y,p.z);}
-        if(state==BombRoundState.DISABLED){if(hasBothTeams(world))beginBuyTime(world);else waitForTeams(world);}
-        else if(state==BombRoundState.WAITING_FOR_TEAMS&&hasBothTeams(world))beginBuyTime(world);
+        if(state==BombRoundState.DISABLED){if(hasEnoughPlayersForBombRound(world))beginBuyTime(world);else waitForTeams(world);}
+        else if(state==BombRoundState.WAITING_FOR_TEAMS&&hasEnoughPlayersForBombRound(world))beginBuyTime(world);
         if(state==BombRoundState.PRE_ROUND&&now>=stateEndTick) startRound(world);
         else if(state==BombRoundState.LIVE&&now>=stateEndTick) completeRound(world,TDMManager.getCounterTerroristTeam(world),BombRoundWinReason.TIME_EXPIRED);
-        else if(state==BombRoundState.ROUND_END&&now>=stateEndTick){if(hasBothTeams(world))beginBuyTime(world);else waitForTeams(world);}
+        else if(state==BombRoundState.ROUND_END&&now>=stateEndTick){if(hasEnoughPlayersForBombRound(world))beginBuyTime(world);else waitForTeams(world);}
         TDMSpectatorManager.tick(world);
     }
     public static void beginBuyTime(World world){
@@ -58,8 +58,7 @@ public final class TDMBombManager {
     public static void startRound(World world){
         if(world.isRemote||state!=BombRoundState.PRE_ROUND||TDMManager.isMapVoteActive(world))return;
         TDMManager.TDMMap map=TDMManager.getSelectedMapData(world);if(map==null||map.mode!=TDMManager.TDMGameMode.BOMB)return;
-        int red=0,blue=0;for(EntityPlayerMP p:TDMManager.getOnlinePlayers())if(p.worldObj.provider.dimensionId==world.provider.dimensionId&&!TDMSpectatorManager.isObserving(p)&&!isEliminated(p)){TDMManager.Team t=TDMManager.getOrAssignPlayerTeam(p);if(t==TDMManager.Team.RED)red++;else if(t==TDMManager.Team.BLUE)blue++;}
-        if(red==0||blue==0){waitForTeams(world);return;}
+        if(!hasEnoughPlayersForBombRound(world)){waitForTeams(world);return;}
         for(EntityPlayerMP p:TDMManager.getOnlinePlayers())if(p.worldObj.provider.dimensionId==world.provider.dimensionId){if(!TDMManager.hasSelectedKit(p)){TDMManager.Team t=TDMManager.getOrAssignPlayerTeam(p);int[] costs=TDMKitManager.getKitCosts(map.name,t);int fallback=-1;for(int i=0;i<costs.length;i++)if(!map.buyScoreEnabled||costs[i]==0){fallback=i;break;}if(fallback>=0)TDMManager.selectKit(p,fallback);else{p.addChatMessage(new ChatComponentText("No free kit is available for this round."));System.err.println("TDM bomb buy: no free kit for map "+map.name+" team "+t.name);}}com.hfr.packet.PacketDispatcher.wrapper.sendTo(new com.hfr.packet.effect.TDMKitGuiPacket("",new String[0]),p);}
         state=BombRoundState.LIVE;stateEndTick=world.getTotalWorldTime()+TDMManager.getEffectiveBombRoundTicks(world,map.name);assignBombToRandomTerrorist(world);TDMManager.sendStatusToAll(world);
     }
@@ -73,8 +72,11 @@ public final class TDMBombManager {
         for(EntityPlayerMP p:eligible){ItemStack stack=HbmCsgoChargeIntegration.createCsgoChargeStack();if(stack!=null&&p.inventory.addItemStackToInventory(stack)){p.inventory.markDirty();p.inventoryContainer.detectAndSendChanges();p.addChatMessage(new ChatComponentText("You have the bomb."));return true;}}
         System.err.println("TDM bomb round: no eligible Terrorist has inventory space for the CSGO bomb in dimension "+world.provider.dimensionId+".");return false;
     }
-    private static boolean hasBothTeams(World world){int red=0,blue=0;for(EntityPlayerMP p:TDMManager.getOnlinePlayers())if(p.worldObj.provider.dimensionId==world.provider.dimensionId&&!TDMSpectatorManager.isObserving(p)){TDMManager.Team team=TDMManager.getOrAssignPlayerTeam(p);if(team==TDMManager.Team.RED)red++;else if(team==TDMManager.Team.BLUE)blue++;}return red>0&&blue>0;}
-    private static void waitForTeams(World world){state=BombRoundState.WAITING_FOR_TEAMS;stateEndTick=0;bomb=null;pendingPlant=null;eliminated.clear();TDMManager.sendStatusToAll(world);}
+    public static int getPlayerCount(World world,TDMManager.Team wanted){int count=0;for(EntityPlayerMP p:TDMManager.getOnlinePlayers())if(p.worldObj.provider.dimensionId==world.provider.dimensionId&&!TDMSpectatorManager.isObserving(p)&&TDMManager.getOrAssignPlayerTeam(p)==wanted)count++;return count;}
+    public static boolean hasBothTeams(World world){return getPlayerCount(world,TDMManager.Team.RED)>0&&getPlayerCount(world,TDMManager.Team.BLUE)>0;}
+    public static boolean hasEnoughPlayersForBombRound(World world){return hasBothTeams(world)||(TDMManager.isBombTestMode()&&(getPlayerCount(world,TDMManager.Team.RED)+getPlayerCount(world,TDMManager.Team.BLUE)>0));}
+    private static void waitForTeams(World world){cleanupTransientState(world);state=BombRoundState.WAITING_FOR_TEAMS;TDMManager.sendStatusToAll(world);}
+    public static void onTestModeChanged(World world,boolean enabled){if(enabled){if(state==BombRoundState.WAITING_FOR_TEAMS&&hasEnoughPlayersForBombRound(world))beginBuyTime(world);}else if(!hasBothTeams(world)){cleanupTransientState(world);state=BombRoundState.WAITING_FOR_TEAMS;TDMManager.sendStatusToAll(world);}}
     /** Called at LOWEST priority, after an uncancelled Forge placement has been accepted. */
     public static void recordAcceptedPlant(EntityPlayer player,Block block,int x,int y,int z){
         if(canPlant(player,block,x,y,z,false))pendingPlant=new PendingPlant(player,x,y,z,player.worldObj.getTotalWorldTime());
@@ -100,6 +102,7 @@ public final class TDMBombManager {
     public static void eliminate(EntityPlayer p){
         if(!TDMManager.isHardcoreRespawns(p.worldObj))return; eliminated.add(key(p));
         if(!TDMManager.isBombMode(p.worldObj)||!isRoundActive())return;
+        if(TDMManager.isBombTestMode()&&!hasBothTeams(p.worldObj))return;
         TDMManager.Team ct=TDMManager.getCounterTerroristTeam(p.worldObj),tt=TDMManager.getTerroristTeam(p.worldObj);
         if(living(p.worldObj,ct)==0)completeRound(p.worldObj,tt,BombRoundWinReason.COUNTER_TERRORISTS_ELIMINATED);
         else if(state!=BombRoundState.BOMB_PLANTED&&living(p.worldObj,tt)==0)completeRound(p.worldObj,ct,BombRoundWinReason.TERRORISTS_ELIMINATED);
@@ -113,7 +116,8 @@ public final class TDMBombManager {
         else TDMManager.sendStatusToAll(world);
     }
     private static String reasonText(BombRoundWinReason r){switch(r){case BOMB_DEFUSED:return "bomb defused";case BOMB_DETONATED:return "bomb detonated";case TERRORISTS_ELIMINATED:return "Terrorists eliminated";case COUNTER_TERRORISTS_ELIMINATED:return "Counter-Terrorists eliminated";default:return "time expired";}}
-    public static void cleanup(World world,boolean removeTracked){if(removeTracked&&bomb!=null&&world.provider.dimensionId==bomb.dim&&HbmCsgoChargeIntegration.isCsgoCharge(world.getBlock(bomb.x,bomb.y,bomb.z)))world.setBlockToAir(bomb.x,bomb.y,bomb.z);bomb=null;pendingPlant=null;eliminated.clear();state=BombRoundState.DISABLED;stateEndTick=0;}
+    private static void cleanupTransientState(World world){if(bomb!=null&&world.provider.dimensionId==bomb.dim&&HbmCsgoChargeIntegration.isCsgoCharge(world.getBlock(bomb.x,bomb.y,bomb.z)))world.setBlockToAir(bomb.x,bomb.y,bomb.z);bomb=null;pendingPlant=null;eliminated.clear();stateEndTick=0;TDMSpectatorManager.restoreAll();TDMManager.clearPendingKitSelections();TDMManager.closeBombBuyGuis();}
+    public static void cleanup(World world,boolean removeTracked){if(removeTracked)cleanupTransientState(world);else{bomb=null;pendingPlant=null;eliminated.clear();stateEndTick=0;}state=BombRoundState.DISABLED;}
     private static void broadcast(String s){for(EntityPlayerMP p:TDMManager.getOnlinePlayers())p.addChatMessage(new ChatComponentText(s));}
     private static String key(EntityPlayer p){return p.getCommandSenderName().toLowerCase();}
     private static final class TrackedBomb {final int dim,x,y,z;final String site,planter;final TDMManager.Team team;final TDMManager.BombRole role;TrackedBomb(int d,int x,int y,int z,String s,String p,TDMManager.Team t,TDMManager.BombRole r){dim=d;this.x=x;this.y=y;this.z=z;site=s;planter=p;team=t;role=r;}}

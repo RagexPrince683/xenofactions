@@ -83,7 +83,7 @@ public class EventHandlerClient {
 	private static int tdmBlueScore = 0;
 	private static String tdmMapName = "";
 	private static String tdmMode="DEATHMATCH",tdmBombState="DISABLED",tdmTerroristTeam="red",tdmBombsite="",tdmSpectating="";
-	private static int tdmRedBombWins,tdmBlueBombWins,tdmBombSeconds,tdmSpectatorTarget=-1,tdmBuyScore; private static boolean tdmEconomy;
+	private static int tdmRedBombWins,tdmBlueBombWins,tdmBombSeconds,tdmSpectatorTarget=-1,tdmBuyScore,tdmRedPlayerCount,tdmBluePlayerCount; private static boolean tdmEconomy;
 	
 	public static List<int[]> resourceBorders = new ArrayList();
 	boolean resources = false;
@@ -93,6 +93,9 @@ public class EventHandlerClient {
 	}
 	public static void updateTDMStatus(boolean enabled,boolean voting,int roundSeconds,int voteSeconds,int redScore,int blueScore,String mapName,String mode,String bombState,int redBombWins,int blueBombWins,String terroristTeam,int bombSeconds,String site) {updateTDMStatus(enabled,voting,roundSeconds,voteSeconds,redScore,blueScore,mapName,mode,bombState,redBombWins,blueBombWins,terroristTeam,bombSeconds,site,false,0);}
 	public static void updateTDMStatus(boolean enabled,boolean voting,int roundSeconds,int voteSeconds,int redScore,int blueScore,String mapName,String mode,String bombState,int redBombWins,int blueBombWins,String terroristTeam,int bombSeconds,String site,boolean economy,int buyScore) {
+		updateTDMStatus(enabled,voting,roundSeconds,voteSeconds,redScore,blueScore,mapName,mode,bombState,redBombWins,blueBombWins,terroristTeam,bombSeconds,site,economy,buyScore,0,0);
+	}
+	public static void updateTDMStatus(boolean enabled,boolean voting,int roundSeconds,int voteSeconds,int redScore,int blueScore,String mapName,String mode,String bombState,int redBombWins,int blueBombWins,String terroristTeam,int bombSeconds,String site,boolean economy,int buyScore,int redPlayerCount,int bluePlayerCount) {
 		tdmHudEnabled = enabled;
 		tdmVoting = voting;
 		tdmRoundSeconds = roundSeconds;
@@ -100,7 +103,7 @@ public class EventHandlerClient {
 		tdmRedScore = redScore;
 		tdmBlueScore = blueScore;
 		tdmMapName = mapName == null ? "" : mapName;
-		tdmMode=mode;tdmBombState=bombState;tdmRedBombWins=redBombWins;tdmBlueBombWins=blueBombWins;tdmTerroristTeam=terroristTeam;tdmBombSeconds=bombSeconds;tdmBombsite=site;tdmEconomy=economy;tdmBuyScore=buyScore;
+		tdmMode=mode;tdmBombState=bombState;tdmRedBombWins=redBombWins;tdmBlueBombWins=blueBombWins;tdmTerroristTeam=terroristTeam;tdmBombSeconds=bombSeconds;tdmBombsite=site;tdmEconomy=economy;tdmBuyScore=buyScore;tdmRedPlayerCount=redPlayerCount;tdmBluePlayerCount=bluePlayerCount;
 		if(!enabled||voting)updateTDMSpectator(-1,"");
 	}
 	public static void updateTDMSpectator(int entityId,String name){Minecraft mc=Minecraft.getMinecraft();tdmSpectatorTarget=entityId;tdmSpectating=name==null?"":name;if(mc==null)return;if(entityId<=0){if(mc.thePlayer!=null)mc.renderViewEntity=mc.thePlayer;return;}if(mc.theWorld!=null){Entity e=mc.theWorld.getEntityByID(entityId);if(e instanceof EntityPlayer)mc.renderViewEntity= (EntityLivingBase) e;else if(mc.thePlayer!=null)mc.renderViewEntity=mc.thePlayer;}}
@@ -116,14 +119,15 @@ public class EventHandlerClient {
 		}
 
 		FontRenderer font = mc.fontRenderer;
-		boolean bomb="BOMB".equals(tdmMode);String timer = tdmVoting ? "Map vote: " + formatSeconds(tdmVoteSeconds) : bomb?("LIVE".equals(tdmBombState)?"Round: "+formatSeconds(tdmBombSeconds):tdmBombState+(tdmBombsite.length()>0?" "+tdmBombsite:"")):"Round: " + formatSeconds(tdmRoundSeconds);
+		boolean bomb="BOMB".equals(tdmMode);String timer = tdmVoting ? "Map vote: " + formatSeconds(tdmVoteSeconds) : bomb?bombStateText():"Round: " + formatSeconds(tdmRoundSeconds);
 		String map = tdmMapName.length() > 0 ? " Map: " + tdmMapName : "";
-		String redRole=bomb?("red".equals(tdmTerroristTeam)?"T":"CT"):"",blueRole=bomb?("blue".equals(tdmTerroristTeam)?"T":"CT"):"";String text = timer + "  Red"+(bomb?" ("+redRole+")":"")+": " + (bomb?tdmRedBombWins:tdmRedScore) + "  Blue"+(bomb?" ("+blueRole+")":"")+": " + (bomb?tdmBlueBombWins:tdmBlueScore) + map+(bomb&&tdmEconomy?"  Buy score: "+tdmBuyScore:"");
+		String redRole=bomb?("red".equals(tdmTerroristTeam)?"T":"CT"):"",blueRole=bomb?("blue".equals(tdmTerroristTeam)?"T":"CT"):"";boolean waiting=bomb&&"WAITING_FOR_TEAMS".equals(tdmBombState);String text = timer + "  Red"+(bomb&&!waiting?" ("+redRole+")":"")+": " + (waiting?tdmRedPlayerCount:(bomb?tdmRedBombWins:tdmRedScore)) + "  Blue"+(bomb&&!waiting?" ("+blueRole+")":"")+": " + (waiting?tdmBluePlayerCount:(bomb?tdmBlueBombWins:tdmBlueScore)) + map+(bomb&&tdmEconomy?"  Buy score: "+tdmBuyScore:"");
 		ScaledResolution resolution = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
 		int x = (resolution.getScaledWidth() - font.getStringWidth(text)) / 2;
 		font.drawStringWithShadow(text, Math.max(2, x), 6, tdmVoting ? 0xFFFF55 : 0xFFFFFF);
 		if(tdmSpectating.length()>0)font.drawStringWithShadow("Spectating "+tdmSpectating,2,18,0xFFFFFF);
 	}
+	private static String bombStateText(){if("WAITING_FOR_TEAMS".equals(tdmBombState))return "Waiting for teams";if("PRE_ROUND".equals(tdmBombState))return "Buy time: "+formatSeconds(tdmBombSeconds);if("LIVE".equals(tdmBombState))return "Round: "+formatSeconds(tdmBombSeconds);if("BOMB_PLANTED".equals(tdmBombState))return "Bomb planted"+(tdmBombsite.length()>0?" "+tdmBombsite:"");if("ROUND_END".equals(tdmBombState))return "Round over";return "";}
 
 
 	public static void openTDMMenu(String currentTeam, int cooldownSeconds, String[] friendlyLines, String[] enemyLines,boolean canOpenBuyMenu) {

@@ -1,3 +1,9 @@
+# Pull request: reconcile runtime TDM modes and add explicit BOMB testing
+
+- Added authoritative active-map mode transitions that reset the old lifecycle, scores, spectators, buy state, and objective state before immediately starting the newly selected mode; inactive-map configuration remains side-effect free.
+- Added an operator-only, transient `/tdm bombtest on|off|status` override that relaxes only the minimum-player gate, preserves production two-team waiting, and suppresses absent-team elimination awards.
+- Replaced raw BOMB lifecycle enum HUD text and distinguished waiting-state server player counts from BOMB round-win scores.
+
 # Pull request: fix Forge 1.7.10 TDM packet scheduling
 
 - Replaced the unavailable newer-version `MinecraftServer` scheduled-task call with a TDM-owned Java 8 task queue drained once at the start of each server tick.
