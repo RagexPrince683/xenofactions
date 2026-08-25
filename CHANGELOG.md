@@ -1,3 +1,9 @@
+# Pull request: allow HBM CSGO bombs in Warzones and add per-map TDM limits
+
+- Added an optional, cached registry lookup for HBM's exact CSGO charge block and allowed only that block through Warzone placement protection.
+- Added backward-compatible per-map TDM score-limit and round-timer overrides with global fallbacks of 10,000 points and 20 minutes.
+- Added `/tdm map scorelimit` and `/tdm map timer` administration commands, effective-setting map listings, help text, and documentation.
+
 # Pull request: fix bottom-up reachable Builder construction
 
 - Versioned Builder work order and migrated active jobs to deterministic bottom-up Y/Z/X scheduling using the current world as construction truth.

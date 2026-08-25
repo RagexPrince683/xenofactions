@@ -94,6 +94,8 @@ public class TDMData extends WorldSavedData {
             }
 
             TDMManager.TDMMap map = new TDMManager.TDMMap(mapName);
+            map.scoreLimitOverride = mapTag.hasKey("scoreLimit") ? Math.max(0, mapTag.getInteger("scoreLimit")) : 0;
+            map.roundTicksOverride = mapTag.hasKey("roundTicks") ? Math.max(0, mapTag.getInteger("roundTicks")) : 0;
             int mapSpawnCount = mapTag.getInteger("spawnCount");
             for (int j = 0; j < mapSpawnCount; j++) {
                 TDMManager.SpawnPoint spawn = readSpawn(mapTag.getCompoundTag("spawn" + j));
@@ -159,6 +161,8 @@ public class TDMData extends WorldSavedData {
         for (TDMManager.TDMMap map : maps.values()) {
             NBTTagCompound mapTag = new NBTTagCompound();
             mapTag.setString("name", map.name);
+            if (map.scoreLimitOverride > 0) mapTag.setInteger("scoreLimit", map.scoreLimitOverride);
+            if (map.roundTicksOverride > 0) mapTag.setInteger("roundTicks", map.roundTicksOverride);
             mapTag.setInteger("spawnCount", map.spawns.size());
             for (int i = 0; i < map.spawns.size(); i++) {
                 mapTag.setTag("spawn" + i, writeSpawn(map.spawns.get(i)));
