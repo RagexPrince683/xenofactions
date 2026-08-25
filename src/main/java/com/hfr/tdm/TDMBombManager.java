@@ -1,6 +1,7 @@
 package com.hfr.tdm;
 
 import com.hfr.compat.HbmCsgoChargeIntegration;
+import com.hfr.config.XFConfig;
 import com.hfr.main.MainRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
@@ -9,6 +10,7 @@ import net.minecraft.entity.item.EntityItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.world.World;
+import net.minecraftforge.common.util.ForgeDirection;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,6 +27,8 @@ public final class TDMBombManager {
     public static final int BUY_TIME_TICKS = TDMManager.BUY_TIME_TICKS;
     private static final int INTERMISSION_TICKS = 5 * 20;
     private static final int MISSING_RESULT_GRACE_TICKS = 5;
+    /** HBM decrements once per tick and explodes at zero; five leaves a small multi-tick margin beyond XF's <= 1 detonation latch. */
+    private static final int UNKNOWN_REMOVAL_DEFUSE_MIN_TIMER = 5;
     private static BombRoundState state = BombRoundState.DISABLED;
     private static long stateEndTick;
     private static final Set<String> eliminated = new HashSet<String>();
@@ -97,7 +101,7 @@ public final class TDMBombManager {
         if(canPlant(player,block,x,y,z,false))pendingPlant=new PendingPlant(player,x,y,z,player.worldObj.getTotalWorldTime());
     }
     private static void acceptPlant(EntityPlayer player,int x,int y,int z){String site=TDMManager.getBombsiteAt(player.worldObj,player.dimension,x,y,z);if(!"A".equals(site)&&!"B".equals(site))return;
-        bomb=new TrackedBomb(player.worldObj,player.dimension,x,y,z,site,player.getCommandSenderName(),TDMManager.getOrAssignPlayerTeam(player),TDMManager.getBombRole(player),player.worldObj.getBlock(x,y,z),player.worldObj.getTotalWorldTime());bomb.observe();HbmCsgoChargeIntegration.describeImplementation(player.worldObj,x,y,z);missingBombSince=-1L;missingBombWarningLogged=false;
+        bomb=new TrackedBomb(player.worldObj,player.dimension,x,y,z,site,player.getCommandSenderName(),TDMManager.getOrAssignPlayerTeam(player),TDMManager.getBombRole(player),player.worldObj.getBlock(x,y,z),player.worldObj.getBlockMetadata(x,y,z),player.worldObj.getTotalWorldTime());bomb.observe();HbmCsgoChargeIntegration.describeImplementation(player.worldObj,x,y,z);missingBombSince=-1L;missingBombWarningLogged=false;
         state=BombRoundState.BOMB_PLANTED; TDMManager.sendStatusToAll(player.worldObj);
     }
     public static boolean canPlant(EntityPlayer p,Block block,int x,int y,int z,boolean explain){
@@ -131,12 +135,19 @@ public final class TDMBombManager {
         if(missingBombSince<0){missingBombSince=now;return;}
         if(now-missingBombSince>=MISSING_RESULT_GRACE_TICKS){
             TDMManager.TDMMap map=TDMManager.getSelectedMapData(world);String mapName=map==null?"<unknown>":map.name;
-            if("DEFUSED".equals(bomb.runtimeResult)||bomb.disarmObserved){finishBombResult(world,true);return;}
-            if("DETONATED".equals(bomb.runtimeResult)||bomb.detonationObserved){finishBombResult(world,false);return;}
-            if(MainRegistry.logger!=null)MainRegistry.logger.error("HBM CSGO TDM unknown removal: map={}, site={}, dimension={}, coordinates=({}, {}, {}), round={}, block={}, tile={}, previousStarted={}, currentStarted={}, previousTimer={}, currentTimer={}",mapName,bomb.site,bomb.dim,bomb.x,bomb.y,bomb.z,bomb.roundIdentity,bomb.block.getClass().getName(),bomb.tileClass,bomb.previousStarted,bomb.currentStarted,bomb.previousTimer,bomb.currentTimer);
+            if("DEFUSED".equals(bomb.runtimeResult)){finishBombResult(world,true);return;}
+            if("DETONATED".equals(bomb.runtimeResult)){finishBombResult(world,false);return;}
+            if(bomb.detonationObserved){finishBombResult(world,false);return;}
+            if(bomb.disarmObserved){finishBombResult(world,true);return;}
+            boolean supportValid=isTrackedBombSupportStillValid(bomb);
+            boolean fallback=state==BombRoundState.BOMB_PLANTED&&!bomb.invalidated&&bomb.currentTimer!=null&&bomb.currentTimer.intValue()>=UNKNOWN_REMOVAL_DEFUSE_MIN_TIMER&&supportValid&&XFConfig.tdmBombUnknownRemovalAsDefuse;
+            if(fallback){if(MainRegistry.logger!=null)MainRegistry.logger.warn("HBM CSGO TDM: classifying unknown removal as CT defuse by compatibility fallback. map={}, site={}, dimension={}, coordinates=({},{},{}), timer={}, started={}, supportValid={}",mapName,bomb.site,bomb.dim,bomb.x,bomb.y,bomb.z,bomb.currentTimer,bomb.currentStarted,supportValid);finishBombResult(world,true);return;}
+            if(MainRegistry.logger!=null)MainRegistry.logger.error("HBM CSGO TDM unknown removal: map={}, site={}, dimension={}, coordinates=({}, {}, {}), round={}, block={}, tile={}, previousStarted={}, currentStarted={}, previousTimer={}, currentTimer={}, detonationObserved={}, disarmObserved={}, runtimeResult={}, attachmentMetadata={}, attachmentDirection={}, supportCoordinates=({}, {}, {}), supportValid={}, compatibilityFallbackEnabled={}",mapName,bomb.site,bomb.dim,bomb.x,bomb.y,bomb.z,bomb.roundIdentity,bomb.block.getClass().getName(),bomb.tileClass,bomb.previousStarted,bomb.currentStarted,bomb.previousTimer,bomb.currentTimer,bomb.detonationObserved,bomb.disarmObserved,bomb.runtimeResult,bomb.chargeMetadata,bomb.attachmentDirection,bomb.supportX,bomb.supportY,bomb.supportZ,supportValid,XFConfig.tdmBombUnknownRemovalAsDefuse);
+            if(!supportValid&&MainRegistry.logger!=null)MainRegistry.logger.error("HBM CSGO TDM objective disappeared because its supporting block became invalid; refusing CT defuse fallback.");
             state=BombRoundState.OBJECTIVE_ERROR;TDMManager.sendStatusToAll(world);
         }
     }
+    private static boolean isTrackedBombSupportStillValid(TrackedBomb b){return b!=null&&b.attachmentDirection!=ForgeDirection.UNKNOWN&&b.world.isSideSolid(b.supportX,b.supportY,b.supportZ,b.attachmentDirection);}
     public static void eliminate(EntityPlayer p){
         if(!TDMManager.isHardcoreRespawns(p.worldObj))return; eliminated.add(key(p));
         if(!TDMManager.isBombMode(p.worldObj)||!isRoundActive())return;
@@ -166,6 +177,6 @@ public final class TDMBombManager {
     public static synchronized void onWorldUnload(World world){if(world!=null&&bomb!=null&&bomb.world==world)cleanup(world,false);}
     private static void broadcast(String s){for(EntityPlayerMP p:TDMManager.getOnlinePlayers())p.addChatMessage(new ChatComponentText(s));}
     private static String key(EntityPlayer p){return p.getCommandSenderName().toLowerCase();}
-    private static final class TrackedBomb {final World world;final int dim,x,y,z;final String site,planter;final TDMManager.Team team;final TDMManager.BombRole role;final Block block;final long plantTick,roundIdentity;Class<?> tileClass;Boolean previousStarted,currentStarted;Integer previousTimer,currentTimer;boolean disarmObserved,detonationObserved,invalidated;String runtimeResult,runtimePlayerUuid,runtimePlayerName;TrackedBomb(World w,int d,int x,int y,int z,String s,String p,TDMManager.Team t,TDMManager.BombRole r,Block b,long tick){world=w;dim=d;this.x=x;this.y=y;this.z=z;site=s;planter=p;team=t;role=r;block=b;plantTick=tick;roundIdentity=tick;}void observe(){HbmCsgoChargeIntegration.Snapshot snapshot=HbmCsgoChargeIntegration.snapshot(world,x,y,z);previousStarted=currentStarted;previousTimer=currentTimer;currentStarted=snapshot.started;currentTimer=snapshot.timer;if(snapshot.tileClass!=null)tileClass=snapshot.tileClass;if(Boolean.TRUE.equals(previousStarted)&&Boolean.FALSE.equals(currentStarted)&&currentTimer!=null&&currentTimer.intValue()>0){disarmObserved=true;if(MainRegistry.logger!=null)MainRegistry.logger.info("HBM CSGO TDM: started true -> false; disarm latched");}if(Boolean.TRUE.equals(currentStarted)&&currentTimer!=null&&currentTimer.intValue()<=1){detonationObserved=true;if(MainRegistry.logger!=null)MainRegistry.logger.info("HBM CSGO TDM: detonation latched at timer={}",currentTimer);}}}
+    private static final class TrackedBomb {final World world;final int dim,x,y,z,chargeMetadata,supportX,supportY,supportZ;final ForgeDirection attachmentDirection;final String site,planter;final TDMManager.Team team;final TDMManager.BombRole role;final Block block;final long plantTick,roundIdentity;Class<?> tileClass;Boolean previousStarted,currentStarted;Integer previousTimer,currentTimer;boolean disarmObserved,detonationObserved,invalidated;String runtimeResult,runtimePlayerUuid,runtimePlayerName;TrackedBomb(World w,int d,int x,int y,int z,String s,String p,TDMManager.Team t,TDMManager.BombRole r,Block b,int metadata,long tick){world=w;dim=d;this.x=x;this.y=y;this.z=z;site=s;planter=p;team=t;role=r;block=b;chargeMetadata=metadata;attachmentDirection=ForgeDirection.getOrientation(metadata);supportX=x-attachmentDirection.offsetX;supportY=y-attachmentDirection.offsetY;supportZ=z-attachmentDirection.offsetZ;plantTick=tick;roundIdentity=tick;}void observe(){HbmCsgoChargeIntegration.Snapshot snapshot=HbmCsgoChargeIntegration.snapshot(world,x,y,z);previousStarted=currentStarted;previousTimer=currentTimer;currentStarted=snapshot.started;currentTimer=snapshot.timer;if(snapshot.tileClass!=null)tileClass=snapshot.tileClass;if(XFConfig.tdmBombLifecycleDebug&&MainRegistry.logger!=null)MainRegistry.logger.info("HBM CSGO TDM lifecycle: coordinates=({}, {}, {}), started={} -> {}, timer={} -> {}",x,y,z,previousStarted,currentStarted,previousTimer,currentTimer);if(Boolean.TRUE.equals(previousStarted)&&Boolean.FALSE.equals(currentStarted)&&currentTimer!=null&&currentTimer.intValue()>0){disarmObserved=true;if(XFConfig.tdmBombLifecycleDebug&&MainRegistry.logger!=null)MainRegistry.logger.info("HBM CSGO TDM: started true -> false; disarm latched");}if(Boolean.TRUE.equals(currentStarted)&&currentTimer!=null&&currentTimer.intValue()<=1){detonationObserved=true;if(XFConfig.tdmBombLifecycleDebug&&MainRegistry.logger!=null)MainRegistry.logger.info("HBM CSGO TDM: detonation latched at timer={}",currentTimer);}}}
     private static final class PendingPlant{final EntityPlayer player;final int x,y,z;final long tick;PendingPlant(EntityPlayer p,int x,int y,int z,long t){player=p;this.x=x;this.y=y;this.z=z;tick=t;}}
 }
