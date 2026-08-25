@@ -22,6 +22,6 @@ public class TDMKitSelectResultPacket implements IMessage {
     public static class Handler implements IMessageHandler<TDMKitSelectResultPacket,IMessage> {
         public IMessage onMessage(final TDMKitSelectResultPacket message,MessageContext context){handle(message);return null;}
         @SideOnly(Side.CLIENT)
-        private void handle(final TDMKitSelectResultPacket message){Minecraft.getMinecraft().func_152344_a(new Runnable(){public void run(){if(Minecraft.getMinecraft().currentScreen instanceof GUITDMKitSelect)((GUITDMKitSelect)Minecraft.getMinecraft().currentScreen).receiveSelectionResult(message.result);}});}
+        private void handle(final TDMKitSelectResultPacket message){Minecraft.getMinecraft().func_152344_a(new Runnable(){public void run(){if(message.result==TDMManager.KitSelectionResult.SUCCESS)com.hfr.main.EventHandlerClient.clearMandatoryKitGui(true);else if(Minecraft.getMinecraft().currentScreen instanceof GUITDMKitSelect)((GUITDMKitSelect)Minecraft.getMinecraft().currentScreen).receiveSelectionResult(message.result);}});}
     }
 }

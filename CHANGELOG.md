@@ -1,3 +1,9 @@
+# Pull request: restore hardcore-aware TDM respawn kit lifecycle
+
+- Kept the timed global BOMB buy phase exclusively for hardcore-respawn maps; non-hardcore rounds now enter `LIVE` directly and use independent mandatory per-player kit locks.
+- Made every real non-hardcore respawn teleport, protect, freeze, and repeatedly enforce an inescapable kit GUI after the death screen, with authoritative damage, interaction, and pickup restrictions.
+- Added server movement anchors for buy and respawn protection, explicit kit-selection contexts, safe fallback handling, and deferred one-objective BOMB assignment until an eligible Terrorist's inventory can no longer be replaced by kit application.
+
 # Pull request: contain TDM BOMB buy protection to PRE_ROUND
 
 - Separated the authoritative BOMB buy phase, pending kit choice, and temporary kit protection so stale pending selections can no longer refresh invisibility, slowness, resistance, or regeneration during live combat.
