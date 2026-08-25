@@ -45,7 +45,9 @@ public class TDMKitManager {
         return addKit(GLOBAL_MAP, team, player);
     }
 
-    public static int addKit(String mapName, TDMManager.Team team, EntityPlayer player) {
+    public static int addKit(String mapName, TDMManager.Team team, EntityPlayer player) { return addKit(mapName, team, player, 0); }
+
+    public static int addKit(String mapName, TDMManager.Team team, EntityPlayer player, int cost) {
         String normalizedMap = TDMManager.normalizeMapName(mapName);
         List<ItemEntry> items = new ArrayList<ItemEntry>();
 
@@ -65,7 +67,7 @@ public class TDMKitManager {
 
         List<KitEntry> teamKits = getOrCreateTeamKits(normalizedMap, team);
         String mapPrefix = normalizedMap.length() > 0 ? normalizedMap + " " : "";
-        KitEntry kit = new KitEntry(mapPrefix + team.name.substring(0, 1).toUpperCase() + team.name.substring(1) + " Kit " + (teamKits.size() + 1), items);
+        KitEntry kit = new KitEntry(mapPrefix + team.name.substring(0, 1).toUpperCase() + team.name.substring(1) + " Kit " + (teamKits.size() + 1), items, Math.max(0, cost));
         teamKits.add(kit);
         save();
         return teamKits.size();
@@ -90,6 +92,9 @@ public class TDMKitManager {
     public static String[] getDirectKitNames(String mapName, TDMManager.Team team) {
         return getKitNames(getDirectTeamKits(mapName, team));
     }
+
+    public static int[] getKitCosts(String mapName, TDMManager.Team team) { List<KitEntry> list=getTeamKits(mapName,team); int[] costs=new int[list.size()]; for(int i=0;i<costs.length;i++) costs[i]=Math.max(0,list.get(i).cost); return costs; }
+    public static int getKitCost(String mapName,TDMManager.Team team,int index){List<KitEntry> list=getTeamKits(mapName,team);return index<0||index>=list.size()?-1:Math.max(0,list.get(index).cost);}
 
     public static boolean removeKit(String mapName, TDMManager.Team team, int kitIndex) {
         List<KitEntry> teamKits = getDirectTeamKits(mapName, team);
@@ -256,13 +261,15 @@ public class TDMKitManager {
 
     private static class KitEntry {
         String name;
+        int cost;
         List<ItemEntry> items = new ArrayList<ItemEntry>();
 
         KitEntry() { }
 
-        KitEntry(String name, List<ItemEntry> items) {
+        KitEntry(String name, List<ItemEntry> items, int cost) {
             this.name = name;
             this.items = items;
+            this.cost = Math.max(0, cost);
         }
     }
 

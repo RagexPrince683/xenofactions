@@ -468,3 +468,9 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Added a persistent 27-slot Builder inventory with secure GUI transfer, nearby dropped-item pickup, migration, and death drops.
 - Counted Depot and Builder stock together, added atomic capacity-aware fetching and a distinct inventory-full diagnostic.
 - Updated Builder documentation for inventory persistence, pickup, and canonical matching.
+
+## TDM bomb kit economy and buy phase
+
+- Added per-map BOMB economy configuration, match-scoped player buy score, kill and successful-defuse rewards, and server-authoritative saved-kit purchases.
+- Added saved-kit costs with backward-compatible zero-cost loading and a 20-second protected buy phase before every bomb round.
+- Added automatic first-free-kit fallback, economy HUD/GUI synchronization, commands, and map diagnostics.

@@ -83,7 +83,7 @@ public class EventHandlerClient {
 	private static int tdmBlueScore = 0;
 	private static String tdmMapName = "";
 	private static String tdmMode="DEATHMATCH",tdmBombState="DISABLED",tdmTerroristTeam="red",tdmBombsite="",tdmSpectating="";
-	private static int tdmRedBombWins,tdmBlueBombWins,tdmBombSeconds,tdmSpectatorTarget=-1;
+	private static int tdmRedBombWins,tdmBlueBombWins,tdmBombSeconds,tdmSpectatorTarget=-1,tdmBuyScore; private static boolean tdmEconomy;
 	
 	public static List<int[]> resourceBorders = new ArrayList();
 	boolean resources = false;
@@ -91,7 +91,8 @@ public class EventHandlerClient {
 	public static void updateTDMStatus(boolean enabled, boolean voting, int roundSeconds, int voteSeconds, int redScore, int blueScore, String mapName) {
 		updateTDMStatus(enabled,voting,roundSeconds,voteSeconds,redScore,blueScore,mapName,"DEATHMATCH","DISABLED",0,0,"red",0,"");
 	}
-	public static void updateTDMStatus(boolean enabled,boolean voting,int roundSeconds,int voteSeconds,int redScore,int blueScore,String mapName,String mode,String bombState,int redBombWins,int blueBombWins,String terroristTeam,int bombSeconds,String site) {
+	public static void updateTDMStatus(boolean enabled,boolean voting,int roundSeconds,int voteSeconds,int redScore,int blueScore,String mapName,String mode,String bombState,int redBombWins,int blueBombWins,String terroristTeam,int bombSeconds,String site) {updateTDMStatus(enabled,voting,roundSeconds,voteSeconds,redScore,blueScore,mapName,mode,bombState,redBombWins,blueBombWins,terroristTeam,bombSeconds,site,false,0);}
+	public static void updateTDMStatus(boolean enabled,boolean voting,int roundSeconds,int voteSeconds,int redScore,int blueScore,String mapName,String mode,String bombState,int redBombWins,int blueBombWins,String terroristTeam,int bombSeconds,String site,boolean economy,int buyScore) {
 		tdmHudEnabled = enabled;
 		tdmVoting = voting;
 		tdmRoundSeconds = roundSeconds;
@@ -99,7 +100,7 @@ public class EventHandlerClient {
 		tdmRedScore = redScore;
 		tdmBlueScore = blueScore;
 		tdmMapName = mapName == null ? "" : mapName;
-		tdmMode=mode;tdmBombState=bombState;tdmRedBombWins=redBombWins;tdmBlueBombWins=blueBombWins;tdmTerroristTeam=terroristTeam;tdmBombSeconds=bombSeconds;tdmBombsite=site;
+		tdmMode=mode;tdmBombState=bombState;tdmRedBombWins=redBombWins;tdmBlueBombWins=blueBombWins;tdmTerroristTeam=terroristTeam;tdmBombSeconds=bombSeconds;tdmBombsite=site;tdmEconomy=economy;tdmBuyScore=buyScore;
 		if(!enabled||voting)updateTDMSpectator(-1,"");
 	}
 	public static void updateTDMSpectator(int entityId,String name){Minecraft mc=Minecraft.getMinecraft();tdmSpectatorTarget=entityId;tdmSpectating=name==null?"":name;if(mc==null)return;if(entityId<=0){if(mc.thePlayer!=null)mc.renderViewEntity=mc.thePlayer;return;}if(mc.theWorld!=null){Entity e=mc.theWorld.getEntityByID(entityId);if(e instanceof EntityPlayer)mc.renderViewEntity=e;else if(mc.thePlayer!=null)mc.renderViewEntity=mc.thePlayer;}}
@@ -117,7 +118,7 @@ public class EventHandlerClient {
 		FontRenderer font = mc.fontRenderer;
 		boolean bomb="BOMB".equals(tdmMode);String timer = tdmVoting ? "Map vote: " + formatSeconds(tdmVoteSeconds) : bomb?("LIVE".equals(tdmBombState)?"Round: "+formatSeconds(tdmBombSeconds):tdmBombState+(tdmBombsite.length()>0?" "+tdmBombsite:"")):"Round: " + formatSeconds(tdmRoundSeconds);
 		String map = tdmMapName.length() > 0 ? " Map: " + tdmMapName : "";
-		String redRole=bomb?("red".equals(tdmTerroristTeam)?"T":"CT"):"",blueRole=bomb?("blue".equals(tdmTerroristTeam)?"T":"CT"):"";String text = timer + "  Red"+(bomb?" ("+redRole+")":"")+": " + (bomb?tdmRedBombWins:tdmRedScore) + "  Blue"+(bomb?" ("+blueRole+")":"")+": " + (bomb?tdmBlueBombWins:tdmBlueScore) + map;
+		String redRole=bomb?("red".equals(tdmTerroristTeam)?"T":"CT"):"",blueRole=bomb?("blue".equals(tdmTerroristTeam)?"T":"CT"):"";String text = timer + "  Red"+(bomb?" ("+redRole+")":"")+": " + (bomb?tdmRedBombWins:tdmRedScore) + "  Blue"+(bomb?" ("+blueRole+")":"")+": " + (bomb?tdmBlueBombWins:tdmBlueScore) + map+(bomb&&tdmEconomy?"  Buy score: "+tdmBuyScore:"");
 		ScaledResolution resolution = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
 		int x = (resolution.getScaledWidth() - font.getStringWidth(text)) / 2;
 		font.drawStringWithShadow(text, Math.max(2, x), 6, tdmVoting ? 0xFFFF55 : 0xFFFFFF);
