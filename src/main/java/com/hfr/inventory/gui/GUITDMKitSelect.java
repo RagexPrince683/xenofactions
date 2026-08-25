@@ -9,12 +9,13 @@ import net.minecraft.util.EnumChatFormatting;
 public class GUITDMKitSelect extends GuiScreen {
 
     private final String team;
-    private final String[] kitNames;
+    private final String[] kitNames; private final int[] costs;private final boolean economy,buying;private final int balance,seconds;
 
     public GUITDMKitSelect(String team, String[] kitNames) {
-        this.team = team;
-        this.kitNames = kitNames;
+        this(team,kitNames,new int[kitNames.length],false,0,0,false);
     }
+
+    public GUITDMKitSelect(String team,String[] names,int[] costs,boolean economy,int balance,int seconds,boolean buying){this.team=team;this.kitNames=names;this.costs=costs;this.economy=economy;this.balance=balance;this.seconds=seconds;this.buying=buying;}
 
     @Override
     public void initGui() {
@@ -23,19 +24,19 @@ public class GUITDMKitSelect extends GuiScreen {
         int y = this.height / 2 - (kitNames.length * 24) / 2;
 
         for (int i = 0; i < kitNames.length; i++) {
-            this.buttonList.add(new GuiButton(i, x, y + i * 24, 200, 20, kitNames[i]));
+            this.buttonList.add(new GuiButton(i, x, y + i * 24, 200, 20, kitNames[i]+" - "+(costs[i]==0?"FREE":Integer.toString(costs[i]))));
         }
     }
 
     @Override
     protected void actionPerformed(GuiButton button) {
         PacketDispatcher.wrapper.sendToServer(new TDMKitSelectPacket(button.id));
-        this.mc.displayGuiScreen(null);
+        if(!buying)this.mc.displayGuiScreen(null);
     }
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) {
-        // Do not allow the menu to be escaped before a kit is selected.
+        // Buying and legacy selection remain server-controlled.
     }
 
     @Override
@@ -43,7 +44,7 @@ public class GUITDMKitSelect extends GuiScreen {
         this.drawDefaultBackground();
         String title = EnumChatFormatting.BOLD + "Select a " + team + " TDM Kit";
         this.drawCenteredString(this.fontRendererObj, title, this.width / 2, this.height / 2 - (kitNames.length * 24) / 2 - 28, 0xFFFFFF);
-        this.drawCenteredString(this.fontRendererObj, "You have Resistance and Regeneration until you pick one.", this.width / 2, this.height / 2 - (kitNames.length * 24) / 2 - 16, 0xA0A0A0);
+        this.drawCenteredString(this.fontRendererObj, buying?("Buy time: "+seconds+"s"+(economy?"  Balance: "+balance:"")):"You have Resistance and Regeneration until you pick one.", this.width / 2, this.height / 2 - (kitNames.length * 24) / 2 - 16, 0xA0A0A0);
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 

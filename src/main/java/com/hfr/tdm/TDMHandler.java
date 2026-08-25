@@ -82,17 +82,18 @@ public class TDMHandler {
         if (TDMManager.isMapVoteActive(event.entityLiving.worldObj)) return;
 
         EntityPlayer victim = (EntityPlayer) event.entityLiving;
-        TDMBombManager.eliminate(victim);
         EntityPlayer attacker = getAttackingPlayer(event.source);
-        if (attacker == null || attacker == victim) return;
-
-        TDMManager.Team victimTeam = TDMManager.getOrAssignPlayerTeam(victim);
-        TDMManager.Team attackerTeam = TDMManager.getOrAssignPlayerTeam(attacker);
-        if (attackerTeam != null && attackerTeam != victimTeam) {
-            TDMManager.addKillScore(victim.worldObj, attackerTeam);
-            TDMManager.recordKill(victim.worldObj, attacker.getCommandSenderName());
-            TDMManager.recordDeath(victim.worldObj, victim.getCommandSenderName());
+        if (attacker != null && attacker != victim) {
+            TDMManager.Team victimTeam = TDMManager.getOrAssignPlayerTeam(victim);
+            TDMManager.Team attackerTeam = TDMManager.getOrAssignPlayerTeam(attacker);
+            if (attackerTeam != null && attackerTeam != victimTeam) {
+                TDMManager.addKillScore(victim.worldObj, attackerTeam);
+                TDMManager.recordKill(victim.worldObj, attacker.getCommandSenderName());
+                TDMManager.recordDeath(victim.worldObj, victim.getCommandSenderName());
+                TDMManager.awardKillBuyScore(attacker);
+            }
         }
+        TDMBombManager.eliminate(victim);
     }
 
     @SubscribeEvent
@@ -100,6 +101,7 @@ public class TDMHandler {
         if (event.entityLiving.worldObj.isRemote) return;
         if (!(event.entityLiving instanceof EntityPlayer)) return;
         if (!TDMManager.isEnabled(event.entityLiving.worldObj)) return;
+        if (TDMManager.isBombMode(event.entityLiving.worldObj) && !TDMBombManager.isRoundActive()) { event.setCanceled(true); return; }
         if (TDMManager.isFriendlyFireEnabled(event.entityLiving.worldObj)) return;
 
         EntityPlayer victim = (EntityPlayer) event.entityLiving;
@@ -119,9 +121,9 @@ public class TDMHandler {
     @SubscribeEvent(priority=EventPriority.LOWEST,receiveCanceled=false)
     public void acceptedPlace(BlockEvent.PlaceEvent event){if(!event.world.isRemote)TDMBombManager.recordAcceptedPlant(event.player,event.placedBlock,event.x,event.y,event.z);}
     @SubscribeEvent(priority=EventPriority.HIGHEST)
-    public void restrictBreak(BlockEvent.BreakEvent event){if(TDMSpectatorManager.isObserving(event.getPlayer()))event.setCanceled(true);}
+    public void restrictBreak(BlockEvent.BreakEvent event){if(TDMSpectatorManager.isObserving(event.getPlayer())||(TDMManager.isBombMode(event.world)&&!TDMBombManager.isRoundActive()))event.setCanceled(true);else if(TDMBombManager.tryDefuse(event.getPlayer(),event.x,event.y,event.z))event.setCanceled(true);}
     @SubscribeEvent(priority=EventPriority.HIGHEST)
-    public void restrictInteract(PlayerInteractEvent event){if(TDMSpectatorManager.isObserving(event.entityPlayer))event.setCanceled(true);}
+    public void restrictInteract(PlayerInteractEvent event){if(TDMSpectatorManager.isObserving(event.entityPlayer)||(TDMManager.isBombMode(event.entityPlayer.worldObj)&&!TDMBombManager.isRoundActive()))event.setCanceled(true);}
     @SubscribeEvent(priority=EventPriority.HIGHEST)
     public void restrictPickup(EntityItemPickupEvent event){if(TDMSpectatorManager.isObserving(event.entityPlayer))event.setCanceled(true);}
 

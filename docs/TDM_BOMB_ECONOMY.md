@@ -1,0 +1,9 @@
+# TDM BOMB kit economy
+
+BOMB maps can enable a per-map saved-kit economy with `/tdm map economy <map> <true|false>`. Configure enemy-kill and completed CT-defuse rewards with `killscore` and `defusescore`. This currency is personal, server authoritative, separate from team scores and round wins, survives death and bomb-round boundaries, and resets when the map match ends.
+
+`/tdm kit add <red|blue> [map|global] [cost]` saves a whole loadout. Cost `0` is free. Existing `tdm_kits.txt` entries omit `cost` and therefore deserialize as `0`; map-specific lists continue to take precedence over stable-order global fallbacks.
+
+Every BOMB round starts with a protected 20-second buying period. The live timer starts afterward. A player may purchase one eligible team kit. If none is selected, the first free eligible kit is assigned; paid kits are never assigned free while economy rules are enabled. Economy-disabled BOMB maps retain the phase but treat every kit as free. DEATHMATCH behavior is unchanged.
+
+Old TDM map NBT has no economy keys and loads with economy disabled and both rewards at zero.

@@ -14,13 +14,15 @@ public class TDMKitGuiPacket implements IMessage {
 
     private String team;
     private String[] kitNames;
+    private int[] costs; private boolean economy,buying; private int balance,seconds;
 
     public TDMKitGuiPacket() { }
 
     public TDMKitGuiPacket(String team, String[] kitNames) {
-        this.team = team;
-        this.kitNames = kitNames;
+        this(team,kitNames,new int[kitNames.length],false,0,0,false);
     }
+
+    public TDMKitGuiPacket(String team,String[] names,int[] costs,boolean economy,int balance,int seconds,boolean buying){this.team=team;this.kitNames=names;this.costs=costs;this.economy=economy;this.balance=balance;this.seconds=seconds;this.buying=buying;}
 
     @Override
     public void fromBytes(ByteBuf buf) {
@@ -29,7 +31,7 @@ public class TDMKitGuiPacket implements IMessage {
         kitNames = new String[count];
         for (int i = 0; i < count; i++) {
             kitNames[i] = ByteBufUtils.readUTF8String(buf);
-        }
+        } costs=new int[count];for(int i=0;i<count;i++)costs[i]=buf.readInt();economy=buf.readBoolean();balance=buf.readInt();seconds=buf.readInt();buying=buf.readBoolean();
     }
 
     @Override
@@ -38,7 +40,7 @@ public class TDMKitGuiPacket implements IMessage {
         buf.writeInt(kitNames.length);
         for (int i = 0; i < kitNames.length; i++) {
             ByteBufUtils.writeUTF8String(buf, kitNames[i]);
-        }
+        } for(int cost:costs)buf.writeInt(cost);buf.writeBoolean(economy);buf.writeInt(balance);buf.writeInt(seconds);buf.writeBoolean(buying);
     }
 
     public static class Handler implements IMessageHandler<TDMKitGuiPacket, IMessage> {
@@ -46,7 +48,7 @@ public class TDMKitGuiPacket implements IMessage {
         @Override
         @SideOnly(Side.CLIENT)
         public IMessage onMessage(TDMKitGuiPacket message, MessageContext ctx) {
-            Minecraft.getMinecraft().displayGuiScreen(new GUITDMKitSelect(message.team, message.kitNames));
+            if(message.kitNames.length==0)Minecraft.getMinecraft().displayGuiScreen(null);else Minecraft.getMinecraft().displayGuiScreen(new GUITDMKitSelect(message.team,message.kitNames,message.costs,message.economy,message.balance,message.seconds,message.buying));
             return null;
         }
     }

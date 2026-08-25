@@ -34,6 +34,8 @@ public class TDMData extends WorldSavedData {
     public final Map<String, String> mapVotes = new HashMap<String, String>();
     public final Map<String, Integer> playerKills = new HashMap<String, Integer>();
     public final Map<String, Integer> playerDeaths = new HashMap<String, Integer>();
+    /** Match-scoped balances, persisted only so reconnects cannot reset money. */
+    public final Map<String, Integer> playerBuyScores = new HashMap<String, Integer>();
 
     public TDMData(String name) {
         super(name);
@@ -105,6 +107,9 @@ public class TDMData extends WorldSavedData {
             map.hardcoreRespawns=mapTag.hasKey("hardcoreRespawns")&&mapTag.getBoolean("hardcoreRespawns");
             map.bombScoreLimitOverride=mapTag.hasKey("bombScoreLimit")?Math.max(0,mapTag.getInteger("bombScoreLimit")):0;
             map.bombRoundTicksOverride=mapTag.hasKey("bombRoundTicks")?Math.max(0,mapTag.getInteger("bombRoundTicks")):0;
+            map.buyScoreEnabled=mapTag.hasKey("buyScoreEnabled")&&mapTag.getBoolean("buyScoreEnabled");
+            map.killBuyScoreReward=mapTag.hasKey("killBuyScoreReward")?Math.max(0,mapTag.getInteger("killBuyScoreReward")):0;
+            map.bombDefuseBuyScoreReward=mapTag.hasKey("bombDefuseBuyScoreReward")?Math.max(0,mapTag.getInteger("bombDefuseBuyScoreReward")):0;
             readBombsite(mapTag,"bombsiteA",map.bombsiteA);readBombsite(mapTag,"bombsiteB",map.bombsiteB);
             int mapSpawnCount = mapTag.getInteger("spawnCount");
             for (int j = 0; j < mapSpawnCount; j++) {
@@ -139,6 +144,8 @@ public class TDMData extends WorldSavedData {
             playerKills.put(player, Integer.valueOf(nbt.getInteger("statKills" + i)));
             playerDeaths.put(player, Integer.valueOf(nbt.getInteger("statDeaths" + i)));
         }
+
+        playerBuyScores.clear(); int buyCount=nbt.getInteger("buyScoreCount"); for(int i=0;i<buyCount;i++){String player=nbt.getString("buyScorePlayer"+i).toLowerCase();if(player.length()>0)playerBuyScores.put(player,Integer.valueOf(Math.max(0,nbt.getInteger("buyScore"+i))));}
 
         int voteCount = nbt.getInteger("voteCount");
         for (int i = 0; i < voteCount; i++) {
@@ -176,6 +183,7 @@ public class TDMData extends WorldSavedData {
             if (map.roundTicksOverride > 0) mapTag.setInteger("roundTicks", map.roundTicksOverride);
             mapTag.setString("mode",map.mode.name());mapTag.setString("terroristTeam",map.terroristTeam.name);mapTag.setBoolean("hardcoreRespawns",map.hardcoreRespawns);
             if(map.bombScoreLimitOverride>0)mapTag.setInteger("bombScoreLimit",map.bombScoreLimitOverride);if(map.bombRoundTicksOverride>0)mapTag.setInteger("bombRoundTicks",map.bombRoundTicksOverride);
+            mapTag.setBoolean("buyScoreEnabled",map.buyScoreEnabled);if(map.killBuyScoreReward>0)mapTag.setInteger("killBuyScoreReward",map.killBuyScoreReward);if(map.bombDefuseBuyScoreReward>0)mapTag.setInteger("bombDefuseBuyScoreReward",map.bombDefuseBuyScoreReward);
             writeBombsite(mapTag,"bombsiteA",map.bombsiteA);writeBombsite(mapTag,"bombsiteB",map.bombsiteB);
             mapTag.setInteger("spawnCount", map.spawns.size());
             for (int i = 0; i < map.spawns.size(); i++) {
@@ -205,6 +213,8 @@ public class TDMData extends WorldSavedData {
             statIndex++;
         }
         nbt.setInteger("statCount", statIndex);
+
+        int buyIndex=0;for(Map.Entry<String,Integer> entry:playerBuyScores.entrySet()){nbt.setString("buyScorePlayer"+buyIndex,entry.getKey());nbt.setInteger("buyScore"+buyIndex,Math.max(0,entry.getValue().intValue()));buyIndex++;}nbt.setInteger("buyScoreCount",buyIndex);
 
         int voteIndex = 0;
         for (Map.Entry<String, String> entry : mapVotes.entrySet()) {

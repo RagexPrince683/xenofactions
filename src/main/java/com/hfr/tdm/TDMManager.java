@@ -24,6 +24,7 @@ public class TDMManager {
     public static final int POINTS_PER_KILL = 100;
     public static final int BOMB_SCORE_LIMIT = 13;
     public static final int BOMB_ROUND_TICKS = 120 * 20;
+    public static final int BUY_TIME_TICKS = 20 * 20;
     public static final int TEAM_CHANGE_COOLDOWN_TICKS = 120 * 20;
     private static final Set<String> pendingKitSelection = new HashSet<String>();
     private static final Map<String, Long> nextTeamChangeTick = new HashMap<String, Long>();
@@ -83,6 +84,9 @@ public class TDMManager {
         public boolean hardcoreRespawns;
         public int bombScoreLimitOverride;
         public int bombRoundTicksOverride;
+        public boolean buyScoreEnabled;
+        public int killBuyScoreReward;
+        public int bombDefuseBuyScoreReward;
         public final Bombsite bombsiteA = new Bombsite();
         public final Bombsite bombsiteB = new Bombsite();
 
@@ -160,6 +164,7 @@ public class TDMManager {
             data.mapVoteActive = false;
             data.mapVoteEndTick = 0;
             data.mapVotes.clear();
+            data.playerBuyScores.clear();
         }
         data.markDirty();
         sendStatusToAll(world);
@@ -238,7 +243,7 @@ public class TDMManager {
             return false;
         }
 
-        TDMBombManager.cleanup(world,true);TDMSpectatorManager.restoreAll();data.selectedMap = normalized;
+        TDMBombManager.cleanup(world,true);TDMSpectatorManager.restoreAll();data.playerBuyScores.clear();data.selectedMap = normalized;
         data.markDirty();
         return true;
     }
@@ -496,6 +501,7 @@ public class TDMManager {
         data.blueScore = 0;
         data.playerKills.clear();
         data.playerDeaths.clear();
+        data.playerBuyScores.clear();
         data.roundEndTick = world.getTotalWorldTime() + getEffectiveRoundTicks(world);
         data.mapVoteActive = false;
         data.mapVoteEndTick = 0;
@@ -543,6 +549,7 @@ public class TDMManager {
 
         TDMBombManager.cleanup(world, true);
         TDMSpectatorManager.restoreAll();
+        data.playerBuyScores.clear();
 
         data.mapVoteActive = true;
         data.mapVoteEndTick = world.getTotalWorldTime() + MAP_VOTE_TICKS;
@@ -604,7 +611,8 @@ public class TDMManager {
                         data.blueScore, data.selectedMap,
                         getGameMode(world).name(), TDMBombManager.getState().name(),
                         data.redBombWins, data.blueBombWins, getTerroristTeam(world).name,
-                        TDMBombManager.getRemainingSeconds(world), TDMBombManager.getPlantedSite()
+                        TDMBombManager.getRemainingSeconds(world), TDMBombManager.getPlantedSite(),
+                        getSelectedMapData(world)!=null&&getSelectedMapData(world).buyScoreEnabled, getBuyScore(player)
                 ), player);
             }
         }
@@ -841,6 +849,13 @@ public class TDMManager {
         return players;
     }
 
+    public static int getBuyScore(EntityPlayer player){Integer v=TDMData.get(player.worldObj).playerBuyScores.get(getPlayerKey(player));return v==null?0:Math.max(0,v.intValue());}
+    public static void addBuyScore(EntityPlayer player,int amount){TDMMap map=getSelectedMapData(player.worldObj);if(map==null||!map.buyScoreEnabled||amount<=0)return;TDMData d=TDMData.get(player.worldObj);int old=getBuyScore(player);int next=old>Integer.MAX_VALUE-amount?Integer.MAX_VALUE:old+amount;d.playerBuyScores.put(getPlayerKey(player),Integer.valueOf(next));d.markDirty();sendStatusToAll(player.worldObj);}
+    public static void awardKillBuyScore(EntityPlayer player){TDMMap map=getSelectedMapData(player.worldObj);if(map!=null&&map.mode==TDMGameMode.BOMB&&map.buyScoreEnabled&&TDMBombManager.isRoundActive())addBuyScore(player,map.killBuyScoreReward);}
+    public static void awardDefuseBuyScore(EntityPlayer player){TDMMap map=getSelectedMapData(player.worldObj);if(map!=null&&map.buyScoreEnabled)addBuyScore(player,map.bombDefuseBuyScoreReward);}
+    public static void clearKitSelection(EntityPlayer player){pendingKitSelection.remove(getPlayerKey(player));}
+    public static boolean hasSelectedKit(EntityPlayer player){return !pendingKitSelection.contains(getPlayerKey(player));}
+
     public static void promptForKit(EntityPlayer player) {
         if (!(player instanceof EntityPlayerMP)) {
             return;
@@ -855,7 +870,8 @@ public class TDMManager {
         }
 
         pendingKitSelection.add(getPlayerKey(player));
-        PacketDispatcher.wrapper.sendTo(new TDMKitGuiPacket(team.name, TDMKitManager.getKitNames(mapName, team)), (EntityPlayerMP) player);
+        int[] costs=TDMKitManager.getKitCosts(mapName,team); boolean buying=isBombMode(player.worldObj)&&TDMBombManager.getState()==TDMBombManager.BombRoundState.PRE_ROUND; TDMMap map=getSelectedMapData(player.worldObj); boolean economy=buying&&map!=null&&map.buyScoreEnabled; if(!economy)java.util.Arrays.fill(costs,0);
+        PacketDispatcher.wrapper.sendTo(new TDMKitGuiPacket(team.name, TDMKitManager.getKitNames(mapName, team),costs,economy,getBuyScore(player),buying?TDMBombManager.getRemainingSeconds(player.worldObj):0,buying), (EntityPlayerMP) player);
     }
 
     public static void tickKitSelection(EntityPlayer player) {
@@ -885,11 +901,12 @@ public class TDMManager {
             return false;
         }
 
-        Team team = getOrAssignPlayerTeam(player);
-        if (!TDMKitManager.applyKit(getSelectedMap(player.worldObj), team, kitIndex, player)) {
-            return false;
-        }
-
+        Team team = getOrAssignPlayerTeam(player); String mapName=getSelectedMap(player.worldObj);
+        boolean buying=isBombMode(player.worldObj); if(buying&&TDMBombManager.getState()!=TDMBombManager.BombRoundState.PRE_ROUND)return false;
+        int savedCost=TDMKitManager.getKitCost(mapName,team,kitIndex); if(savedCost<0)return false;
+        TDMMap map=getSelectedMapData(player.worldObj);int effectiveCost=map!=null&&map.buyScoreEnabled?savedCost:0;if(getBuyScore(player)<effectiveCost)return false;
+        if (!TDMKitManager.applyKit(mapName, team, kitIndex, player)) return false;
+        if(effectiveCost>0){TDMData d=TDMData.get(player.worldObj);d.playerBuyScores.put(getPlayerKey(player),Integer.valueOf(getBuyScore(player)-effectiveCost));d.markDirty();}
         pendingKitSelection.remove(getPlayerKey(player));
         player.removePotionEffect(Potion.resistance.id);
         player.removePotionEffect(Potion.regeneration.id);
