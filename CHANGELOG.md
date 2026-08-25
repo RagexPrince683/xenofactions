@@ -1,3 +1,9 @@
+# Pull request: fix Forge 1.7.10 TDM packet scheduling
+
+- Replaced the unavailable newer-version `MinecraftServer` scheduled-task call with a TDM-owned Java 8 task queue drained once at the start of each server tick.
+- Kept kit purchases and menu actions server-authoritative while rejecting disconnected players before queued work mutates their state.
+- Clear pending TDM packet work when the server overworld unloads so integrated-server sessions cannot inherit stale actions.
+
 # Pull request: fix TDM bomb buy-menu selection lifecycle
 
 - Added an authoritative server-to-client kit-selection result so successful bomb purchases close the buy GUI while recoverable failures keep it usable with specific feedback.
