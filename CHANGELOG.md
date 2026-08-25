@@ -543,3 +543,9 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Added per-map BOMB economy configuration, match-scoped player buy score, kill and successful-defuse rewards, and server-authoritative saved-kit purchases.
 - Added saved-kit costs with backward-compatible zero-cost loading and a 20-second protected buy phase before every bomb round.
 - Added automatic first-free-kit fallback, economy HUD/GUI synchronization, commands, and map diagnostics.
+
+# Pull request: finalize HBM CSGO BOMB objective custody
+
+- Observe the live HBM charge's inherited `started` and `timer` fields through a per-tile-class reflection cache, latching disarm and imminent detonation before HBM removes its tile.
+- Replace unknown-removal scoring with an explicit operator-recoverable objective error and retain coordinate-matched runtime IMC as secondary confirmation.
+- Enforce exact-item bomb custody, purge stale inventory/world drops at round boundaries, and create exactly one fresh objective for each playable round.

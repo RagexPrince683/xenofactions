@@ -173,7 +173,7 @@ public class TDMHandler {
         }
     }
     @SubscribeEvent(priority=EventPriority.HIGHEST)
-    public void restrictPickup(EntityItemPickupEvent event){if(TDMSpectatorManager.isObserving(event.entityPlayer))event.setCanceled(true);}
+    public void restrictPickup(EntityItemPickupEvent event){if(TDMBombManager.isBombStack(event.item.getEntityItem())&&(!TDMManager.isTerrorist(event.entityPlayer)||TDMBombManager.getState()!=TDMBombManager.BombRoundState.LIVE)){event.setCanceled(true);if(TDMBombManager.getState()!=TDMBombManager.BombRoundState.LIVE)event.item.setDead();return;}if(TDMSpectatorManager.isObserving(event.entityPlayer))event.setCanceled(true);}
 
     private boolean isWorldBorderAdminWand(EntityPlayer player) {
         return player != null
