@@ -1,45 +1,43 @@
 # HBM CSGO bomb runtime integration
 
-HBM owns the lifecycle of its CSGO charge (`hbm:tile.charge_c4csgo`, with
-`hbm:charge_c4csgo` retained as Xenofactions's legacy registry fallback).
-Xenofactions owns the result and scoring of the active TDM BOMB round. In
-particular, Xenofactions does **not** infer whether a charge was defused or
-detonated when its block disappears.
+Xenofactions resolves the objective by exact registry identity: primary
+`hbm:tile.charge_c4csgo`, then legacy `hbm:charge_c4csgo`. It retains the actual
+returned `Block`; display and unlocalized names and generic C4 blocks are never
+used.
 
-## Runtime IMC contract
+## Hard-tracked lifecycle
 
-HBM sends a Forge 1.7.10 runtime IMC message to the `hfr` mod with key:
+An accepted plant records its world, dimension, exact coordinates and block,
+bombsite, planter, Terrorist team/role, plant tick/round identity, and the live
+tile instance and runtime class. `HbmCsgoChargeIntegration` snapshots HBM's
+serialized `timer` fuse and `defuse` hold-progress state while the block exists.
+The adapter deliberately has no HBM imports. It logs the concrete production
+block and tile Java names once when an installed jar supplies them (production
+obfuscation means these names are properties of that jar, not a stable API).
 
-```text
-xenofactions_tdm_csgo_bomb_result
-```
+Every server tick checks that exact coordinate. Removal begins a five-tick,
+event-ordering-only grace period. A matching runtime result is secondary
+confirmation. After the grace period the saved lifecycle/IMC result is applied;
+an otherwise unknown removal is warning-logged once and resolves as detonation,
+so a valid objective can never leave the HUD or round in `BOMB_PLANTED` forever.
+Xenofactions cleanup invalidates the tracker before removing the block and can
+therefore never award a cleanup as a result. Ordinary players remain unable to
+break the tracked objective.
 
-The message value is an `NBTTagCompound` containing:
+## Optional runtime IMC
 
-| Field | NBT type | Meaning |
-| --- | --- | --- |
-| `result` | string | Exactly `DEFUSED` or `DETONATED`. |
-| `dimension` | int | Dimension containing the charge. |
-| `x` | int | Charge block X coordinate. |
-| `y` | int | Charge block Y coordinate. |
-| `z` | int | Charge block Z coordinate. |
-| `player_uuid` | string, optional | UUID of the player who completed a defuse. |
-| `player_name` | string, optional | Name of the player who completed a defuse. |
+HBM may send `xenofactions_tdm_csgo_bomb_result` from sender `hbm` with string
+`result` (`DEFUSED` or `DETONATED`) and integer `dimension`, `x`, `y`, and `z`.
+Optional string `player_uuid`/`player_name` identifies a defuser. Xenofactions
+accepts it only for the currently tracked coordinate; stale messages cannot
+finish a later round.
 
-The sender must use `FMLInterModComms.sendRuntimeMessage(...)` only in the
-CSGO charge's authoritative successful-defuse and committed-detonation
-branches. Starting or interrupting a defuse, removing a block for cleanup, and
-other HBM explosives are not results. HBM may first check
-`Loader.isModLoaded("hfr")`; Xenofactions is not an HBM dependency.
+## Recovery command
 
-Xenofactions fetches runtime messages with its real `@Mod.Instance`, accepts
-only sender `hbm`, validates all required NBT types, and matches the dimension
-and exact coordinates against the currently planted A/B objective. Duplicate,
-conflicting, unrelated, and stale messages therefore cannot finish another
-round. The optional player identity is used only to award the existing defuse
-buy score when that player can be resolved safely.
+Operators can run:
 
-If the tracked block disappears before its message is consumed, Xenofactions
-holds the objective during a bounded grace period. If no result arrives, it
-logs one warning and leaves the round paused for safe administrative recovery;
-it never guesses either team as the winner.
+`/tdm forceroundend <red|blue|terrorist|ct|counterterrorist|abort>`
+
+A winner uses the explicit `ADMIN_FORCED` reason. `abort` changes no score. Both
+paths invalidate and remove an objective, clear transient state, enter normal
+round-end intermission, and then proceed to buy time or team waiting.
