@@ -1,3 +1,9 @@
+# Pull request: make tracked BOMB disappearance authoritative
+
+- Detect a validated, planted HBM CSGO charge's disappearance from its tracked world coordinates during the authoritative server tick and complete the round once as a Terrorist detonation win.
+- Invalidate the tracked objective before successful defuses and Xenofactions lifecycle cleanup remove its block, preventing those intentional removals from being misclassified as detonations.
+- Remove the unreliable Forge explosion-origin match while retaining the exact optional HBM runtime-registry lookup and planted-bomb break protection.
+
 # Pull request: finish BOMB detonation rounds and reset client TDM state
 
 - Complete a planted HBM CSGO charge's round exactly once from its non-cancelled Forge detonation event, awarding Terrorists through the authoritative BOMB result path while preventing manual objective breaks.

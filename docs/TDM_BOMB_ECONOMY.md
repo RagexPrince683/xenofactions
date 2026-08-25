@@ -10,7 +10,7 @@ The buy phase (`PRE_ROUND`) and the brief `ROUND_END` intermission freeze ordina
 
 Old TDM map NBT has no economy keys and loads with economy disabled and both rewards at zero.
 
-An HBM CSGO charge planted in a configured bombsite ends the round when its actual Forge explosion detonates. Terrorists receive the round win through the same authoritative result and intermission path used by defuses and elimination results; ordinary block removal is not a detonation.
+Once Xenofactions has accepted and tracked an HBM CSGO charge planted in configured bombsite A or B, the authoritative server tick watches that exact block in its tracked world and dimension. If the exact CSGO charge disappears during `BOMB_PLANTED`, Xenofactions treats it as a detonation and gives Terrorists the round through the normal result and intermission path; correctness does not depend on Forge reporting an explosion at the block coordinates. A successful CT defuse and Xenofactions lifecycle cleanup invalidate the tracker before removing the objective, so those intentional removals are not classified as detonations. The tracked planted bomb remains protected from ordinary player breaking.
 
 Leaving a world or server clears the client TDM HUD, scores, timers, BOMB state, and spectator camera. The next server must send its own status before any TDM HUD is shown.
 
