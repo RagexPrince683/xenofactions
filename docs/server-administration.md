@@ -66,7 +66,7 @@ Xenofactions extends its existing rectangular Earth boundary; it does not use th
 
 - `/xc worldborder on` and `/xc worldborder off` immediately enable or disable enforcement.
 - `/xc worldborder status` shows the effective state, configured center, X/Z radii, safety margin, and exemption count.
-- `/xc worldborder wand` gives an in-game administrator a **World Border Exemption Wand**. Left-click a block for position 1 and right-click a block for position 2; both clicks suppress the normal block action.
+- `/xc worldborder wand` gives an in-game administrator a **World Border Exemption Wand**. Left-click a block for position 1 and right-click a block for position 2; both clicks suppress the normal block action. Coordinate selection is still recorded when faction or TDM protection has already canceled the interaction, without reopening the protected block action.
 - After running `/xc worldborder wand`, left-click position 1, right-click position 2, then run `/xc worldborder exempt` to save the selected rectangle without supplying a name.
 - `/xc worldborder clearexemptions` removes every saved exemption without changing enforcement state or configured geometry.
 

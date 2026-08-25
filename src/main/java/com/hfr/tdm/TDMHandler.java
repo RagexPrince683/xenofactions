@@ -1,5 +1,6 @@
 package com.hfr.tdm;
 
+import com.hfr.items.ModItems;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.gameevent.TickEvent;
@@ -133,15 +134,48 @@ public class TDMHandler {
     }
 
     @SubscribeEvent(priority=EventPriority.HIGHEST)
-    public void restrictPlace(BlockEvent.PlaceEvent event){if(event.world.isRemote)return;if(TDMSpectatorManager.isObserving(event.player)||!TDMBombManager.canPlant(event.player,event.placedBlock,event.x,event.y,event.z,true))event.setCanceled(true);}
+    public void restrictPlace(BlockEvent.PlaceEvent event) {
+        if (event.world.isRemote) return;
+        if (TDMSpectatorManager.isObserving(event.player)
+                || TDMBombManager.shouldRestrictWorldInteraction(event.world)
+                || !TDMBombManager.canPlant(event.player, event.placedBlock, event.x, event.y, event.z, true)) {
+            event.setCanceled(true);
+        }
+    }
     @SubscribeEvent(priority=EventPriority.LOWEST,receiveCanceled=false)
     public void acceptedPlace(BlockEvent.PlaceEvent event){if(!event.world.isRemote)TDMBombManager.recordAcceptedPlant(event.player,event.placedBlock,event.x,event.y,event.z);}
     @SubscribeEvent(priority=EventPriority.HIGHEST)
-    public void restrictBreak(BlockEvent.BreakEvent event){if(TDMSpectatorManager.isObserving(event.getPlayer())||(TDMManager.isBombMode(event.world)&&!TDMBombManager.isRoundActive()))event.setCanceled(true);else if(TDMBombManager.tryDefuse(event.getPlayer(),event.x,event.y,event.z))event.setCanceled(true);}
+    public void restrictBreak(BlockEvent.BreakEvent event) {
+        EntityPlayer player = event.getPlayer();
+        if (isWorldBorderAdminWand(player)) return;
+        if (TDMSpectatorManager.isObserving(player)
+                || TDMBombManager.shouldRestrictWorldInteraction(event.world)) {
+            event.setCanceled(true);
+        } else if (TDMBombManager.tryDefuse(player, event.x, event.y, event.z)) {
+            event.setCanceled(true);
+        }
+    }
     @SubscribeEvent(priority=EventPriority.HIGHEST)
-    public void restrictInteract(PlayerInteractEvent event){if(TDMSpectatorManager.isObserving(event.entityPlayer)||(TDMManager.isBombMode(event.entityPlayer.worldObj)&&!TDMBombManager.isRoundActive()))event.setCanceled(true);}
+    public void restrictInteract(PlayerInteractEvent event) {
+        EntityPlayer player = event.entityPlayer;
+        if (TDMSpectatorManager.isObserving(player)) {
+            event.setCanceled(true);
+            return;
+        }
+        if (isWorldBorderAdminWand(player)) return;
+        if (TDMBombManager.shouldRestrictWorldInteraction(player.worldObj)) {
+            event.setCanceled(true);
+        }
+    }
     @SubscribeEvent(priority=EventPriority.HIGHEST)
     public void restrictPickup(EntityItemPickupEvent event){if(TDMSpectatorManager.isObserving(event.entityPlayer))event.setCanceled(true);}
+
+    private boolean isWorldBorderAdminWand(EntityPlayer player) {
+        return player != null
+                && player.getHeldItem() != null
+                && player.getHeldItem().getItem() == ModItems.world_border_wand
+                && player.canCommandSenderUseCommand(3, "xclowder");
+    }
 
 
     private void runRoundTimer(EntityPlayer player) {

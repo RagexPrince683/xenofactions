@@ -30,6 +30,14 @@ public final class TDMBombManager {
     private TDMBombManager() { }
     public static BombRoundState getState(){return state;}
     public static boolean isRoundActive(){return state==BombRoundState.LIVE||state==BombRoundState.BOMB_PLANTED;}
+    /** True only for BOMB phases which intentionally freeze ordinary world editing. */
+    public static boolean shouldRestrictWorldInteraction(World world){
+        return world!=null
+                && TDMManager.isEnabled(world)
+                && TDMManager.isBombMode(world)
+                && !TDMManager.isMapVoteActive(world)
+                && (state==BombRoundState.PRE_ROUND||state==BombRoundState.ROUND_END);
+    }
     public static String getPlantedSite(){return bomb==null?"":bomb.site;}
     public static int getRemainingSeconds(World w){return (state==BombRoundState.LIVE||state==BombRoundState.PRE_ROUND)?(int)Math.max(0,(stateEndTick-w.getTotalWorldTime()+19)/20):0;}
     public static boolean isEliminated(EntityPlayer p){return eliminated.contains(key(p));}

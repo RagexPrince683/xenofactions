@@ -1,3 +1,9 @@
+# Pull request: restore world-border wand selection and scope BOMB interaction freezes
+
+- Made the operator world-border wand receive canceled Forge 1.7.10 interactions and retain cancellation after recording either coordinate.
+- Replaced the blanket non-active BOMB world lock with an authoritative phase-specific lock for only `PRE_ROUND` and `ROUND_END`, while leaving `WAITING_FOR_TEAMS`, `DISABLED`, and map voting editable subject to normal protections.
+- Added a narrow TDM bypass for the exact authorized world-border wand, preserved BOMB planting and defusing paths, and kept observer cleanup when returning to the team-waiting state.
+
 # Pull request: reconcile runtime TDM modes and add explicit BOMB testing
 
 - Added authoritative active-map mode transitions that reset the old lifecycle, scores, spectators, buy state, and objective state before immediately starting the newly selected mode; inactive-map configuration remains side-effect free.
