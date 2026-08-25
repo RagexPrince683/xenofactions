@@ -19,6 +19,7 @@ import com.hfr.command.IgnoreManager;
 import com.hfr.command.Mute;
 import com.hfr.command.MuteManager;
 import com.hfr.clowder.flag.CustomFlagService;
+import com.hfr.config.XFConfig;
 import com.hfr.data.AntiMobData;
 import com.hfr.data.OutOfBoundsData;
 import com.hfr.data.CBTData;
