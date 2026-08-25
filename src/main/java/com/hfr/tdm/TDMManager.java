@@ -6,6 +6,8 @@ import com.hfr.packet.effect.TDMKitSelectResultPacket;
 import com.hfr.packet.effect.TDMMapVoteGuiPacket;
 import com.hfr.packet.effect.TDMStatusPacket;
 import com.hfr.compat.HbmCsgoChargeIntegration;
+import com.hfr.config.XFConfig;
+import com.hfr.main.MainRegistry;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
@@ -28,6 +30,7 @@ public class TDMManager {
     public static final int BUY_TIME_TICKS = 20 * 20;
     public static final int TEAM_CHANGE_COOLDOWN_TICKS = 120 * 20;
     private static final Set<String> pendingKitSelection = new HashSet<String>();
+    private static final Set<String> kitProtectionActive = new HashSet<String>();
     private static final Map<String, Long> nextTeamChangeTick = new HashMap<String, Long>();
     private static boolean bombTestMode;
 
@@ -130,8 +133,7 @@ public class TDMManager {
         if (!data.enabled || !data.selectedMap.equals(map.name)) return true;
 
         // startMatch owns score, timer, spectator, vote, economy, and bomb lifecycle reset.
-        pendingKitSelection.clear();
-        closeBombBuyGuis();
+        cancelAllKitSelections();
         data.roundEndTick = 0;
         startMatch(world, false);
         return true;
@@ -146,7 +148,25 @@ public class TDMManager {
         sendStatusToAll(world);
     }
 
-    public static void clearPendingKitSelections() { pendingKitSelection.clear(); }
+    /** Cancels all active selections and their TDM-owned effects as one lifecycle operation. */
+    public static void clearPendingKitSelections() { cancelAllKitSelections(); }
+
+    public static void cancelAllKitSelections() {
+        for (EntityPlayerMP player : getOnlinePlayers()) {
+            if (pendingKitSelection.contains(getPlayerKey(player)) || kitProtectionActive.contains(getPlayerKey(player))) {
+                cancelKitSelection(player);
+            }
+        }
+        pendingKitSelection.clear();
+        kitProtectionActive.clear();
+    }
+
+    public static void cancelKitSelections(World world) {
+        if (world == null) return;
+        for (EntityPlayerMP player : getOnlinePlayers()) {
+            if (player.worldObj.provider.dimensionId == world.provider.dimensionId) cancelKitSelection(player);
+        }
+    }
 
     public static void closeBombBuyGuis() {
         for (EntityPlayerMP player : getOnlinePlayers()) {
@@ -182,6 +202,7 @@ public class TDMManager {
         tdmEnabled = false;
         bombTestMode = false;
         pendingKitSelection.clear();
+        kitProtectionActive.clear();
         nextTeamChangeTick.clear();
     }
 
@@ -199,7 +220,7 @@ public class TDMManager {
             startRound(world, false);
         } else {
             TDMBombManager.cleanup(world, true);
-            TDMSpectatorManager.restoreAll();
+            resetTDMTransientPlayerState(world);
             data.roundEndTick = 0;
             data.mapVoteActive = false;
             data.mapVoteEndTick = 0;
@@ -588,7 +609,7 @@ public class TDMManager {
         }
 
         TDMBombManager.cleanup(world, true);
-        TDMSpectatorManager.restoreAll();
+        resetTDMTransientPlayerState(world);
         data.playerBuyScores.clear();
 
         data.mapVoteActive = true;
@@ -894,14 +915,65 @@ public class TDMManager {
     public static void addBuyScore(EntityPlayer player,int amount){TDMMap map=getSelectedMapData(player.worldObj);if(map==null||!map.buyScoreEnabled||amount<=0)return;TDMData d=TDMData.get(player.worldObj);int old=getBuyScore(player);int next=old>Integer.MAX_VALUE-amount?Integer.MAX_VALUE:old+amount;d.playerBuyScores.put(getPlayerKey(player),Integer.valueOf(next));d.markDirty();sendStatusToAll(player.worldObj);}
     public static void awardKillBuyScore(EntityPlayer player){TDMMap map=getSelectedMapData(player.worldObj);if(map!=null&&map.mode==TDMGameMode.BOMB&&map.buyScoreEnabled&&TDMBombManager.isRoundActive())addBuyScore(player,map.killBuyScoreReward);}
     public static void awardDefuseBuyScore(EntityPlayer player){TDMMap map=getSelectedMapData(player.worldObj);if(map!=null&&map.buyScoreEnabled)addBuyScore(player,map.bombDefuseBuyScoreReward);}
-    public static void clearKitSelection(EntityPlayer player){pendingKitSelection.remove(getPlayerKey(player));}
+    public static void clearKitSelection(EntityPlayer player){if(player!=null)pendingKitSelection.remove(getPlayerKey(player));}
     public static boolean hasSelectedKit(EntityPlayer player){return !pendingKitSelection.contains(getPlayerKey(player));}
 
+    public static boolean isAliveForTDM(EntityPlayer player) {
+        return player != null && player.worldObj != null && !player.isDead && player.getHealth() > 0.0F;
+    }
+
+    public static void applyKitSelectionProtection(EntityPlayer player) {
+        if (!isAliveForTDM(player)) return;
+        String key = getPlayerKey(player);
+        if (kitProtectionActive.add(key) && XFConfig.tdmBombLifecycleDebug && MainRegistry.logger != null) {
+            MainRegistry.logger.info("TDM kit protection applied to {} during PRE_ROUND", player.getCommandSenderName());
+        }
+        player.addPotionEffect(new PotionEffect(Potion.invisibility.id, 40, 4, true));
+        player.addPotionEffect(new PotionEffect(Potion.moveSlowdown.id, 40, 4, true));
+        player.addPotionEffect(new PotionEffect(Potion.resistance.id, 40, 4, true));
+        player.addPotionEffect(new PotionEffect(Potion.regeneration.id, 40, 4, true));
+    }
+
+    public static void clearKitSelectionProtection(EntityPlayer player) {
+        if (player == null) return;
+        player.removePotionEffect(Potion.invisibility.id);
+        player.removePotionEffect(Potion.moveSlowdown.id);
+        player.removePotionEffect(Potion.resistance.id);
+        player.removePotionEffect(Potion.regeneration.id);
+        kitProtectionActive.remove(getPlayerKey(player));
+    }
+
+    public static boolean hasKitSelectionProtection(EntityPlayer player) {
+        return player != null && kitProtectionActive.contains(getPlayerKey(player));
+    }
+
+    public static void closeKitGui(EntityPlayer player) {
+        if (player instanceof EntityPlayerMP) PacketDispatcher.wrapper.sendTo(new TDMKitGuiPacket("", new String[0]), (EntityPlayerMP) player);
+    }
+
+    public static void cancelKitSelection(EntityPlayer player) {
+        if (player == null) return;
+        pendingKitSelection.remove(getPlayerKey(player));
+        clearKitSelectionProtection(player);
+        closeKitGui(player);
+    }
+
+    /** Clears only transient state owned by TDM; spectator flags and kit potions remain independent. */
+    public static void resetTDMTransientPlayerState(EntityPlayer player) {
+        cancelKitSelection(player);
+        TDMSpectatorManager.restore(player);
+    }
+
+    public static void resetTDMTransientPlayerState(World world) {
+        for (EntityPlayerMP player : getOnlinePlayers()) if (world == null || player.worldObj.provider.dimensionId == world.provider.dimensionId) resetTDMTransientPlayerState(player);
+    }
+
     public static void promptForKit(EntityPlayer player) {
-        if (!(player instanceof EntityPlayerMP)) {
+        if (!(player instanceof EntityPlayerMP) || !isAliveForTDM(player) || !isEnabled(player.worldObj) || isMapVoteActive(player.worldObj)) {
             return;
         }
         if (TDMSpectatorManager.isObserving(player)) return;
+        if (isBombMode(player.worldObj) && TDMBombManager.getState() != TDMBombManager.BombRoundState.PRE_ROUND) return;
 
         Team team = getOrAssignPlayerTeam(player);
         String mapName = getSelectedMap(player.worldObj);
@@ -916,44 +988,57 @@ public class TDMManager {
     }
 
     public static void tickKitSelection(EntityPlayer player) {
-        boolean bombBuyRestricted=isEnabled(player.worldObj)&&isBombMode(player.worldObj)&&TDMBombManager.getState()==TDMBombManager.BombRoundState.PRE_ROUND&&!TDMSpectatorManager.isObserving(player);
-        if (!bombBuyRestricted&&!pendingKitSelection.contains(getPlayerKey(player))) {
+        if (player == null || player.worldObj == null) return;
+        String key = getPlayerKey(player);
+        if (!isEnabled(player.worldObj) || isMapVoteActive(player.worldObj)) {
+            if (pendingKitSelection.contains(key) || kitProtectionActive.contains(key)) cancelKitSelection(player);
             return;
         }
-
-        if (!isEnabled(player.worldObj)) {
-            pendingKitSelection.remove(getPlayerKey(player));
+        if (isBombMode(player.worldObj)) {
+            if (TDMBombManager.getState() == TDMBombManager.BombRoundState.PRE_ROUND) {
+                if (isAliveForTDM(player) && !TDMSpectatorManager.isObserving(player)) applyKitSelectionProtection(player);
+                else clearKitSelectionProtection(player);
+                return;
+            }
+            if (pendingKitSelection.remove(key) && XFConfig.tdmBombLifecycleDebug && MainRegistry.logger != null) MainRegistry.logger.info("TDM stale pending kit selection cleared for {}", player.getCommandSenderName());
+            clearKitSelectionProtection(player);
+            closeKitGui(player);
             return;
         }
-
-        player.addPotionEffect(new PotionEffect(Potion.invisibility.id, 40, 4, true));
-        player.addPotionEffect(new PotionEffect(Potion.moveSlowdown.id, 40, 4, true));
-        player.addPotionEffect(new PotionEffect(Potion.resistance.id, 40, 4, true));
-        player.addPotionEffect(new PotionEffect(Potion.regeneration.id, 40, 4, true));
+        if (pendingKitSelection.contains(key) && isAliveForTDM(player) && !TDMSpectatorManager.isObserving(player)) applyKitSelectionProtection(player);
+        else clearKitSelectionProtection(player);
     }
 
     public static KitSelectionResult selectKit(EntityPlayer player, int kitIndex) {
-        if (TDMSpectatorManager.isObserving(player)) return KitSelectionResult.BUY_PHASE_ENDED;
+        if (!isAliveForTDM(player) || TDMSpectatorManager.isObserving(player)) return expireKitSelection(player);
+        if (!isEnabled(player.worldObj) || isMapVoteActive(player.worldObj)) {
+            return expireKitSelection(player);
+        }
+
+        if (isBombMode(player.worldObj) && TDMBombManager.getState() != TDMBombManager.BombRoundState.PRE_ROUND) return expireKitSelection(player);
         if (!pendingKitSelection.contains(getPlayerKey(player))) {
             return KitSelectionResult.ALREADY_SELECTED;
         }
 
-        if (!isEnabled(player.worldObj) || isMapVoteActive(player.worldObj)) {
-            pendingKitSelection.remove(getPlayerKey(player));
-            return KitSelectionResult.BUY_PHASE_ENDED;
-        }
-
         Team team = getOrAssignPlayerTeam(player); String mapName=getSelectedMap(player.worldObj);
-        boolean buying=isBombMode(player.worldObj); if(buying&&TDMBombManager.getState()!=TDMBombManager.BombRoundState.PRE_ROUND)return KitSelectionResult.BUY_PHASE_ENDED;
+        boolean buying=isBombMode(player.worldObj);
         int savedCost=TDMKitManager.getKitCost(mapName,team,kitIndex); if(savedCost<0)return KitSelectionResult.INVALID_SELECTION;
         TDMMap map=getSelectedMapData(player.worldObj);int effectiveCost=map!=null&&map.buyScoreEnabled?savedCost:0;if(getBuyScore(player)<effectiveCost)return KitSelectionResult.INSUFFICIENT_FUNDS;
         if (!TDMKitManager.applyKit(mapName, team, kitIndex, player)) return KitSelectionResult.INVALID_SELECTION;
         if(effectiveCost>0){TDMData d=TDMData.get(player.worldObj);d.playerBuyScores.put(getPlayerKey(player),Integer.valueOf(getBuyScore(player)-effectiveCost));d.markDirty();}
         pendingKitSelection.remove(getPlayerKey(player));
-        player.removePotionEffect(Potion.resistance.id);
-        player.removePotionEffect(Potion.regeneration.id);
+        if (!buying) clearKitSelectionProtection(player);
+        if (XFConfig.tdmBombLifecycleDebug && MainRegistry.logger != null) MainRegistry.logger.info("TDM kit selection completed for {}", player.getCommandSenderName());
         if(player instanceof EntityPlayerMP){EntityPlayerMP mp=(EntityPlayerMP)player;mp.inventory.markDirty();mp.inventoryContainer.detectAndSendChanges();sendStatusToAll(player.worldObj);PacketDispatcher.wrapper.sendTo(new TDMKitSelectResultPacket(KitSelectionResult.SUCCESS),(EntityPlayerMP)player);}
         return KitSelectionResult.SUCCESS;
+    }
+
+    private static KitSelectionResult expireKitSelection(EntityPlayer player) {
+        if (player != null) {
+            cancelKitSelection(player);
+            if (XFConfig.tdmBombLifecycleDebug && MainRegistry.logger != null) MainRegistry.logger.info("TDM kit selection expired for {}", player.getCommandSenderName());
+        }
+        return KitSelectionResult.BUY_PHASE_ENDED;
     }
 
     private static String getPlayerKey(EntityPlayer player) {
@@ -961,6 +1046,7 @@ public class TDMManager {
     }
 
     public static boolean respawnPlayer(EntityPlayer player, Random rand) {
+        if (!isAliveForTDM(player)) return false;
         SpawnPoint spawn = getRandomSpawn(player, rand);
         if (spawn == null) {
             return false;
