@@ -1,3 +1,9 @@
+# Pull request: fix TDM bomb buy-menu selection lifecycle
+
+- Added an authoritative server-to-client kit-selection result so successful bomb purchases close the buy GUI while recoverable failures keep it usable with specific feedback.
+- Made buy-menu clicks wait for acknowledgement, restored Escape handling, added a server-timed visible countdown, and exposed buy-menu reopening through the existing TDM menu.
+- Added an explicit one-team waiting state so bomb matches begin one clean buy phase only after both teams have an eligible player.
+
 # Pull request: fix world-border exemption administration and exits
 
 - Replaced named exemption management with the selection-driven `/xc worldborder exempt` workflow and collision-safe internal persistence keys.

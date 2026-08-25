@@ -10,20 +10,25 @@ public class GUITDMMenu extends GuiScreen {
     private final int cooldownSeconds;
     private final String[] friendlyLines;
     private final String[] enemyLines;
-    public GUITDMMenu(String currentTeam, int cooldownSeconds, String[] friendlyLines, String[] enemyLines){
+    private final boolean canOpenBuyMenu;
+    public GUITDMMenu(String currentTeam, int cooldownSeconds, String[] friendlyLines, String[] enemyLines,boolean canOpenBuyMenu){
         this.currentTeam = currentTeam;
         this.cooldownSeconds = cooldownSeconds;
         this.friendlyLines = friendlyLines == null ? new String[0] : friendlyLines;
         this.enemyLines = enemyLines == null ? new String[0] : enemyLines;
+        this.canOpenBuyMenu=canOpenBuyMenu;
     }
     public void initGui() {
         this.buttonList.clear();
         this.buttonList.add(new GuiButton(0, this.width/2-100, this.height-40, 200, 20, cooldownSeconds > 0 ? "Swap Team ("+cooldownSeconds+"s)" : "Swap Team"));
         ((GuiButton)this.buttonList.get(0)).enabled = cooldownSeconds <= 0;
+        if(canOpenBuyMenu)this.buttonList.add(new GuiButton(1,this.width/2-100,this.height-64,200,20,"Reopen Buy Menu"));
     }
     protected void actionPerformed(GuiButton button) {
         if (button.id == 0) {
             PacketDispatcher.wrapper.sendToServer(new TDMMenuActionPacket(true));
+        } else if(button.id==1){
+            PacketDispatcher.wrapper.sendToServer(new TDMMenuActionPacket(false,true));
         }
     }
     public void drawScreen(int mx,int my,float pt){
