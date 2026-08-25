@@ -22,6 +22,12 @@ public final class HbmCsgoChargeIntegration {
         return csgoCharge != null && block == csgoCharge;
     }
 
+    /** Runtime registry contract only; no HBM class is linked at compile time. */
+    public static boolean isAvailable() {
+        if (!resolved) resolve();
+        return csgoCharge != null;
+    }
+
     private static synchronized void resolve() {
         if (resolved) return;
         resolved = true;

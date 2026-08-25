@@ -209,3 +209,12 @@ Map listings show effective score limits and round durations, marking inherited 
 ## Registered-but-not-currently-registered commands
 
 The source contains `CommandOrewand`, `CommandXCum`, and `CommandXCustomImage`, but `MainRegistry.serverStarting` does not register them in the current code path. They are intentionally not documented as usable commands.
+### TDM bomb maps
+
+TDM always stores players on the **RED** or **BLUE** team. A bomb map adds objective roles without changing membership: `/tdm map terroristteam <map> <red|blue>` chooses which stored team is Terrorist and the other team is Counter-Terrorist. Sides do not swap automatically.
+
+Use `/tdm map mode <map> <deathmatch|bomb>` to select the mode and `/tdm map hardcorerespawns <map> <true|false>` to keep eliminated players out of combat until the next bomb round (or the next map match for deathmatch). Configure A or B as normalized cuboids with `/tdm map bombsite <map> <a|b> pos1`, `pos2`, or `clear`; positions use the executing player's floored block coordinate and both corners must share a dimension.
+
+`/tdm map scorelimit` and `/tdm map timer` retain their deathmatch meanings on deathmatch maps. On bomb maps they configure wins required (default **13**) and the pre-plant round timer (default **120 seconds**) using separate persisted overrides. `/tdm maps` shows roles, hardcore behavior, effective defaults, and bombsite readiness.
+
+HBM remains optional for Xenofactions and ordinary deathmatch. Playing a BOMB map requires HBM's exact runtime block registration `hbm:tile.charge_c4csgo` (with legacy `hbm:charge_c4csgo` fallback); no HBM classes are compile-time dependencies. The narrow PR #195 Warzone exception remains in effect outside controlled bomb rounds.
