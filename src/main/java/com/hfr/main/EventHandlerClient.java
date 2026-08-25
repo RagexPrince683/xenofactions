@@ -41,6 +41,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.gui.GuiGameOver;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.Tessellator;
@@ -79,6 +80,10 @@ public class EventHandlerClient {
 	public static boolean shader = false;
 	
 	private static boolean tdmHudEnabled = false;
+	private static GUITDMKitSelect mandatoryKitGui;
+	public static void setMandatoryKitGui(GUITDMKitSelect gui){mandatoryKitGui=gui;enforceMandatoryKitGui();}
+	public static void clearMandatoryKitGui(boolean close){mandatoryKitGui=null;Minecraft mc=Minecraft.getMinecraft();if(close&&mc!=null&&mc.currentScreen instanceof GUITDMKitSelect)mc.displayGuiScreen(null);}
+	private static void enforceMandatoryKitGui(){Minecraft mc=Minecraft.getMinecraft();if(mandatoryKitGui==null||mc==null||mc.theWorld==null||mc.thePlayer==null||mc.thePlayer.isDead||mc.thePlayer.getHealth()<=0||mc.currentScreen instanceof GuiGameOver)return;if(mc.currentScreen!=mandatoryKitGui)mc.displayGuiScreen(mandatoryKitGui);}
 	private static boolean tdmVoting = false;
 	private static int tdmRoundSeconds = 0;
 	private static int tdmVoteSeconds = 0;
@@ -111,6 +116,7 @@ public class EventHandlerClient {
 		if(!enabled||voting)updateTDMSpectator(-1,"");
 	}
 	public static void resetTDMClientState() {
+		mandatoryKitGui=null;
 		tdmHudEnabled=false;tdmVoting=false;tdmRoundSeconds=0;tdmVoteSeconds=0;tdmRedScore=0;tdmBlueScore=0;tdmMapName="";
 		tdmMode="DEATHMATCH";tdmBombState="DISABLED";tdmTerroristTeam="red";tdmBombsite="";tdmSpectating="";
 		tdmRedBombWins=0;tdmBlueBombWins=0;tdmBombSeconds=0;tdmSpectatorTarget=-1;tdmBuyScore=0;tdmRedPlayerCount=0;tdmBluePlayerCount=0;tdmEconomy=false;
@@ -572,6 +578,7 @@ public class EventHandlerClient {
 
 	@SubscribeEvent
 	public void xenofactionsClientTick(ClientTickEvent event) {
+		if(event.phase==TickEvent.Phase.END)enforceMandatoryKitGui();
 		Minecraft xfMc = Minecraft.getMinecraft();
 		boolean xfHasWorld = xfMc.theWorld != null;
 		if(xfHadWorld&&!xfHasWorld)resetTDMClientState();

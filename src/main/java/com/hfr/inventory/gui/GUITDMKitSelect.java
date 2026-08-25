@@ -10,15 +10,16 @@ import net.minecraft.util.ChatComponentText;
 public class GUITDMKitSelect extends GuiScreen {
 
     private final String team;
-    private final String[] kitNames; private final int[] costs;private final boolean economy,buying;private final int balance,seconds;
+    private final String[] kitNames; private final int[] costs;private final boolean economy,buying,mandatory;private final int balance,seconds;
     private final long buyEndMillis;
     private boolean awaitingSelectionResult;
 
     public GUITDMKitSelect(String team, String[] kitNames) {
-        this(team,kitNames,new int[kitNames.length],false,0,0,false);
+        this(team,kitNames,new int[kitNames.length],false,0,0,false,false);
     }
 
-    public GUITDMKitSelect(String team,String[] names,int[] costs,boolean economy,int balance,int seconds,boolean buying){this.team=team;this.kitNames=names;this.costs=costs;this.economy=economy;this.balance=balance;this.seconds=seconds;this.buying=buying;this.buyEndMillis=System.currentTimeMillis()+seconds*1000L;}
+    public GUITDMKitSelect(String team,String[] names,int[] costs,boolean economy,int balance,int seconds,boolean buying){this(team,names,costs,economy,balance,seconds,buying,false);}
+    public GUITDMKitSelect(String team,String[] names,int[] costs,boolean economy,int balance,int seconds,boolean buying,boolean mandatory){this.team=team;this.kitNames=names;this.costs=costs;this.economy=economy;this.balance=balance;this.seconds=seconds;this.buying=buying;this.mandatory=mandatory;this.buyEndMillis=System.currentTimeMillis()+seconds*1000L;}
 
     @Override
     public void initGui() {
@@ -34,13 +35,13 @@ public class GUITDMKitSelect extends GuiScreen {
     @Override
     protected void actionPerformed(GuiButton button) {
         if(awaitingSelectionResult)return;
-        if(buying){awaitingSelectionResult=true;setButtonsEnabled(false);}
+        if(buying||mandatory){awaitingSelectionResult=true;setButtonsEnabled(false);}
         PacketDispatcher.wrapper.sendToServer(new TDMKitSelectPacket(button.id));
-        if(!buying)this.mc.displayGuiScreen(null);
+        if(!buying&&!mandatory)this.mc.displayGuiScreen(null);
     }
 
     public void receiveSelectionResult(com.hfr.tdm.TDMManager.KitSelectionResult result){
-        if(result==com.hfr.tdm.TDMManager.KitSelectionResult.SUCCESS){awaitingSelectionResult=true;this.mc.displayGuiScreen(null);return;}
+        if(result==com.hfr.tdm.TDMManager.KitSelectionResult.SUCCESS){awaitingSelectionResult=true;com.hfr.main.EventHandlerClient.clearMandatoryKitGui(true);return;}
         awaitingSelectionResult=false;setButtonsEnabled(true);
         String message=result==com.hfr.tdm.TDMManager.KitSelectionResult.INSUFFICIENT_FUNDS?"You cannot afford that kit.":result==com.hfr.tdm.TDMManager.KitSelectionResult.INVALID_SELECTION?"That kit is no longer available.":result==com.hfr.tdm.TDMManager.KitSelectionResult.ALREADY_SELECTED?"You already selected a kit for this round.":"Kit selection is no longer active.";
         if(this.mc.thePlayer!=null)this.mc.thePlayer.addChatMessage(new ChatComponentText(message));
@@ -50,7 +51,7 @@ public class GUITDMKitSelect extends GuiScreen {
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) {
-        super.keyTyped(typedChar,keyCode);
+        if(mandatory&&keyCode==1)return;super.keyTyped(typedChar,keyCode);
     }
 
     @Override

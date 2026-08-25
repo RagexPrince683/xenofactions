@@ -22,7 +22,7 @@ import java.util.Random;
 
 public class TDMHandler {
 
-    private static final int RESPAWN_RETRY_TICKS = 20;
+    private static final int RESPAWN_RETRY_TICKS = 2;
     private static final int AUTO_BALANCE_INTERVAL_TICKS = 100;
     private static final int TEAM_CHANGE_REMINDER_INTERVAL_TICKS = 8 * 60 * 20;
     private long lastAutoBalanceTick = -1;
@@ -56,12 +56,12 @@ public class TDMHandler {
         TDMManager.cancelKitSelection(event.entityPlayer);
 
         if (TDMBombManager.isEliminated(event.original) && TDMManager.isHardcoreRespawns(event.entityPlayer.worldObj)) TDMSpectatorManager.observe(event.entityPlayer);
-        else queueRespawn(event.entityPlayer);
+        // PlayerRespawnEvent owns non-hardcore per-life setup; Clone is too early for a gameplay GUI.
     }
 
     @SubscribeEvent
     public void onRespawn(cpw.mods.fml.common.gameevent.PlayerEvent.PlayerRespawnEvent event) {
-        TDMManager.clearKitSelectionProtection(event.player);
+        TDMManager.cancelKitSelection(event.player);
         if (TDMBombManager.isEliminated(event.player) && TDMManager.isHardcoreRespawns(event.player.worldObj)) TDMSpectatorManager.observe(event.player);
         else queueRespawn(event.player);
     }
@@ -90,10 +90,10 @@ public class TDMHandler {
         if (!TDMManager.isAliveForTDM(event.player)) return;
         if (TDMManager.respawnPlayer(event.player, random)) {
             pendingRespawns.remove(playerName);
-            TDMManager.promptForKit(event.player);
+            TDMManager.promptForKit(event.player, TDMManager.KitSelectionContext.RESPAWN_LOCK);
         } else if (ticksLeft <= 1) {
             pendingRespawns.remove(playerName);
-            TDMManager.promptForKit(event.player);
+            TDMManager.promptForKit(event.player, TDMManager.KitSelectionContext.RESPAWN_LOCK);
         } else {
             pendingRespawns.put(playerName, ticksLeft - 1);
         }
@@ -127,10 +127,11 @@ public class TDMHandler {
         if (event.entityLiving.worldObj.isRemote) return;
         if (!(event.entityLiving instanceof EntityPlayer)) return;
         if (!TDMManager.isEnabled(event.entityLiving.worldObj)) return;
+        EntityPlayer victim = (EntityPlayer) event.entityLiving;
+        if(TDMManager.hasKitSelectionProtection(victim)){event.setCanceled(true);return;}
+        EntityPlayer protectedAttacker=getAttackingPlayer(event.source);if(protectedAttacker!=null&&TDMManager.hasKitSelectionProtection(protectedAttacker)){event.setCanceled(true);return;}
         if (TDMManager.isBombMode(event.entityLiving.worldObj) && !TDMBombManager.isRoundActive()) { event.setCanceled(true); return; }
         if (TDMManager.isFriendlyFireEnabled(event.entityLiving.worldObj)) return;
-
-        EntityPlayer victim = (EntityPlayer) event.entityLiving;
         EntityPlayer attacker = getAttackingPlayer(event.source);
         if (TDMSpectatorManager.isObserving(victim) || (attacker != null && TDMSpectatorManager.isObserving(attacker))) { event.setCanceled(true); return; }
         if (attacker == null || attacker == victim) return;
@@ -145,7 +146,7 @@ public class TDMHandler {
     @SubscribeEvent(priority=EventPriority.HIGHEST)
     public void restrictPlace(BlockEvent.PlaceEvent event) {
         if (event.world.isRemote) return;
-        if (TDMSpectatorManager.isObserving(event.player)
+        if (TDMManager.hasKitSelectionProtection(event.player)||TDMSpectatorManager.isObserving(event.player)
                 || TDMBombManager.shouldRestrictWorldInteraction(event.world)
                 || !TDMBombManager.canPlant(event.player, event.placedBlock, event.x, event.y, event.z, true)) {
             event.setCanceled(true);
@@ -157,7 +158,7 @@ public class TDMHandler {
     public void restrictBreak(BlockEvent.BreakEvent event) {
         EntityPlayer player = event.getPlayer();
         if (isWorldBorderAdminWand(player)) return;
-        if (TDMSpectatorManager.isObserving(player)
+        if (TDMManager.hasKitSelectionProtection(player)||TDMSpectatorManager.isObserving(player)
                 || TDMBombManager.shouldRestrictWorldInteraction(event.world)) {
             event.setCanceled(true);
         } else if (TDMBombManager.isTrackedBomb(event.world, event.x, event.y, event.z)) {
@@ -167,7 +168,7 @@ public class TDMHandler {
     @SubscribeEvent(priority=EventPriority.HIGHEST)
     public void restrictInteract(PlayerInteractEvent event) {
         EntityPlayer player = event.entityPlayer;
-        if (TDMSpectatorManager.isObserving(player)) {
+        if (TDMManager.hasKitSelectionProtection(player)||TDMSpectatorManager.isObserving(player)) {
             event.setCanceled(true);
             return;
         }
@@ -177,7 +178,7 @@ public class TDMHandler {
         }
     }
     @SubscribeEvent(priority=EventPriority.HIGHEST)
-    public void restrictPickup(EntityItemPickupEvent event){if(TDMBombManager.isBombStack(event.item.getEntityItem())&&(!TDMManager.isTerrorist(event.entityPlayer)||TDMBombManager.getState()!=TDMBombManager.BombRoundState.LIVE)){event.setCanceled(true);if(TDMBombManager.getState()!=TDMBombManager.BombRoundState.LIVE)event.item.setDead();return;}if(TDMSpectatorManager.isObserving(event.entityPlayer))event.setCanceled(true);}
+    public void restrictPickup(EntityItemPickupEvent event){if(TDMManager.hasKitSelectionProtection(event.entityPlayer)){event.setCanceled(true);return;}if(TDMBombManager.isBombStack(event.item.getEntityItem())&&(!TDMManager.isTerrorist(event.entityPlayer)||TDMBombManager.getState()!=TDMBombManager.BombRoundState.LIVE)){event.setCanceled(true);if(TDMBombManager.getState()!=TDMBombManager.BombRoundState.LIVE)event.item.setDead();return;}if(TDMSpectatorManager.isObserving(event.entityPlayer))event.setCanceled(true);}
 
     private boolean isWorldBorderAdminWand(EntityPlayer player) {
         return player != null
