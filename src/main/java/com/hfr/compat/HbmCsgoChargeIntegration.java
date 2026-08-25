@@ -1,21 +1,53 @@
 package com.hfr.compat;
 
 import cpw.mods.fml.common.Loader;
+import cpw.mods.fml.common.event.FMLInterModComms;
 import cpw.mods.fml.common.registry.GameRegistry;
+import com.hfr.main.MainRegistry;
+import com.hfr.tdm.TDMBombManager;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.World;
 
 /** Optional HBM lookup for the CSGO bomb block; never links against HBM classes. */
 public final class HbmCsgoChargeIntegration {
 
     private static final String HBM_MOD_ID = "hbm";
+    public static final String BOMB_RESULT_KEY = "xenofactions_tdm_csgo_bomb_result";
     private static final String[] REGISTRY_NAMES = { "tile.charge_c4csgo", "charge_c4csgo" };
     private static boolean resolved;
     private static Block csgoCharge;
     private static Item csgoChargeItem;
 
     private HbmCsgoChargeIntegration() {
+    }
+
+    /** Consume HBM's authoritative CSGO lifecycle notifications on the server thread. */
+    public static void pollBombResults() {
+        if (MainRegistry.instance == null || MinecraftServer.getServer() == null) return;
+        for (FMLInterModComms.IMCMessage message : FMLInterModComms.fetchRuntimeMessages(MainRegistry.instance)) {
+            if (!HBM_MOD_ID.equals(message.getSender()) || !BOMB_RESULT_KEY.equals(message.key)
+                    || !message.isNBTMessage()) continue;
+            NBTTagCompound data = message.getNBTValue();
+            if (!hasRequiredBombResultFields(data)) continue;
+            String result = data.getString("result");
+            if (!"DEFUSED".equals(result) && !"DETONATED".equals(result)) continue;
+            int dimension = data.getInteger("dimension");
+            World world = MinecraftServer.getServer().worldServerForDimension(dimension);
+            if (world == null) continue;
+            String playerUuid = data.hasKey("player_uuid", 8) ? data.getString("player_uuid") : null;
+            String playerName = data.hasKey("player_name", 8) ? data.getString("player_name") : null;
+            TDMBombManager.handleHbmBombResult(world, result, dimension,
+                    data.getInteger("x"), data.getInteger("y"), data.getInteger("z"), playerUuid, playerName);
+        }
+    }
+
+    private static boolean hasRequiredBombResultFields(NBTTagCompound data) {
+        return data != null && data.hasKey("result", 8) && data.hasKey("dimension", 3)
+                && data.hasKey("x", 3) && data.hasKey("y", 3) && data.hasKey("z", 3);
     }
 
     public static boolean isCsgoCharge(Block block) {

@@ -1,3 +1,10 @@
+# Pull request: use authoritative HBM CSGO bomb results
+
+- Added an optional Forge 1.7.10 runtime IMC receiver for HBM's authoritative `DEFUSED` and `DETONATED` CSGO charge lifecycle results.
+- Removed ordinary block breaking as a Xenofactions defuse mechanism and kept the tracked objective protected while HBM owns its interaction and removal.
+- Replaced missing-block detonation scoring with a bounded, warning-once safe recovery watchdog; disappearance alone can no longer award a BOMB round.
+- Documented the sender, message key, NBT fields, lifecycle ownership, validation, and duplicate/stale-message protection in `docs/HBM_CSGO_BOMB_RUNTIME_INTEGRATION.md`.
+
 # Pull request: make tracked BOMB disappearance authoritative
 
 - Detect a validated, planted HBM CSGO charge's disappearance from its tracked world coordinates during the authoritative server tick and complete the round once as a Terrorist detonation win.
