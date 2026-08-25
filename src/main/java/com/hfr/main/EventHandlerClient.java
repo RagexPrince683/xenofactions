@@ -103,7 +103,7 @@ public class EventHandlerClient {
 		tdmMode=mode;tdmBombState=bombState;tdmRedBombWins=redBombWins;tdmBlueBombWins=blueBombWins;tdmTerroristTeam=terroristTeam;tdmBombSeconds=bombSeconds;tdmBombsite=site;tdmEconomy=economy;tdmBuyScore=buyScore;
 		if(!enabled||voting)updateTDMSpectator(-1,"");
 	}
-	public static void updateTDMSpectator(int entityId,String name){Minecraft mc=Minecraft.getMinecraft();tdmSpectatorTarget=entityId;tdmSpectating=name==null?"":name;if(mc==null)return;if(entityId<=0){if(mc.thePlayer!=null)mc.renderViewEntity=mc.thePlayer;return;}if(mc.theWorld!=null){Entity e=mc.theWorld.getEntityByID(entityId);if(e instanceof EntityPlayer)mc.renderViewEntity=e;else if(mc.thePlayer!=null)mc.renderViewEntity=mc.thePlayer;}}
+	public static void updateTDMSpectator(int entityId,String name){Minecraft mc=Minecraft.getMinecraft();tdmSpectatorTarget=entityId;tdmSpectating=name==null?"":name;if(mc==null)return;if(entityId<=0){if(mc.thePlayer!=null)mc.renderViewEntity=mc.thePlayer;return;}if(mc.theWorld!=null){Entity e=mc.theWorld.getEntityByID(entityId);if(e instanceof EntityPlayer)mc.renderViewEntity= (EntityLivingBase) e;else if(mc.thePlayer!=null)mc.renderViewEntity=mc.thePlayer;}}
 
 	private static void drawTDMHud() {
 		if (!tdmHudEnabled) {
