@@ -67,10 +67,9 @@ Xenofactions extends its existing rectangular Earth boundary; it does not use th
 - `/xc worldborder on` and `/xc worldborder off` immediately enable or disable enforcement.
 - `/xc worldborder status` shows the effective state, configured center, X/Z radii, safety margin, and exemption count.
 - `/xc worldborder wand` gives an in-game administrator a **World Border Exemption Wand**. Left-click a block for position 1 and right-click a block for position 2; both clicks suppress the normal block action.
-- `/xc worldborder exempt add <name>` saves the administrator's two selected corners under a case-insensitive name containing letters, numbers, `_`, or `-`.
-- `/xc worldborder exempt remove <name>` removes one saved exemption.
-- `/xc worldborder exempt list` lists every saved exemption and its dimension and X/Z bounds.
+- After running `/xc worldborder wand`, left-click position 1, right-click position 2, then run `/xc worldborder exempt` to save the selected rectangle without supplying a name.
+- `/xc worldborder clearexemptions` removes every saved exemption without changing enforcement state or configured geometry.
 
-Selections are per administrator and temporary. Saved regions are inclusive rectangular columns covering **all Y levels**, and apply only to Earth boundary enforcement: they do not bypass faction claims, Safezones, Warzones, block protection, TDM restrictions, or damage rules. Regions are dimension-specific.
+Selections are per administrator and temporary. Saved regions persist automatically as inclusive, dimension-specific rectangular columns covering **all Y levels**, and apply only to Earth boundary enforcement: they do not bypass faction claims, Safezones, Warzones, block protection, TDM restrictions, or damage rules. Leaving an exemption while still outside the map returns a player safely to the configured Earth map center. Moving into the valid map needs no teleport, and ordinary non-exempt boundary crossings continue to use the existing wrap behavior.
 
-`earthBoundaryEnabled` is the default only when a world has no saved runtime choice. Runtime on/off changes and named exemptions persist in the world's `xenofactions_earth_boundary` saved data. Changing runtime state never changes the configured center, radii, or safety margin. Disabling enforcement leaves exemptions intact, ready for later re-enabling.
+`earthBoundaryEnabled` is the default only when a world has no saved runtime choice. Runtime on/off changes and exemptions persist in the world's `xenofactions_earth_boundary` saved data; legacy named exemptions remain compatible. Changing runtime state never changes the configured center, radii, or safety margin. Disabling enforcement leaves exemptions intact, ready for later re-enabling.

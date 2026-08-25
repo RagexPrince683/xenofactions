@@ -3,9 +3,11 @@ package com.hfr.main;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -96,6 +98,7 @@ import com.hfr.wallart.WallArtService;
 
 
 public class CommonEventHandler {
+	private static final Set<UUID> PLAYERS_PREVIOUSLY_EXEMPT = new HashSet<UUID>();
 
 	//all the serverside crap for vehicle radars
 	@SubscribeEvent
@@ -106,11 +109,6 @@ public class CommonEventHandler {
 		if(!player.worldObj.isRemote && event.phase == Phase.START) {
 
 
-			if (EarthBoundaryManager.isBoundaryEnabled(player.worldObj)
-					&& !EarthBoundaryManager.isPositionExempt(player.worldObj, player.posX, player.posZ)) {
-				handleBorder(player);
-			}
-			
 			player.worldObj.theProfiler.startSection("xr_radar");
 
 			/// RADAR SHIT ///
@@ -439,8 +437,8 @@ public class CommonEventHandler {
 	// --- handleBorder: safe wrap for every non-player entity (and vehicles) ---
 	public void handleBorder(Entity entity) {
 		if (entity == null || entity.isDead) return;
+		if (entity instanceof EntityPlayer) return; // players are authoritative in handlePlayerBorder
 		if (!EarthBoundaryManager.isBoundaryEnabled(entity.worldObj)) return;
-		if (entity instanceof EntityPlayer && EarthBoundaryManager.isPositionExempt(entity.worldObj, entity.posX, entity.posZ)) return;
 
 		double posX = entity.posX;
 		double posZ = entity.posZ;
@@ -534,7 +532,7 @@ public class CommonEventHandler {
 	 * Tries getTopSolidOrLiquidBlock first (fast). Falls back to scanning up to build height.
 	 */
 	// --- helper: safe Y finder (fast path + fallback) ---
-	private double findSafeY(World world, int checkX, int checkY, int checkZ) {
+	private static double findSafeY(World world, int checkX, int checkY, int checkZ) {
 		// Fast path: top solid or liquid block (typical in 1.7.10)
 		try {
 			int top = world.getTopSolidOrLiquidBlock(checkX, checkZ);
@@ -554,13 +552,23 @@ public class CommonEventHandler {
 	public void handlePlayerBorder(EntityPlayerMP player) {
 		if (player == null || player.isDead) return;
 		if (!EarthBoundaryManager.isBoundaryEnabled(player.worldObj)) return;
-		if (EarthBoundaryManager.isPositionExempt(player.worldObj, player.posX, player.posZ)) return;
+		UUID playerId = player.getUniqueID();
+		boolean currentlyExempt = EarthBoundaryManager.isPositionExempt(player.worldObj, player.posX, player.posZ);
+		boolean wasExempt = PLAYERS_PREVIOUSLY_EXEMPT.contains(playerId);
+		if (currentlyExempt) {
+			PLAYERS_PREVIOUSLY_EXEMPT.add(playerId);
+			return;
+		}
+		PLAYERS_PREVIOUSLY_EXEMPT.remove(playerId);
+		if (wasExempt) {
+			if (!EarthBoundaryManager.isInsideBoundary(player.worldObj, player.posX, player.posZ)) teleportToEarthCenter(player);
+			return;
+		}
 
 		double posX = player.posX;
 		double posZ = player.posZ;
 
-		if (posX < MainRegistry.borderNegX || posX > MainRegistry.borderPosX ||
-				posZ < MainRegistry.borderNegZ || posZ > MainRegistry.borderPosZ) {
+		if (!EarthBoundaryManager.isInsideBoundary(player.worldObj, posX, posZ)) {
 
 			double newX = wrapX(posX);
 			double newZ = wrapZ(posZ);
@@ -627,6 +635,27 @@ public class CommonEventHandler {
 		}
 	}
 
+	/** Immediately resolves players whose active exemption was removed by an admin command. */
+	public static void returnClearedExemptionPlayers(List<EntityPlayerMP> players) {
+		for (EntityPlayerMP player : players) {
+			PLAYERS_PREVIOUSLY_EXEMPT.remove(player.getUniqueID());
+			if (!EarthBoundaryManager.isInsideBoundary(player.worldObj, player.posX, player.posZ)) teleportToEarthCenter(player);
+		}
+	}
+
+	private static void teleportToEarthCenter(EntityPlayerMP player) {
+		double targetX = XFConfig.earthBoundaryCenterX;
+		double targetZ = XFConfig.earthBoundaryCenterZ;
+		double currentY = player.posY;
+		if (Double.isNaN(currentY) || Double.isInfinite(currentY) || currentY < 1.0D || currentY > 254.0D) currentY = 64.0D;
+		double targetY = findSafeY(player.worldObj, MathHelper.floor_double(targetX), MathHelper.floor_double(currentY), MathHelper.floor_double(targetZ));
+		if (Double.isNaN(targetY) || Double.isInfinite(targetY)) targetY = 64.0D;
+		if (targetY < 1.0D) targetY = 1.0D;
+		if (targetY > 254.0D) targetY = 254.0D;
+		player.playerNetServerHandler.setPlayerLocation(targetX, targetY, targetZ, player.rotationYaw, player.rotationPitch);
+		player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "Your world border exemption ended outside the map; you were returned to the Earth map center."));
+	}
+
 
 	private double wrapX(double x) {
 		if (x < MainRegistry.borderNegX) {
@@ -671,7 +700,10 @@ public class CommonEventHandler {
 
 	@SubscribeEvent
 	public void onWorldBorderWandLogout(PlayerLoggedOutEvent event) {
-		if (event.player != null) ItemWorldBorderWand.clear(event.player);
+		if (event.player != null) {
+			ItemWorldBorderWand.clear(event.player);
+			PLAYERS_PREVIOUSLY_EXEMPT.remove(event.player.getUniqueID());
+		}
 	}
 
 	@SubscribeEvent
@@ -763,7 +795,10 @@ public class CommonEventHandler {
 
 	@SubscribeEvent
 	public void onWallArtRootUnload(WorldEvent.Unload event) {
-		if(event.world != null && !event.world.isRemote && event.world.provider.dimensionId == 0) WallArtService.shutdown();
+		if(event.world != null && !event.world.isRemote && event.world.provider.dimensionId == 0) {
+			WallArtService.shutdown();
+			PLAYERS_PREVIOUSLY_EXEMPT.clear();
+		}
 	}
 
 	private void handleOutOfBoundsRegions(World world) {

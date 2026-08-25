@@ -54,6 +54,25 @@ public final class EarthBoundarySavedData extends WorldSavedData {
         markDirty();
         return true;
     }
+    /** Adds a region without exposing its persistence key to administrators. */
+    public Region addRegion(int dimension, int x1, int z1, int x2, int z2) {
+        int suffix = 1;
+        String key;
+        do { key = "exemption_" + suffix++; } while (getRegion(key) != null);
+        Region region = new Region(key, dimension, Math.min(x1, x2), Math.max(x1, x2), Math.min(z1, z2), Math.max(z1, z2));
+        regions.add(region);
+        markDirty();
+        return region;
+    }
+    /** Removes all exemption rectangles while leaving the runtime enable override untouched. */
+    public int clearRegions() {
+        int removed = regions.size();
+        if (removed > 0) {
+            regions.clear();
+            markDirty();
+        }
+        return removed;
+    }
     public boolean removeRegion(String name) {
         Region found = getRegion(name);
         if (found == null) return false;

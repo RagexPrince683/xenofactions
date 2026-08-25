@@ -1,3 +1,10 @@
+# Pull request: fix world-border exemption administration and exits
+
+- Replaced named exemption management with the selection-driven `/xc worldborder exempt` workflow and collision-safe internal persistence keys.
+- Added `/xc worldborder clearexemptions`, preserving runtime border state and safely returning affected out-of-map players to the configured center.
+- Added UUID-based exemption transition tracking so exemption exits return players to a terrain-safe map center while normal crossings keep legacy wrapping.
+- Retained backward-compatible loading of PR #199 named regions and documented persistent, inclusive, all-Y behavior.
+
 # Pull request: add persistent runtime Earth boundary controls
 
 - Added operator-only `/xc worldborder` runtime enable, disable, status, selection-wand, and named exemption administration.

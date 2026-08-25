@@ -221,8 +221,7 @@ public class CommandClowderAdmin extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-clearcreationcooldown <player-or-uuid>" + TITLE + " - Clears an online or offline player creation cooldown"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-factiontimeoutcreationreset <player>" + TITLE + " - Resets a named player creation cooldown"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-earth <status|packs|verify|check>" + TITLE + " - Manages Earth maps"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-worldborder <on|off|status|wand>" + TITLE + " - Controls the Earth boundary"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-worldborder exempt <add|remove|list>" + TITLE + " - Manages all-Y exemption regions"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-worldborder <on|off|status|wand|exempt|clearexemptions>" + TITLE + " - Controls the Earth boundary"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-deletedata" + TITLE + " - Deletes all clowder data (CAUTION!!)"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-disband <faction>" + TITLE + " - Disbands your faction with confirmation"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-rename <name>" + TITLE + " - Renames your faction"));
@@ -617,9 +616,7 @@ public class CommandClowderAdmin extends CommandBase {
 		if(cmd.equals("earth") && args.length == 2)
 			return getListOfStringsMatchingLastWord(args, new String[] { "status", "packs", "verify", "check" });
 		if(cmd.equals("worldborder") && args.length == 2)
-			return getListOfStringsMatchingLastWord(args, new String[] { "on", "off", "status", "wand", "exempt" });
-		if(cmd.equals("worldborder") && args.length == 3 && args[1].equalsIgnoreCase("exempt"))
-			return getListOfStringsMatchingLastWord(args, new String[] { "add", "remove", "list" });
+			return getListOfStringsMatchingLastWord(args, new String[] { "on", "off", "status", "wand", "exempt", "clearexemptions" });
 		if(cmd.equals("earth") && args.length == 3 && args[1].equalsIgnoreCase("verify"))
 			return getListOfStringsMatchingLastWord(args, EarthCommandHandler.getPackIds());
 		if(cmd.equals("forcekick") || cmd.equals("fk") || cmd.equals("factiontimeoutcreationreset") || cmd.equals("clearcreationcooldown") || cmd.equals("resetcreationcooldown"))

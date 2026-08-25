@@ -1,6 +1,7 @@
 package com.hfr.world.border;
 
 import com.hfr.config.XFConfig;
+import com.hfr.main.MainRegistry;
 import com.hfr.saveddata.EarthBoundarySavedData;
 import com.hfr.saveddata.EarthBoundarySavedData.Region;
 import net.minecraft.world.World;
@@ -19,5 +20,10 @@ public final class EarthBoundaryManager {
         for (Region region : EarthBoundarySavedData.get(world).getRegions())
             if (region.contains(dimension, x, z)) return true;
         return false;
+    }
+    /** The authoritative inclusive rectangle used by the legacy wrap implementation. */
+    public static boolean isInsideBoundary(World world, double x, double z) {
+        return world != null && x >= MainRegistry.borderNegX && x <= MainRegistry.borderPosX
+                && z >= MainRegistry.borderNegZ && z <= MainRegistry.borderPosZ;
     }
 }
