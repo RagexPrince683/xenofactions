@@ -184,6 +184,8 @@ Common subcommands parsed by source include:
 ```text
 /tdm help
 /tdm maps
+/tdm map scorelimit <map> <points|default>
+/tdm map timer <map> <seconds|default>
 /tdm kits
 /tdm menu
 /tdm vote
@@ -202,7 +204,7 @@ Common subcommands parsed by source include:
 /tdm forcemapvote
 ```
 
-Server staff should validate map and kit setup in game because the exact argument requirements depend on TDM manager data.
+Map listings show effective score limits and round durations, marking inherited global defaults. Map-specific score limits must be positive points, and map-specific timers must be positive whole seconds; use `default` to restore the global 10,000-point or 20-minute setting. The map vote remains 30 seconds. Server staff should validate map and kit setup in game because the exact argument requirements depend on TDM manager data.
 
 ## Registered-but-not-currently-registered commands
 

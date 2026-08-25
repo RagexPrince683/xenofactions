@@ -53,6 +53,10 @@ public class TDMManager {
     public static class TDMMap {
         public final String name;
         public final List<SpawnPoint> spawns = new ArrayList<SpawnPoint>();
+        /** Zero means inherit the global setting. */
+        public int scoreLimitOverride;
+        /** Zero means inherit the global setting; positive values are ticks. */
+        public int roundTicksOverride;
 
         public TDMMap(String name) {
             this.name = normalizeMapName(name);
@@ -189,6 +193,60 @@ public class TDMManager {
 
     public static List<String> getMapNames(World world) {
         return new ArrayList<String>(TDMData.get(world).maps.keySet());
+    }
+
+    public static int getEffectiveScoreLimit(World world) {
+        TDMData data = TDMData.get(world);
+        return getEffectiveScoreLimit(data.maps.get(data.selectedMap));
+    }
+
+    public static int getEffectiveScoreLimit(World world, String mapName) {
+        return getEffectiveScoreLimit(TDMData.get(world).maps.get(normalizeMapName(mapName)));
+    }
+
+    private static int getEffectiveScoreLimit(TDMMap map) {
+        return map != null && map.scoreLimitOverride > 0 ? map.scoreLimitOverride : SCORE_LIMIT;
+    }
+
+    public static int getEffectiveRoundTicks(World world) {
+        TDMData data = TDMData.get(world);
+        return getEffectiveRoundTicks(data.maps.get(data.selectedMap));
+    }
+
+    public static int getEffectiveRoundTicks(World world, String mapName) {
+        return getEffectiveRoundTicks(TDMData.get(world).maps.get(normalizeMapName(mapName)));
+    }
+
+    private static int getEffectiveRoundTicks(TDMMap map) {
+        return map != null && map.roundTicksOverride > 0 ? map.roundTicksOverride : ROUND_TICKS;
+    }
+
+    public static int getScoreLimitOverride(World world, String mapName) {
+        TDMMap map = TDMData.get(world).maps.get(normalizeMapName(mapName));
+        return map == null ? 0 : map.scoreLimitOverride;
+    }
+
+    public static int getRoundTicksOverride(World world, String mapName) {
+        TDMMap map = TDMData.get(world).maps.get(normalizeMapName(mapName));
+        return map == null ? 0 : map.roundTicksOverride;
+    }
+
+    public static boolean setMapScoreLimit(World world, String mapName, int scoreLimit) {
+        TDMData data = TDMData.get(world);
+        TDMMap map = data.maps.get(normalizeMapName(mapName));
+        if (map == null || scoreLimit < 0) return false;
+        map.scoreLimitOverride = scoreLimit;
+        data.markDirty();
+        return true;
+    }
+
+    public static boolean setMapRoundTicks(World world, String mapName, int roundTicks) {
+        TDMData data = TDMData.get(world);
+        TDMMap map = data.maps.get(normalizeMapName(mapName));
+        if (map == null || roundTicks < 0) return false;
+        map.roundTicksOverride = roundTicks;
+        data.markDirty();
+        return true;
     }
 
     public static void addMapSpawn(World world, String mapName, Team team, int dim, int x, int y, int z) {
@@ -348,7 +406,8 @@ public class TDMManager {
             return;
         }
 
-        if (now >= data.roundEndTick || data.redScore >= SCORE_LIMIT || data.blueScore >= SCORE_LIMIT) {
+        int scoreLimit = getEffectiveScoreLimit(world);
+        if (now >= data.roundEndTick || data.redScore >= scoreLimit || data.blueScore >= scoreLimit) {
             startMapVote(world);
             return;
         }
@@ -364,7 +423,7 @@ public class TDMManager {
         data.blueScore = 0;
         data.playerKills.clear();
         data.playerDeaths.clear();
-        data.roundEndTick = world.getTotalWorldTime() + ROUND_TICKS;
+        data.roundEndTick = world.getTotalWorldTime() + getEffectiveRoundTicks(world);
         data.mapVoteActive = false;
         data.mapVoteEndTick = 0;
         if (resetVotes) {
@@ -381,17 +440,22 @@ public class TDMManager {
         }
 
         if (scoringTeam == Team.RED) {
-            data.redScore += POINTS_PER_KILL;
+            data.redScore = addScore(data.redScore);
         } else if (scoringTeam == Team.BLUE) {
-            data.blueScore += POINTS_PER_KILL;
+            data.blueScore = addScore(data.blueScore);
         }
         data.markDirty();
 
-        if (data.redScore >= SCORE_LIMIT || data.blueScore >= SCORE_LIMIT) {
+        int scoreLimit = getEffectiveScoreLimit(world);
+        if (data.redScore >= scoreLimit || data.blueScore >= scoreLimit) {
             startMapVote(world);
         } else {
             sendStatusToAll(world);
         }
+    }
+
+    private static int addScore(int score) {
+        return score > Integer.MAX_VALUE - POINTS_PER_KILL ? Integer.MAX_VALUE : score + POINTS_PER_KILL;
     }
 
     public static void startMapVote(World world) {

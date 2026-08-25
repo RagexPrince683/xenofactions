@@ -18,6 +18,7 @@ import com.hfr.command.Mute;
 import com.hfr.command.MuteManager;
 import com.hfr.command.*;
 import com.hfr.config.XFConfig;
+import com.hfr.compat.HbmCsgoChargeIntegration;
 import com.hfr.data.ClowderData;
 import com.hfr.handler.BobbyBreaker;
 import com.hfr.handler.ExplosionSound;
@@ -493,6 +494,9 @@ public void handleChatServer(ServerChatEvent event) {
 			return true;
 
 		if(owner == null)
+			return true;
+
+		if(owner.zone == Zone.WARZONE && HbmCsgoChargeIntegration.isCsgoCharge(b))
 			return true;
 
 		if(owner.zone == Zone.SAFEZONE || owner.zone == Zone.WARZONE)

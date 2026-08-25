@@ -248,6 +248,8 @@ public class CommandTDM extends CommandBase {
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map delete <map>" + TITLE + " - Deletes a playable map"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map select <map>" + TITLE + " - Selects the current map"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map addspawn <map> <red|blue>" + TITLE + " - Adds your position as a map spawn"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map scorelimit <map> <points|default>" + TITLE + " - Sets a map score limit"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map timer <map> <seconds|default>" + TITLE + " - Sets a map round timer"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-kit add <red|blue> [map|global]" + TITLE + " - Saves your inventory as a kit"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-kit list [map|global]" + TITLE + " - Lists saved kits"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-kit remove <red|blue> <number> [map|global]" + TITLE + " - Deletes a kit"));
@@ -404,7 +406,7 @@ public class CommandTDM extends CommandBase {
 
     private void processMapCommand(ICommandSender sender, String[] args, World world) {
         if (args.length < 2) {
-            sender.addChatMessage(new ChatComponentText("Usage: /tdm map <create|delete|select|addspawn|clearspawns|list>"));
+            sendMapUsage(sender);
             return;
         }
 
@@ -414,15 +416,17 @@ public class CommandTDM extends CommandBase {
             return;
         }
 
-        if (!action.equals("create") && !action.equals("delete") && !action.equals("select") && !action.equals("addspawn") && !action.equals("clearspawns")) {
+        if (!action.equals("create") && !action.equals("delete") && !action.equals("select") && !action.equals("addspawn") && !action.equals("clearspawns") && !action.equals("scorelimit") && !action.equals("timer")) {
             sender.addChatMessage(new ChatComponentText("Unknown TDM map command: " + args[1]));
-            sender.addChatMessage(new ChatComponentText("Usage: /tdm map <create|delete|select|addspawn|clearspawns|list>"));
+            sendMapUsage(sender);
             return;
         }
 
         if (args.length < 3) {
             if (action.equals("addspawn")) {
                 sender.addChatMessage(new ChatComponentText("Usage: /tdm map addspawn <map> <red|blue>"));
+            } else if (action.equals("scorelimit") || action.equals("timer")) {
+                sender.addChatMessage(new ChatComponentText("Usage: /tdm map " + action + " <map> <" + (action.equals("timer") ? "seconds" : "points") + "|default>"));
             } else {
                 sender.addChatMessage(new ChatComponentText("Usage: /tdm map " + args[1] + " <map>"));
             }
@@ -441,6 +445,11 @@ public class CommandTDM extends CommandBase {
                 return;
             }
             sender.addChatMessage(new ChatComponentText("Created TDM map: " + mapName));
+            return;
+        }
+
+        if (action.equals("scorelimit") || action.equals("timer")) {
+            configureMapSetting(sender, world, action, mapName, args);
             return;
         }
 
@@ -493,7 +502,53 @@ public class CommandTDM extends CommandBase {
             return;
         }
 
-        sender.addChatMessage(new ChatComponentText("Usage: /tdm map <create|delete|select|addspawn|clearspawns|list>"));
+        sendMapUsage(sender);
+    }
+
+    private void configureMapSetting(ICommandSender sender, World world, String action, String mapName, String[] args) {
+        if (!TDMManager.hasMap(world, mapName)) {
+            sender.addChatMessage(new ChatComponentText("Unknown TDM map: " + mapName));
+            return;
+        }
+        if (args.length < 4) {
+            sender.addChatMessage(new ChatComponentText("Usage: /tdm map " + action + " <map> <" + (action.equals("timer") ? "seconds" : "points") + "|default>"));
+            return;
+        }
+
+        boolean useDefault = args[3].equalsIgnoreCase("default");
+        int value = 0;
+        if (!useDefault) {
+            try {
+                value = Integer.parseInt(args[3]);
+            } catch (NumberFormatException e) {
+                sender.addChatMessage(new ChatComponentText((action.equals("timer") ? "Seconds" : "Score limit") + " must be a positive integer or default."));
+                return;
+            }
+            if (value <= 0) {
+                sender.addChatMessage(new ChatComponentText((action.equals("timer") ? "Seconds" : "Score limit") + " must be a positive integer or default."));
+                return;
+            }
+        }
+
+        if (action.equals("timer")) {
+            if (value > Integer.MAX_VALUE / 20) {
+                sender.addChatMessage(new ChatComponentText("Round timer is too large; seconds must not exceed " + (Integer.MAX_VALUE / 20) + "."));
+                return;
+            }
+            int ticks = value * 20;
+            TDMManager.setMapRoundTicks(world, mapName, ticks);
+            int effectiveSeconds = TDMManager.getEffectiveRoundTicks(world, mapName) / 20;
+            sender.addChatMessage(new ChatComponentText("Map " + mapName + " round timer: " + (useDefault ? "default" : value + " seconds") + "; effective: " + effectiveSeconds + " seconds."));
+        } else {
+            TDMManager.setMapScoreLimit(world, mapName, value);
+            sender.addChatMessage(new ChatComponentText("Map " + mapName + " score limit: " + (useDefault ? "default" : Integer.toString(value)) + "; effective: " + TDMManager.getEffectiveScoreLimit(world, mapName) + "."));
+        }
+    }
+
+    private void sendMapUsage(ICommandSender sender) {
+        sender.addChatMessage(new ChatComponentText("Usage: /tdm map <create|delete|select|addspawn|clearspawns|scorelimit|timer|list>"));
+        sender.addChatMessage(new ChatComponentText("  /tdm map scorelimit <map> <points|default>"));
+        sender.addChatMessage(new ChatComponentText("  /tdm map timer <map> <seconds|default>"));
     }
 
     private void sendMapList(ICommandSender sender, World world) {
@@ -504,7 +559,14 @@ public class CommandTDM extends CommandBase {
         }
 
         String selected = TDMManager.getSelectedMap(world);
-        sender.addChatMessage(new ChatComponentText("TDM maps: " + join(maps) + ". Selected: " + (selected.length() == 0 ? "none" : selected)));
+        sender.addChatMessage(new ChatComponentText("TDM maps (selected: " + (selected.length() == 0 ? "none" : selected) + "):"));
+        for (String map : maps) {
+            boolean defaultScore = TDMManager.getScoreLimitOverride(world, map) == 0;
+            boolean defaultTimer = TDMManager.getRoundTicksOverride(world, map) == 0;
+            sender.addChatMessage(new ChatComponentText("- " + map + ": score " + TDMManager.getEffectiveScoreLimit(world, map)
+                    + (defaultScore ? " (default)" : "") + ", round " + (TDMManager.getEffectiveRoundTicks(world, map) / 20)
+                    + "s" + (defaultTimer ? " (default)" : "")));
+        }
         sendVoteCounts(sender, world);
     }
 
