@@ -27,6 +27,8 @@ import com.hfr.data.StockData.Stock;
 //import com.hfr.dim.WorldProviderMoon;
 import com.hfr.handler.SLBMHandler;
 import com.hfr.items.ModItems;
+import com.hfr.items.ItemWorldBorderWand;
+import com.hfr.world.border.EarthBoundaryManager;
 import com.hfr.main.MainRegistry.ControlEntry;
 import com.hfr.main.MainRegistry.ImmunityEntry;
 import com.hfr.main.MainRegistry.PotionEntry;
@@ -46,6 +48,7 @@ import com.hfr.rvi.RVICommon.RVIType;
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
+import cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.Phase;
 import cpw.mods.fml.common.gameevent.TickEvent.WorldTickEvent;
 import net.minecraft.command.ICommandSender;
@@ -81,6 +84,7 @@ import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.event.entity.living.LivingSpawnEvent;
@@ -90,7 +94,6 @@ import net.minecraftforge.event.world.WorldEvent;
 import com.hfr.wallart.WallArtService;
 
 
-import static com.hfr.main.MainRegistry.border;
 
 public class CommonEventHandler {
 
@@ -103,7 +106,8 @@ public class CommonEventHandler {
 		if(!player.worldObj.isRemote && event.phase == Phase.START) {
 
 
-			if (border) {
+			if (EarthBoundaryManager.isBoundaryEnabled(player.worldObj)
+					&& !EarthBoundaryManager.isPositionExempt(player.worldObj, player.posX, player.posZ)) {
 				handleBorder(player);
 			}
 			
@@ -435,6 +439,8 @@ public class CommonEventHandler {
 	// --- handleBorder: safe wrap for every non-player entity (and vehicles) ---
 	public void handleBorder(Entity entity) {
 		if (entity == null || entity.isDead) return;
+		if (!EarthBoundaryManager.isBoundaryEnabled(entity.worldObj)) return;
+		if (entity instanceof EntityPlayer && EarthBoundaryManager.isPositionExempt(entity.worldObj, entity.posX, entity.posZ)) return;
 
 		double posX = entity.posX;
 		double posZ = entity.posZ;
@@ -546,8 +552,9 @@ public class CommonEventHandler {
 	}
 
 	public void handlePlayerBorder(EntityPlayerMP player) {
-		if (!border) return;
 		if (player == null || player.isDead) return;
+		if (!EarthBoundaryManager.isBoundaryEnabled(player.worldObj)) return;
+		if (EarthBoundaryManager.isPositionExempt(player.worldObj, player.posX, player.posZ)) return;
 
 		double posX = player.posX;
 		double posZ = player.posZ;
@@ -645,6 +652,29 @@ public class CommonEventHandler {
 	//handles the anti-mob wand
 
 	@SubscribeEvent
+	public void onWorldBorderWandInteract(PlayerInteractEvent event) {
+		EntityPlayer player = event.entityPlayer;
+		if (player == null || player.worldObj.isRemote || player.getHeldItem() == null || player.getHeldItem().getItem() != ModItems.world_border_wand) return;
+		if (!player.canCommandSenderUseCommand(3, "xclowder")) {
+			player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "You do not have permission to use the world border exemption wand."));
+			event.setCanceled(true);
+			return;
+		}
+		if (event.action == PlayerInteractEvent.Action.LEFT_CLICK_BLOCK) {
+			ItemWorldBorderWand.select(player, true, event.x, event.z);
+			event.setCanceled(true);
+		} else if (event.action == PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) {
+			ItemWorldBorderWand.select(player, false, event.x, event.z);
+			event.setCanceled(true);
+		}
+	}
+
+	@SubscribeEvent
+	public void onWorldBorderWandLogout(PlayerLoggedOutEvent event) {
+		if (event.player != null) ItemWorldBorderWand.clear(event.player);
+	}
+
+	@SubscribeEvent
 	public void onWorldTick(WorldTickEvent event) {
 
 		// basic guard checks up-front
@@ -660,7 +690,7 @@ public class CommonEventHandler {
 		// --------------------
 		// World-border logic
 		// --------------------
-		if (border && world.provider.dimensionId == 0) {
+		if (EarthBoundaryManager.isBoundaryEnabled(world) && world.provider.dimensionId == 0) {
 			// take a snapshot of the entity list to avoid ConcurrentModificationException
 			List<Entity> snapshot = new ArrayList<Entity>(world.loadedEntityList);
 

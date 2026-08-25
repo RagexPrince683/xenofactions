@@ -930,3 +930,5 @@ gui.builder.depot_position=Depot: %s, %s, %s
 gui.builder.distance=Distance from Depot: %s blocks
 gui.builder.distance.warning=Warning: schematic origin is extremely far from the Depot.
 gui.builder.preview.moved=Preview moved.
+
+item.world_border_wand.name=World Border Exemption Wand
