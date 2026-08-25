@@ -1,3 +1,9 @@
+# Pull request: classify same-tick HBM CSGO dismantles as CT defuses
+
+- Added the configurable Xenofactions-only `tdmBombUnknownRemovalAsDefuse` compatibility fallback for HBM dismantles that remove `BlockChargeC4CSGO` before `TileEntityCharge`'s brief disarmed state can be sampled.
+- Captured charge attachment metadata and enforced HBM's supporting-face solidity rule, while retaining strict `OBJECTIVE_ERROR` behavior for invalid supports, near-expiration removals, and disabled fallback mode.
+- Preserved explicit and latched detonation precedence, added optional lifecycle diagnostics and comprehensive unknown-removal logging, and retained ordinary defuse cleanup and fresh one-bomb-per-round assignment.
+
 # Pull request: hard-track the HBM CSGO bomb lifecycle
 
 - Hard-track every accepted CSGO plant by exact block, coordinate, tile instance, lifecycle snapshot, plant tick, and round identity; bounded missing-block resolution prevents permanent `BOMB_PLANTED` rounds.

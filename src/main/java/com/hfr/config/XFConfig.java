@@ -43,6 +43,9 @@ public final class XFConfig {
 	public static final String CAT_LEGACY_DEBUG = "XENOFACTIONS_17_DEBUG_LOGGING";
 	public static final String CAT_EARTH_WORLD = "XENOFACTIONS_18_EARTH_WORLD";
 	public static final String CAT_BUILDERS = "XENOFACTIONS_19_BUILDERS";
+	public static final String CAT_TDM = "XENOFACTIONS_20_TDM";
+	public static boolean tdmBombUnknownRemovalAsDefuse = true;
+	public static boolean tdmBombLifecycleDebug = false;
 	public static boolean enableFactionBuilders = true;
 	public static int builderWorkIntervalTicks = 10;
 	public static int builderBlockScanBudget = 64;
@@ -197,6 +200,8 @@ public final class XFConfig {
 		commentCategories(config);
 		enableEarthWorldType = bool(config, CAT_EARTH_WORLD, "enableEarthWorldType", true, "Registers the template-backed xf_earth overworld type.");
 		enableFactionBuilders = bool(config, CAT_BUILDERS, "enableFactionBuilders", true, "Enable persistent faction Builder workers.");
+		tdmBombUnknownRemovalAsDefuse = bool(config, CAT_TDM, "tdmBombUnknownRemovalAsDefuse", true, "When an active tracked HBM CSGO bomb disappears before Xenofactions can observe HBM's brief disarmed state, treat the removal as a successful CT defuse if no detonation evidence exists and the bomb's supporting block is still valid. Disable this for strict OBJECTIVE_ERROR debugging.");
+		tdmBombLifecycleDebug = bool(config, CAT_TDM, "tdmBombLifecycleDebug", false, "Log detailed HBM CSGO bomb lifecycle transitions. Warnings and objective errors are always logged.");
 		builderWorkIntervalTicks = integer(config, CAT_BUILDERS, "builderWorkIntervalTicks", 10, 1, 1200, "Ticks between Builder work cycles.");
 		builderBlockScanBudget = integer(config, CAT_BUILDERS, "builderBlockScanBudget", 64, 1, 4096, "Maximum schematic entries examined per work cycle.");
 		builderAllowWilderness = bool(config, CAT_BUILDERS, "builderAllowWilderness", false, "Allow Builder modifications outside claimed territory.");
@@ -372,6 +377,8 @@ public final class XFConfig {
 		config.addCustomCategoryComment(CAT_LEGACY_GENERAL, "16 - Miscellaneous legacy settings that do not belong to a specific subsystem.");
 		config.addCustomCategoryComment(CAT_LEGACY_DEBUG, "17 - Legacy debug, logging, and precision-calculation settings.");
 		config.addCustomCategoryComment(CAT_EARTH_WORLD, "18 - Template-backed WorldPainter Earth overworld safeguards.");
+		config.addCustomCategoryComment(CAT_BUILDERS, "19 - Persistent faction Builder worker settings.");
+		config.addCustomCategoryComment(CAT_TDM, "20 - TDM compatibility and lifecycle diagnostics.");
 	}
 	private static String enumValue(String value, String def, String alternatives, String name) { String v=value.toUpperCase(); if(v.equals(def)) return v; for(String a:alternatives.split(",")) if(v.equals(a)) return v; warn(name+" is invalid; using "+def); return def; }
 

@@ -32,6 +32,15 @@ Category: `XENOFACTIONS_01_MODULES`
 | `enableGuideBook` | `true` | Enable guide-book integration/fallback references. |
 | `enableNEIIntegration` | `true` | Register optional Not Enough Items handlers when NEI is installed; ordinary gameplay recipes and stone-drop behavior are unchanged. |
 
+## TDM compatibility
+
+Category: `XENOFACTIONS_20_TDM`
+
+| Key | Default | Meaning |
+| --- | ---: | --- |
+| `tdmBombUnknownRemovalAsDefuse` | `true` | Treat a tracked HBM CSGO charge that disappears safely before its brief disarmed state can be observed as a CT defuse, but only with a valid support face, a safely positive timer, and no detonation evidence. Set `false` to preserve strict `OBJECTIVE_ERROR` handling. |
+| `tdmBombLifecycleDebug` | `false` | Log detailed reflected HBM lifecycle transitions. Compatibility warnings and objective errors remain visible when disabled. |
+
 ## Prestige generation
 
 Category: `XENOFACTIONS_02_PRESTIGE_GENERATION`
