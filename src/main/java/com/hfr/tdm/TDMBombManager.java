@@ -71,8 +71,8 @@ public final class TDMBombManager {
         sanitizeBombInventories(world);TDMSpectatorManager.tick(world);
     }
     public static void beginBuyTime(World world){
-        cleanupTransientState(world);state=BombRoundState.PRE_ROUND;stateEndTick=world.getTotalWorldTime()+BUY_TIME_TICKS;Random r=new Random();
-        for(EntityPlayerMP p:TDMManager.getOnlinePlayers())if(p.worldObj.provider.dimensionId==world.provider.dimensionId&&TDMManager.isAliveForTDM(p)){TDMManager.resetTDMTransientPlayerState(p);TDMManager.respawnPlayer(p,r);p.inventory.clearInventory(null,-1);for(int i=0;i<4;i++)p.inventory.armorInventory[i]=null;TDMManager.clearKitSelection(p);TDMManager.promptForKit(p,TDMManager.KitSelectionContext.BUY_PHASE);}
+        cleanupTransientState(world);state=BombRoundState.PRE_ROUND;stateEndTick=world.getTotalWorldTime()+BUY_TIME_TICKS;Random r=new Random();if(XFConfig.tdmBombLifecycleDebug&&MainRegistry.logger!=null)MainRegistry.logger.info("TDM BUY: begin map={}",TDMManager.getSelectedMap(world));
+        for(EntityPlayerMP p:TDMManager.getOnlinePlayers())if(p.worldObj.provider.dimensionId==world.provider.dimensionId&&TDMManager.isAliveForTDM(p)){TDMManager.resetTDMTransientPlayerState(p);TDMManager.respawnPlayer(p,r);p.inventory.clearInventory(null,-1);for(int i=0;i<4;i++)p.inventory.armorInventory[i]=null;TDMManager.clearKitSelection(p);TDMManager.enrollGlobalBuyProtection(p);TDMManager.promptForKit(p,TDMManager.KitSelectionContext.BUY_PHASE);}
         TDMManager.sendStatusToAll(world);
     }
     public static void beginNextBombRound(World world){if(TDMManager.isHardcoreRespawns(world))beginBuyTime(world);else startRoundWithoutBuyTime(world);}

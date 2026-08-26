@@ -30,7 +30,8 @@ public class TDMManager {
     public static final int BUY_TIME_TICKS = 20 * 20;
     public static final int TEAM_CHANGE_COOLDOWN_TICKS = 120 * 20;
     private static final Set<String> pendingKitSelection = new HashSet<String>();
-    private static final Set<String> kitProtectionActive = new HashSet<String>();
+    private static final Set<String> buyProtectionActive = new HashSet<String>();
+    private static final Set<String> respawnLockProtectionActive = new HashSet<String>();
     private static final Map<String, KitSelectionContext> kitSelectionContexts = new HashMap<String, KitSelectionContext>();
     private static final Map<String, FreezeAnchor> freezeAnchors = new HashMap<String, FreezeAnchor>();
     private static final Map<String, Long> nextTeamChangeTick = new HashMap<String, Long>();
@@ -157,12 +158,13 @@ public class TDMManager {
 
     public static void cancelAllKitSelections() {
         for (EntityPlayerMP player : getOnlinePlayers()) {
-            if (pendingKitSelection.contains(getPlayerKey(player)) || kitProtectionActive.contains(getPlayerKey(player))) {
+            if (pendingKitSelection.contains(getPlayerKey(player)) || hasKitSelectionProtection(player)) {
                 cancelKitSelection(player);
             }
         }
         pendingKitSelection.clear();
-        kitProtectionActive.clear();
+        buyProtectionActive.clear();
+        respawnLockProtectionActive.clear();
         kitSelectionContexts.clear();
         freezeAnchors.clear();
     }
@@ -208,7 +210,8 @@ public class TDMManager {
         tdmEnabled = false;
         bombTestMode = false;
         pendingKitSelection.clear();
-        kitProtectionActive.clear();
+        buyProtectionActive.clear();
+        respawnLockProtectionActive.clear();
         kitSelectionContexts.clear();
         freezeAnchors.clear();
         nextTeamChangeTick.clear();
@@ -931,31 +934,74 @@ public class TDMManager {
         return player != null && player.worldObj != null && !player.isDead && player.getHealth() > 0.0F;
     }
 
+    /** True for living participants in the selected map dimension throughout hardcore PRE_ROUND. */
+    public static boolean isGlobalBombBuyPeriod(EntityPlayer player) {
+        if (!isAliveForTDM(player) || !isEnabled(player.worldObj) || isMapVoteActive(player.worldObj)
+                || !isBombMode(player.worldObj) || !isHardcoreRespawns(player.worldObj)
+                || TDMBombManager.getState() != TDMBombManager.BombRoundState.PRE_ROUND
+                || TDMSpectatorManager.isObserving(player)) return false;
+        TDMMap map = getSelectedMapData(player.worldObj);
+        if (map == null) return false;
+        for (SpawnPoint spawn : map.spawns) if (spawn.dim == player.dimension) return true;
+        return false;
+    }
+
+    /** Must be called after respawnPlayer so the anchor is the team spawn. */
+    public static void enrollGlobalBuyProtection(EntityPlayer player) {
+        if (!isGlobalBombBuyPeriod(player)) return;
+        String key = getPlayerKey(player);
+        respawnLockProtectionActive.remove(key);
+        buyProtectionActive.add(key);
+        freezeAnchors.put(key, new FreezeAnchor(player));
+        applyOwnedProtectionEffects(player);
+        enforceFreeze(player, freezeAnchors.get(key));
+        if (XFConfig.tdmBombLifecycleDebug && MainRegistry.logger != null)
+            MainRegistry.logger.info("TDM BUY: {} freeze anchor=({}, {}, {})", player.getCommandSenderName(), player.posX, player.posY, player.posZ);
+    }
+
+    /** Per-player RESPawn lock protection; global buy protection has separate ownership. */
     public static void applyKitSelectionProtection(EntityPlayer player) {
         if (!isAliveForTDM(player)) return;
         String key = getPlayerKey(player);
-        if (kitProtectionActive.add(key) && XFConfig.tdmBombLifecycleDebug && MainRegistry.logger != null) {
-            MainRegistry.logger.info("TDM kit protection applied to {} during PRE_ROUND", player.getCommandSenderName());
-        }
+        respawnLockProtectionActive.add(key);
+        applyOwnedProtectionEffects(player);
+        if (!freezeAnchors.containsKey(key)) freezeAnchors.put(key, new FreezeAnchor(player));
+    }
+
+    private static void applyOwnedProtectionEffects(EntityPlayer player) {
         player.addPotionEffect(new PotionEffect(Potion.invisibility.id, 40, 4, true));
         player.addPotionEffect(new PotionEffect(Potion.moveSlowdown.id, 40, 4, true));
         player.addPotionEffect(new PotionEffect(Potion.resistance.id, 40, 4, true));
         player.addPotionEffect(new PotionEffect(Potion.regeneration.id, 40, 4, true));
-        if(!freezeAnchors.containsKey(key))freezeAnchors.put(key,new FreezeAnchor(player));
     }
 
-    public static void clearKitSelectionProtection(EntityPlayer player) {
-        if (player == null) return;
+    private static void removeOwnedProtectionEffects(EntityPlayer player) {
         player.removePotionEffect(Potion.invisibility.id);
         player.removePotionEffect(Potion.moveSlowdown.id);
         player.removePotionEffect(Potion.resistance.id);
         player.removePotionEffect(Potion.regeneration.id);
-        kitProtectionActive.remove(getPlayerKey(player));
-        freezeAnchors.remove(getPlayerKey(player));
+    }
+
+    public static void clearKitSelectionProtection(EntityPlayer player) {
+        if (player == null) return;
+        String key = getPlayerKey(player);
+        respawnLockProtectionActive.remove(key);
+        if (!buyProtectionActive.contains(key)) { freezeAnchors.remove(key); removeOwnedProtectionEffects(player); }
+    }
+
+    public static void releaseGlobalBuyProtection(EntityPlayer player) {
+        if (player == null) return;
+        String key = getPlayerKey(player);
+        buyProtectionActive.remove(key);
+        if (!respawnLockProtectionActive.contains(key)) { freezeAnchors.remove(key); removeOwnedProtectionEffects(player); }
     }
 
     public static boolean hasKitSelectionProtection(EntityPlayer player) {
-        return player != null && kitProtectionActive.contains(getPlayerKey(player));
+        return player != null && (buyProtectionActive.contains(getPlayerKey(player)) || respawnLockProtectionActive.contains(getPlayerKey(player)));
+    }
+
+    public static boolean hasRespawnLockProtection(EntityPlayer player) {
+        return player != null && respawnLockProtectionActive.contains(getPlayerKey(player));
     }
 
     public static void closeKitGui(EntityPlayer player) {
@@ -967,6 +1013,7 @@ public class TDMManager {
         pendingKitSelection.remove(getPlayerKey(player));
         kitSelectionContexts.remove(getPlayerKey(player));
         clearKitSelectionProtection(player);
+        releaseGlobalBuyProtection(player);
         closeKitGui(player);
     }
 
@@ -998,25 +1045,44 @@ public class TDMManager {
         }
 
         pendingKitSelection.add(getPlayerKey(player));
-        kitSelectionContexts.put(getPlayerKey(player),context);applyKitSelectionProtection(player);
+        kitSelectionContexts.put(getPlayerKey(player),context);if(context==KitSelectionContext.RESPAWN_LOCK)applyKitSelectionProtection(player);
         int[] costs=TDMKitManager.getKitCosts(mapName,team); boolean buying=context==KitSelectionContext.BUY_PHASE; TDMMap map=getSelectedMapData(player.worldObj); boolean economy=map!=null&&map.buyScoreEnabled; if(!economy)java.util.Arrays.fill(costs,0);
-        boolean affordable=false;for(int cost:costs)if(!economy||cost<=getBuyScore(player)){affordable=true;break;}if(!affordable){if(MainRegistry.logger!=null)MainRegistry.logger.warn("TDM map {} has no affordable kit for {}; applying deterministic uncharged fallback",mapName,player.getCommandSenderName());if(TDMKitManager.applyKit(mapName,team,0,player)){pendingKitSelection.remove(getPlayerKey(player));kitSelectionContexts.remove(getPlayerKey(player));clearKitSelectionProtection(player);closeKitGui(player);if(isBombMode(player.worldObj))TDMBombManager.ensureLiveRoundBombAssigned(player.worldObj);}return;}
-        PacketDispatcher.wrapper.sendTo(new TDMKitGuiPacket(team.name, TDMKitManager.getKitNames(mapName, team),costs,economy,getBuyScore(player),buying?TDMBombManager.getRemainingSeconds(player.worldObj):0,buying,context==KitSelectionContext.RESPAWN_LOCK), (EntityPlayerMP) player);
+        boolean affordable=false;for(int cost:costs)if(!economy||cost<=getBuyScore(player)){affordable=true;break;}if(!affordable){if(MainRegistry.logger!=null)MainRegistry.logger.warn("TDM map {} has no affordable kit for {}; applying deterministic uncharged fallback",mapName,player.getCommandSenderName());if(TDMKitManager.applyKit(mapName,team,0,player)){pendingKitSelection.remove(getPlayerKey(player));kitSelectionContexts.remove(getPlayerKey(player));if(context==KitSelectionContext.RESPAWN_LOCK)clearKitSelectionProtection(player);closeKitGui(player);if(isBombMode(player.worldObj)&&context==KitSelectionContext.RESPAWN_LOCK)TDMBombManager.ensureLiveRoundBombAssigned(player.worldObj);}return;}
+        PacketDispatcher.wrapper.sendTo(new TDMKitGuiPacket(team.name, TDMKitManager.getKitNames(mapName, team),costs,economy,getBuyScore(player),buying?TDMBombManager.getRemainingSeconds(player.worldObj):0,buying,true), (EntityPlayerMP) player);
+        if(XFConfig.tdmBombLifecycleDebug&&MainRegistry.logger!=null)MainRegistry.logger.info("TDM BUY: kit GUI sent to {} context={}",player.getCommandSenderName(),context);
     }
 
     public static void tickKitSelection(EntityPlayer player) {
         if (player == null || player.worldObj == null) return;
         String key = getPlayerKey(player);
         if (!isEnabled(player.worldObj) || isMapVoteActive(player.worldObj)) {
-            if (pendingKitSelection.contains(key) || kitProtectionActive.contains(key)) cancelKitSelection(player);
+            if (pendingKitSelection.contains(key) || hasKitSelectionProtection(player)) cancelKitSelection(player);
             return;
         }
-        KitSelectionContext context=getKitSelectionContext(player);
-        if(context==KitSelectionContext.BUY_PHASE&&(!isBombMode(player.worldObj)||TDMBombManager.getState()!=TDMBombManager.BombRoundState.PRE_ROUND)){cancelKitSelection(player);return;}
-        if(context==KitSelectionContext.RESPAWN_LOCK&&isHardcoreRespawns(player.worldObj)){cancelKitSelection(player);return;}
-        if (pendingKitSelection.contains(key) && isAliveForTDM(player) && !TDMSpectatorManager.isObserving(player)) applyKitSelectionProtection(player);
-        else clearKitSelectionProtection(player);
-        FreezeAnchor anchor=freezeAnchors.get(key);if(anchor!=null&&player instanceof EntityPlayerMP){player.motionX=player.motionY=player.motionZ=0;player.fallDistance=0;if(anchor.dimension==player.dimension&&(Math.abs(player.posX-anchor.x)>.01||Math.abs(player.posY-anchor.y)>.01||Math.abs(player.posZ-anchor.z)>.01))((EntityPlayerMP)player).playerNetServerHandler.setPlayerLocation(anchor.x,anchor.y,anchor.z,player.rotationYaw,player.rotationPitch);}
+        KitSelectionContext context = getKitSelectionContext(player);
+        if (isGlobalBombBuyPeriod(player)) {
+            buyProtectionActive.add(key);
+            applyOwnedProtectionEffects(player);
+            if (!freezeAnchors.containsKey(key)) freezeAnchors.put(key, new FreezeAnchor(player));
+            enforceFreeze(player, freezeAnchors.get(key));
+            return;
+        }
+        if (context == KitSelectionContext.BUY_PHASE) {
+            pendingKitSelection.remove(key); kitSelectionContexts.remove(key); closeKitGui(player);
+        }
+        releaseGlobalBuyProtection(player);
+        if (context == KitSelectionContext.RESPAWN_LOCK && isHardcoreRespawns(player.worldObj)) { cancelKitSelection(player); return; }
+        if (context == KitSelectionContext.RESPAWN_LOCK && pendingKitSelection.contains(key)
+                && isAliveForTDM(player) && !TDMSpectatorManager.isObserving(player)) {
+            applyKitSelectionProtection(player); enforceFreeze(player, freezeAnchors.get(key));
+        } else clearKitSelectionProtection(player);
+    }
+
+    private static void enforceFreeze(EntityPlayer player, FreezeAnchor anchor) {
+        if (anchor == null || !(player instanceof EntityPlayerMP)) return;
+        player.motionX = 0; player.motionY = 0; player.motionZ = 0; player.fallDistance = 0; player.setSprinting(false);
+        if (anchor.dimension == player.dimension && (Math.abs(player.posX-anchor.x) > .001 || Math.abs(player.posY-anchor.y) > .001 || Math.abs(player.posZ-anchor.z) > .001))
+            ((EntityPlayerMP)player).playerNetServerHandler.setPlayerLocation(anchor.x, anchor.y, anchor.z, player.rotationYaw, player.rotationPitch);
     }
 
     public static KitSelectionResult selectKit(EntityPlayer player, int kitIndex) {
@@ -1040,7 +1106,9 @@ public class TDMManager {
         if(effectiveCost>0){TDMData d=TDMData.get(player.worldObj);d.playerBuyScores.put(getPlayerKey(player),Integer.valueOf(getBuyScore(player)-effectiveCost));d.markDirty();}
         pendingKitSelection.remove(getPlayerKey(player));
         kitSelectionContexts.remove(getPlayerKey(player));
-        if (!buying) {clearKitSelectionProtection(player);closeKitGui(player);}
+        if (!buying) clearKitSelectionProtection(player);
+        closeKitGui(player);
+        if(buying&&XFConfig.tdmBombLifecycleDebug&&MainRegistry.logger!=null)MainRegistry.logger.info("TDM BUY: {} selected kit {}, global freeze retained",player.getCommandSenderName(),kitIndex);
         if (XFConfig.tdmBombLifecycleDebug && MainRegistry.logger != null) MainRegistry.logger.info("TDM kit selection completed for {}", player.getCommandSenderName());
         if(player instanceof EntityPlayerMP){EntityPlayerMP mp=(EntityPlayerMP)player;mp.inventory.markDirty();mp.inventoryContainer.detectAndSendChanges();sendStatusToAll(player.worldObj);PacketDispatcher.wrapper.sendTo(new TDMKitSelectResultPacket(KitSelectionResult.SUCCESS),(EntityPlayerMP)player);}if(context==KitSelectionContext.RESPAWN_LOCK&&isBombMode(player.worldObj))TDMBombManager.ensureLiveRoundBombAssigned(player.worldObj);
         return KitSelectionResult.SUCCESS;
