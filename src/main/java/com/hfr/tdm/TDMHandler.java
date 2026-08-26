@@ -80,6 +80,12 @@ public class TDMHandler {
     }
 
     @SubscribeEvent
+    public void onLogout(cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent event) {
+        pendingRespawns.remove(getKey(event.player));
+        TDMSpectatorManager.forget(event.player);
+    }
+
+    @SubscribeEvent
     public void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         if (event.player.worldObj.isRemote) return;

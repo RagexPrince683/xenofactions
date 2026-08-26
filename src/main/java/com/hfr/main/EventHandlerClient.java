@@ -92,6 +92,9 @@ public class EventHandlerClient {
 	private static String tdmMapName = "";
 	private static String tdmMode="DEATHMATCH",tdmBombState="DISABLED",tdmTerroristTeam="red",tdmBombsite="",tdmSpectating="";
 	private static int tdmRedBombWins,tdmBlueBombWins,tdmBombSeconds,tdmSpectatorTarget=-1,tdmBuyScore,tdmRedPlayerCount,tdmBluePlayerCount; private static boolean tdmEconomy;
+	private static boolean xenofactionsOwnsCamera;
+	private static Entity xenofactionsCameraEntity;
+	private static Entity xenofactionsPreviousCamera;
 	
 	public static List<int[]> resourceBorders = new ArrayList();
 	boolean resources = false;
@@ -120,10 +123,57 @@ public class EventHandlerClient {
 		tdmHudEnabled=false;tdmVoting=false;tdmRoundSeconds=0;tdmVoteSeconds=0;tdmRedScore=0;tdmBlueScore=0;tdmMapName="";
 		tdmMode="DEATHMATCH";tdmBombState="DISABLED";tdmTerroristTeam="red";tdmBombsite="";tdmSpectating="";
 		tdmRedBombWins=0;tdmBlueBombWins=0;tdmBombSeconds=0;tdmSpectatorTarget=-1;tdmBuyScore=0;tdmRedPlayerCount=0;tdmBluePlayerCount=0;tdmEconomy=false;
-		Minecraft mc=Minecraft.getMinecraft();if(mc==null)return;if(mc.thePlayer!=null)mc.renderViewEntity=mc.thePlayer;
+		releaseTDMSpectatorCamera();
+		Minecraft mc=Minecraft.getMinecraft();if(mc==null)return;
 		if(mc.currentScreen instanceof GUITDMMenu||mc.currentScreen instanceof GUITDMKitSelect||mc.currentScreen instanceof GUITDMMapVote)mc.displayGuiScreen(null);
 	}
-	public static void updateTDMSpectator(int entityId,String name){Minecraft mc=Minecraft.getMinecraft();tdmSpectatorTarget=entityId;tdmSpectating=name==null?"":name;if(mc==null)return;if(entityId<=0){if(mc.thePlayer!=null)mc.renderViewEntity=mc.thePlayer;return;}if(mc.theWorld!=null){Entity e=mc.theWorld.getEntityByID(entityId);if(e instanceof EntityPlayer)mc.renderViewEntity= (EntityLivingBase) e;else if(mc.thePlayer!=null)mc.renderViewEntity=mc.thePlayer;}}
+	public static void updateTDMSpectator(int entityId, String name) {
+		Minecraft mc = Minecraft.getMinecraft();
+		int previousTarget = tdmSpectatorTarget;
+		tdmSpectatorTarget = entityId;
+		tdmSpectating = name == null ? "" : name;
+
+		if (entityId <= 0) {
+			releaseTDMSpectatorCamera();
+			return;
+		}
+		if (mc == null || mc.theWorld == null) return;
+
+		Entity target = mc.theWorld.getEntityByID(entityId);
+		if (!(target instanceof EntityPlayer) || target.isDead || target.worldObj != mc.theWorld) {
+			releaseTDMSpectatorCamera();
+			// Permit a later refresh to retry once the server entity has reached the client.
+			tdmSpectatorTarget = -1;
+			return;
+		}
+
+		if (xenofactionsOwnsCamera && xenofactionsCameraEntity == target) return;
+		if (previousTarget == entityId) return;
+
+		if (!xenofactionsOwnsCamera) {
+			xenofactionsPreviousCamera = mc.renderViewEntity;
+			xenofactionsOwnsCamera = true;
+		}
+		xenofactionsCameraEntity = target;
+		mc.renderViewEntity = target;
+	}
+
+	/** Releases only camera state that Xenofactions can prove it still owns. */
+	public static void releaseTDMSpectatorCamera() {
+		Minecraft mc = Minecraft.getMinecraft();
+		if (xenofactionsOwnsCamera && mc != null && mc.renderViewEntity == xenofactionsCameraEntity) {
+			Entity restore = xenofactionsPreviousCamera;
+			if (restore != null && !restore.isDead && restore.worldObj == mc.theWorld) {
+				mc.renderViewEntity = restore;
+			} else if (mc.thePlayer != null) {
+				mc.renderViewEntity = mc.thePlayer;
+			}
+		}
+		// Another mod may have replaced the camera; never overwrite its new value.
+		xenofactionsOwnsCamera = false;
+		xenofactionsCameraEntity = null;
+		xenofactionsPreviousCamera = null;
+	}
 
 	private static void drawTDMHud() {
 		if (!tdmHudEnabled) {
@@ -582,7 +632,12 @@ public class EventHandlerClient {
 		Minecraft xfMc = Minecraft.getMinecraft();
 		boolean xfHasWorld = xfMc.theWorld != null;
 		if(xfHadWorld&&!xfHasWorld)resetTDMClientState();
-		if(xfHasWorld&&tdmSpectatorTarget>0&&(xfMc.renderViewEntity==null||xfMc.renderViewEntity.dimension!=xfMc.thePlayer.dimension))updateTDMSpectator(-1,"");
+		if (xenofactionsOwnsCamera && (xenofactionsCameraEntity == null
+				|| xenofactionsCameraEntity.isDead
+				|| xenofactionsCameraEntity.worldObj != xfMc.theWorld
+				|| xfMc.renderViewEntity != xenofactionsCameraEntity)) {
+			releaseTDMSpectatorCamera();
+		}
 		if(!xfHadWorld && xfHasWorld) xfTutorialQueued = true;
 		if(!xfHasWorld) xfTutorialQueued = false;
 		xfHadWorld = xfHasWorld;
