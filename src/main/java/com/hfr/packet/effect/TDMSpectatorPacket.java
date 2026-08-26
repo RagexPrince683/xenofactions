@@ -8,6 +8,7 @@ import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.client.Minecraft;
 
 public class TDMSpectatorPacket implements IMessage {
     private int entityId; private String name="";
@@ -15,5 +16,17 @@ public class TDMSpectatorPacket implements IMessage {
     public TDMSpectatorPacket(int id,String name){entityId=id;this.name=name==null?"":name;}
     public void fromBytes(ByteBuf b){entityId=b.readInt();name=ByteBufUtils.readUTF8String(b);}
     public void toBytes(ByteBuf b){b.writeInt(entityId);ByteBufUtils.writeUTF8String(b,name);}
-    public static class Handler implements IMessageHandler<TDMSpectatorPacket,IMessage>{@SideOnly(Side.CLIENT)public IMessage onMessage(TDMSpectatorPacket m,MessageContext c){EventHandlerClient.updateTDMSpectator(m.entityId,m.name);return null;}}
+    public static class Handler implements IMessageHandler<TDMSpectatorPacket,IMessage> {
+        @SideOnly(Side.CLIENT)
+        public IMessage onMessage(TDMSpectatorPacket message, MessageContext context) {
+            final int entityId = message.entityId;
+            final String name = message.name;
+            Minecraft.getMinecraft().func_152344_a(new Runnable() {
+                public void run() {
+                    EventHandlerClient.updateTDMSpectator(entityId, name);
+                }
+            });
+            return null;
+        }
+    }
 }

@@ -1,3 +1,9 @@
+# Pull request: isolate TDM spectator camera ownership
+
+- Track the exact client camera Xenofactions assigns and restore the prior valid camera only while Xenofactions still owns the current view.
+- Schedule spectator packets on the Minecraft client thread and ignore unchanged periodic targets, preventing camera reacquisition after another mod takes control.
+- Preserve teammate spectating while making cleanup, disconnects, world changes, respawns, map votes, and mode transitions safe for vehicle and custom-camera mods such as MCHeli.
+
 # Pull request: enforce hardcore BOMB buy-period isolation
 
 - Made hardcore BOMB `PRE_ROUND` independently freeze and protect every living participant until the authoritative transition to `LIVE`, regardless of whether that player has already selected a kit.
