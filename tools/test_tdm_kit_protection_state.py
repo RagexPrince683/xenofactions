@@ -13,16 +13,15 @@ def method(source, signature, next_signature):
 
 
 def test_all_owned_effects_are_cleared():
-    body = method(MANAGER, "public static void clearKitSelectionProtection", "public static void closeKitGui")
+    body = method(MANAGER, "private static void removeOwnedProtectionEffects", "public static void clearKitSelectionProtection")
     for potion in ("invisibility", "moveSlowdown", "resistance", "regeneration"):
         assert "removePotionEffect(Potion.%s.id)" % potion in body
 
 
 def test_selection_contexts_separate_buy_phase_from_respawn_lock():
     body = method(MANAGER, "public static void tickKitSelection", "public static KitSelectionResult selectKit")
-    assert "context==KitSelectionContext.BUY_PHASE" in body
-    assert "BombRoundState.PRE_ROUND" in body
-    assert "context==KitSelectionContext.RESPAWN_LOCK" in body
+    assert "isGlobalBombBuyPeriod(player)" in body
+    assert "context == KitSelectionContext.RESPAWN_LOCK" in body
     assert "isHardcoreRespawns" in body
     assert "applyKitSelectionProtection(player)" in body
 
@@ -40,7 +39,7 @@ def test_non_hardcore_round_skips_buy_phase_and_defers_bomb():
 
 def test_freeze_anchor_is_server_authoritative():
     body = method(MANAGER, "public static void tickKitSelection", "public static KitSelectionResult selectKit")
-    for token in ("motionX=player.motionY=player.motionZ=0", "fallDistance=0", "setPlayerLocation"):
+    for token in ("player.motionX = 0", "player.motionY = 0", "player.motionZ = 0", "fallDistance = 0", "setPlayerLocation"):
         assert token in body
 
 
@@ -56,6 +55,14 @@ def test_dead_entities_are_not_processed_during_buy_setup():
     assert "TDMManager.isAliveForTDM(p)" in body
     assert body.index("TDMManager.isAliveForTDM(p)") < body.index("TDMManager.respawnPlayer(p,r)")
 
+
+def test_global_buy_period_is_independent_of_pending_selection():
+    helper = method(MANAGER, "public static boolean isGlobalBombBuyPeriod", "public static void enrollGlobalBuyProtection")
+    assert "BombRoundState.PRE_ROUND" in helper
+    assert "pendingKitSelection" not in helper
+    tick = method(MANAGER, "public static void tickKitSelection", "public static KitSelectionResult selectKit")
+    assert "isGlobalBombBuyPeriod(player)" in tick
+    assert tick.index("isGlobalBombBuyPeriod(player)") < tick.index("context == KitSelectionContext.RESPAWN_LOCK")
 
 if __name__ == "__main__":
     tests = [value for name, value in sorted(globals().items()) if name.startswith("test_")]

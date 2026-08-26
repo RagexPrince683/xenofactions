@@ -1,3 +1,9 @@
+# Pull request: enforce hardcore BOMB buy-period isolation
+
+- Made hardcore BOMB `PRE_ROUND` independently freeze and protect every living participant until the authoritative transition to `LIVE`, regardless of whether that player has already selected a kit.
+- Made BUY_PHASE selection mandatory, enrolled late hardcore respawns with the correct context, and blocked outgoing attacks, entity interaction, pickups, movement, sprinting, and jumping throughout buy time.
+- Preserved non-hardcore per-player `RESPAWN_LOCK` behavior and separated its protection ownership from global buy protection.
+
 # Pull request: restore hardcore-aware TDM respawn kit lifecycle
 
 - Kept the timed global BOMB buy phase exclusively for hardcore-respawn maps; non-hardcore rounds now enter `LIVE` directly and use independent mandatory per-player kit locks.

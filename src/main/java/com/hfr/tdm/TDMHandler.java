@@ -13,6 +13,8 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
+import net.minecraftforge.event.entity.player.AttackEntityEvent;
+import net.minecraftforge.event.entity.player.EntityInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.WorldEvent;
 
@@ -27,7 +29,8 @@ public class TDMHandler {
     private static final int TEAM_CHANGE_REMINDER_INTERVAL_TICKS = 8 * 60 * 20;
     private long lastAutoBalanceTick = -1;
     private long lastRoundTick = -1;
-    private final Map<String, Integer> pendingRespawns = new HashMap<String, Integer>();
+    private static final class PendingRespawn { int ticks; TDMManager.KitSelectionContext context; PendingRespawn(int ticks,TDMManager.KitSelectionContext context){this.ticks=ticks;this.context=context;} }
+    private final Map<String, PendingRespawn> pendingRespawns = new HashMap<String, PendingRespawn>();
     private final Random random = new Random();
 
     @SubscribeEvent
@@ -62,6 +65,16 @@ public class TDMHandler {
     @SubscribeEvent
     public void onRespawn(cpw.mods.fml.common.gameevent.PlayerEvent.PlayerRespawnEvent event) {
         TDMManager.cancelKitSelection(event.player);
+        if (TDMManager.isEnabled(event.player.worldObj) && TDMManager.isBombMode(event.player.worldObj)
+                && TDMManager.isHardcoreRespawns(event.player.worldObj)
+                && TDMBombManager.getState() == TDMBombManager.BombRoundState.PRE_ROUND) {
+            TDMSpectatorManager.restore(event.player);
+            if (TDMManager.respawnPlayer(event.player, random)) {
+                TDMManager.enrollGlobalBuyProtection(event.player);
+                TDMManager.promptForKit(event.player, TDMManager.KitSelectionContext.BUY_PHASE);
+            } else queueRespawn(event.player);
+            return;
+        }
         if (TDMBombManager.isEliminated(event.player) && TDMManager.isHardcoreRespawns(event.player.worldObj)) TDMSpectatorManager.observe(event.player);
         else queueRespawn(event.player);
     }
@@ -84,18 +97,20 @@ public class TDMHandler {
         runAutoBalance(event.player);
 
         String playerName = getKey(event.player);
-        Integer ticksLeft = pendingRespawns.get(playerName);
-        if (ticksLeft == null) return;
+        PendingRespawn pending = pendingRespawns.get(playerName);
+        if (pending == null) return;
 
         if (!TDMManager.isAliveForTDM(event.player)) return;
         if (TDMManager.respawnPlayer(event.player, random)) {
             pendingRespawns.remove(playerName);
-            TDMManager.promptForKit(event.player, TDMManager.KitSelectionContext.RESPAWN_LOCK);
-        } else if (ticksLeft <= 1) {
+            if(pending.context==TDMManager.KitSelectionContext.BUY_PHASE)TDMManager.enrollGlobalBuyProtection(event.player);
+            TDMManager.promptForKit(event.player, pending.context);
+        } else if (pending.ticks <= 1) {
             pendingRespawns.remove(playerName);
-            TDMManager.promptForKit(event.player, TDMManager.KitSelectionContext.RESPAWN_LOCK);
+            if(pending.context==TDMManager.KitSelectionContext.BUY_PHASE)TDMManager.enrollGlobalBuyProtection(event.player);
+            TDMManager.promptForKit(event.player, pending.context);
         } else {
-            pendingRespawns.put(playerName, ticksLeft - 1);
+            pending.ticks--;
         }
     }
 
@@ -125,11 +140,12 @@ public class TDMHandler {
     @SubscribeEvent
     public void onLivingAttack(LivingAttackEvent event) {
         if (event.entityLiving.worldObj.isRemote) return;
+        EntityPlayer protectedAttacker=getAttackingPlayer(event.source);
+        if(protectedAttacker!=null&&(TDMManager.isGlobalBombBuyPeriod(protectedAttacker)||TDMManager.hasKitSelectionProtection(protectedAttacker)||TDMSpectatorManager.isObserving(protectedAttacker))){event.setCanceled(true);return;}
         if (!(event.entityLiving instanceof EntityPlayer)) return;
         if (!TDMManager.isEnabled(event.entityLiving.worldObj)) return;
         EntityPlayer victim = (EntityPlayer) event.entityLiving;
         if(TDMManager.hasKitSelectionProtection(victim)){event.setCanceled(true);return;}
-        EntityPlayer protectedAttacker=getAttackingPlayer(event.source);if(protectedAttacker!=null&&TDMManager.hasKitSelectionProtection(protectedAttacker)){event.setCanceled(true);return;}
         if (TDMManager.isBombMode(event.entityLiving.worldObj) && !TDMBombManager.isRoundActive()) { event.setCanceled(true); return; }
         if (TDMManager.isFriendlyFireEnabled(event.entityLiving.worldObj)) return;
         EntityPlayer attacker = getAttackingPlayer(event.source);
@@ -142,6 +158,11 @@ public class TDMHandler {
             event.setCanceled(true);
         }
     }
+
+    @SubscribeEvent(priority=EventPriority.HIGHEST)
+    public void restrictAttack(AttackEntityEvent event){if(TDMManager.isGlobalBombBuyPeriod(event.entityPlayer)||TDMManager.hasRespawnLockProtection(event.entityPlayer)||TDMSpectatorManager.isObserving(event.entityPlayer))event.setCanceled(true);}
+    @SubscribeEvent(priority=EventPriority.HIGHEST)
+    public void restrictEntityInteract(EntityInteractEvent event){if(TDMManager.isGlobalBombBuyPeriod(event.entityPlayer)||TDMManager.hasRespawnLockProtection(event.entityPlayer)||TDMSpectatorManager.isObserving(event.entityPlayer))event.setCanceled(true);}
 
     @SubscribeEvent(priority=EventPriority.HIGHEST)
     public void restrictPlace(BlockEvent.PlaceEvent event) {
@@ -178,7 +199,7 @@ public class TDMHandler {
         }
     }
     @SubscribeEvent(priority=EventPriority.HIGHEST)
-    public void restrictPickup(EntityItemPickupEvent event){if(TDMManager.hasKitSelectionProtection(event.entityPlayer)){event.setCanceled(true);return;}if(TDMBombManager.isBombStack(event.item.getEntityItem())&&(!TDMManager.isTerrorist(event.entityPlayer)||TDMBombManager.getState()!=TDMBombManager.BombRoundState.LIVE)){event.setCanceled(true);if(TDMBombManager.getState()!=TDMBombManager.BombRoundState.LIVE)event.item.setDead();return;}if(TDMSpectatorManager.isObserving(event.entityPlayer))event.setCanceled(true);}
+    public void restrictPickup(EntityItemPickupEvent event){if(TDMManager.isGlobalBombBuyPeriod(event.entityPlayer)||TDMManager.hasKitSelectionProtection(event.entityPlayer)){event.setCanceled(true);return;}if(TDMBombManager.isBombStack(event.item.getEntityItem())&&(!TDMManager.isTerrorist(event.entityPlayer)||TDMBombManager.getState()!=TDMBombManager.BombRoundState.LIVE)){event.setCanceled(true);if(TDMBombManager.getState()!=TDMBombManager.BombRoundState.LIVE)event.item.setDead();return;}if(TDMSpectatorManager.isObserving(event.entityPlayer))event.setCanceled(true);}
 
     private boolean isWorldBorderAdminWand(EntityPlayer player) {
         return player != null
@@ -243,7 +264,8 @@ public class TDMHandler {
         if (!TDMManager.isAliveForTDM(player)) return;
         if (TDMManager.isHardcoreRespawns(player.worldObj) && TDMBombManager.isEliminated(player)) { TDMSpectatorManager.observe(player); return; }
 
-        pendingRespawns.put(getKey(player), RESPAWN_RETRY_TICKS);
+        TDMManager.KitSelectionContext context=TDMManager.isBombMode(player.worldObj)&&TDMManager.isHardcoreRespawns(player.worldObj)&&TDMBombManager.getState()==TDMBombManager.BombRoundState.PRE_ROUND?TDMManager.KitSelectionContext.BUY_PHASE:TDMManager.KitSelectionContext.RESPAWN_LOCK;
+        pendingRespawns.put(getKey(player),new PendingRespawn(RESPAWN_RETRY_TICKS,context));
     }
 
     private String getKey(EntityPlayer player) {
