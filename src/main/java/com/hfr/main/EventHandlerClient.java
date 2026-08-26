@@ -155,7 +155,7 @@ public class EventHandlerClient {
 			xenofactionsOwnsCamera = true;
 		}
 		xenofactionsCameraEntity = target;
-		mc.renderViewEntity = target;
+		mc.renderViewEntity = (EntityLivingBase) target;
 	}
 
 	/** Releases only camera state that Xenofactions can prove it still owns. */
@@ -164,7 +164,7 @@ public class EventHandlerClient {
 		if (xenofactionsOwnsCamera && mc != null && mc.renderViewEntity == xenofactionsCameraEntity) {
 			Entity restore = xenofactionsPreviousCamera;
 			if (restore != null && !restore.isDead && restore.worldObj == mc.theWorld) {
-				mc.renderViewEntity = restore;
+				mc.renderViewEntity = (EntityLivingBase) restore;
 			} else if (mc.thePlayer != null) {
 				mc.renderViewEntity = mc.thePlayer;
 			}
