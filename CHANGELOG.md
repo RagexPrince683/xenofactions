@@ -1,3 +1,9 @@
+# Pull request: remove TDM spectator camera overrides
+
+- Removed all TDM camera targeting, ownership, and restoration so TDM never overrides the Minecraft camera.
+- Kept eliminated-player observer gameplay state without forcing teammate views, preventing interference with vehicle and custom-camera mods such as MCHeli.
+- Rewrote the affected TDM client state, HUD, observer manager, and compatibility packet registration for readability while preserving packet discriminator IDs.
+
 # Pull request: isolate TDM spectator camera ownership
 
 - Track the exact client camera Xenofactions assigns and restore the prior valid camera only while Xenofactions still owns the current view.

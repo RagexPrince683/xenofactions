@@ -81,33 +81,85 @@ public class EventHandlerClient {
 	
 	private static boolean tdmHudEnabled = false;
 	private static GUITDMKitSelect mandatoryKitGui;
-	public static void setMandatoryKitGui(GUITDMKitSelect gui){mandatoryKitGui=gui;enforceMandatoryKitGui();}
-	public static void clearMandatoryKitGui(boolean close){mandatoryKitGui=null;Minecraft mc=Minecraft.getMinecraft();if(close&&mc!=null&&mc.currentScreen instanceof GUITDMKitSelect)mc.displayGuiScreen(null);}
-	private static void enforceMandatoryKitGui(){Minecraft mc=Minecraft.getMinecraft();if(mandatoryKitGui==null||mc==null||mc.theWorld==null||mc.thePlayer==null||mc.thePlayer.isDead||mc.thePlayer.getHealth()<=0||mc.currentScreen instanceof GuiGameOver)return;if(mc.currentScreen!=mandatoryKitGui)mc.displayGuiScreen(mandatoryKitGui);}
+
+	public static void setMandatoryKitGui(GUITDMKitSelect gui) {
+		mandatoryKitGui = gui;
+		enforceMandatoryKitGui();
+	}
+
+	public static void clearMandatoryKitGui(boolean close) {
+		mandatoryKitGui = null;
+		Minecraft minecraft = Minecraft.getMinecraft();
+		if (close && minecraft != null && minecraft.currentScreen instanceof GUITDMKitSelect) {
+			minecraft.displayGuiScreen(null);
+		}
+	}
+
+	private static void enforceMandatoryKitGui() {
+		Minecraft minecraft = Minecraft.getMinecraft();
+		if (mandatoryKitGui == null
+				|| minecraft == null
+				|| minecraft.theWorld == null
+				|| minecraft.thePlayer == null
+				|| minecraft.thePlayer.isDead
+				|| minecraft.thePlayer.getHealth() <= 0
+				|| minecraft.currentScreen instanceof GuiGameOver) {
+			return;
+		}
+		if (minecraft.currentScreen != mandatoryKitGui) {
+			minecraft.displayGuiScreen(mandatoryKitGui);
+		}
+	}
 	private static boolean tdmVoting = false;
 	private static int tdmRoundSeconds = 0;
 	private static int tdmVoteSeconds = 0;
 	private static int tdmRedScore = 0;
 	private static int tdmBlueScore = 0;
 	private static String tdmMapName = "";
-	private static String tdmMode="DEATHMATCH",tdmBombState="DISABLED",tdmTerroristTeam="red",tdmBombsite="",tdmSpectating="";
-	private static int tdmRedBombWins,tdmBlueBombWins,tdmBombSeconds,tdmSpectatorTarget=-1,tdmBuyScore,tdmRedPlayerCount,tdmBluePlayerCount; private static boolean tdmEconomy;
-	private static boolean xenofactionsOwnsCamera;
-	private static Entity xenofactionsCameraEntity;
-	private static Entity xenofactionsPreviousCamera;
+	private static String tdmMode = "DEATHMATCH";
+	private static String tdmBombState = "DISABLED";
+	private static String tdmTerroristTeam = "red";
+	private static String tdmBombsite = "";
+	private static int tdmRedBombWins;
+	private static int tdmBlueBombWins;
+	private static int tdmBombSeconds;
+	private static int tdmBuyScore;
+	private static int tdmRedPlayerCount;
+	private static int tdmBluePlayerCount;
+	private static boolean tdmEconomy;
 	
 	public static List<int[]> resourceBorders = new ArrayList();
 	boolean resources = false;
 	
 	public static void updateTDMStatus(boolean enabled, boolean voting, int roundSeconds, int voteSeconds, int redScore, int blueScore, String mapName) {
-		updateTDMStatus(enabled,voting,roundSeconds,voteSeconds,redScore,blueScore,mapName,"DEATHMATCH","DISABLED",0,0,"red",0,"");
+		updateTDMStatus(enabled, voting, roundSeconds, voteSeconds, redScore, blueScore, mapName,
+				"DEATHMATCH", "DISABLED", 0, 0, "red", 0, "");
 	}
-	public static void updateTDMStatus(boolean enabled,boolean voting,int roundSeconds,int voteSeconds,int redScore,int blueScore,String mapName,String mode,String bombState,int redBombWins,int blueBombWins,String terroristTeam,int bombSeconds,String site) {updateTDMStatus(enabled,voting,roundSeconds,voteSeconds,redScore,blueScore,mapName,mode,bombState,redBombWins,blueBombWins,terroristTeam,bombSeconds,site,false,0);}
-	public static void updateTDMStatus(boolean enabled,boolean voting,int roundSeconds,int voteSeconds,int redScore,int blueScore,String mapName,String mode,String bombState,int redBombWins,int blueBombWins,String terroristTeam,int bombSeconds,String site,boolean economy,int buyScore) {
-		updateTDMStatus(enabled,voting,roundSeconds,voteSeconds,redScore,blueScore,mapName,mode,bombState,redBombWins,blueBombWins,terroristTeam,bombSeconds,site,economy,buyScore,0,0);
+
+	public static void updateTDMStatus(boolean enabled, boolean voting, int roundSeconds, int voteSeconds,
+			int redScore, int blueScore, String mapName, String mode, String bombState,
+			int redBombWins, int blueBombWins, String terroristTeam, int bombSeconds, String site) {
+		updateTDMStatus(enabled, voting, roundSeconds, voteSeconds, redScore, blueScore, mapName,
+				mode, bombState, redBombWins, blueBombWins, terroristTeam, bombSeconds, site, false, 0);
 	}
-	public static void updateTDMStatus(boolean enabled,boolean voting,int roundSeconds,int voteSeconds,int redScore,int blueScore,String mapName,String mode,String bombState,int redBombWins,int blueBombWins,String terroristTeam,int bombSeconds,String site,boolean economy,int buyScore,int redPlayerCount,int bluePlayerCount) {
-		if(!enabled){resetTDMClientState();return;}
+
+	public static void updateTDMStatus(boolean enabled, boolean voting, int roundSeconds, int voteSeconds,
+			int redScore, int blueScore, String mapName, String mode, String bombState,
+			int redBombWins, int blueBombWins, String terroristTeam, int bombSeconds, String site,
+			boolean economy, int buyScore) {
+		updateTDMStatus(enabled, voting, roundSeconds, voteSeconds, redScore, blueScore, mapName,
+				mode, bombState, redBombWins, blueBombWins, terroristTeam, bombSeconds, site,
+				economy, buyScore, 0, 0);
+	}
+
+	public static void updateTDMStatus(boolean enabled, boolean voting, int roundSeconds, int voteSeconds,
+			int redScore, int blueScore, String mapName, String mode, String bombState,
+			int redBombWins, int blueBombWins, String terroristTeam, int bombSeconds, String site,
+			boolean economy, int buyScore, int redPlayerCount, int bluePlayerCount) {
+		if (!enabled) {
+			resetTDMClientState();
+			return;
+		}
 		tdmHudEnabled = enabled;
 		tdmVoting = voting;
 		tdmRoundSeconds = roundSeconds;
@@ -115,64 +167,49 @@ public class EventHandlerClient {
 		tdmRedScore = redScore;
 		tdmBlueScore = blueScore;
 		tdmMapName = mapName == null ? "" : mapName;
-		tdmMode=mode;tdmBombState=bombState;tdmRedBombWins=redBombWins;tdmBlueBombWins=blueBombWins;tdmTerroristTeam=terroristTeam;tdmBombSeconds=bombSeconds;tdmBombsite=site;tdmEconomy=economy;tdmBuyScore=buyScore;tdmRedPlayerCount=redPlayerCount;tdmBluePlayerCount=bluePlayerCount;
-		if(!enabled||voting)updateTDMSpectator(-1,"");
+		tdmMode = mode;
+		tdmBombState = bombState;
+		tdmRedBombWins = redBombWins;
+		tdmBlueBombWins = blueBombWins;
+		tdmTerroristTeam = terroristTeam;
+		tdmBombSeconds = bombSeconds;
+		tdmBombsite = site;
+		tdmEconomy = economy;
+		tdmBuyScore = buyScore;
+		tdmRedPlayerCount = redPlayerCount;
+		tdmBluePlayerCount = bluePlayerCount;
 	}
+
 	public static void resetTDMClientState() {
-		mandatoryKitGui=null;
-		tdmHudEnabled=false;tdmVoting=false;tdmRoundSeconds=0;tdmVoteSeconds=0;tdmRedScore=0;tdmBlueScore=0;tdmMapName="";
-		tdmMode="DEATHMATCH";tdmBombState="DISABLED";tdmTerroristTeam="red";tdmBombsite="";tdmSpectating="";
-		tdmRedBombWins=0;tdmBlueBombWins=0;tdmBombSeconds=0;tdmSpectatorTarget=-1;tdmBuyScore=0;tdmRedPlayerCount=0;tdmBluePlayerCount=0;tdmEconomy=false;
-		releaseTDMSpectatorCamera();
-		Minecraft mc=Minecraft.getMinecraft();if(mc==null)return;
-		if(mc.currentScreen instanceof GUITDMMenu||mc.currentScreen instanceof GUITDMKitSelect||mc.currentScreen instanceof GUITDMMapVote)mc.displayGuiScreen(null);
-	}
-	public static void updateTDMSpectator(int entityId, String name) {
-		Minecraft mc = Minecraft.getMinecraft();
-		int previousTarget = tdmSpectatorTarget;
-		tdmSpectatorTarget = entityId;
-		tdmSpectating = name == null ? "" : name;
+		mandatoryKitGui = null;
+		tdmHudEnabled = false;
+		tdmVoting = false;
+		tdmRoundSeconds = 0;
+		tdmVoteSeconds = 0;
+		tdmRedScore = 0;
+		tdmBlueScore = 0;
+		tdmMapName = "";
+		tdmMode = "DEATHMATCH";
+		tdmBombState = "DISABLED";
+		tdmTerroristTeam = "red";
+		tdmBombsite = "";
+		tdmRedBombWins = 0;
+		tdmBlueBombWins = 0;
+		tdmBombSeconds = 0;
+		tdmBuyScore = 0;
+		tdmRedPlayerCount = 0;
+		tdmBluePlayerCount = 0;
+		tdmEconomy = false;
 
-		if (entityId <= 0) {
-			releaseTDMSpectatorCamera();
+		Minecraft minecraft = Minecraft.getMinecraft();
+		if (minecraft == null) {
 			return;
 		}
-		if (mc == null || mc.theWorld == null) return;
-
-		Entity target = mc.theWorld.getEntityByID(entityId);
-		if (!(target instanceof EntityPlayer) || target.isDead || target.worldObj != mc.theWorld) {
-			releaseTDMSpectatorCamera();
-			// Permit a later refresh to retry once the server entity has reached the client.
-			tdmSpectatorTarget = -1;
-			return;
+		if (minecraft.currentScreen instanceof GUITDMMenu
+				|| minecraft.currentScreen instanceof GUITDMKitSelect
+				|| minecraft.currentScreen instanceof GUITDMMapVote) {
+			minecraft.displayGuiScreen(null);
 		}
-
-		if (xenofactionsOwnsCamera && xenofactionsCameraEntity == target) return;
-		if (previousTarget == entityId) return;
-
-		if (!xenofactionsOwnsCamera) {
-			xenofactionsPreviousCamera = mc.renderViewEntity;
-			xenofactionsOwnsCamera = true;
-		}
-		xenofactionsCameraEntity = target;
-		mc.renderViewEntity = (EntityLivingBase) target;
-	}
-
-	/** Releases only camera state that Xenofactions can prove it still owns. */
-	public static void releaseTDMSpectatorCamera() {
-		Minecraft mc = Minecraft.getMinecraft();
-		if (xenofactionsOwnsCamera && mc != null && mc.renderViewEntity == xenofactionsCameraEntity) {
-			Entity restore = xenofactionsPreviousCamera;
-			if (restore != null && !restore.isDead && restore.worldObj == mc.theWorld) {
-				mc.renderViewEntity = (EntityLivingBase) restore;
-			} else if (mc.thePlayer != null) {
-				mc.renderViewEntity = mc.thePlayer;
-			}
-		}
-		// Another mod may have replaced the camera; never overwrite its new value.
-		xenofactionsOwnsCamera = false;
-		xenofactionsCameraEntity = null;
-		xenofactionsPreviousCamera = null;
 	}
 
 	private static void drawTDMHud() {
@@ -186,15 +223,52 @@ public class EventHandlerClient {
 		}
 
 		FontRenderer font = mc.fontRenderer;
-		boolean bomb="BOMB".equals(tdmMode);String timer = tdmVoting ? "Map vote: " + formatSeconds(tdmVoteSeconds) : bomb?bombStateText():"Round: " + formatSeconds(tdmRoundSeconds);
+		boolean bombMode = "BOMB".equals(tdmMode);
+		String timer;
+		if (tdmVoting) {
+			timer = "Map vote: " + formatSeconds(tdmVoteSeconds);
+		} else if (bombMode) {
+			timer = bombStateText();
+		} else {
+			timer = "Round: " + formatSeconds(tdmRoundSeconds);
+		}
 		String map = tdmMapName.length() > 0 ? " Map: " + tdmMapName : "";
-		String redRole=bomb?("red".equals(tdmTerroristTeam)?"T":"CT"):"",blueRole=bomb?("blue".equals(tdmTerroristTeam)?"T":"CT"):"";boolean waiting=bomb&&"WAITING_FOR_TEAMS".equals(tdmBombState);String text = timer + "  Red"+(bomb&&!waiting?" ("+redRole+")":"")+": " + (waiting?tdmRedPlayerCount:(bomb?tdmRedBombWins:tdmRedScore)) + "  Blue"+(bomb&&!waiting?" ("+blueRole+")":"")+": " + (waiting?tdmBluePlayerCount:(bomb?tdmBlueBombWins:tdmBlueScore)) + map+(bomb&&tdmEconomy?"  Buy score: "+tdmBuyScore:"");
+		boolean waitingForTeams = bombMode && "WAITING_FOR_TEAMS".equals(tdmBombState);
+		String redRole = "red".equals(tdmTerroristTeam) ? "T" : "CT";
+		String blueRole = "blue".equals(tdmTerroristTeam) ? "T" : "CT";
+		int redDisplayScore = waitingForTeams ? tdmRedPlayerCount : (bombMode ? tdmRedBombWins : tdmRedScore);
+		int blueDisplayScore = waitingForTeams ? tdmBluePlayerCount : (bombMode ? tdmBlueBombWins : tdmBlueScore);
+		String redRoleText = bombMode && !waitingForTeams ? " (" + redRole + ")" : "";
+		String blueRoleText = bombMode && !waitingForTeams ? " (" + blueRole + ")" : "";
+		String buyScoreText = bombMode && tdmEconomy ? "  Buy score: " + tdmBuyScore : "";
+		String text = timer
+				+ "  Red" + redRoleText + ": " + redDisplayScore
+				+ "  Blue" + blueRoleText + ": " + blueDisplayScore
+				+ map
+				+ buyScoreText;
 		ScaledResolution resolution = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
 		int x = (resolution.getScaledWidth() - font.getStringWidth(text)) / 2;
 		font.drawStringWithShadow(text, Math.max(2, x), 6, tdmVoting ? 0xFFFF55 : 0xFFFFFF);
-		if(tdmSpectating.length()>0)font.drawStringWithShadow("Spectating "+tdmSpectating,2,18,0xFFFFFF);
 	}
-	private static String bombStateText(){if("WAITING_FOR_TEAMS".equals(tdmBombState))return "Waiting for teams";if("PRE_ROUND".equals(tdmBombState))return "Buy time: "+formatSeconds(tdmBombSeconds);if("LIVE".equals(tdmBombState))return "Round: "+formatSeconds(tdmBombSeconds);if("BOMB_PLANTED".equals(tdmBombState))return "Bomb planted"+(tdmBombsite.length()>0?" "+tdmBombsite:"");if("ROUND_END".equals(tdmBombState))return "Round over";return "";}
+
+	private static String bombStateText() {
+		if ("WAITING_FOR_TEAMS".equals(tdmBombState)) {
+			return "Waiting for teams";
+		}
+		if ("PRE_ROUND".equals(tdmBombState)) {
+			return "Buy time: " + formatSeconds(tdmBombSeconds);
+		}
+		if ("LIVE".equals(tdmBombState)) {
+			return "Round: " + formatSeconds(tdmBombSeconds);
+		}
+		if ("BOMB_PLANTED".equals(tdmBombState)) {
+			return "Bomb planted" + (tdmBombsite.length() > 0 ? " " + tdmBombsite : "");
+		}
+		if ("ROUND_END".equals(tdmBombState)) {
+			return "Round over";
+		}
+		return "";
+	}
 
 
 	public static void openTDMMenu(String currentTeam, int cooldownSeconds, String[] friendlyLines, String[] enemyLines,boolean canOpenBuyMenu) {
@@ -632,12 +706,6 @@ public class EventHandlerClient {
 		Minecraft xfMc = Minecraft.getMinecraft();
 		boolean xfHasWorld = xfMc.theWorld != null;
 		if(xfHadWorld&&!xfHasWorld)resetTDMClientState();
-		if (xenofactionsOwnsCamera && (xenofactionsCameraEntity == null
-				|| xenofactionsCameraEntity.isDead
-				|| xenofactionsCameraEntity.worldObj != xfMc.theWorld
-				|| xfMc.renderViewEntity != xenofactionsCameraEntity)) {
-			releaseTDMSpectatorCamera();
-		}
 		if(!xfHadWorld && xfHasWorld) xfTutorialQueued = true;
 		if(!xfHasWorld) xfTutorialQueued = false;
 		xfHadWorld = xfHasWorld;
