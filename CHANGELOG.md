@@ -1,3 +1,10 @@
+# Native earth2000 raster pregeneration
+
+- Added an external, SHA-256-verified `earth2000` source format and bounded 512-block raster tile reader.
+- Added clean Minecraft 1.7.10 terrain conversion and resumable, deterministic Anvil region generation with safe partial-world ownership and final verification.
+- Added level-4 `/xc earth source` and `/xc earth pregen` administration commands plus external source-package tooling.
+- Documented the dedicated-server bootstrap workflow; the normal JAR continues to contain generator code only, while existing `.xfmap` support remains intact.
+
 # Pull request: isolate TDM spectator camera ownership
 
 - Track the exact client camera Xenofactions assigns and restore the prior valid camera only while Xenofactions still owns the current view.
