@@ -60,6 +60,9 @@ public final class XFConfig {
 	public static String earthDefaultPackId = "xf-earth-16k-clean";
 	public static String earthBundledCacheDirectory = "";
 	public static String earthLocalMapDirectory = "";
+	public static String earthSourceDirectory = "";
+	public static int earthRasterTileCache = 8;
+	public static boolean earthPregenVegetation = false;
 	public static boolean earthRequireVerifiedHashes = true;
 	public static boolean earthAllowUnverifiedLocalPacks = false;
 	public static boolean earthRequireProfile = true;
@@ -214,6 +217,9 @@ public final class XFConfig {
 		earthDefaultPackId = string(config, CAT_EARTH_WORLD, "earthDefaultPackId", "xf-earth-16k-clean", "Map pack selected when generator options are empty or invalid.");
 		earthBundledCacheDirectory = string(config, CAT_EARTH_WORLD, "earthBundledCacheDirectory", "", "Blank uses .minecraft/xenofactions/earthmaps/cache.");
 		earthLocalMapDirectory = string(config, CAT_EARTH_WORLD, "earthLocalMapDirectory", "", "Blank uses .minecraft/xenofactions/earthmaps.");
+		earthSourceDirectory = string(config, CAT_EARTH_WORLD, "earthSourceDirectory", "", "External raster source root. Blank uses .minecraft/xenofactions/earthmaps/sources; source images are never loaded from the jar.");
+		earthRasterTileCache = integer(config, CAT_EARTH_WORLD, "earthRasterTileCache", 8, 1, 32, "Maximum 512x512 decoded raster tiles retained across all Earth source images.");
+		earthPregenVegetation = bool(config, CAT_EARTH_WORLD, "earthPregenVegetation", false, "Reserved decoration switch. The earth2000 clean generator currently requires this to remain false.");
 		earthRequireVerifiedHashes = bool(config, CAT_EARTH_WORLD, "earthRequireVerifiedHashes", true, "Require manifest and archive hashes.");
 		earthAllowUnverifiedLocalPacks = bool(config, CAT_EARTH_WORLD, "earthAllowUnverifiedLocalPacks", false, "Unsafe development escape hatch for local packs.");
 		earthRequireProfile = bool(config, CAT_EARTH_WORLD, "earthRequireProfile", true, "Refuse an adopted Earth world without xenoearth-profile.json.");

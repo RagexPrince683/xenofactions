@@ -1,6 +1,7 @@
 # Gradle files
 .gradle/
 build/
+generated/earth2000-source/
 out/
 !gradle/wrapper/gradle-wrapper.jar
 
