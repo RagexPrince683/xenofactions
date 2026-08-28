@@ -90,7 +90,12 @@ public class PacketDispatcher {
 		wrapper.registerMessage(TDMKitSelectPacket.Handler.class, TDMKitSelectPacket.class, i++, Side.SERVER);
 		wrapper.registerMessage(TDMKitSelectResultPacket.Handler.class, TDMKitSelectResultPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(TDMStatusPacket.Handler.class, TDMStatusPacket.class, i++, Side.CLIENT);
-		wrapper.registerMessage(TDMSpectatorPacket.Handler.class, TDMSpectatorPacket.class, i++, Side.CLIENT);
+		// Preserve the retired spectator-target packet ID so every later discriminator stays stable.
+		wrapper.registerMessage(
+				LegacyTDMSpectatorCompatibilityPacket.Handler.class,
+				LegacyTDMSpectatorCompatibilityPacket.class,
+				i++,
+				Side.CLIENT);
 		wrapper.registerMessage(TDMMapVoteGuiPacket.Handler.class, TDMMapVoteGuiPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(TDMMapVoteSelectPacket.Handler.class, TDMMapVoteSelectPacket.class, i++, Side.SERVER);
 		wrapper.registerMessage(TDMMenuActionPacket.Handler.class, TDMMenuActionPacket.class, i++, Side.SERVER);

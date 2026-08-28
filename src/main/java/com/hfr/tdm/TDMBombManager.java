@@ -68,7 +68,8 @@ public final class TDMBombManager {
         else if(state==BombRoundState.LIVE&&now>=stateEndTick) completeRound(world,TDMManager.getCounterTerroristTeam(world),BombRoundWinReason.TIME_EXPIRED);
         else if(state==BombRoundState.ROUND_END&&now>=stateEndTick){if(hasEnoughPlayersForBombRound(world))beginNextBombRound(world);else waitForTeams(world);}
         if(state==BombRoundState.LIVE&&!TDMManager.isHardcoreRespawns(world))ensureLiveRoundBombAssigned(world);
-        sanitizeBombInventories(world);TDMSpectatorManager.tick(world);
+        sanitizeBombInventories(world);
+        TDMSpectatorManager.tick();
     }
     public static void beginBuyTime(World world){
         cleanupTransientState(world);state=BombRoundState.PRE_ROUND;stateEndTick=world.getTotalWorldTime()+BUY_TIME_TICKS;Random r=new Random();if(XFConfig.tdmBombLifecycleDebug&&MainRegistry.logger!=null)MainRegistry.logger.info("TDM BUY: begin map={}",TDMManager.getSelectedMap(world));
