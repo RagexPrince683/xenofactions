@@ -107,11 +107,13 @@ public final class TDMBombManager {
             if (!TDMManager.isAliveForTDM(player)) {
                 continue;
             }
-            TDMManager.resetTDMTransientPlayerState(player);
             if (!TDMManager.placePlayerAtSelectedMapSpawn(player, random)) {
                 continue;
             }
 
+            // Round initialization restores health and hunger at the final team spawn.
+            TDMManager.restorePlayerForRound(player);
+            TDMManager.resetTDMTransientPlayerState(player);
             player.inventory.clearInventory(null, -1);
             for (int slot = 0; slot < player.inventory.armorInventory.length; slot++) {
                 player.inventory.armorInventory[slot] = null;
@@ -148,11 +150,13 @@ public final class TDMBombManager {
             if (!TDMManager.isAliveForTDM(player)) {
                 continue;
             }
-            TDMManager.resetTDMTransientPlayerState(player);
             if (!TDMManager.placePlayerAtSelectedMapSpawn(player, random)) {
                 continue;
             }
 
+            // Restore the new life before protection makes this live round playable.
+            TDMManager.restorePlayerForRound(player);
+            TDMManager.resetTDMTransientPlayerState(player);
             player.inventory.clearInventory(null, -1);
             for (int slot = 0; slot < player.inventory.armorInventory.length; slot++) {
                 player.inventory.armorInventory[slot] = null;

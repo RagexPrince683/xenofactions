@@ -11,6 +11,7 @@ import com.hfr.main.MainRegistry;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.potion.Potion;
@@ -723,7 +724,7 @@ public class TDMManager {
                 continue;
             }
 
-            if (placePlayerAtSelectedMapSpawn(player, random)) {
+            if (respawnPlayer(player, random)) {
                 pendingKitSelection.remove(getPlayerKey(player));
                 if (!TDMSpectatorManager.isObserving(player) && context != KitSelectionContext.NONE) {
                     promptForKit(player, context);
@@ -1017,7 +1018,10 @@ public class TDMManager {
         return false;
     }
 
-    /** Must be called after respawnPlayer so the anchor is the team spawn. */
+    /**
+     * Must be called after respawnPlayer so the anchor is the team spawn.
+     * Buy protection is server-side gameplay protection and must never hide the player.
+     */
     public static void enrollGlobalBuyProtection(EntityPlayer player) {
         if (!isGlobalBombBuyPeriod(player)) return;
         String key = getPlayerKey(player);
@@ -1040,14 +1044,13 @@ public class TDMManager {
     }
 
     private static void applyOwnedProtectionEffects(EntityPlayer player) {
-        player.addPotionEffect(new PotionEffect(Potion.invisibility.id, 40, 4, true));
         player.addPotionEffect(new PotionEffect(Potion.moveSlowdown.id, 40, 4, true));
         player.addPotionEffect(new PotionEffect(Potion.resistance.id, 40, 4, true));
         player.addPotionEffect(new PotionEffect(Potion.regeneration.id, 40, 4, true));
     }
 
     private static void removeOwnedProtectionEffects(EntityPlayer player) {
-        player.removePotionEffect(Potion.invisibility.id);
+        // TDM no longer applies invisibility, so an active invisibility effect belongs elsewhere.
         player.removePotionEffect(Potion.moveSlowdown.id);
         player.removePotionEffect(Potion.resistance.id);
         player.removePotionEffect(Potion.regeneration.id);
@@ -1289,9 +1292,34 @@ public class TDMManager {
         return true;
     }
 
-    /** Compatibility alias for existing lifecycle callers. */
+    /**
+     * Restores the TDM-owned new-life state after authoritative team-spawn placement.
+     * This helper is only for round starts and genuine respawns, never live players.
+     */
+    public static void restorePlayerForRound(EntityPlayer player) {
+        if (player == null || !isAliveForTDM(player)) {
+            return;
+        }
+
+        player.setHealth(player.getMaxHealth());
+        player.getFoodStats().setFoodLevel(20);
+        player.getFoodStats().setFoodSaturationLevel(20.0F);
+        NBTTagCompound foodState = new NBTTagCompound();
+        player.getFoodStats().writeNBT(foodState);
+        foodState.setFloat("foodExhaustionLevel", 0.0F);
+        player.getFoodStats().readNBT(foodState);
+        player.extinguish();
+        player.fallDistance = 0.0F;
+    }
+
+    /** Places and fully restores a player for a genuine TDM new-life transition. */
     public static boolean respawnPlayer(EntityPlayer player, Random random) {
-        return placePlayerAtSelectedMapSpawn(player, random);
+        if (!placePlayerAtSelectedMapSpawn(player, random)) {
+            return false;
+        }
+
+        restorePlayerForRound(player);
+        return true;
     }
 
     private static void logInvalidSpawn(EntityPlayer player, String mapName, Team team, int dimension) {

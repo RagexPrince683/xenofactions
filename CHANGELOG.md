@@ -1,3 +1,10 @@
+# Pull request: restore visible TDM bomb-round participants
+
+- Restored every genuine TDM round start and respawn to maximum health, full hunger and saturation, zero exhaustion, and cleared TDM-owned fire and fall state after team-spawn placement.
+- Kept eliminated hardcore late joiners as spectators without granting a restored combat life.
+- Removed invisibility from server-side buy and respawn-lock protection while preserving freeze, slowdown, resistance, regeneration, interaction, and damage protection behavior.
+- Stopped TDM cleanup from removing invisibility effects supplied by unrelated gameplay systems.
+
 # Pull request: make selected TDM maps own player spawning
 
 - Centralized login, respawn, match-start, map-rotation, and bomb-round placement through the selected map's team spawn lookup.
