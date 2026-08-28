@@ -27,6 +27,7 @@ public class TDMManager {
     public static final int MAP_VOTE_TICKS = 30 * 20;
     public static final int SCORE_LIMIT = 10000;
     public static final int POINTS_PER_KILL = 100;
+    /** BOMB maps are first-team-to-N round wins; maps may override this default of 13. */
     public static final int BOMB_SCORE_LIMIT = 13;
     public static final int BOMB_ROUND_TICKS = 120 * 20;
     public static final int BUY_TIME_TICKS = 20 * 20;

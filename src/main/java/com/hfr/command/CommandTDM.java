@@ -267,7 +267,7 @@ public class CommandTDM extends CommandBase {
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map delete <map>" + TITLE + " - Deletes a playable map"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map select <map>" + TITLE + " - Selects the current map"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map addspawn <map> <red|blue>" + TITLE + " - Adds your position as a map spawn"));
-        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map scorelimit <map> <points|default>" + TITLE + " - Sets a map score limit"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map scorelimit <map> <value|default>" + TITLE + " - Sets points, or BOMB round wins required"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map timer <map> <seconds|default>" + TITLE + " - Sets a map round timer"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map mode <map> <deathmatch|bomb>" + TITLE + " - Sets the map game mode"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map terroristteam <map> <red|blue>" + TITLE + " - Maps RED/BLUE to the T role"));
@@ -561,8 +561,8 @@ public class CommandTDM extends CommandBase {
                 sender.addChatMessage(new ChatComponentText((action.equals("timer") ? "Seconds" : "Score limit") + " must be a positive integer or default."));
                 return;
             }
-            if (value <= 0) {
-                sender.addChatMessage(new ChatComponentText((action.equals("timer") ? "Seconds" : "Score limit") + " must be a positive integer or default."));
+            if (value < 0 || (action.equals("timer") && value == 0)) {
+                sender.addChatMessage(new ChatComponentText((action.equals("timer") ? "Seconds must be a positive integer or default." : "Score limit must be a non-negative integer (0 restores the default).")));
                 return;
             }
         }
@@ -580,13 +580,14 @@ public class CommandTDM extends CommandBase {
         } else {
             TDMManager.setMapScoreLimit(world, mapName, value);
             boolean bomb=TDMManager.getMap(world,mapName).mode==TDMManager.TDMGameMode.BOMB;
-            sender.addChatMessage(new ChatComponentText("Map " + mapName + " score limit: " + (useDefault ? "default" : Integer.toString(value)) + "; effective: " + (bomb?TDMManager.getEffectiveBombScoreLimit(world,mapName):TDMManager.getEffectiveScoreLimit(world, mapName)) + "."));
+            String label = bomb ? "round-win limit" : "score limit";
+            sender.addChatMessage(new ChatComponentText("Map " + mapName + " " + label + ": " + (useDefault ? "default" : Integer.toString(value)) + "; effective: " + (bomb?TDMManager.getEffectiveBombScoreLimit(world,mapName):TDMManager.getEffectiveScoreLimit(world, mapName)) + "."));
         }
     }
 
     private void sendMapUsage(ICommandSender sender) {
         sender.addChatMessage(new ChatComponentText("Usage: /tdm map <create|delete|select|addspawn|clearspawns|mode|terroristteam|hardcorerespawns|bombsite|economy|killscore|defusescore|scorelimit|timer|list>"));
-        sender.addChatMessage(new ChatComponentText("  /tdm map scorelimit <map> <points|default>"));
+        sender.addChatMessage(new ChatComponentText("  /tdm map scorelimit <map> <value|default> (BOMB: first team to this many round wins; default 13)"));
         sender.addChatMessage(new ChatComponentText("  /tdm map timer <map> <seconds|default>"));
         sender.addChatMessage(new ChatComponentText("  /tdm map bombsite <map> <a|b> <pos1|pos2|clear>"));
     }
