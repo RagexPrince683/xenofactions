@@ -93,8 +93,56 @@ public class TDMKitManager {
         return getKitNames(getDirectTeamKits(mapName, team));
     }
 
-    public static int[] getKitCosts(String mapName, TDMManager.Team team) { List<KitEntry> list=getTeamKits(mapName,team); int[] costs=new int[list.size()]; for(int i=0;i<costs.length;i++) costs[i]=Math.max(0,list.get(i).cost); return costs; }
-    public static int getKitCost(String mapName,TDMManager.Team team,int index){List<KitEntry> list=getTeamKits(mapName,team);return index<0||index>=list.size()?-1:Math.max(0,list.get(index).cost);}
+    public static int[] getKitCosts(String mapName, TDMManager.Team team) {
+        List<KitEntry> teamKits = getTeamKits(mapName, team);
+        int[] costs = new int[teamKits.size()];
+        for (int i = 0; i < costs.length; i++) {
+            costs[i] = Math.max(0, teamKits.get(i).cost);
+        }
+        return costs;
+    }
+
+    public static int getKitCost(String mapName, TDMManager.Team team, int index) {
+        List<KitEntry> teamKits = getTeamKits(mapName, team);
+        if (index < 0 || index >= teamKits.size()) {
+            return -1;
+        }
+        return Math.max(0, teamKits.get(index).cost);
+    }
+
+    /**
+     * Returns detached slot-indexed inventories for the same effective kit list used
+     * by names, costs, and application. Callers may safely mutate the arrays or stacks.
+     */
+    public static ItemStack[][] getKitPreviews(String mapName, TDMManager.Team team) {
+        List<KitEntry> teamKits = getTeamKits(mapName, team);
+        ItemStack[][] previews = new ItemStack[teamKits.size()][MAIN_INVENTORY_SIZE + ARMOR_INVENTORY_SIZE];
+
+        for (int kitIndex = 0; kitIndex < teamKits.size(); kitIndex++) {
+            KitEntry kit = teamKits.get(kitIndex);
+            if (kit.items == null) {
+                continue;
+            }
+
+            for (ItemEntry item : kit.items) {
+                if (item == null || item.slot < 0 || item.slot >= previews[kitIndex].length) {
+                    continue;
+                }
+
+                ItemStack stack;
+                try {
+                    stack = item.toPreviewItemStack();
+                } catch (RuntimeException exception) {
+                    stack = null;
+                }
+
+                if (stack != null) {
+                    previews[kitIndex][item.slot] = stack.copy();
+                }
+            }
+        }
+        return previews;
+    }
 
     public static boolean removeKit(String mapName, TDMManager.Team team, int kitIndex) {
         List<KitEntry> teamKits = getDirectTeamKits(mapName, team);
@@ -291,6 +339,17 @@ public class TDMKitManager {
         }
 
         ItemStack toItemStack() {
+            return toItemStack(false);
+        }
+
+        ItemStack toPreviewItemStack() {
+            if (count <= 0) {
+                return null;
+            }
+            return toItemStack(true);
+        }
+
+        private ItemStack toItemStack(boolean rejectInvalidNbt) {
             Item item = (Item) Item.itemRegistry.getObject(itemName);
             if (item == null) return null;
 
@@ -300,6 +359,9 @@ public class TDMKitManager {
                     stack.setTagCompound((NBTTagCompound) JsonToNBT.func_150315_a(nbtData));
                 } catch (Exception e) {
                     System.err.println("Failed to parse TDM kit NBT for item: " + itemName);
+                    if (rejectInvalidNbt) {
+                        return null;
+                    }
                 }
             }
             return stack;
