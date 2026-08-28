@@ -29,7 +29,15 @@ public class TDMHandler {
     private static final int TEAM_CHANGE_REMINDER_INTERVAL_TICKS = 8 * 60 * 20;
     private long lastAutoBalanceTick = -1;
     private long lastRoundTick = -1;
-    private static final class PendingRespawn { int ticks; TDMManager.KitSelectionContext context; PendingRespawn(int ticks,TDMManager.KitSelectionContext context){this.ticks=ticks;this.context=context;} }
+    private static final class PendingRespawn {
+        int ticks;
+        TDMManager.KitSelectionContext context;
+
+        PendingRespawn(int ticks, TDMManager.KitSelectionContext context) {
+            this.ticks = ticks;
+            this.context = context;
+        }
+    }
     private final Map<String, PendingRespawn> pendingRespawns = new HashMap<String, PendingRespawn>();
     private final Random random = new Random();
 
@@ -65,18 +73,52 @@ public class TDMHandler {
     @SubscribeEvent
     public void onRespawn(cpw.mods.fml.common.gameevent.PlayerEvent.PlayerRespawnEvent event) {
         TDMManager.cancelKitSelection(event.player);
-        if (TDMManager.isEnabled(event.player.worldObj) && TDMManager.isBombMode(event.player.worldObj)
-                && TDMManager.isHardcoreRespawns(event.player.worldObj)
-                && TDMBombManager.getState() == TDMBombManager.BombRoundState.PRE_ROUND) {
-            TDMSpectatorManager.restore(event.player);
-            if (TDMManager.respawnPlayer(event.player, random)) {
-                TDMManager.enrollGlobalBuyProtection(event.player);
-                TDMManager.promptForKit(event.player, TDMManager.KitSelectionContext.BUY_PHASE);
-            } else queueRespawn(event.player);
+        if (!TDMManager.isEnabled(event.player.worldObj)) {
             return;
         }
-        if (TDMBombManager.isEliminated(event.player) && TDMManager.isHardcoreRespawns(event.player.worldObj)) TDMSpectatorManager.observe(event.player);
-        else queueRespawn(event.player);
+
+        boolean hardcoreBomb = TDMManager.isBombMode(event.player.worldObj)
+                && TDMManager.isHardcoreRespawns(event.player.worldObj);
+        if (hardcoreBomb && TDMBombManager.isEliminated(event.player)) {
+            TDMSpectatorManager.observe(event.player);
+            tryImmediatePlacement(event.player, TDMManager.KitSelectionContext.NONE);
+            return;
+        }
+
+        TDMManager.KitSelectionContext context = hardcoreBomb
+                && TDMBombManager.getState() == TDMBombManager.BombRoundState.PRE_ROUND
+                ? TDMManager.KitSelectionContext.BUY_PHASE
+                : TDMManager.KitSelectionContext.RESPAWN_LOCK;
+        if (context == TDMManager.KitSelectionContext.BUY_PHASE) {
+            TDMSpectatorManager.restore(event.player);
+        }
+        tryImmediatePlacement(event.player, context);
+    }
+
+    @SubscribeEvent
+    public void onLogin(cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.player.worldObj.isRemote || !TDMManager.isEnabled(event.player.worldObj)) {
+            return;
+        }
+
+        TDMManager.getOrAssignPlayerTeam(event.player);
+        boolean hardcoreBomb = TDMManager.isBombMode(event.player.worldObj)
+                && TDMManager.isHardcoreRespawns(event.player.worldObj);
+        if (hardcoreBomb
+                && TDMBombManager.getState() != TDMBombManager.BombRoundState.PRE_ROUND
+                && TDMBombManager.getState() != TDMBombManager.BombRoundState.WAITING_FOR_TEAMS) {
+            // Joining an active hardcore round grants map context, never combat eligibility.
+            TDMBombManager.markLateJoinerEliminated(event.player);
+            TDMSpectatorManager.observe(event.player);
+            tryImmediatePlacement(event.player, TDMManager.KitSelectionContext.NONE);
+            return;
+        }
+
+        TDMManager.KitSelectionContext context = hardcoreBomb
+                && TDMBombManager.getState() == TDMBombManager.BombRoundState.PRE_ROUND
+                ? TDMManager.KitSelectionContext.BUY_PHASE
+                : TDMManager.KitSelectionContext.RESPAWN_LOCK;
+        tryImmediatePlacement(event.player, context);
     }
 
     @SubscribeEvent
@@ -113,8 +155,6 @@ public class TDMHandler {
             TDMManager.promptForKit(event.player, pending.context);
         } else if (pending.ticks <= 1) {
             pendingRespawns.remove(playerName);
-            if(pending.context==TDMManager.KitSelectionContext.BUY_PHASE)TDMManager.enrollGlobalBuyProtection(event.player);
-            TDMManager.promptForKit(event.player, pending.context);
         } else {
             pending.ticks--;
         }
@@ -264,14 +304,29 @@ public class TDMHandler {
         return null;
     }
 
-    private void queueRespawn(EntityPlayer player) {
-        if (player.worldObj.isRemote) return;
-        if (!TDMManager.isEnabled(player.worldObj)) return;
-        if (!TDMManager.isAliveForTDM(player)) return;
-        if (TDMManager.isHardcoreRespawns(player.worldObj) && TDMBombManager.isEliminated(player)) { TDMSpectatorManager.observe(player); return; }
+    private void tryImmediatePlacement(EntityPlayer player, TDMManager.KitSelectionContext context) {
+        if (TDMManager.placePlayerAtSelectedMapSpawn(player, random)) {
+            pendingRespawns.remove(getKey(player));
+            if (context == TDMManager.KitSelectionContext.BUY_PHASE) {
+                TDMManager.enrollGlobalBuyProtection(player);
+            }
+            if (!TDMSpectatorManager.isObserving(player)
+                    && context != TDMManager.KitSelectionContext.NONE) {
+                TDMManager.promptForKit(player, context);
+            }
+            return;
+        }
 
-        TDMManager.KitSelectionContext context=TDMManager.isBombMode(player.worldObj)&&TDMManager.isHardcoreRespawns(player.worldObj)&&TDMBombManager.getState()==TDMBombManager.BombRoundState.PRE_ROUND?TDMManager.KitSelectionContext.BUY_PHASE:TDMManager.KitSelectionContext.RESPAWN_LOCK;
-        pendingRespawns.put(getKey(player),new PendingRespawn(RESPAWN_RETRY_TICKS,context));
+        if (context != TDMManager.KitSelectionContext.NONE) {
+            queueRespawn(player, context);
+        }
+    }
+
+    private void queueRespawn(EntityPlayer player, TDMManager.KitSelectionContext context) {
+        pendingRespawns.put(
+                getKey(player),
+                new PendingRespawn(RESPAWN_RETRY_TICKS, context)
+        );
     }
 
     private String getKey(EntityPlayer player) {

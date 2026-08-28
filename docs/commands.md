@@ -206,6 +206,8 @@ Common subcommands parsed by source include:
 
 Map listings show effective score limits and round durations, marking inherited global defaults. Map-specific score limits must be positive points, and map-specific timers must be positive whole seconds; use `default` to restore the global 10,000-point or 20-minute setting. The map vote remains 30 seconds. Server staff should validate map and kit setup in game because the exact argument requirements depend on TDM manager data.
 
+While TDM is enabled, the selected map owns participant spawn placement on login, respawn, and every match or map transition. Map-specific RED and BLUE spawns are authoritative (including their configured dimensions). Legacy global spawns are used only when the selected map has no map-specific spawn data. A match with missing required team spawns is refused and logged rather than falling through to vanilla worldspawn.
+
 ## Registered-but-not-currently-registered commands
 
 The source contains `CommandOrewand`, `CommandXCum`, and `CommandXCustomImage`, but `MainRegistry.serverStarting` does not register them in the current code path. They are intentionally not documented as usable commands.
