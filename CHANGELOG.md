@@ -1,3 +1,11 @@
+# Pull request: persist bomb-round survivor inventories and enforce round-win limits
+
+- Kept exact survivor inventory and armor stacks between rounds of the same BOMB match while sending every player who died during the live round through the normal fresh-loadout flow.
+- Added transient per-round death and explicit first-round lifecycle state, independent of hardcore elimination, and reset it at match, map, mode, disable, vote, and cleanup boundaries.
+- Continued purging the CSGO objective bomb on every transition so it can never persist as survivor equipment.
+- Defined BOMB score limits as first-team-to-N round wins, retained the default of 13 and existing per-map NBT override, and clarified configuration feedback.
+- Ended the match through the single normal map-vote entry point immediately after either team records the winning round.
+
 # Pull request: restore visible TDM bomb-round participants
 
 - Restored every genuine TDM round start and respawn to maximum health, full hunger and saturation, zero exhaustion, and cleared TDM-owned fire and fall state after team-spawn placement.
