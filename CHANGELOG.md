@@ -3,6 +3,18 @@
 - Removed all TDM camera targeting, ownership, and restoration so TDM never overrides the Minecraft camera.
 - Kept eliminated-player observer gameplay state without forcing teammate views, preventing interference with vehicle and custom-camera mods such as MCHeli.
 - Rewrote the affected TDM client state, HUD, observer manager, and compatibility packet registration for readability while preserving packet discriminator IDs.
+# Pull request: preview complete TDM kit contents before selection
+
+- Added slot-accurate, read-only previews of every eligible TDM kit's saved main inventory and armor contents.
+- Sent copied item stacks with their metadata and NBT through bounded Forge 1.7.10 packet serialization so real modded tooltips remain available.
+- Added a scalable hover preview panel, inventory layout, armor area, kit-list scrolling, empty-kit feedback, and visible unaffordable-kit disabling without changing server authority.
+
+# Native earth2000 raster pregeneration
+
+- Added an external, SHA-256-verified `earth2000` source format and bounded 512-block raster tile reader.
+- Added clean Minecraft 1.7.10 terrain conversion and resumable, deterministic Anvil region generation with safe partial-world ownership and final verification.
+- Added level-4 `/xc earth source` and `/xc earth pregen` administration commands plus external source-package tooling.
+- Documented the dedicated-server bootstrap workflow; the normal JAR continues to contain generator code only, while existing `.xfmap` support remains intact.
 
 # Pull request: isolate TDM spectator camera ownership
 
