@@ -4,6 +4,8 @@ BOMB maps can enable a per-map saved-kit economy with `/tdm map economy <map> <t
 
 `/tdm kit add <red|blue> [map|global] [cost]` saves a whole loadout. Cost `0` is free. Existing `tdm_kits.txt` entries omit `cost` and therefore deserialize as `0`; map-specific lists continue to take precedence over stable-order global fallbacks.
 
+The kit selection and purchase GUI previews the complete saved 36-slot inventory and four armor slots before a player chooses a kit. Preview icons and tooltips use copies of the real saved `ItemStack` data, including stack counts, metadata, and NBT, so modded names, ammunition, attachments, skins, enchantments, and other custom tooltip details remain visible.
+
 Hardcore-respawn BOMB maps start each round with the protected 20-second global buying period, and the live timer starts afterward. Non-hardcore BOMB maps skip `PRE_ROUND` and its countdown entirely: the round becomes `LIVE` immediately and each living player receives a mandatory per-life kit selection instead. The same mandatory selection is created after every real Forge respawn on non-hardcore maps, including DEATHMATCH and respawns during `LIVE` or `BOMB_PLANTED`.
 
 On hardcore BOMB maps, every living RED and BLUE participant is teleported to a team spawn and server-authoritatively frozen for the full `PRE_ROUND` countdown. The server zeros all motion, cancels sprinting, and corrects X/Y/Z to the post-teleport anchor, so walking, strafing, sprinting, and jumping cannot persist. Players may still look around. All outgoing attacks, incoming damage, entity/world interactions, and pickups are blocked until the state becomes `LIVE`.

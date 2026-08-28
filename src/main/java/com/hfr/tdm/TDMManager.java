@@ -10,6 +10,7 @@ import com.hfr.config.XFConfig;
 import com.hfr.main.MainRegistry;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.potion.Potion;
@@ -1044,12 +1045,66 @@ public class TDMManager {
             return;
         }
 
-        pendingKitSelection.add(getPlayerKey(player));
-        kitSelectionContexts.put(getPlayerKey(player),context);if(context==KitSelectionContext.RESPAWN_LOCK)applyKitSelectionProtection(player);
-        int[] costs=TDMKitManager.getKitCosts(mapName,team); boolean buying=context==KitSelectionContext.BUY_PHASE; TDMMap map=getSelectedMapData(player.worldObj); boolean economy=map!=null&&map.buyScoreEnabled; if(!economy)java.util.Arrays.fill(costs,0);
-        boolean affordable=false;for(int cost:costs)if(!economy||cost<=getBuyScore(player)){affordable=true;break;}if(!affordable){if(MainRegistry.logger!=null)MainRegistry.logger.warn("TDM map {} has no affordable kit for {}; applying deterministic uncharged fallback",mapName,player.getCommandSenderName());if(TDMKitManager.applyKit(mapName,team,0,player)){pendingKitSelection.remove(getPlayerKey(player));kitSelectionContexts.remove(getPlayerKey(player));if(context==KitSelectionContext.RESPAWN_LOCK)clearKitSelectionProtection(player);closeKitGui(player);if(isBombMode(player.worldObj)&&context==KitSelectionContext.RESPAWN_LOCK)TDMBombManager.ensureLiveRoundBombAssigned(player.worldObj);}return;}
-        PacketDispatcher.wrapper.sendTo(new TDMKitGuiPacket(team.name, TDMKitManager.getKitNames(mapName, team),costs,economy,getBuyScore(player),buying?TDMBombManager.getRemainingSeconds(player.worldObj):0,buying,true), (EntityPlayerMP) player);
-        if(XFConfig.tdmBombLifecycleDebug&&MainRegistry.logger!=null)MainRegistry.logger.info("TDM BUY: kit GUI sent to {} context={}",player.getCommandSenderName(),context);
+        String playerKey = getPlayerKey(player);
+        pendingKitSelection.add(playerKey);
+        kitSelectionContexts.put(playerKey, context);
+        if (context == KitSelectionContext.RESPAWN_LOCK) {
+            applyKitSelectionProtection(player);
+        }
+
+        int[] costs = TDMKitManager.getKitCosts(mapName, team);
+        boolean buying = context == KitSelectionContext.BUY_PHASE;
+        TDMMap map = getSelectedMapData(player.worldObj);
+        boolean economy = map != null && map.buyScoreEnabled;
+        if (!economy) {
+            java.util.Arrays.fill(costs, 0);
+        }
+
+        boolean affordable = false;
+        for (int cost : costs) {
+            if (!economy || cost <= getBuyScore(player)) {
+                affordable = true;
+                break;
+            }
+        }
+        if (!affordable) {
+            if (MainRegistry.logger != null) {
+                MainRegistry.logger.warn(
+                        "TDM map {} has no affordable kit for {}; applying deterministic uncharged fallback",
+                        mapName,
+                        player.getCommandSenderName());
+            }
+            if (TDMKitManager.applyKit(mapName, team, 0, player)) {
+                pendingKitSelection.remove(playerKey);
+                kitSelectionContexts.remove(playerKey);
+                if (context == KitSelectionContext.RESPAWN_LOCK) {
+                    clearKitSelectionProtection(player);
+                }
+                closeKitGui(player);
+                if (isBombMode(player.worldObj) && context == KitSelectionContext.RESPAWN_LOCK) {
+                    TDMBombManager.ensureLiveRoundBombAssigned(player.worldObj);
+                }
+            }
+            return;
+        }
+        ItemStack[][] kitPreviews = TDMKitManager.getKitPreviews(mapName, team);
+        PacketDispatcher.wrapper.sendTo(new TDMKitGuiPacket(
+                team.name,
+                TDMKitManager.getKitNames(mapName, team),
+                costs,
+                kitPreviews,
+                economy,
+                getBuyScore(player),
+                buying ? TDMBombManager.getRemainingSeconds(player.worldObj) : 0,
+                buying,
+                true),
+                (EntityPlayerMP) player);
+        if (XFConfig.tdmBombLifecycleDebug && MainRegistry.logger != null) {
+            MainRegistry.logger.info(
+                    "TDM BUY: kit GUI sent to {} context={}",
+                    player.getCommandSenderName(),
+                    context);
+        }
     }
 
     public static void tickKitSelection(EntityPlayer player) {
