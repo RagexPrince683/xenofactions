@@ -1,3 +1,10 @@
+# Pull request: make selected TDM maps own player spawning
+
+- Centralized login, respawn, match-start, map-rotation, and bomb-round placement through the selected map's team spawn lookup.
+- Added immediate Forge login and respawn placement, with lifecycle retries only when immediate placement cannot complete.
+- Made map-specific spawns authoritative, retained legacy global spawns only for maps without map spawn data, and honored cross-dimension spawn coordinates.
+- Refused invalid round starts with actionable server errors instead of allowing vanilla worldspawn fallback.
+
 # Pull request: remove TDM spectator camera overrides
 
 - Removed all TDM camera targeting, ownership, and restoration so TDM never overrides the Minecraft camera.

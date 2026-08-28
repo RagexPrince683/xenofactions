@@ -138,10 +138,10 @@ public class TDMManager {
         data.markDirty();
         if (!data.enabled || !data.selectedMap.equals(map.name)) return true;
 
-        // startMatch owns score, timer, spectator, vote, economy, and bomb lifecycle reset.
+        // startRound owns validation, match reset, and the selected-map spawn transition.
         cancelAllKitSelections();
         data.roundEndTick = 0;
-        startMatch(world, false);
+        startRound(world, false);
         return true;
     }
 
@@ -563,12 +563,22 @@ public class TDMManager {
         }
     }
 
+    /**
+     * Starts a full match only after the selected map can own participant spawning.
+     * An enabled TDM round must never fall through to vanilla worldspawn when a
+     * selected-map spawn is available.
+     */
     public static void startRound(World world, boolean resetVotes) {
+        if (!hasUsableSelectedMapSpawns(world)) {
+            stopInvalidMatchStart(world);
+            return;
+        }
+
         startMatch(world, resetVotes);
     }
 
-    /** Starts a full map match; bomb combat rounds have their own lifecycle. */
-    public static void startMatch(World world, boolean resetVotes) {
+    /** Starts a validated full map match; bomb combat rounds own their own placement lifecycle. */
+    private static void startMatch(World world, boolean resetVotes) {
         TDMData data = TDMData.get(world);
         data.redScore = 0;
         data.blueScore = 0;
@@ -583,8 +593,12 @@ public class TDMManager {
         }
         data.markDirty();
         TDMSpectatorManager.restoreAll();
-        if (isBombMode(world)) TDMBombManager.startMatch(world);
-        else TDMBombManager.cleanup(world, true);
+        if (isBombMode(world)) {
+            TDMBombManager.startMatch(world);
+        } else {
+            TDMBombManager.cleanup(world, true);
+            placeAllPlayersAtSelectedMap(world, KitSelectionContext.RESPAWN_LOCK);
+        }
         sendStatusToAll(world);
     }
 
@@ -642,8 +656,8 @@ public class TDMManager {
         data.mapVoteEndTick = 0;
         data.mapVotes.clear();
         data.markDirty();
+        // selectedMap is final before startRound resolves any player spawn.
         startRound(world, false);
-        teleportAllPlayersToSelectedMap(world);
     }
 
     public static int getRemainingRoundSeconds(World world) {
@@ -674,8 +688,7 @@ public class TDMManager {
     public static void sendStatusToAll(World world) {
         TDMData data = TDMData.get(world);
         for (EntityPlayerMP player : getOnlinePlayers()) {
-            if (player.worldObj.provider.dimensionId == world.provider.dimensionId) {
-                PacketDispatcher.wrapper.sendTo(new TDMStatusPacket(
+            PacketDispatcher.wrapper.sendTo(new TDMStatusPacket(
                         data.enabled,
                         data.mapVoteActive,
                         getRemainingRoundSeconds(world),
@@ -688,7 +701,6 @@ public class TDMManager {
                         getSelectedMapData(world)!=null&&getSelectedMapData(world).buyScoreEnabled, getBuyScore(player),
                         TDMBombManager.getPlayerCount(world, Team.RED), TDMBombManager.getPlayerCount(world, Team.BLUE)
                 ), player);
-            }
         }
     }
 
@@ -700,24 +712,82 @@ public class TDMManager {
 
         String[] maps = mapNames.toArray(new String[mapNames.size()]);
         for (EntityPlayerMP player : getOnlinePlayers()) {
-            if (player.worldObj.provider.dimensionId == world.provider.dimensionId) {
-                PacketDispatcher.wrapper.sendTo(new TDMMapVoteGuiPacket(maps, MAP_VOTE_TICKS / 20), player);
+            PacketDispatcher.wrapper.sendTo(new TDMMapVoteGuiPacket(maps, MAP_VOTE_TICKS / 20), player);
+        }
+    }
+
+    public static void placeAllPlayersAtSelectedMap(World world, KitSelectionContext context) {
+        Random random = new Random();
+        for (EntityPlayerMP player : getOnlinePlayers()) {
+            if (!isAliveForTDM(player)) {
+                continue;
+            }
+
+            if (placePlayerAtSelectedMapSpawn(player, random)) {
+                pendingKitSelection.remove(getPlayerKey(player));
+                if (!TDMSpectatorManager.isObserving(player) && context != KitSelectionContext.NONE) {
+                    promptForKit(player, context);
+                }
             }
         }
     }
 
-    private static void teleportAllPlayersToSelectedMap(World world) {
-        Random rand = new Random();
-        for (EntityPlayerMP player : getOnlinePlayers()) {
-            if (player.worldObj.provider.dimensionId != world.provider.dimensionId) {
-                continue;
-            }
+    private static boolean hasUsableSelectedMapSpawns(World world) {
+        TDMData data = TDMData.get(world);
+        TDMMap map = data.maps.get(data.selectedMap);
+        if (map == null) {
+            logInvalidSpawn(null, data.selectedMap, null, world.provider.dimensionId);
+            return false;
+        }
 
-            if (respawnPlayer(player, rand)) {
-                pendingKitSelection.remove(getPlayerKey(player));
-                promptForKit(player);
+        boolean redAvailable = hasSpawnForTeam(data, map, Team.RED);
+        boolean blueAvailable = hasSpawnForTeam(data, map, Team.BLUE);
+        if (!redAvailable) {
+            logMissingTeamSpawnForParticipants(data, map.name, Team.RED, world.provider.dimensionId);
+        }
+        if (!blueAvailable) {
+            logMissingTeamSpawnForParticipants(data, map.name, Team.BLUE, world.provider.dimensionId);
+        }
+        return redAvailable && blueAvailable;
+    }
+
+    private static boolean hasSpawnForTeam(TDMData data, TDMMap map, Team team) {
+        List<SpawnPoint> source = map.spawns.isEmpty() ? data.spawns : map.spawns;
+        for (SpawnPoint spawn : source) {
+            if (spawn.team == team
+                    && net.minecraftforge.common.DimensionManager.isDimensionRegistered(spawn.dim)) {
+                return true;
             }
         }
+        return false;
+    }
+
+    private static void logMissingTeamSpawnForParticipants(
+            TDMData data,
+            String mapName,
+            Team team,
+            int dimension
+    ) {
+        boolean foundParticipant = false;
+        for (EntityPlayerMP player : getOnlinePlayers()) {
+            if (data.playerTeams.get(getPlayerKey(player)) == team) {
+                logInvalidSpawn(player, mapName, team, player.dimension);
+                foundParticipant = true;
+            }
+        }
+        if (!foundParticipant) {
+            logInvalidSpawn(null, mapName, team, dimension);
+        }
+    }
+
+    private static void stopInvalidMatchStart(World world) {
+        TDMData data = TDMData.get(world);
+        data.roundEndTick = 0;
+        data.mapVoteActive = false;
+        data.mapVoteEndTick = 0;
+        data.markDirty();
+        TDMBombManager.cleanup(world, true);
+        sendStatusToAll(world);
     }
 
     public static void addSpawn(World world, Team team, int dim, int x, int y, int z) {
@@ -1181,31 +1251,63 @@ public class TDMManager {
         return player.getCommandSenderName().toLowerCase();
     }
 
-    public static boolean respawnPlayer(EntityPlayer player, Random rand) {
-        if (!isAliveForTDM(player)) return false;
-        SpawnPoint spawn = getRandomSpawn(player, rand);
+    /** Authoritative server-side placement path for login, respawn, and round transitions. */
+    public static boolean placePlayerAtSelectedMapSpawn(EntityPlayer player, Random random) {
+        if (!isAliveForTDM(player)) {
+            return false;
+        }
+
+        Team team = getOrAssignPlayerTeam(player);
+        String mapName = getSelectedMap(player.worldObj);
+        SpawnPoint spawn = getRandomSpawn(player.worldObj, team, random);
         if (spawn == null) {
+            logInvalidSpawn(player, mapName, team, player.dimension);
             return false;
         }
 
         if (player instanceof EntityPlayerMP) {
             EntityPlayerMP playerMP = (EntityPlayerMP) player;
+            playerMP.mountEntity(null);
+            if (playerMP.dimension != spawn.dim) {
+                // Forge's existing transfer path establishes the destination world before final placement.
+                playerMP.travelToDimension(spawn.dim);
+            }
             playerMP.playerNetServerHandler.setPlayerLocation(
-                    spawn.x + 0.5,
+                    spawn.x + 0.5D,
                     spawn.y,
-                    spawn.z + 0.5,
+                    spawn.z + 0.5D,
                     playerMP.rotationYaw,
                     playerMP.rotationPitch
             );
+        } else if (player.dimension == spawn.dim) {
+            player.setPositionAndUpdate(spawn.x + 0.5D, spawn.y, spawn.z + 0.5D);
         } else {
-            player.setPositionAndUpdate(
-                    spawn.x + 0.5,
-                    spawn.y,
-                    spawn.z + 0.5
-            );
+            logInvalidSpawn(player, mapName, team, player.dimension);
+            return false;
         }
 
         return true;
+    }
+
+    /** Compatibility alias for existing lifecycle callers. */
+    public static boolean respawnPlayer(EntityPlayer player, Random random) {
+        return placePlayerAtSelectedMapSpawn(player, random);
+    }
+
+    private static void logInvalidSpawn(EntityPlayer player, String mapName, Team team, int dimension) {
+        String playerName = player == null ? "<round-start>" : player.getCommandSenderName();
+        String teamName = team == null ? "<unassigned>" : team.name;
+        String selectedMap = mapName == null || mapName.length() == 0 ? "<none>" : mapName;
+        String message = "TDM spawn error: player=" + playerName
+                + ", selectedMap=" + selectedMap
+                + ", team=" + teamName
+                + ", dimension=" + dimension
+                + ". No usable team spawn is available; refusing vanilla worldspawn fallback.";
+        if (MainRegistry.logger != null) {
+            MainRegistry.logger.error(message);
+        } else {
+            System.err.println(message);
+        }
     }
 
     public static SpawnPoint getRandomSpawn(EntityPlayer player, Random rand) {
@@ -1218,12 +1320,11 @@ public class TDMManager {
         List<SpawnPoint> valid = new ArrayList<SpawnPoint>();
         TDMMap selected = data.maps.get(data.selectedMap);
 
-        if (selected != null) {
-            addValidSpawns(valid, selected.spawns, team, world.provider.dimensionId);
-        }
-
-        if (valid.isEmpty()) {
-            addValidSpawns(valid, data.spawns, team, world.provider.dimensionId);
+        if (selected != null && !selected.spawns.isEmpty()) {
+            addValidSpawns(valid, selected.spawns, team);
+        } else {
+            // Legacy global spawns remain compatible only for maps with no map-specific data.
+            addValidSpawns(valid, data.spawns, team);
         }
 
         if (valid.isEmpty()) {
@@ -1233,9 +1334,10 @@ public class TDMManager {
         return valid.get(rand.nextInt(valid.size()));
     }
 
-    private static void addValidSpawns(List<SpawnPoint> valid, List<SpawnPoint> spawns, Team team, int dim) {
+    private static void addValidSpawns(List<SpawnPoint> valid, List<SpawnPoint> spawns, Team team) {
         for (SpawnPoint spawn : spawns) {
-            if (spawn.team == team && spawn.dim == dim) {
+            if (spawn.team == team
+                    && net.minecraftforge.common.DimensionManager.isDimensionRegistered(spawn.dim)) {
                 valid.add(spawn);
             }
         }
