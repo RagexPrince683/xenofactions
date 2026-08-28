@@ -305,7 +305,15 @@ public class TDMHandler {
     }
 
     private void tryImmediatePlacement(EntityPlayer player, TDMManager.KitSelectionContext context) {
-        if (TDMManager.placePlayerAtSelectedMapSpawn(player, random)) {
+        boolean placed;
+        if (context == TDMManager.KitSelectionContext.NONE) {
+            // Spectators and eliminated hardcore late joiners receive placement, not a new life.
+            placed = TDMManager.placePlayerAtSelectedMapSpawn(player, random);
+        } else {
+            placed = TDMManager.respawnPlayer(player, random);
+        }
+
+        if (placed) {
             pendingRespawns.remove(getKey(player));
             if (context == TDMManager.KitSelectionContext.BUY_PHASE) {
                 TDMManager.enrollGlobalBuyProtection(player);
