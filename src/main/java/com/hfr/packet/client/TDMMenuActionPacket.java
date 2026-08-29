@@ -31,11 +31,9 @@ public class TDMMenuActionPacket implements IMessage {
                     if (message.requestSwap && TDMManager.hasPlayerTeam(player)) {
                         TDMManager.changePlayerTeamWithCooldown(player);
                     }
-                    if (message.requestBuyMenu && TDMManager.hasPlayerTeam(player) && TDMManager.isBombMode(player.worldObj)
-                            && com.hfr.tdm.TDMBombManager.getState()
-                                    == com.hfr.tdm.TDMBombManager.BombRoundState.PRE_ROUND
-                            && !TDMManager.hasSelectedKit(player)) {
-                        TDMManager.promptForKit(player);
+                    if (message.requestBuyMenu) {
+                        TDMManager.requestBuyMenu(player);
+                        return;
                     }
 
                     PacketDispatcher.wrapper.sendTo(
