@@ -39,6 +39,32 @@ public class TDMManager {
     private static final Map<String, FreezeAnchor> freezeAnchors = new HashMap<String, FreezeAnchor>();
     private static final Map<String, Long> nextTeamChangeTick = new HashMap<String, Long>();
     private static boolean bombTestMode;
+    private static final Set<String> teamlessPlayers = new HashSet<String>();
+
+    public static void makePlayerTeamless(EntityPlayer player) {
+        if (player == null) return;
+        TDMData data = TDMData.get(player.worldObj);
+        data.playerTeams.remove(getPlayerKey(player));
+        teamlessPlayers.add(getPlayerKey(player));
+        cancelKitSelection(player);
+        TDMSpectatorManager.restore(player);
+        data.markDirty();
+        sendStatusToAll(player.worldObj);
+    }
+
+    public static void playConfiguredSound(World world, String[] variants, Team onlyTeam) {
+        if (world == null || variants == null) return;
+        List<String> valid = new ArrayList<String>();
+        for (String sound : variants) if (sound != null && sound.trim().length() > 0) valid.add(sound.trim());
+        if (valid.isEmpty()) return;
+        String sound = valid.get(world.rand.nextInt(valid.size()));
+        for (EntityPlayerMP player : getOnlinePlayers()) {
+            if (player.worldObj != world || TDMSpectatorManager.isObserving(player)) continue;
+            Team team = getPlayerTeam(world, player.getCommandSenderName());
+            if (team == null || (onlyTeam != null && team != onlyTeam)) continue;
+            player.playSound(sound, 1.0F, 1.0F);
+        }
+    }
 
     public enum Team {
         RED("red"),
@@ -116,7 +142,7 @@ public class TDMManager {
     public static TDMGameMode getGameMode(World world) { TDMMap m=getSelectedMapData(world); return m == null ? TDMGameMode.DEATHMATCH : m.mode; }
     public static Team getTerroristTeam(World world) { TDMMap m=getSelectedMapData(world); return m == null ? Team.RED : m.terroristTeam; }
     public static Team getCounterTerroristTeam(World world) { return getTerroristTeam(world) == Team.RED ? Team.BLUE : Team.RED; }
-    public static BombRole getBombRole(World world, Team team) { return team == getTerroristTeam(world) ? BombRole.TERRORIST : BombRole.COUNTER_TERRORIST; }
+    public static BombRole getBombRole(World world, Team team) { return team == null ? null : (team == getTerroristTeam(world) ? BombRole.TERRORIST : BombRole.COUNTER_TERRORIST); }
     public static BombRole getBombRole(EntityPlayer player) { return getBombRole(player.worldObj, getOrAssignPlayerTeam(player)); }
     public static boolean isTerrorist(EntityPlayer player) { return getBombRole(player) == BombRole.TERRORIST; }
     public static boolean isCounterTerrorist(EntityPlayer player) { return getBombRole(player) == BombRole.COUNTER_TERRORIST; }
@@ -218,6 +244,7 @@ public class TDMManager {
         kitSelectionContexts.clear();
         freezeAnchors.clear();
         nextTeamChangeTick.clear();
+        teamlessPlayers.clear();
     }
 
     public static boolean isEnabled(World world) {
@@ -865,6 +892,7 @@ public class TDMManager {
 
     public static void setPlayerTeam(World world, String playerName, Team team) {
         TDMData data = TDMData.get(world);
+        teamlessPlayers.remove(playerName.toLowerCase());
         data.playerTeams.put(playerName.toLowerCase(), team);
         data.markDirty();
     }
@@ -881,11 +909,16 @@ public class TDMManager {
         if (team != null) {
             return team;
         }
+        if (teamlessPlayers.contains(playerName)) return null;
 
         team = getSmallestTeam(data);
         data.playerTeams.put(playerName, team);
         data.markDirty();
         return team;
+    }
+
+    public static boolean hasPlayerTeam(EntityPlayer player) {
+        return player != null && getPlayerTeam(player.worldObj, player.getCommandSenderName()) != null;
     }
 
     private static Team getSmallestTeam(TDMData data) {
@@ -1113,6 +1146,7 @@ public class TDMManager {
         if(context==KitSelectionContext.RESPAWN_LOCK&&(isHardcoreRespawns(player.worldObj)||(isBombMode(player.worldObj)&&TDMBombManager.getState()!=TDMBombManager.BombRoundState.LIVE&&TDMBombManager.getState()!=TDMBombManager.BombRoundState.BOMB_PLANTED)))return;
 
         Team team = getOrAssignPlayerTeam(player);
+        if (team == null) return;
         String mapName = getSelectedMap(player.worldObj);
         if (TDMKitManager.getKitCount(mapName, team) <= 0) {
             player.addChatMessage(new net.minecraft.util.ChatComponentText("No TDM kits have been saved for " + team.name + " on map " + (mapName.length() == 0 ? "global" : mapName) + ". Ask an admin to use /tdm kit add " + team.name + " [map]."));

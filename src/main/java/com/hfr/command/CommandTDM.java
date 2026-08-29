@@ -237,6 +237,13 @@ public class CommandTDM extends CommandBase {
             return;
         }
 
+        if (args[0].equalsIgnoreCase("teamless")) {
+            EntityPlayer player = getCommandSenderAsPlayer(sender);
+            TDMManager.makePlayerTeamless(player);
+            sender.addChatMessage(new ChatComponentText("You are now a teamless TDM observer."));
+            return;
+        }
+
         if (args[0].equalsIgnoreCase("clear")) {
             TDMManager.clearSpawns(world);
             sender.addChatMessage(new ChatComponentText("Legacy TDM spawns cleared"));
@@ -286,6 +293,7 @@ public class CommandTDM extends CommandBase {
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-friendlyfire <on|off>" + TITLE + " - Toggles friendly fire"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-autobalance <on|off|now>" + TITLE + " - Configures or runs auto balance"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-setteam <player> <red|blue>" + TITLE + " - Moves a player to a team"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-teamless" + TITLE + " - Leaves both teams as an admin observer"));
         sender.addChatMessage(new ChatComponentText(INFO + "Legacy spawn tools: /tdm addspawn <red|blue>, /tdm clear"));
     }
 

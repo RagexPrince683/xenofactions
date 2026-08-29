@@ -25,11 +25,11 @@ public class TDMMenuDataPacket implements IMessage {
     public TDMMenuDataPacket() {}
     public TDMMenuDataPacket(EntityPlayerMP player, int cooldownSeconds) {
         this.cooldownSeconds = cooldownSeconds;
-        this.currentTeam = TDMManager.getOrAssignPlayerTeam(player).name;
+        TDMManager.Team self = TDMManager.getPlayerTeam(player.worldObj, player.getCommandSenderName());
+        this.currentTeam = self == null ? "teamless" : self.name;
         this.canOpenBuyMenu=TDMManager.isBombMode(player.worldObj)&&com.hfr.tdm.TDMBombManager.getState()==com.hfr.tdm.TDMBombManager.BombRoundState.PRE_ROUND&&!TDMManager.hasSelectedKit(player);
         List<String> friend = new ArrayList<String>();
         List<String> enemy = new ArrayList<String>();
-        TDMManager.Team self = TDMManager.getOrAssignPlayerTeam(player);
         for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
             EntityPlayerMP p = (EntityPlayerMP)obj;
             TDMManager.Team team = TDMManager.getPlayerTeam(player.worldObj, p.getCommandSenderName());
@@ -38,7 +38,7 @@ public class TDMMenuDataPacket implements IMessage {
             int d = TDMManager.getDeaths(player.worldObj, p.getCommandSenderName());
             float kdr = d <= 0 ? (float)k : ((float)k / (float)d);
             String line = p.getCommandSenderName() + " | " + k + "/" + d + " | " + String.format(java.util.Locale.US, "%.2f", kdr);
-            if (team == self) {
+            if (team == TDMManager.Team.BLUE) {
                 friend.add(line);
             } else {
                 enemy.add(line);

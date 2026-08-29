@@ -630,3 +630,10 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Observe the live HBM charge's inherited `started` and `timer` fields through a per-tile-class reflection cache, latching disarm and imminent detonation before HBM removes its tile.
 - Replace unknown-removal scoring with an explicit operator-recoverable objective error and retain coordinate-matched runtime IMC as secondary confirmation.
 - Enforce exact-item bomb custody, purge stale inventory/world drops at round boundaries, and create exactly one fresh objective for each playable round.
+2026-08-29 00:00 — TDM multiplayer round-flow improvements
+
+- Initialized every competitive player through the round-boundary kit flow, including survivors, so a death is no longer required to receive a complete fresh loadout.
+- Kept planted bombs authoritative over Terrorist elimination and added centralized detonation economy rewards.
+- Added configurable variant lists for team win, team round-start, and bomb-planted sounds.
+- Added an admin-only `/tdm teamless` observer command, explicit Blue/Red menu rosters, and remappable TDM menu/buy-menu keys.
+- Source inspection was completed; multiplayer and dedicated-server runtime validation remains required.

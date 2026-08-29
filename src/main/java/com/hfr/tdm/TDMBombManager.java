@@ -184,6 +184,8 @@ public final class TDMBombManager {
         }
         finishFreshLoadoutPreparation();
         ensureLiveRoundBombAssigned(world);
+        TDMManager.playConfiguredSound(world, XFConfig.tdmTRoundStartSounds, TDMManager.getTerroristTeam(world));
+        TDMManager.playConfiguredSound(world, XFConfig.tdmCtRoundStartSounds, TDMManager.getCounterTerroristTeam(world));
         TDMManager.sendStatusToAll(world);
     }
 
@@ -215,6 +217,8 @@ public final class TDMBombManager {
             waitForTeams(world);
             return;
         }
+        TDMManager.playConfiguredSound(world, XFConfig.tdmTRoundStartSounds, TDMManager.getTerroristTeam(world));
+        TDMManager.playConfiguredSound(world, XFConfig.tdmCtRoundStartSounds, TDMManager.getCounterTerroristTeam(world));
         TDMManager.sendStatusToAll(world);
     }
 
@@ -241,7 +245,7 @@ public final class TDMBombManager {
         EntityPlayerMP carrier=eligible.get(0);carrier.entityDropItem(available,0.0F);return true;
     }
     public static synchronized void ensureLiveRoundBombAssigned(World world){if(world==null||state!=BombRoundState.LIVE||bomb!=null||hasWorldBomb(world))return;for(EntityPlayerMP p:TDMManager.getOnlinePlayers())if(p.worldObj==world&&TDMManager.isTerrorist(p))for(ItemStack stack:p.inventory.mainInventory)if(isBombStack(stack))return;assignBombToRandomTerrorist(world);}
-    public static int getPlayerCount(World world,TDMManager.Team wanted){int count=0;for(EntityPlayerMP p:TDMManager.getOnlinePlayers())if(!TDMSpectatorManager.isObserving(p)&&TDMManager.getOrAssignPlayerTeam(p)==wanted)count++;return count;}
+    public static int getPlayerCount(World world,TDMManager.Team wanted){int count=0;for(EntityPlayerMP p:TDMManager.getOnlinePlayers())if(!TDMSpectatorManager.isObserving(p)&&TDMManager.getPlayerTeam(world,p.getCommandSenderName())==wanted)count++;return count;}
     public static boolean hasBothTeams(World world){return getPlayerCount(world,TDMManager.Team.RED)>0&&getPlayerCount(world,TDMManager.Team.BLUE)>0;}
     public static boolean hasEnoughPlayersForBombRound(World world){return hasBothTeams(world)||(TDMManager.isBombTestMode()&&(getPlayerCount(world,TDMManager.Team.RED)+getPlayerCount(world,TDMManager.Team.BLUE)>0));}
     private static void waitForTeams(World world){cleanupTransientState(world);state=BombRoundState.WAITING_FOR_TEAMS;TDMManager.sendStatusToAll(world);}
@@ -252,7 +256,9 @@ public final class TDMBombManager {
     }
     private static void acceptPlant(EntityPlayer player,int x,int y,int z){String site=TDMManager.getBombsiteAt(player.worldObj,player.dimension,x,y,z);if(!"A".equals(site)&&!"B".equals(site))return;
         bomb=new TrackedBomb(player.worldObj,player.dimension,x,y,z,site,player.getCommandSenderName(),TDMManager.getOrAssignPlayerTeam(player),TDMManager.getBombRole(player),player.worldObj.getBlock(x,y,z),player.worldObj.getBlockMetadata(x,y,z),player.worldObj.getTotalWorldTime());bomb.observe();HbmCsgoChargeIntegration.describeImplementation(player.worldObj,x,y,z);missingBombSince=-1L;missingBombWarningLogged=false;
-        state=BombRoundState.BOMB_PLANTED; TDMManager.sendStatusToAll(player.worldObj);
+        state=BombRoundState.BOMB_PLANTED;
+        TDMManager.playConfiguredSound(player.worldObj, XFConfig.tdmBombPlantedSounds, null);
+        TDMManager.sendStatusToAll(player.worldObj);
     }
     public static boolean canPlant(EntityPlayer p,Block block,int x,int y,int z,boolean explain){
         String reason=null;
@@ -309,11 +315,17 @@ public final class TDMBombManager {
         if(living(p.worldObj,ct)==0)completeRound(p.worldObj,tt,BombRoundWinReason.COUNTER_TERRORISTS_ELIMINATED);
         else if(state!=BombRoundState.BOMB_PLANTED&&living(p.worldObj,tt)==0)completeRound(p.worldObj,ct,BombRoundWinReason.TERRORISTS_ELIMINATED);
     }
-    private static int living(World w,TDMManager.Team team){int n=0;for(EntityPlayerMP p:TDMManager.getOnlinePlayers())if(TDMManager.getOrAssignPlayerTeam(p)==team&&!isEliminated(p)&&!TDMSpectatorManager.isObserving(p))n++;return n;}
+    private static int living(World w,TDMManager.Team team){int n=0;for(EntityPlayerMP p:TDMManager.getOnlinePlayers())if(TDMManager.getPlayerTeam(w,p.getCommandSenderName())==team&&!isEliminated(p)&&!TDMSpectatorManager.isObserving(p))n++;return n;}
     public static synchronized void completeRound(World world,TDMManager.Team winner,BombRoundWinReason reason){
         if(!isRoundActive())return; purgeBombObjectiveItems(world);TDMManager.cancelKitSelections(world);state=BombRoundState.ROUND_END; TDMData d=TDMData.get(world);
+        if(reason==BombRoundWinReason.BOMB_DETONATED) {
+            for(EntityPlayerMP player:TDMManager.getOnlinePlayers())
+                if(player.worldObj==world&&TDMManager.getPlayerTeam(world,player.getCommandSenderName())==winner)
+                    TDMManager.awardDefuseBuyScore(player);
+        }
         if(winner==TDMManager.Team.RED){d.redBombWins++;d.blueBombLosses++;}else{d.blueBombWins++;d.redBombLosses++;} d.markDirty(); stateEndTick=world.getTotalWorldTime()+INTERMISSION_TICKS;
         TDMManager.BombRole role=TDMManager.getBombRole(world,winner); broadcast((role==TDMManager.BombRole.TERRORIST?"Terrorists":"Counter-Terrorists")+" win: "+reasonText(reason)+".");
+        TDMManager.playConfiguredSound(world, role==TDMManager.BombRole.TERRORIST ? XFConfig.tdmTWinSounds : XFConfig.tdmCtWinSounds, null);
         if((winner==TDMManager.Team.RED?d.redBombWins:d.blueBombWins)>=TDMManager.getEffectiveBombScoreLimit(world,TDMManager.getSelectedMap(world))){TDMManager.startMapVote(world);}
         else TDMManager.sendStatusToAll(world);
     }
@@ -351,7 +363,7 @@ public final class TDMBombManager {
     private static void prepareFreshLoadoutDecisions(World world) {
         freshLoadoutPlayers.clear();
         for (EntityPlayerMP player : TDMManager.getOnlinePlayers()) {
-            if (player.worldObj == world && (firstRoundOfMatch || roundDeaths.contains(key(player)))) {
+            if (player.worldObj == world && TDMManager.hasPlayerTeam(player)) {
                 freshLoadoutPlayers.add(key(player));
             }
         }

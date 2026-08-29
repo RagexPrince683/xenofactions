@@ -198,6 +198,9 @@ public final class XFConfig {
 	public static boolean dynmapShowClaimDetails = true;
 	public static boolean dynmapShowPrestigeDetails = true;
 	public static String[] dynmapDimensionWorldMap = new String[] { "0=world", "-1=world_nether", "1=world_the_end" };
+	public static String[] tdmCtWinSounds = new String[0], tdmTWinSounds = new String[0];
+	public static String[] tdmCtRoundStartSounds = new String[0], tdmTRoundStartSounds = new String[0];
+	public static String[] tdmBombPlantedSounds = new String[0];
 
 	public static void load(Configuration config) {
 		commentCategories(config);
@@ -205,6 +208,11 @@ public final class XFConfig {
 		enableFactionBuilders = bool(config, CAT_BUILDERS, "enableFactionBuilders", true, "Enable persistent faction Builder workers.");
 		tdmBombUnknownRemovalAsDefuse = bool(config, CAT_TDM, "tdmBombUnknownRemovalAsDefuse", true, "When an active tracked HBM CSGO bomb disappears before Xenofactions can observe HBM's brief disarmed state, treat the removal as a successful CT defuse if no detonation evidence exists and the bomb's supporting block is still valid. Disable this for strict OBJECTIVE_ERROR debugging.");
 		tdmBombLifecycleDebug = bool(config, CAT_TDM, "tdmBombLifecycleDebug", false, "Log detailed HBM CSGO bomb lifecycle transitions. Warnings and objective errors are always logged.");
+		tdmCtWinSounds = stringList(config, CAT_TDM, "ctWinSounds", tdmCtWinSounds, "Sound IDs randomly selected for Counter-Terrorist round wins. Empty disables the event.");
+		tdmTWinSounds = stringList(config, CAT_TDM, "terroristWinSounds", tdmTWinSounds, "Sound IDs randomly selected for Terrorist round wins. Empty disables the event.");
+		tdmCtRoundStartSounds = stringList(config, CAT_TDM, "ctRoundStartSounds", tdmCtRoundStartSounds, "Sound IDs randomly selected for Counter-Terrorists at round start.");
+		tdmTRoundStartSounds = stringList(config, CAT_TDM, "terroristRoundStartSounds", tdmTRoundStartSounds, "Sound IDs randomly selected for Terrorists at round start.");
+		tdmBombPlantedSounds = stringList(config, CAT_TDM, "bombPlantedSounds", tdmBombPlantedSounds, "Sound IDs randomly selected globally when a bomb is planted.");
 		builderWorkIntervalTicks = integer(config, CAT_BUILDERS, "builderWorkIntervalTicks", 10, 1, 1200, "Ticks between Builder work cycles.");
 		builderBlockScanBudget = integer(config, CAT_BUILDERS, "builderBlockScanBudget", 64, 1, 4096, "Maximum schematic entries examined per work cycle.");
 		builderAllowWilderness = bool(config, CAT_BUILDERS, "builderAllowWilderness", false, "Allow Builder modifications outside claimed territory.");
