@@ -1,3 +1,8 @@
+# Pull request: fix dedicated-server TDM food restoration
+
+- Replaced client-side-only `FoodStats` setter calls in TDM new-life restoration with the common-side NBT read/write path required by Forge 1.7.10 dedicated servers.
+- Kept the existing food tick timer while restoring full hunger and saturation, clearing exhaustion, and preserving all other TDM respawn behavior.
+
 # Pull request: persist bomb-round survivor inventories and enforce round-win limits
 
 - Kept exact survivor inventory and armor stacks between rounds of the same BOMB match while sending every player who died during the live round through the normal fresh-loadout flow.
