@@ -109,10 +109,11 @@ public class TDMData extends WorldSavedData {
             map.bombScoreLimitOverride=mapTag.hasKey("bombScoreLimit")?Math.max(0,mapTag.getInteger("bombScoreLimit")):0;
             map.bombRoundTicksOverride=mapTag.hasKey("bombRoundTicks")?Math.max(0,mapTag.getInteger("bombRoundTicks")):0;
             map.buyScoreEnabled=!mapTag.hasKey("buyScoreEnabled")||mapTag.getBoolean("buyScoreEnabled");
-            map.roundStartBuyScoreReward=mapTag.hasKey("roundStartBuyScoreReward")?Math.max(0,mapTag.getInteger("roundStartBuyScoreReward")):1;
+            map.roundLossBuyScoreReward=mapTag.hasKey("roundLossBuyScoreReward")?Math.max(0,mapTag.getInteger("roundLossBuyScoreReward")):(mapTag.hasKey("roundStartBuyScoreReward")?Math.max(0,mapTag.getInteger("roundStartBuyScoreReward")):1);
             map.killBuyScoreReward=mapTag.hasKey("killBuyScoreReward")?Math.max(0,mapTag.getInteger("killBuyScoreReward")):2;
             map.roundWinBuyScoreReward=mapTag.hasKey("roundWinBuyScoreReward")?Math.max(0,mapTag.getInteger("roundWinBuyScoreReward")):3;
             map.bombDefuseBuyScoreReward=mapTag.hasKey("bombDefuseBuyScoreReward")?Math.max(0,mapTag.getInteger("bombDefuseBuyScoreReward")):0;
+            map.bombPlantBuyScoreReward=mapTag.hasKey("bombPlantBuyScoreReward")?Math.max(0,mapTag.getInteger("bombPlantBuyScoreReward")):1;
             readBombsite(mapTag,"bombsiteA",map.bombsiteA);readBombsite(mapTag,"bombsiteB",map.bombsiteB);
             int mapSpawnCount = mapTag.getInteger("spawnCount");
             for (int j = 0; j < mapSpawnCount; j++) {
@@ -186,7 +187,7 @@ public class TDMData extends WorldSavedData {
             if (map.roundTicksOverride > 0) mapTag.setInteger("roundTicks", map.roundTicksOverride);
             mapTag.setString("mode",map.mode.name());mapTag.setString("terroristTeam",map.terroristTeam.name);if(map.mode!=TDMManager.TDMGameMode.BOMB)mapTag.setBoolean("hardcoreRespawns",map.hardcoreRespawns);
             if(map.bombScoreLimitOverride>0)mapTag.setInteger("bombScoreLimit",map.bombScoreLimitOverride);if(map.bombRoundTicksOverride>0)mapTag.setInteger("bombRoundTicks",map.bombRoundTicksOverride);
-            mapTag.setBoolean("buyScoreEnabled",map.buyScoreEnabled);mapTag.setInteger("roundStartBuyScoreReward",Math.max(0,map.roundStartBuyScoreReward));mapTag.setInteger("killBuyScoreReward",Math.max(0,map.killBuyScoreReward));mapTag.setInteger("roundWinBuyScoreReward",Math.max(0,map.roundWinBuyScoreReward));if(map.bombDefuseBuyScoreReward>0)mapTag.setInteger("bombDefuseBuyScoreReward",map.bombDefuseBuyScoreReward);
+            mapTag.setBoolean("buyScoreEnabled",map.buyScoreEnabled);mapTag.setInteger("roundLossBuyScoreReward",Math.max(0,map.roundLossBuyScoreReward));mapTag.setInteger("killBuyScoreReward",Math.max(0,map.killBuyScoreReward));mapTag.setInteger("roundWinBuyScoreReward",Math.max(0,map.roundWinBuyScoreReward));mapTag.setInteger("bombPlantBuyScoreReward",Math.max(0,map.bombPlantBuyScoreReward));if(map.bombDefuseBuyScoreReward>0)mapTag.setInteger("bombDefuseBuyScoreReward",map.bombDefuseBuyScoreReward);
             writeBombsite(mapTag,"bombsiteA",map.bombsiteA);writeBombsite(mapTag,"bombsiteB",map.bombsiteB);
             mapTag.setInteger("spawnCount", map.spawns.size());
             for (int i = 0; i < map.spawns.size(); i++) {

@@ -330,13 +330,14 @@ later loads and reloads preserve the empty list.
 
 `/tdm map mode <map> ffa` selects round-elimination Free-For-All. Add neutral spawn locations with `/tdm map addspawn <map> ffa`; these are stored independently from RED/BLUE spawns. Existing map saves remain valid and maps without FFA spawn records retain their team-mode behavior.
 
-TDM maps persist three non-negative economy rewards. Missing fields use these defaults:
+TDM maps persist non-negative economy rewards. Missing fields use these defaults:
 
-- `roundStartBuyScoreReward`: `1`
+- `roundLossBuyScoreReward`: `1`
 - `killBuyScoreReward`: `2`
 - `roundWinBuyScoreReward`: `3`
+- `bombPlantBuyScoreReward`: `1`
 
-Configure them with `/tdm map roundstartscore <map> <amount>`, `/tdm map killscore <map> <amount>`, and `/tdm map roundwinscore <map> <amount>`. Zero disables an individual reward. `/tdm map economy <map> false` disables map economy as a whole.
+Configure them with `/tdm map lossscore <map> <amount>`, `/tdm map killscore <map> <amount>`, `/tdm map roundwinscore <map> <amount>`, and `/tdm map plantscore <map> <amount>`. Zero disables an individual reward. The loss reward is finalized before the next buy period: the losing team receives it in team modes, every non-winner receives it in FFA, and an FFA draw awards it to all captured active competitors. Legacy `roundStartBuyScoreReward` map data is read as the loss reward when the new field is absent, but saves write only `roundLossBuyScoreReward`. A successful authoritative bomb plant pays the individual planter exactly once when the tracked bomb enters the planted state. `/tdm map economy <map> false` disables map economy as a whole.
 
 Bundled sound event IDs are `hfr:tdm.ct_win1`, `hfr:tdm.t_win1`, `hfr:tdm.ct_round_start1`, `hfr:tdm.t_round_start1`, and `hfr:tdm.bomb_plant1`. Each configured event accepts a variant list; blank entries are ignored and an empty list disables playback.
 The values name sound **events**, not `.ogg` files or paths. An ID without a namespace uses `hfr`; an explicit namespace (for example `othermod:custom.roundwin`) is preserved. The server selects one variant and sends an explicit playback packet to each eligible player in the same world/dimension. Operators can exercise that same path with `/tdm testsound <ctwin|twin|ctstart|tstart|bombplant>`; start tests target only the operator, while win and plant tests use normal global TDM recipients. If an event is disabled, the command reports the event type, property name, raw values, and normalized effective values. Enable legacy `enableDebugLogging` to log the trigger, configured variants, normalized event ID, recipient count, dispatch route, and client playback.

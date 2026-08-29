@@ -38,7 +38,7 @@ public class TDMHandler {
             this.context = context;
         }
     }
-    private final Map<String, PendingRespawn> pendingRespawns = new HashMap<String, PendingRespawn>();
+    private static final Map<String, PendingRespawn> pendingRespawns = new HashMap<String, PendingRespawn>();
     private final Random random = new Random();
 
     @SubscribeEvent
@@ -57,6 +57,7 @@ public class TDMHandler {
         if (event.world != null && !event.world.isRemote
                 && event.world.provider.dimensionId == 0) {
             TDMServerTaskQueue.clear();
+            pendingRespawns.clear();
         }
     }
 
@@ -157,7 +158,7 @@ public class TDMHandler {
         if (!TDMManager.canPlaceAtTdmSpawn(event.player)) return;
         if (TDMManager.respawnPlayer(event.player, random)) {
             pendingRespawns.remove(playerName);
-            if(pending.context==TDMManager.KitSelectionContext.NONE&&TDMBombManager.isEliminated(event.player))TDMManager.putInRoundWaiting(event.player);
+            if(pending.context==TDMManager.KitSelectionContext.NONE&&(TDMBombManager.isEliminated(event.player)||TDMManager.isFfaEliminated(event.player)))TDMManager.putInRoundWaiting(event.player);
             if(pending.context==TDMManager.KitSelectionContext.BUY_PHASE)TDMManager.enrollGlobalBuyProtection(event.player);
             TDMManager.promptForKit(event.player, pending.context);
         } else if (pending.ticks <= 1) {
@@ -324,7 +325,7 @@ public class TDMHandler {
 
         if (placed) {
             pendingRespawns.remove(getKey(player));
-            if(context==TDMManager.KitSelectionContext.NONE&&TDMBombManager.isEliminated(player))TDMManager.putInRoundWaiting(player);
+            if(context==TDMManager.KitSelectionContext.NONE&&(TDMBombManager.isEliminated(player)||TDMManager.isFfaEliminated(player)))TDMManager.putInRoundWaiting(player);
             if (context == TDMManager.KitSelectionContext.BUY_PHASE) {
                 TDMManager.enrollGlobalBuyProtection(player);
             }
@@ -343,6 +344,13 @@ public class TDMHandler {
                 getKey(player),
                 new PendingRespawn(RESPAWN_RETRY_TICKS, context)
         );
+    }
+
+    /** Pending retries carry only lifecycle context; every attempt resolves the current persisted team. */
+    public static void refreshPendingPlacementAfterTeamChange(EntityPlayer player) {
+        if(player==null)return;
+        PendingRespawn pending=pendingRespawns.get(player.getCommandSenderName().toLowerCase());
+        if(pending!=null)pending.ticks=RESPAWN_RETRY_TICKS;
     }
 
     private String getKey(EntityPlayer player) {
