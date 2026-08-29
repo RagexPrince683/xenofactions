@@ -1303,10 +1303,12 @@ public class TDMManager {
         }
 
         player.setHealth(player.getMaxHealth());
-        player.getFoodStats().setFoodLevel(20);
-        player.getFoodStats().setFoodSaturationLevel(20.0F);
         NBTTagCompound foodState = new NBTTagCompound();
+        // MCP exposes the FoodStats setters in the merged development environment, but they
+        // are not common-side methods on Forge 1.7.10 dedicated servers. Use common-side NBT.
         player.getFoodStats().writeNBT(foodState);
+        foodState.setInteger("foodLevel", 20);
+        foodState.setFloat("foodSaturationLevel", 20.0F);
         foodState.setFloat("foodExhaustionLevel", 0.0F);
         player.getFoodStats().readNBT(foodState);
         player.extinguish();
