@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.UUID;
 
 
-import com.hbm.util.fauxpointtwelve.BlockPos;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder;
 import com.hfr.command.CommandClowderChat;

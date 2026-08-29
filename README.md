@@ -27,7 +27,7 @@ The mod is opinionated toward competitive survival servers: factions create citi
 | Java | Java 8 is recommended for building and running legacy Forge 1.7.10 servers. |
 | Side | Install on both client and server for normal multiplayer use. Dedicated servers need it for commands, claims, world data, and gameplay logic; clients need it for blocks, items, GUIs, renderers, and assets. |
 | Hard dependencies | None declared in `mcmod.info`; the Forge mod annotation only orders Xenofactions after GuideAPI if GuideAPI is present. |
-| Optional integrations | Dynmap is optional. The integration uses reflection and retries when Dynmap is absent or not ready. |
+| Optional integrations | Dynmap and HBM are optional. Their integrations avoid direct runtime linkage; HBM safezones retain radiation clearing when the expected HBM API is available. |
 | Known compatibility note | FMU+/Flan-style radar support is disabled by default with `FxR_enableRadar=false`, which helps avoid MCHeli-era compatibility crashes. |
 
 ## Installation

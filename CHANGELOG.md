@@ -671,3 +671,9 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Replaced the universal round-start score with a result-time losing-side bonus, including captured-participant filtering and deterministic all-loser FFA draws.
 - Migrated legacy `roundStartBuyScoreReward` data to `roundLossBuyScoreReward`, added the configurable `bombPlantBuyScoreReward`, and awarded it once at the authoritative unplanted-to-planted transition.
 - Updated TDM map commands and documentation. Source-level lifecycle, persistence, and call-site inspection was completed; dedicated-server multiplayer runtime validation remains required.
+
+2026-08-29 23:59 — Make HBM radiation integration runtime-optional
+
+- Removed direct HBM class references from always-loaded safezone and common event handlers, eliminating their HBM-driven classloading failure path.
+- Added a one-time, reflection-backed radiation compatibility bridge selected only when Forge reports mod ID `hbm`; absent or incompatible HBM installations degrade to a no-op with at most one warning per failure boundary.
+- Preserved the existing safezone radaway, Rad-X, radiation reset, and radiation-potion removal behavior when the expected HBM API is available. HBM-free and HBM-present dedicated-server runtime validation remains required.
