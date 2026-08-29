@@ -45,8 +45,16 @@ public class TDMMapVoteGuiPacket implements IMessage {
 
         @Override
         @SideOnly(Side.CLIENT)
-        public IMessage onMessage(TDMMapVoteGuiPacket message, MessageContext ctx) {
-            Minecraft.getMinecraft().displayGuiScreen(new GUITDMMapVote(message.mapNames, message.voteSeconds));
+        public IMessage onMessage(final TDMMapVoteGuiPacket message, MessageContext ctx) {
+            // Forge 1.7.10 SimpleNetworkWrapper handlers can run off-thread, so GUI state must change on the client thread.
+            Minecraft.getMinecraft().func_152344_a(new Runnable() {
+                @Override
+                public void run() {
+                    Minecraft.getMinecraft().displayGuiScreen(
+                            new GUITDMMapVote(message.mapNames, message.voteSeconds)
+                    );
+                }
+            });
             return null;
         }
     }
