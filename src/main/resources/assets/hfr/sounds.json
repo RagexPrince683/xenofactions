@@ -56,6 +56,27 @@
     "explosion.close": {"category": "block", "sounds": [{"name": "explosion/explosion_close", "stream": false}]},
     "explosion.medium": {"category": "block", "sounds": [{"name": "explosion/explosion_medium", "stream": false}]},
     "explosion.rumble": {"category": "block", "sounds": [{"name": "explosion/explosion_rumble", "stream": false}]},
-    
-    "grenade.gBounce": {"category": "block", "sounds": ["grenade/gBounce1", "grenade/gBounce2", "grenade/gBounce3"]}
+
+    "grenade.gBounce": {"category": "block", "sounds": ["grenade/gBounce1", "grenade/gBounce2", "grenade/gBounce3"]},
+
+    "tdm.bomb_plant1": {
+        "category": "player",
+        "sounds": [{"name": "tdm/tdm_bomb_plant1", "stream": false}]
+    },
+    "tdm.ct_round_start1": {
+        "category": "player",
+        "sounds": [{"name": "tdm/tdm_ct_round_start1", "stream": false}]
+    },
+    "tdm.ct_win1": {
+        "category": "player",
+        "sounds": [{"name": "tdm/tdm_ct_win1", "stream": false}]
+    },
+    "tdm.t_round_start1": {
+        "category": "player",
+        "sounds": [{"name": "tdm/tdm_t_round_start1", "stream": false}]
+    },
+    "tdm.t_win1": {
+        "category": "player",
+        "sounds": [{"name": "tdm/tdm_t_win1", "stream": false}]
+    }
 }

@@ -198,9 +198,25 @@ public final class XFConfig {
 	public static boolean dynmapShowClaimDetails = true;
 	public static boolean dynmapShowPrestigeDetails = true;
 	public static String[] dynmapDimensionWorldMap = new String[] { "0=world", "-1=world_nether", "1=world_the_end" };
-	public static String[] tdmCtWinSounds = new String[0], tdmTWinSounds = new String[0];
-	public static String[] tdmCtRoundStartSounds = new String[0], tdmTRoundStartSounds = new String[0];
-	public static String[] tdmBombPlantedSounds = new String[0];
+	public static String[] tdmCtWinSounds = new String[] {
+			"hfr:tdm.ct_win1"
+	};
+
+	public static String[] tdmTWinSounds = new String[] {
+			"hfr:tdm.t_win1"
+	};
+
+	public static String[] tdmCtRoundStartSounds = new String[] {
+			"hfr:tdm.ct_round_start1"
+	};
+
+	public static String[] tdmTRoundStartSounds = new String[] {
+			"hfr:tdm.t_round_start1"
+	};
+
+	public static String[] tdmBombPlantedSounds = new String[] {
+			"hfr:tdm.bomb_plant1"
+	};
 
 	public static void load(Configuration config) {
 		commentCategories(config);
