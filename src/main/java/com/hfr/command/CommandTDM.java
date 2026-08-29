@@ -14,6 +14,8 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.world.World;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -332,18 +334,29 @@ public class CommandTDM extends CommandBase {
         }
         String type = args[1].toLowerCase();
         String eventType;
+        String propertyName;
         String[] variants;
         boolean global;
-        if ("ctwin".equals(type)) { eventType = "ct_victory_test"; variants = XFConfig.tdmCtWinSounds; global = true; }
-        else if ("twin".equals(type)) { eventType = "t_victory_test"; variants = XFConfig.tdmTWinSounds; global = true; }
-        else if ("ctstart".equals(type)) { eventType = "ct_round_start_test"; variants = XFConfig.tdmCtRoundStartSounds; global = false; }
-        else if ("tstart".equals(type)) { eventType = "t_round_start_test"; variants = XFConfig.tdmTRoundStartSounds; global = false; }
-        else if ("bombplant".equals(type)) { eventType = "bomb_planted_test"; variants = XFConfig.tdmBombPlantedSounds; global = true; }
+        if ("ctwin".equals(type)) { eventType = "ct_victory_test"; propertyName = XFConfig.TDM_CT_WIN_SOUNDS_PROPERTY; variants = XFConfig.tdmCtWinSounds; global = true; }
+        else if ("twin".equals(type)) { eventType = "t_victory_test"; propertyName = XFConfig.TDM_T_WIN_SOUNDS_PROPERTY; variants = XFConfig.tdmTWinSounds; global = true; }
+        else if ("ctstart".equals(type)) { eventType = "ct_round_start_test"; propertyName = XFConfig.TDM_CT_ROUND_START_SOUNDS_PROPERTY; variants = XFConfig.tdmCtRoundStartSounds; global = false; }
+        else if ("tstart".equals(type)) { eventType = "t_round_start_test"; propertyName = XFConfig.TDM_T_ROUND_START_SOUNDS_PROPERTY; variants = XFConfig.tdmTRoundStartSounds; global = false; }
+        else if ("bombplant".equals(type)) { eventType = "bomb_planted_test"; propertyName = XFConfig.TDM_BOMB_PLANTED_SOUNDS_PROPERTY; variants = XFConfig.tdmBombPlantedSounds; global = true; }
         else { sender.addChatMessage(new ChatComponentText("Unknown sound type. Use ctwin, twin, ctstart, tstart, or bombplant.")); return; }
         EntityPlayerMP player = (EntityPlayerMP) sender;
         String selected = TDMManager.playConfiguredSound(world, eventType, variants, null, global ? null : player);
-        if (selected == null) sender.addChatMessage(new ChatComponentText("TDM sound is disabled (no non-blank configured variants)."));
+        if (selected == null) sender.addChatMessage(new ChatComponentText("TDM sound disabled: event=" + eventType + ", property=" + propertyName + ", raw=" + Arrays.toString(variants) + ", effective=" + normalizedSoundVariants(variants)));
         else sender.addChatMessage(new ChatComponentText("Dispatched TDM sound event " + selected + (global ? " to eligible TDM players in this dimension." : " to you.")));
+    }
+
+    private List<String> normalizedSoundVariants(String[] variants) {
+        List<String> normalized = new ArrayList<String>();
+        if (variants == null) return normalized;
+        for (String variant : variants) {
+            String eventId = TDMManager.normalizeSoundEventId(variant);
+            if (eventId != null) normalized.add(eventId);
+        }
+        return normalized;
     }
 
     private String[] prependArg(String first, String[] args) {

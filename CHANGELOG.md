@@ -657,3 +657,9 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 
 - Replaced implicit server-side player sound calls with an explicit per-recipient client packet, normalized configured event IDs without rewriting custom namespaces, and added debug-gated dispatch/client diagnostics.
 - Added the operator-only `/tdm testsound` command through the gameplay resolver/dispatcher and documented event-ID configuration semantics. Bundled declarations retain extensionless paths, including the intentionally underscored CT victory filename. In-game audio playback remains to be validated with the command.
+
+2026-08-29 21:55 — Repair TDM sound configuration defaults
+
+- Added a one-time TDM sound-config version migration that repairs legacy empty lists to the five bundled event IDs without overwriting non-empty custom values.
+- Separated immutable Forge defaults from live loaded arrays so reloads cannot turn an earlier empty configured value into the default for a subsequently missing property.
+- Expanded disabled `/tdm testsound` feedback with the event type, property name, raw variants, and normalized effective variants. Source inspection was completed; the command and client playback still require in-game validation.

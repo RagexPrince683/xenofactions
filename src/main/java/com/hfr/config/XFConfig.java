@@ -198,37 +198,35 @@ public final class XFConfig {
 	public static boolean dynmapShowClaimDetails = true;
 	public static boolean dynmapShowPrestigeDetails = true;
 	public static String[] dynmapDimensionWorldMap = new String[] { "0=world", "-1=world_nether", "1=world_the_end" };
-	public static String[] tdmCtWinSounds = new String[] {
-			"hfr:tdm.ct_win1"
-	};
-
-	public static String[] tdmTWinSounds = new String[] {
-			"hfr:tdm.t_win1"
-	};
-
-	public static String[] tdmCtRoundStartSounds = new String[] {
-			"hfr:tdm.ct_round_start1"
-	};
-
-	public static String[] tdmTRoundStartSounds = new String[] {
-			"hfr:tdm.t_round_start1"
-	};
-
-	public static String[] tdmBombPlantedSounds = new String[] {
-			"hfr:tdm.bomb_plant1"
-	};
+	public static final String TDM_CT_WIN_SOUNDS_PROPERTY = "ctWinSounds";
+	public static final String TDM_T_WIN_SOUNDS_PROPERTY = "terroristWinSounds";
+	public static final String TDM_CT_ROUND_START_SOUNDS_PROPERTY = "ctRoundStartSounds";
+	public static final String TDM_T_ROUND_START_SOUNDS_PROPERTY = "terroristRoundStartSounds";
+	public static final String TDM_BOMB_PLANTED_SOUNDS_PROPERTY = "bombPlantedSounds";
+	private static final int TDM_SOUND_CONFIG_VERSION = 1;
+	private static final String[] DEFAULT_TDM_CT_WIN_SOUNDS = new String[] { "hfr:tdm.ct_win1" };
+	private static final String[] DEFAULT_TDM_T_WIN_SOUNDS = new String[] { "hfr:tdm.t_win1" };
+	private static final String[] DEFAULT_TDM_CT_ROUND_START_SOUNDS = new String[] { "hfr:tdm.ct_round_start1" };
+	private static final String[] DEFAULT_TDM_T_ROUND_START_SOUNDS = new String[] { "hfr:tdm.t_round_start1" };
+	private static final String[] DEFAULT_TDM_BOMB_PLANTED_SOUNDS = new String[] { "hfr:tdm.bomb_plant1" };
+	public static String[] tdmCtWinSounds = DEFAULT_TDM_CT_WIN_SOUNDS;
+	public static String[] tdmTWinSounds = DEFAULT_TDM_T_WIN_SOUNDS;
+	public static String[] tdmCtRoundStartSounds = DEFAULT_TDM_CT_ROUND_START_SOUNDS;
+	public static String[] tdmTRoundStartSounds = DEFAULT_TDM_T_ROUND_START_SOUNDS;
+	public static String[] tdmBombPlantedSounds = DEFAULT_TDM_BOMB_PLANTED_SOUNDS;
 
 	public static void load(Configuration config) {
 		commentCategories(config);
+		migrateTdmSoundConfig(config);
 		enableEarthWorldType = bool(config, CAT_EARTH_WORLD, "enableEarthWorldType", true, "Registers the template-backed xf_earth overworld type.");
 		enableFactionBuilders = bool(config, CAT_BUILDERS, "enableFactionBuilders", true, "Enable persistent faction Builder workers.");
 		tdmBombUnknownRemovalAsDefuse = bool(config, CAT_TDM, "tdmBombUnknownRemovalAsDefuse", true, "When an active tracked HBM CSGO bomb disappears before Xenofactions can observe HBM's brief disarmed state, treat the removal as a successful CT defuse if no detonation evidence exists and the bomb's supporting block is still valid. Disable this for strict OBJECTIVE_ERROR debugging.");
 		tdmBombLifecycleDebug = bool(config, CAT_TDM, "tdmBombLifecycleDebug", false, "Log detailed HBM CSGO bomb lifecycle transitions. Warnings and objective errors are always logged.");
-		tdmCtWinSounds = stringList(config, CAT_TDM, "ctWinSounds", tdmCtWinSounds, "Sound IDs randomly selected for Counter-Terrorist round wins. Empty disables the event.");
-		tdmTWinSounds = stringList(config, CAT_TDM, "terroristWinSounds", tdmTWinSounds, "Sound IDs randomly selected for Terrorist round wins. Empty disables the event.");
-		tdmCtRoundStartSounds = stringList(config, CAT_TDM, "ctRoundStartSounds", tdmCtRoundStartSounds, "Sound IDs randomly selected for Counter-Terrorists at round start.");
-		tdmTRoundStartSounds = stringList(config, CAT_TDM, "terroristRoundStartSounds", tdmTRoundStartSounds, "Sound IDs randomly selected for Terrorists at round start.");
-		tdmBombPlantedSounds = stringList(config, CAT_TDM, "bombPlantedSounds", tdmBombPlantedSounds, "Sound IDs randomly selected globally when a bomb is planted.");
+		tdmCtWinSounds = stringList(config, CAT_TDM, TDM_CT_WIN_SOUNDS_PROPERTY, DEFAULT_TDM_CT_WIN_SOUNDS, "Sound IDs randomly selected for Counter-Terrorist round wins. Empty disables the event.");
+		tdmTWinSounds = stringList(config, CAT_TDM, TDM_T_WIN_SOUNDS_PROPERTY, DEFAULT_TDM_T_WIN_SOUNDS, "Sound IDs randomly selected for Terrorist round wins. Empty disables the event.");
+		tdmCtRoundStartSounds = stringList(config, CAT_TDM, TDM_CT_ROUND_START_SOUNDS_PROPERTY, DEFAULT_TDM_CT_ROUND_START_SOUNDS, "Sound IDs randomly selected for Counter-Terrorists at round start.");
+		tdmTRoundStartSounds = stringList(config, CAT_TDM, TDM_T_ROUND_START_SOUNDS_PROPERTY, DEFAULT_TDM_T_ROUND_START_SOUNDS, "Sound IDs randomly selected for Terrorists at round start.");
+		tdmBombPlantedSounds = stringList(config, CAT_TDM, TDM_BOMB_PLANTED_SOUNDS_PROPERTY, DEFAULT_TDM_BOMB_PLANTED_SOUNDS, "Sound IDs randomly selected globally when a bomb is planted.");
 		builderWorkIntervalTicks = integer(config, CAT_BUILDERS, "builderWorkIntervalTicks", 10, 1, 1200, "Ticks between Builder work cycles.");
 		builderBlockScanBudget = integer(config, CAT_BUILDERS, "builderBlockScanBudget", 64, 1, 4096, "Maximum schematic entries examined per work cycle.");
 		builderAllowWilderness = bool(config, CAT_BUILDERS, "builderAllowWilderness", false, "Allow Builder modifications outside claimed territory.");
@@ -451,6 +449,26 @@ public final class XFConfig {
 			while(normalized.endsWith(".")) normalized = normalized.substring(0, normalized.length() - 1);
 			if(normalized.length() > 0) wallArtAllowedHostSet.add(normalized);
 		}
+	}
+
+	private static void migrateTdmSoundConfig(Configuration config) {
+		Property version = config.get(CAT_TDM, "tdmSoundConfigVersion", 0);
+		version.comment = "Internal one-time migration version for TDM sound lists. Do not lower this value.";
+		if(version.getInt(0) >= TDM_SOUND_CONFIG_VERSION) return;
+		migrateEmptyTdmSoundList(config, TDM_CT_WIN_SOUNDS_PROPERTY, DEFAULT_TDM_CT_WIN_SOUNDS);
+		migrateEmptyTdmSoundList(config, TDM_T_WIN_SOUNDS_PROPERTY, DEFAULT_TDM_T_WIN_SOUNDS);
+		migrateEmptyTdmSoundList(config, TDM_CT_ROUND_START_SOUNDS_PROPERTY, DEFAULT_TDM_CT_ROUND_START_SOUNDS);
+		migrateEmptyTdmSoundList(config, TDM_T_ROUND_START_SOUNDS_PROPERTY, DEFAULT_TDM_T_ROUND_START_SOUNDS);
+		migrateEmptyTdmSoundList(config, TDM_BOMB_PLANTED_SOUNDS_PROPERTY, DEFAULT_TDM_BOMB_PLANTED_SOUNDS);
+		version.set(TDM_SOUND_CONFIG_VERSION);
+	}
+
+	private static void migrateEmptyTdmSoundList(Configuration config, String name, String[] defaults) {
+		Property property = config.get(CAT_TDM, name, defaults);
+		String[] values = property.getStringList();
+		for(String value : values)
+			if(value != null && value.trim().length() > 0) return;
+		property.set(defaults);
 	}
 
 	private static boolean bool(Configuration c, String cat, String name, boolean def, String comment) { Property p = c.get(cat, name, def); p.comment = comment; return p.getBoolean(def); }
