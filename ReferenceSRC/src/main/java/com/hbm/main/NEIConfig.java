@@ -1,0 +1,159 @@
+package com.hbm.main;
+
+import java.util.List;
+
+import codechicken.nei.recipe.*;
+import com.hbm.blocks.ModBlocks;
+import com.hbm.blocks.generic.BlockMotherOfAllOres.TileEntityRandomOre;
+import com.hbm.blocks.generic.BlockPlushie.TileEntityPlushie;
+import com.hbm.config.CustomMachineConfigJSON;
+import com.hbm.handler.nei.CustomMachineHandler;
+import com.hbm.handler.nei.NEISafe;
+import com.hbm.items.ModItems;
+import com.hbm.items.machine.ItemBattery;
+import com.hbm.lib.RefStrings;
+
+import codechicken.nei.api.API;
+import codechicken.nei.api.IConfigureNEI;
+import codechicken.nei.api.IHighlightHandler;
+import codechicken.nei.api.ItemInfo.Layout;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.world.World;
+import net.minecraftforge.oredict.OreDictionary;
+
+public class NEIConfig implements IConfigureNEI {
+
+	@Override
+	public void loadConfig() {
+		for (TemplateRecipeHandler handler: NEIRegistry.listAllHandlers()) {
+			registerHandler(handler);
+		}
+
+		for(CustomMachineConfigJSON.MachineConfiguration conf : CustomMachineConfigJSON.niceList) {
+			registerHandlerBypass(new CustomMachineHandler(conf));
+		}
+
+		//Some things are even beyond my control...or are they?
+		API.hideItem(ItemBattery.getEmptyBattery(ModItems.memory));
+		API.hideItem(ItemBattery.getFullBattery(ModItems.memory));
+
+		API.hideItem(new ItemStack(ModItems.item_secret));
+		API.hideItem(new ItemStack(ModBlocks.machine_electric_furnace_on));
+		API.hideItem(new ItemStack(ModBlocks.machine_difurnace_on));
+		API.hideItem(new ItemStack(ModBlocks.machine_nuke_furnace_on));
+		API.hideItem(new ItemStack(ModBlocks.machine_rtg_furnace_on));
+		API.hideItem(new ItemStack(ModBlocks.reinforced_lamp_on));
+		API.hideItem(new ItemStack(ModBlocks.statue_elb));
+		API.hideItem(new ItemStack(ModBlocks.statue_elb_g));
+		API.hideItem(new ItemStack(ModBlocks.statue_elb_w));
+		API.hideItem(new ItemStack(ModBlocks.statue_elb_f));
+		API.hideItem(new ItemStack(ModBlocks.cheater_virus));
+		API.hideItem(new ItemStack(ModBlocks.cheater_virus_seed));
+		API.hideItem(new ItemStack(ModBlocks.transission_hatch));
+		API.hideItem(new ItemStack(ModItems.euphemium_kit));
+		API.hideItem(new ItemStack(ModItems.bobmazon_hidden));
+		API.hideItem(new ItemStack(ModItems.book_lore)); //the broken nbt-less one shouldn't show up in normal play anyway
+
+		//WHAT IS THIS MICKEY MOUSE SHIT
+
+		API.hideItem(new ItemStack(ModBlocks.dummy_block_vault));
+		API.hideItem(new ItemStack(ModBlocks.dummy_block_blast));
+		API.hideItem(new ItemStack(ModBlocks.dummy_block_uf6));
+		API.hideItem(new ItemStack(ModBlocks.dummy_block_puf6));
+		API.hideItem(new ItemStack(ModBlocks.dummy_port_compact_launcher));
+		API.hideItem(new ItemStack(ModBlocks.dummy_port_launch_table));
+		API.hideItem(new ItemStack(ModBlocks.dummy_plate_compact_launcher));
+		API.hideItem(new ItemStack(ModBlocks.dummy_plate_launch_table));
+		API.hideItem(new ItemStack(ModBlocks.dummy_plate_cargo));
+
+		API.hideItem(new ItemStack(ModBlocks.pink_log));
+		API.hideItem(new ItemStack(ModBlocks.pink_planks));
+		API.hideItem(new ItemStack(ModBlocks.pink_slab));
+		API.hideItem(new ItemStack(ModBlocks.pink_double_slab));
+		API.hideItem(new ItemStack(ModBlocks.pink_stairs));
+
+		API.hideItem(new ItemStack(ModBlocks.spotlight_incandescent_off));
+		API.hideItem(new ItemStack(ModBlocks.spotlight_fluoro_off));
+		API.hideItem(new ItemStack(ModBlocks.spotlight_halogen_off));
+		API.hideItem(new ItemStack(ModBlocks.spotlight_beam));
+
+		API.hideItem(new ItemStack(ModItems.rocket_custom));
+		API.hideItem(new ItemStack(ModBlocks.orbital_station));
+
+		// Until we do the new BRO shit, hide it from NEI
+		API.hideItem(new ItemStack(ModItems.bedrock_ore, 1, OreDictionary.WILDCARD_VALUE));
+		API.hideItem(new ItemStack(ModItems.bedrock_ore_base));
+		API.hideItem(new ItemStack(ModItems.ore_density_scanner));
+		API.hideItem(new ItemStack(ModBlocks.machine_ore_slopper));
+
+		API.registerHighlightIdentifier(ModBlocks.ore_random, new IHighlightHandler() {
+
+			@Override
+			public ItemStack identifyHighlight(World world, EntityPlayer player, MovingObjectPosition mop) {
+				int x = mop.blockX;
+				int y = mop.blockY;
+				int z = mop.blockZ;
+
+				TileEntity te = world.getTileEntity(x, y, z);
+
+				if(te instanceof TileEntityRandomOre) {
+					TileEntityRandomOre ore = (TileEntityRandomOre) te;
+					return new ItemStack(ModBlocks.ore_random, 1, ore.getStackId());
+				}
+
+				return null;
+			}
+
+			@Override
+			public List<String> handleTextData(ItemStack itemStack, World world, EntityPlayer player, MovingObjectPosition mop, List<String> currenttip, Layout layout) {
+				return currenttip;
+			}
+
+		});
+
+		API.registerHighlightIdentifier(ModBlocks.plushie, new IHighlightHandler() {
+			@Override public ItemStack identifyHighlight(World world, EntityPlayer player, MovingObjectPosition mop) {
+				int x = mop.blockX;
+				int y = mop.blockY;
+				int z = mop.blockZ;
+				TileEntity te = world.getTileEntity(x, y, z);
+				if(te instanceof TileEntityPlushie) {
+					TileEntityPlushie plush = (TileEntityPlushie) te;
+					return new ItemStack(ModBlocks.plushie, 1, plush.type.ordinal());
+				}
+				return null;
+			}
+			@Override public List<String> handleTextData(ItemStack itemStack, World world, EntityPlayer player, MovingObjectPosition mop, List<String> currenttip, Layout layout) { return currenttip; }
+		});
+	}
+
+	public static void registerHandler(Object o) {
+		API.registerRecipeHandler((ICraftingHandler) o);
+		API.registerUsageHandler((IUsageHandler) o);
+		if(Boolean.getBoolean("hbm.nei.validate") && o instanceof TemplateRecipeHandler) {
+			NEISafe.validateCachedRecipes((TemplateRecipeHandler)o);
+		}
+	}
+
+	/** Bypasses the utterly useless restriction of one registered handler per class */
+	public static void registerHandlerBypass(Object o) {
+		GuiCraftingRecipe.craftinghandlers.add((ICraftingHandler) o);
+		GuiUsageRecipe.usagehandlers.add((IUsageHandler) o);
+		if(Boolean.getBoolean("hbm.nei.validate") && o instanceof TemplateRecipeHandler) {
+			NEISafe.validateCachedRecipes((TemplateRecipeHandler)o);
+		}
+	}
+
+	@Override
+	public String getName() {
+		return "Nuclear Tech NEI Plugin";
+	}
+
+	@Override
+	public String getVersion() {
+		return RefStrings.VERSION;
+	}
+}
