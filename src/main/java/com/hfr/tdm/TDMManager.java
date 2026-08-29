@@ -27,6 +27,7 @@ public class TDMManager {
     public static boolean tdmEnabled = false;
     public static final int ROUND_TICKS = 20 * 60 * 20;
     public static final int MAP_VOTE_TICKS = 30 * 20;
+    public static final int SKIP_VOTE_TICKS = 60 * 20;
     public static final int SCORE_LIMIT = 10000;
     public static final int POINTS_PER_KILL = 100;
     /** BOMB maps are first-team-to-N round wins; maps may override this default of 13. */
@@ -308,6 +309,7 @@ public class TDMManager {
             data.roundEndTick = 0;
             data.mapVoteActive = false;
             data.mapVoteEndTick = 0;
+            clearSkipVote(data);
             data.mapVotes.clear();
             data.playerBuyScores.clear();
         }
@@ -388,7 +390,7 @@ public class TDMManager {
             return false;
         }
 
-        TDMBombManager.cleanup(world,true);TDMSpectatorManager.restoreAll();data.playerBuyScores.clear();data.selectedMap = normalized;
+        TDMBombManager.cleanup(world,true);TDMSpectatorManager.restoreAll();data.playerBuyScores.clear();clearSkipVote(data);data.selectedMap = normalized;
         data.markDirty();
         return true;
     }
@@ -511,7 +513,8 @@ public class TDMManager {
     public static String voteForMap(World world, String playerName, String mapName) {
         String normalized = normalizeMapName(mapName);
         TDMData data = TDMData.get(world);
-        if (!data.enabled || !data.mapVoteActive || !data.maps.containsKey(normalized)) {
+        if (!data.enabled || !data.mapVoteActive || !data.maps.containsKey(normalized)
+                || normalized.equals(normalizeMapName(data.selectedMap))) {
             return null;
         }
 
@@ -569,6 +572,7 @@ public class TDMManager {
         int winnerVotes = -1;
         Map<String, Integer> counts = new LinkedHashMap<String, Integer>();
         for (String mapName : data.maps.keySet()) {
+            if (mapName.equals(normalizeMapName(data.selectedMap))) continue;
             counts.put(mapName, Integer.valueOf(0));
         }
         for (String mapName : data.mapVotes.values()) {
@@ -600,6 +604,7 @@ public class TDMManager {
         }
 
         long now = world.getTotalWorldTime();
+        if (data.skipVoteActive) tickSkipVote(world);
         if (data.mapVoteActive) {
             if (data.mapVoteEndTick <= 0) {
                 data.mapVoteEndTick = now + MAP_VOTE_TICKS;
@@ -667,6 +672,7 @@ public class TDMManager {
         data.roundEndTick = world.getTotalWorldTime() + getEffectiveRoundTicks(world);
         data.mapVoteActive = false;
         data.mapVoteEndTick = 0;
+        clearSkipVote(data);
         if (resetVotes) {
             data.mapVotes.clear();
         }
@@ -713,6 +719,15 @@ public class TDMManager {
     public static void startMapVote(World world) {
         TDMData data = TDMData.get(world);
         if (data.mapVoteActive) {
+            return;
+        }
+
+        clearSkipVote(data);
+        if (getAlternativeMapNames(data).isEmpty()) {
+            data.roundEndTick = world.getTotalWorldTime() + getEffectiveRoundTicks(world);
+            data.markDirty();
+            broadcastTDM(world, "TDM map vote not started: no alternative to the current map is available.");
+            sendStatusToAll(world);
             return;
         }
 
@@ -796,8 +811,104 @@ public class TDMManager {
 
         String[] maps = mapNames.toArray(new String[mapNames.size()]);
         for (EntityPlayerMP player : getOnlinePlayers()) {
-            PacketDispatcher.wrapper.sendTo(new TDMMapVoteGuiPacket(maps, MAP_VOTE_TICKS / 20), player);
+            PacketDispatcher.wrapper.sendTo(new TDMMapVoteGuiPacket(maps, MAP_VOTE_TICKS / 20, getSelectedMap(world)), player);
         }
+    }
+
+    private static List<String> getAlternativeMapNames(TDMData data) {
+        List<String> alternatives = new ArrayList<String>();
+        String current = normalizeMapName(data.selectedMap);
+        for (String map : data.maps.keySet()) if (!map.equals(current)) alternatives.add(map);
+        return alternatives;
+    }
+
+    public static String castSkipVote(World world, EntityPlayer player, boolean yes) {
+        TDMData data = TDMData.get(world);
+        if (!data.enabled || data.mapVoteActive) return "A skip vote is unavailable right now.";
+        String key = getPlayerKey(player);
+        if (!isEligibleSkipVoter(data, player)) return "Only active TDM competitors may vote to skip.";
+        if (!data.skipVoteActive) {
+            if (getAlternativeMapNames(data).isEmpty()) return "The current map cannot be skipped because no alternative map is available.";
+            data.skipVoteActive = true;
+            data.skipVoteEndTick = world.getTotalWorldTime() + SKIP_VOTE_TICKS;
+            data.skipVoteInitiator = player.getCommandSenderName();
+            data.skipVotes.clear();
+            broadcastTDM(world, player.getCommandSenderName() + " started a vote to skip the current map.");
+        }
+        if (data.skipVotes.containsKey(key)) return "You have already voted in this skip vote.";
+        data.skipVotes.put(key, Boolean.valueOf(yes));
+        data.markDirty();
+        String status = getSkipVoteStatus(world);
+        broadcastTDM(world, player.getCommandSenderName() + " voted " + (yes ? "yes" : "no") + ". " + status);
+        evaluateSkipVote(world);
+        return status;
+    }
+
+    public static String getSkipVoteStatus(World world) {
+        TDMData data = TDMData.get(world);
+        if (!data.skipVoteActive) return "No skip-map vote is active.";
+        int eligible = countEligibleSkipVoters(data);
+        int yes = 0, no = 0;
+        for (Boolean vote : data.skipVotes.values()) if (vote.booleanValue()) yes++; else no++;
+        return "Skip vote by " + data.skipVoteInitiator + ": yes " + yes + ", no " + no + ", " + requiredSkipVotes(eligible) + " yes required.";
+    }
+
+    public static void onPlayerDisconnected(World world, EntityPlayer player) {
+        TDMData data = TDMData.get(world);
+        if (!data.skipVoteActive) return;
+        data.skipVotes.remove(getPlayerKey(player));
+        evaluateSkipVote(world);
+    }
+
+    private static void tickSkipVote(World world) {
+        TDMData data = TDMData.get(world);
+        if (world.getTotalWorldTime() >= data.skipVoteEndTick) {
+            broadcastTDM(world, "The vote to skip the current map failed (expired). " + getSkipVoteStatus(world));
+            clearSkipVote(data);
+            data.markDirty();
+            return;
+        }
+        evaluateSkipVote(world);
+    }
+
+    private static void evaluateSkipVote(World world) {
+        TDMData data = TDMData.get(world);
+        if (!data.skipVoteActive) return;
+        Set<String> eligible = new HashSet<String>();
+        for (EntityPlayerMP player : getOnlinePlayers()) if (isEligibleSkipVoter(data, player)) eligible.add(getPlayerKey(player));
+        data.skipVotes.keySet().retainAll(eligible);
+        int required = requiredSkipVotes(eligible.size()), yes = 0;
+        for (Boolean vote : data.skipVotes.values()) if (vote.booleanValue()) yes++;
+        if (yes >= required && required > 0) {
+            broadcastTDM(world, "The vote to skip the current map passed (" + yes + "/" + required + ").");
+            clearSkipVote(data);
+            data.markDirty();
+            startMapVote(world); // Owns objective, combat, freeze, kit, buy-phase, and transition cleanup; awards no result.
+        } else if (yes + (eligible.size() - data.skipVotes.size()) < required) {
+            broadcastTDM(world, "The vote to skip the current map failed. " + getSkipVoteStatus(world));
+            clearSkipVote(data);
+            data.markDirty();
+        }
+    }
+
+    private static boolean isEligibleSkipVoter(TDMData data, EntityPlayer player) {
+        return isCompetitivePlayer(player);
+    }
+
+    private static int countEligibleSkipVoters(TDMData data) {
+        int count = 0;
+        for (EntityPlayerMP player : getOnlinePlayers()) if (isEligibleSkipVoter(data, player)) count++;
+        return count;
+    }
+
+    private static int requiredSkipVotes(int eligible) { return eligible / 2 + 1; }
+
+    private static void clearSkipVote(TDMData data) {
+        data.skipVoteActive = false; data.skipVoteEndTick = 0; data.skipVoteInitiator = ""; data.skipVotes.clear();
+    }
+
+    private static void broadcastTDM(World world, String message) {
+        for (EntityPlayerMP player : getOnlinePlayers()) player.addChatMessage(new ChatComponentText(message));
     }
 
     public static void placeAllPlayersAtSelectedMap(World world, KitSelectionContext context) {
@@ -874,6 +985,7 @@ public class TDMManager {
         data.roundEndTick = 0;
         data.mapVoteActive = false;
         data.mapVoteEndTick = 0;
+        clearSkipVote(data);
         data.markDirty();
         TDMBombManager.cleanup(world, true);
         sendStatusToAll(world);

@@ -68,6 +68,21 @@ public class CommandTDM extends CommandBase {
             return;
         }
 
+        if (args[0].equalsIgnoreCase("skip")) {
+            EntityPlayer player = getCommandSenderAsPlayer(sender);
+            if (args.length > 1 && args[1].equalsIgnoreCase("status")) {
+                sender.addChatMessage(new ChatComponentText(TDMManager.getSkipVoteStatus(world)));
+                return;
+            }
+            boolean yes = args.length < 2 || args[1].equalsIgnoreCase("yes");
+            if (!yes && !args[1].equalsIgnoreCase("no")) {
+                sender.addChatMessage(new ChatComponentText("Usage: /tdm skip [yes|no|status]"));
+                return;
+            }
+            sender.addChatMessage(new ChatComponentText(TDMManager.castSkipVote(world, player, yes)));
+            return;
+        }
+
         if (!isAdmin(sender)) {
             if (args[0].equalsIgnoreCase("menu") || args[0].equalsIgnoreCase("openmenu")) {
                 openMenu(sender);
@@ -268,6 +283,7 @@ public class CommandTDM extends CommandBase {
         sender.addChatMessage(new ChatComponentText(TITLE + "Player commands"));
         sender.addChatMessage(new ChatComponentText(COMMAND + "-maps" + TITLE + " - Lists playable maps and current votes"));
         sender.addChatMessage(new ChatComponentText(COMMAND + "-vote <map>" + TITLE + " - Votes during an active map vote"));
+        sender.addChatMessage(new ChatComponentText(COMMAND + "-skip [yes|no|status]" + TITLE + " - Starts or participates in a vote to skip the current map"));
         sender.addChatMessage(new ChatComponentText(COMMAND + "-menu" + TITLE + " - Opens the TDM menu to swap teams"));
         sender.addChatMessage(new ChatComponentText(COMMAND + "-teamchange" + TITLE + " - Fallback team swap with a 120s cooldown"));
         if (!isAdmin(sender)) {
@@ -713,6 +729,14 @@ public class CommandTDM extends CommandBase {
 
     private boolean isAdmin(ICommandSender sender) {
         return sender.canCommandSenderUseCommand(4, getCommandName());
+    }
+
+    @Override
+    public List addTabCompletionOptions(ICommandSender sender, String[] args) {
+        if (args.length == 1) return getListOfStringsMatchingLastWord(args, "help", "maps", "vote", "skip", "menu", "teamchange", "kits", "kit", "toggle", "forcemapvote", "friendlyfire", "autobalance", "map", "addspawn", "setteam", "teamless", "clear");
+        if (args.length == 2 && args[0].equalsIgnoreCase("skip")) return getListOfStringsMatchingLastWord(args, "yes", "no", "status");
+        if (args.length == 2 && args[0].equalsIgnoreCase("vote")) return getListOfStringsMatchingLastWord(args, TDMManager.getMapNames(sender.getEntityWorld()).toArray(new String[0]));
+        return null;
     }
 
     @Override

@@ -10,10 +10,12 @@ public class GUITDMMapVote extends GuiScreen {
 
     private final String[] mapNames;
     private final int voteSeconds;
+    private final String currentMap;
 
-    public GUITDMMapVote(String[] mapNames, int voteSeconds) {
+    public GUITDMMapVote(String[] mapNames, int voteSeconds, String currentMap) {
         this.mapNames = mapNames;
         this.voteSeconds = voteSeconds;
+        this.currentMap = currentMap;
     }
 
     @Override
@@ -23,13 +25,15 @@ public class GUITDMMapVote extends GuiScreen {
         int y = this.height / 2 - (mapNames.length * 24) / 2;
 
         for (int i = 0; i < mapNames.length; i++) {
-            this.buttonList.add(new GuiButton(i, x, y + i * 24, 200, 20, mapNames[i]));
+            GuiButton button = new GuiButton(i, x, y + i * 24, 200, 20, mapNames[i]);
+            if (mapNames[i].equals(currentMap)) { button.enabled = false; button.displayString = mapNames[i] + " (Current Map)"; }
+            this.buttonList.add(button);
         }
     }
 
     @Override
     protected void actionPerformed(GuiButton button) {
-        if (button.id >= 0 && button.id < mapNames.length) {
+        if (button.enabled && button.id >= 0 && button.id < mapNames.length && !mapNames[button.id].equals(currentMap)) {
             PacketDispatcher.wrapper.sendToServer(new TDMMapVoteSelectPacket(mapNames[button.id]));
         }
         this.mc.displayGuiScreen(null);
