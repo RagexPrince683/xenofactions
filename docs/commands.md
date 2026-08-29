@@ -248,3 +248,6 @@ observer to play.
 - `/tdm map roundwinscore <map> <amount>`
 
 Reward amounts must be non-negative; zero disables that reward. FFA competitors are not assigned RED or BLUE, and `/tdm teamless` continues to designate an observer rather than a competitor.
+# TDM sound diagnostics
+
+`/tdm testsound <ctwin|twin|ctstart|tstart|bombplant>` is operator-only. It selects from the live configured variants and uses the same explicit per-player packet dispatcher as gameplay. Round-start tests play only for the executing operator; victory and bomb-plant tests target the eligible TDM players in the operator's current world.
