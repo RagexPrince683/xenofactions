@@ -79,7 +79,7 @@ public class TDMHandler {
 
         boolean roundElimination = TDMManager.isHardcoreRespawns(event.player.worldObj);
         boolean hardcoreBomb = TDMManager.isBombMode(event.player.worldObj) && roundElimination;
-        if (roundElimination && TDMBombManager.isEliminated(event.player)) {
+        if (roundElimination && (TDMBombManager.isEliminated(event.player) || TDMManager.isFfaEliminated(event.player))) {
             TDMSpectatorManager.restore(event.player);
             tryImmediatePlacement(event.player, TDMManager.KitSelectionContext.NONE);
             return;
@@ -101,7 +101,7 @@ public class TDMHandler {
             return;
         }
 
-        TDMManager.getOrAssignPlayerTeam(event.player);
+        if(!TDMManager.isFfaMode(event.player.worldObj))TDMManager.getOrAssignPlayerTeam(event.player);
         boolean hardcoreBomb = TDMManager.isBombMode(event.player.worldObj)
                 && TDMManager.isHardcoreRespawns(event.player.worldObj);
         boolean activeEliminationRound = TDMManager.isHardcoreRespawns(event.player.worldObj)
@@ -111,6 +111,7 @@ public class TDMHandler {
         if (activeEliminationRound) {
             // Joining an active hardcore round grants map context, never combat eligibility.
             TDMBombManager.markLateJoinerEliminated(event.player);
+            TDMManager.markLateJoinerFfaEliminated(event.player);
             TDMSpectatorManager.restore(event.player);
             tryImmediatePlacement(event.player, TDMManager.KitSelectionContext.NONE);
             return;
@@ -153,7 +154,7 @@ public class TDMHandler {
         PendingRespawn pending = pendingRespawns.get(playerName);
         if (pending == null) return;
 
-        if (!TDMManager.isAliveForTDM(event.player)) return;
+        if (!TDMManager.canPlaceAtTdmSpawn(event.player)) return;
         if (TDMManager.respawnPlayer(event.player, random)) {
             pendingRespawns.remove(playerName);
             if(pending.context==TDMManager.KitSelectionContext.NONE&&TDMBombManager.isEliminated(event.player))TDMManager.putInRoundWaiting(event.player);
@@ -179,13 +180,15 @@ public class TDMHandler {
         if (attacker != null && attacker != victim) {
             TDMManager.Team victimTeam = TDMManager.getOrAssignPlayerTeam(victim);
             TDMManager.Team attackerTeam = TDMManager.getOrAssignPlayerTeam(attacker);
-            if (attackerTeam != null && attackerTeam != victimTeam) {
-                TDMManager.addKillScore(victim.worldObj, attackerTeam);
+            boolean valid=TDMManager.isCompetitivePlayer(victim)&&TDMManager.isCompetitivePlayer(attacker)&&(TDMManager.isFfaMode(victim.worldObj)||(attackerTeam!=null&&attackerTeam!=victimTeam));
+            if (valid) {
+                if(!TDMManager.isFfaMode(victim.worldObj))TDMManager.addKillScore(victim.worldObj, attackerTeam);
                 TDMManager.recordKill(victim.worldObj, attacker.getCommandSenderName());
                 TDMManager.recordDeath(victim.worldObj, victim.getCommandSenderName());
                 TDMManager.awardKillBuyScore(attacker);
             }
         }
+        TDMManager.eliminateFfaPlayer(victim);
         TDMBombManager.eliminate(victim);
     }
 
@@ -199,7 +202,7 @@ public class TDMHandler {
         EntityPlayer victim = (EntityPlayer) event.entityLiving;
         if(TDMManager.isRoundWaiting(victim)||TDMManager.hasKitSelectionProtection(victim)){event.setCanceled(true);return;}
         if (TDMManager.isBombMode(event.entityLiving.worldObj) && !TDMBombManager.isRoundActive()) { event.setCanceled(true); return; }
-        if (TDMManager.isFriendlyFireEnabled(event.entityLiving.worldObj)) return;
+        if (TDMManager.isFfaMode(event.entityLiving.worldObj)||TDMManager.isFriendlyFireEnabled(event.entityLiving.worldObj)) return;
         EntityPlayer attacker = getAttackingPlayer(event.source);
         if (TDMSpectatorManager.isObserving(victim) || (attacker != null && TDMSpectatorManager.isObserving(attacker))) { event.setCanceled(true); return; }
         if (attacker == null || attacker == victim) return;

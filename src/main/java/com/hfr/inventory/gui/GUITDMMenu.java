@@ -11,17 +11,19 @@ public class GUITDMMenu extends GuiScreen {
     private final String[] friendlyLines;
     private final String[] enemyLines;
     private final boolean canOpenBuyMenu;
-    public GUITDMMenu(String currentTeam, int cooldownSeconds, String[] friendlyLines, String[] enemyLines,boolean canOpenBuyMenu){
+    private final boolean ffa;
+    public GUITDMMenu(String currentTeam, int cooldownSeconds, String[] friendlyLines, String[] enemyLines,boolean canOpenBuyMenu,boolean ffa){
         this.currentTeam = currentTeam;
         this.cooldownSeconds = cooldownSeconds;
         this.friendlyLines = friendlyLines == null ? new String[0] : friendlyLines;
         this.enemyLines = enemyLines == null ? new String[0] : enemyLines;
         this.canOpenBuyMenu=canOpenBuyMenu;
+        this.ffa=ffa;
     }
     public void initGui() {
         this.buttonList.clear();
-        this.buttonList.add(new GuiButton(0, this.width/2-100, this.height-40, 200, 20, cooldownSeconds > 0 ? "Swap Team ("+cooldownSeconds+"s)" : "Swap Team"));
-        ((GuiButton)this.buttonList.get(0)).enabled = cooldownSeconds <= 0;
+        this.buttonList.add(new GuiButton(0, this.width/2-100, this.height-40, 200, 20, ffa ? "FFA has no teams" : (cooldownSeconds > 0 ? "Swap Team ("+cooldownSeconds+"s)" : "Swap Team")));
+        ((GuiButton)this.buttonList.get(0)).enabled = !ffa && cooldownSeconds <= 0;
         if(canOpenBuyMenu)this.buttonList.add(new GuiButton(1,this.width/2-100,this.height-64,200,20,"Reopen Buy Menu"));
     }
     protected void actionPerformed(GuiButton button) {
@@ -43,6 +45,8 @@ public class GUITDMMenu extends GuiScreen {
 
         drawCenteredString(this.fontRendererObj, "TDM Scoreboard", this.width/2, 5, 0xFFFFFF);
         drawCenteredString(this.fontRendererObj, "Current team: " + currentTeam.toUpperCase(), this.width/2, 14, 0xDDDDDD);
+
+        if(ffa){int x=this.width/2-panelWidth;int w=panelWidth*2;drawRect(x,panelTop,x+w,panelBottom,0x90333333);drawRect(x,panelTop,x+w,panelTop+14,0xCC777777);drawString(this.fontRendererObj,"FFA PLAYERS",x+5,panelTop+3,0xFFFFFF);drawString(this.fontRendererObj,"PLAYER | K/D | KDR",x+5,panelTop+18,0xDDDDDD);drawRosterColumn(friendlyLines,x+5,panelTop+30,panelHeight-35,0xF0F0F0);super.drawScreen(mx,my,pt);return;}
 
         drawRect(leftX, panelTop, leftX + panelWidth, panelBottom, 0x9020334A);
         drawRect(rightX, panelTop, rightX + panelWidth, panelBottom, 0x904A2020);

@@ -69,7 +69,7 @@
     },
     "tdm.ct_win1": {
         "category": "player",
-        "sounds": [{"name": "tdm/tdm_ct_win1", "stream": false}]
+        "sounds": [{"name": "tdm/tdm_ct_win_1", "stream": false}]
     },
     "tdm.t_round_start1": {
         "category": "player",

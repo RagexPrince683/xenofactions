@@ -170,6 +170,7 @@ public final class TDMBombManager {
             waitForTeams(world);
             return;
         }
+        TDMManager.awardRoundStartBuyScore(world);
         TDMManager.playConfiguredSound(world, XFConfig.tdmTRoundStartSounds, TDMManager.getTerroristTeam(world));
         TDMManager.playConfiguredSound(world, XFConfig.tdmCtRoundStartSounds, TDMManager.getCounterTerroristTeam(world));
         TDMManager.sendStatusToAll(world);
@@ -276,6 +277,7 @@ public final class TDMBombManager {
                 if(player.worldObj==world&&TDMManager.getPlayerTeam(world,player.getCommandSenderName())==winner)
                     TDMManager.awardDefuseBuyScore(player);
         }
+        TDMManager.awardRoundWinBuyScore(world,winner,null);
         if(winner==TDMManager.Team.RED){d.redBombWins++;d.blueBombLosses++;}else{d.blueBombWins++;d.redBombLosses++;} d.markDirty(); stateEndTick=world.getTotalWorldTime()+INTERMISSION_TICKS;
         TDMManager.BombRole role=TDMManager.getBombRole(world,winner); broadcast((role==TDMManager.BombRole.TERRORIST?"Terrorists":"Counter-Terrorists")+" win: "+reasonText(reason)+".");
         TDMManager.playConfiguredSound(world, role==TDMManager.BombRole.TERRORIST ? XFConfig.tdmTWinSounds : XFConfig.tdmCtWinSounds, null);

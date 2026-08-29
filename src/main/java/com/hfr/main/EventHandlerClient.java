@@ -271,10 +271,10 @@ public class EventHandlerClient {
 	}
 
 
-	public static void openTDMMenu(String currentTeam, int cooldownSeconds, String[] friendlyLines, String[] enemyLines,boolean canOpenBuyMenu) {
+	public static void openTDMMenu(String currentTeam, int cooldownSeconds, String[] friendlyLines, String[] enemyLines,boolean canOpenBuyMenu,boolean ffa) {
 		Minecraft mc = Minecraft.getMinecraft();
 		if (mc != null) {
-			mc.displayGuiScreen(new GUITDMMenu(currentTeam, cooldownSeconds, friendlyLines, enemyLines,canOpenBuyMenu));
+			mc.displayGuiScreen(new GUITDMMenu(currentTeam, cooldownSeconds, friendlyLines, enemyLines,canOpenBuyMenu,ffa));
 		}
 	}
 
