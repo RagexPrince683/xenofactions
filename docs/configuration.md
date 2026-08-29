@@ -298,3 +298,17 @@ The `20_tdm` configuration category accepts string lists for `ctWinSounds`,
 `terroristWinSounds`, `ctRoundStartSounds`, `terroristRoundStartSounds`, and
 `bombPlantedSounds`. Entries are Minecraft sound IDs; one non-blank entry is
 selected randomly for each authoritative event. Empty lists disable that event.
+
+## TDM FFA and economy
+
+`/tdm map mode <map> ffa` selects round-elimination Free-For-All. Add neutral spawn locations with `/tdm map addspawn <map> ffa`; these are stored independently from RED/BLUE spawns. Existing map saves remain valid and maps without FFA spawn records retain their team-mode behavior.
+
+TDM maps persist three non-negative economy rewards. Missing fields use these defaults:
+
+- `roundStartBuyScoreReward`: `1`
+- `killBuyScoreReward`: `2`
+- `roundWinBuyScoreReward`: `3`
+
+Configure them with `/tdm map roundstartscore <map> <amount>`, `/tdm map killscore <map> <amount>`, and `/tdm map roundwinscore <map> <amount>`. Zero disables an individual reward. `/tdm map economy <map> false` disables map economy as a whole.
+
+Bundled sound event IDs are `hfr:tdm.ct_win1`, `hfr:tdm.t_win1`, `hfr:tdm.ct_round_start1`, `hfr:tdm.t_round_start1`, and `hfr:tdm.bomb_plant1`. Each configured event accepts a variant list; blank entries are ignored and an empty list disables playback.

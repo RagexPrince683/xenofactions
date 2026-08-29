@@ -47,6 +47,9 @@ public class TDMManager {
     /** Last successfully purchased kit; eligibility is granted separately at round completion. */
     private static final Map<String, Integer> selectedKits = new HashMap<String, Integer>();
     private static final Set<String> survivorChoicePending = new HashSet<String>();
+    private static final Set<String> ffaEliminated = new HashSet<String>();
+    private static long ffaNextRoundTick;
+    private static String ffaRoundWinner;
 
     public static void makePlayerTeamless(EntityPlayer player) {
         if (player == null) return;
@@ -99,7 +102,7 @@ public class TDMManager {
         }
     }
 
-    public enum TDMGameMode { DEATHMATCH, BOMB }
+    public enum TDMGameMode { DEATHMATCH, BOMB, FFA }
     public enum BombRole { TERRORIST, COUNTER_TERRORIST }
     public enum KitSelectionResult { SUCCESS, INSUFFICIENT_FUNDS, INVALID_SELECTION, BUY_PHASE_ENDED, ALREADY_SELECTED }
     public enum KitSelectionContext { NONE, BUY_PHASE, RESPAWN_LOCK }
@@ -132,8 +135,10 @@ public class TDMManager {
         public boolean hardcoreRespawns;
         public int bombScoreLimitOverride;
         public int bombRoundTicksOverride;
-        public boolean buyScoreEnabled;
-        public int killBuyScoreReward;
+        public boolean buyScoreEnabled = true;
+        public int roundStartBuyScoreReward = 1;
+        public int killBuyScoreReward = 2;
+        public int roundWinBuyScoreReward = 3;
         public int bombDefuseBuyScoreReward;
         public final Bombsite bombsiteA = new Bombsite();
         public final Bombsite bombsiteB = new Bombsite();
@@ -156,6 +161,7 @@ public class TDMManager {
     public static boolean isCounterTerrorist(EntityPlayer player) { return getBombRole(player) == BombRole.COUNTER_TERRORIST; }
     public static boolean isHardcoreRespawns(World world) { TDMMap m=getSelectedMapData(world); return m != null && (m.mode == TDMGameMode.BOMB || m.hardcoreRespawns); }
     public static boolean isBombMode(World world) { return getGameMode(world) == TDMGameMode.BOMB; }
+    public static boolean isFfaMode(World world) { return getGameMode(world) == TDMGameMode.FFA; }
 
     public static boolean configureMap(World world, String name, TDMGameMode mode, Team terrorists, Boolean hardcore) {
         TDMMap map=getMap(world,name); if(map==null)return false;
@@ -172,6 +178,7 @@ public class TDMManager {
         if (oldMode == mode) return true;
         map.mode = mode;
         if(mode==TDMGameMode.BOMB)map.hardcoreRespawns=true;
+        if(mode==TDMGameMode.FFA)map.hardcoreRespawns=true;
         data.markDirty();
         if (!data.enabled || !data.selectedMap.equals(map.name)) return true;
 
@@ -255,6 +262,7 @@ public class TDMManager {
         nextTeamChangeTick.clear();
         teamlessPlayers.clear();
         roundWaitingPlayers.clear(); roundWaitingAnchors.clear(); selectedKits.clear(); survivorChoicePending.clear();
+        ffaEliminated.clear(); ffaNextRoundTick=0L; ffaRoundWinner=null;
     }
 
     public static boolean isEnabled(World world) {
@@ -586,6 +594,12 @@ public class TDMManager {
             return;
         }
 
+        if (isFfaMode(world) && ffaNextRoundTick > 0L) {
+            if (now >= ffaNextRoundTick) startFfaRound(world);
+            else if (now % 20 == 0) sendStatusToAll(world);
+            return;
+        }
+
         if (data.roundEndTick <= 0 || now > data.roundEndTick + MAP_VOTE_TICKS) {
             startRound(world, false);
             return;
@@ -637,7 +651,9 @@ public class TDMManager {
             TDMBombManager.startMatch(world);
         } else {
             TDMBombManager.cleanup(world, true);
+            if(isFfaMode(world)){ffaEliminated.clear();ffaNextRoundTick=0L;ffaRoundWinner=null;}
             placeAllPlayersAtSelectedMap(world, KitSelectionContext.RESPAWN_LOCK);
+            awardRoundStartBuyScore(world);
         }
         sendStatusToAll(world);
     }
@@ -682,6 +698,8 @@ public class TDMManager {
         data.mapVoteEndTick = world.getTotalWorldTime() + MAP_VOTE_TICKS;
         data.mapVotes.clear();
         data.markDirty();
+        // Voting changes combat eligibility, not spatial ownership of the selected map.
+        placeAllPlayersAtSelectedMap(world, KitSelectionContext.NONE);
         sendMapVoteGuiToAll(world);
         sendStatusToAll(world);
     }
@@ -759,7 +777,7 @@ public class TDMManager {
     public static void placeAllPlayersAtSelectedMap(World world, KitSelectionContext context) {
         Random random = new Random();
         for (EntityPlayerMP player : getOnlinePlayers()) {
-            if (!isAliveForTDM(player)) {
+            if (!canPlaceAtTdmSpawn(player)) {
                 continue;
             }
 
@@ -780,6 +798,11 @@ public class TDMManager {
             return false;
         }
 
+        if(map.mode==TDMGameMode.FFA){
+            boolean available=hasSpawnForTeam(data,map,null);
+            if(!available)logInvalidSpawn(null,map.name,null,world.provider.dimensionId);
+            return available;
+        }
         boolean redAvailable = hasSpawnForTeam(data, map, Team.RED);
         boolean blueAvailable = hasSpawnForTeam(data, map, Team.BLUE);
         if (!redAvailable) {
@@ -862,6 +885,7 @@ public class TDMManager {
             player.addChatMessage(new ChatComponentText("TDM is not enabled."));
             return false;
         }
+        if(isFfaMode(player.worldObj)){player.addChatMessage(new ChatComponentText("FFA has no teams."));return false;}
         if (TDMBombManager.isRoundActive() || TDMSpectatorManager.isObserving(player)) {
             player.addChatMessage(new ChatComponentText("Team changes are unavailable during an active bomb round."));
             return false;
@@ -916,6 +940,7 @@ public class TDMManager {
     public static Team getOrAssignPlayerTeam(EntityPlayer player) {
         TDMData data = TDMData.get(player.worldObj);
         String playerName = player.getCommandSenderName().toLowerCase();
+        if(isFfaMode(player.worldObj)) return null;
         Team team = data.playerTeams.get(playerName);
 
         if (team != null) {
@@ -930,7 +955,12 @@ public class TDMManager {
     }
 
     public static boolean hasPlayerTeam(EntityPlayer player) {
-        return player != null && getPlayerTeam(player.worldObj, player.getCommandSenderName()) != null;
+        return isCompetitivePlayer(player);
+    }
+
+    public static boolean isCompetitivePlayer(EntityPlayer player){
+        if(player==null||teamlessPlayers.contains(getPlayerKey(player))||TDMSpectatorManager.isObserving(player))return false;
+        return isFfaMode(player.worldObj)||getPlayerTeam(player.worldObj,player.getCommandSenderName())!=null;
     }
 
     private static Team getSmallestTeam(TDMData data) {
@@ -1042,7 +1072,9 @@ public class TDMManager {
 
     public static int getBuyScore(EntityPlayer player){Integer v=TDMData.get(player.worldObj).playerBuyScores.get(getPlayerKey(player));return v==null?0:Math.max(0,v.intValue());}
     public static void addBuyScore(EntityPlayer player,int amount){TDMMap map=getSelectedMapData(player.worldObj);if(map==null||!map.buyScoreEnabled||amount<=0)return;TDMData d=TDMData.get(player.worldObj);int old=getBuyScore(player);int next=old>Integer.MAX_VALUE-amount?Integer.MAX_VALUE:old+amount;d.playerBuyScores.put(getPlayerKey(player),Integer.valueOf(next));d.markDirty();sendStatusToAll(player.worldObj);}
-    public static void awardKillBuyScore(EntityPlayer player){TDMMap map=getSelectedMapData(player.worldObj);if(map!=null&&map.mode==TDMGameMode.BOMB&&map.buyScoreEnabled&&TDMBombManager.isRoundActive())addBuyScore(player,map.killBuyScoreReward);}
+    public static void awardKillBuyScore(EntityPlayer player){TDMMap map=getSelectedMapData(player.worldObj);if(map!=null&&map.buyScoreEnabled&&isCompetitivePlayer(player)&&(map.mode!=TDMGameMode.BOMB||TDMBombManager.isRoundActive()))addBuyScore(player,map.killBuyScoreReward);}
+    public static void awardRoundStartBuyScore(World world){TDMMap map=getSelectedMapData(world);if(map==null)return;for(EntityPlayerMP p:getOnlinePlayers())if(p.worldObj==world&&isCompetitivePlayer(p))addBuyScore(p,map.roundStartBuyScoreReward);}
+    public static void awardRoundWinBuyScore(World world,Team team,EntityPlayer individual){TDMMap map=getSelectedMapData(world);if(map==null)return;if(individual!=null){if(isCompetitivePlayer(individual))addBuyScore(individual,map.roundWinBuyScoreReward);return;}for(EntityPlayerMP p:getOnlinePlayers())if(p.worldObj==world&&isCompetitivePlayer(p)&&getPlayerTeam(world,p.getCommandSenderName())==team)addBuyScore(p,map.roundWinBuyScoreReward);}
     public static void awardDefuseBuyScore(EntityPlayer player){TDMMap map=getSelectedMapData(player.worldObj);if(map!=null&&map.buyScoreEnabled)addBuyScore(player,map.bombDefuseBuyScoreReward);}
     public static void clearKitSelection(EntityPlayer player){if(player!=null){String key=getPlayerKey(player);pendingKitSelection.remove(key);kitSelectionContexts.remove(key);}}
     public static boolean hasSelectedKit(EntityPlayer player){return !pendingKitSelection.contains(getPlayerKey(player));}
@@ -1052,6 +1084,19 @@ public class TDMManager {
         return player != null && player.worldObj != null && !player.isDead && player.getHealth() > 0.0F
                 && !roundWaitingPlayers.contains(getPlayerKey(player));
     }
+    /** Spatial eligibility deliberately ignores combat-phase and round-waiting state. */
+    public static boolean canPlaceAtTdmSpawn(EntityPlayer player){return player!=null&&player.worldObj!=null&&!player.isDead&&player.getHealth()>0.0F;}
+
+    public static boolean isFfaEliminated(EntityPlayer player){return player!=null&&ffaEliminated.contains(getPlayerKey(player));}
+    public static void markLateJoinerFfaEliminated(EntityPlayer player){if(player!=null&&isFfaMode(player.worldObj))ffaEliminated.add(getPlayerKey(player));}
+    public static void eliminateFfaPlayer(EntityPlayer victim){
+        if(victim==null||!isFfaMode(victim.worldObj)||ffaNextRoundTick>0L||!isCompetitivePlayer(victim))return;
+        ffaEliminated.add(getPlayerKey(victim));
+        List<EntityPlayerMP> alive=new ArrayList<EntityPlayerMP>();
+        for(EntityPlayerMP p:getOnlinePlayers())if(p.worldObj==victim.worldObj&&isCompetitivePlayer(p)&&!ffaEliminated.contains(getPlayerKey(p)))alive.add(p);
+        if(alive.size()<=1){ffaRoundWinner=alive.isEmpty()?null:getPlayerKey(alive.get(0));if(!alive.isEmpty())awardRoundWinBuyScore(victim.worldObj,null,alive.get(0));ffaNextRoundTick=victim.worldObj.getTotalWorldTime()+100L;sendStatusToAll(victim.worldObj);}
+    }
+    private static void startFfaRound(World world){ffaEliminated.clear();ffaRoundWinner=null;ffaNextRoundTick=0L;releaseAllRoundWaiting();placeAllPlayersAtSelectedMap(world,KitSelectionContext.RESPAWN_LOCK);awardRoundStartBuyScore(world);}
 
     public static boolean isRoundWaiting(EntityPlayer player) { return player != null && roundWaitingPlayers.contains(getPlayerKey(player)); }
     public static void putInRoundWaiting(EntityPlayer player) {
@@ -1191,7 +1236,7 @@ public class TDMManager {
         if(context==KitSelectionContext.BUY_PHASE&&(!isBombMode(player.worldObj)||!isHardcoreRespawns(player.worldObj)||TDMBombManager.getState()!=TDMBombManager.BombRoundState.PRE_ROUND))return;
         if(context==KitSelectionContext.RESPAWN_LOCK&&(isHardcoreRespawns(player.worldObj)||(isBombMode(player.worldObj)&&TDMBombManager.getState()!=TDMBombManager.BombRoundState.LIVE&&TDMBombManager.getState()!=TDMBombManager.BombRoundState.BOMB_PLANTED)))return;
 
-        Team team = getOrAssignPlayerTeam(player);
+        Team team = isFfaMode(player.worldObj)?null:getOrAssignPlayerTeam(player);
         if (team == null) return;
         String mapName = getSelectedMap(player.worldObj);
         if (TDMKitManager.getKitCount(mapName, team) <= 0) {
@@ -1338,7 +1383,7 @@ public class TDMManager {
 
     /** Authoritative server-side placement path for login, respawn, and round transitions. */
     public static boolean placePlayerAtSelectedMapSpawn(EntityPlayer player, Random random) {
-        if (!isAliveForTDM(player)) {
+        if (!canPlaceAtTdmSpawn(player)) {
             return false;
         }
 
@@ -1414,7 +1459,7 @@ public class TDMManager {
                 + ", selectedMap=" + selectedMap
                 + ", team=" + teamName
                 + ", dimension=" + dimension
-                + ". No usable team spawn is available; refusing vanilla worldspawn fallback.";
+                + ". No usable " + (team==null?"FFA":"team") + " spawn is available; refusing vanilla worldspawn fallback.";
         if (MainRegistry.logger != null) {
             MainRegistry.logger.error(message);
         } else {
@@ -1423,7 +1468,7 @@ public class TDMManager {
     }
 
     public static SpawnPoint getRandomSpawn(EntityPlayer player, Random rand) {
-        Team team = getOrAssignPlayerTeam(player);
+        Team team = isFfaMode(player.worldObj)?null:getOrAssignPlayerTeam(player);
         return getRandomSpawn(player.worldObj, team, rand);
     }
 

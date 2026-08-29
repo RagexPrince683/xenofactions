@@ -108,8 +108,10 @@ public class TDMData extends WorldSavedData {
             if(map.mode==TDMManager.TDMGameMode.BOMB)map.hardcoreRespawns=true; // legacy infinite-respawn BOMB saves migrate to round elimination
             map.bombScoreLimitOverride=mapTag.hasKey("bombScoreLimit")?Math.max(0,mapTag.getInteger("bombScoreLimit")):0;
             map.bombRoundTicksOverride=mapTag.hasKey("bombRoundTicks")?Math.max(0,mapTag.getInteger("bombRoundTicks")):0;
-            map.buyScoreEnabled=mapTag.hasKey("buyScoreEnabled")&&mapTag.getBoolean("buyScoreEnabled");
-            map.killBuyScoreReward=mapTag.hasKey("killBuyScoreReward")?Math.max(0,mapTag.getInteger("killBuyScoreReward")):0;
+            map.buyScoreEnabled=!mapTag.hasKey("buyScoreEnabled")||mapTag.getBoolean("buyScoreEnabled");
+            map.roundStartBuyScoreReward=mapTag.hasKey("roundStartBuyScoreReward")?Math.max(0,mapTag.getInteger("roundStartBuyScoreReward")):1;
+            map.killBuyScoreReward=mapTag.hasKey("killBuyScoreReward")?Math.max(0,mapTag.getInteger("killBuyScoreReward")):2;
+            map.roundWinBuyScoreReward=mapTag.hasKey("roundWinBuyScoreReward")?Math.max(0,mapTag.getInteger("roundWinBuyScoreReward")):3;
             map.bombDefuseBuyScoreReward=mapTag.hasKey("bombDefuseBuyScoreReward")?Math.max(0,mapTag.getInteger("bombDefuseBuyScoreReward")):0;
             readBombsite(mapTag,"bombsiteA",map.bombsiteA);readBombsite(mapTag,"bombsiteB",map.bombsiteB);
             int mapSpawnCount = mapTag.getInteger("spawnCount");
@@ -184,7 +186,7 @@ public class TDMData extends WorldSavedData {
             if (map.roundTicksOverride > 0) mapTag.setInteger("roundTicks", map.roundTicksOverride);
             mapTag.setString("mode",map.mode.name());mapTag.setString("terroristTeam",map.terroristTeam.name);if(map.mode!=TDMManager.TDMGameMode.BOMB)mapTag.setBoolean("hardcoreRespawns",map.hardcoreRespawns);
             if(map.bombScoreLimitOverride>0)mapTag.setInteger("bombScoreLimit",map.bombScoreLimitOverride);if(map.bombRoundTicksOverride>0)mapTag.setInteger("bombRoundTicks",map.bombRoundTicksOverride);
-            mapTag.setBoolean("buyScoreEnabled",map.buyScoreEnabled);if(map.killBuyScoreReward>0)mapTag.setInteger("killBuyScoreReward",map.killBuyScoreReward);if(map.bombDefuseBuyScoreReward>0)mapTag.setInteger("bombDefuseBuyScoreReward",map.bombDefuseBuyScoreReward);
+            mapTag.setBoolean("buyScoreEnabled",map.buyScoreEnabled);mapTag.setInteger("roundStartBuyScoreReward",Math.max(0,map.roundStartBuyScoreReward));mapTag.setInteger("killBuyScoreReward",Math.max(0,map.killBuyScoreReward));mapTag.setInteger("roundWinBuyScoreReward",Math.max(0,map.roundWinBuyScoreReward));if(map.bombDefuseBuyScoreReward>0)mapTag.setInteger("bombDefuseBuyScoreReward",map.bombDefuseBuyScoreReward);
             writeBombsite(mapTag,"bombsiteA",map.bombsiteA);writeBombsite(mapTag,"bombsiteB",map.bombsiteB);
             mapTag.setInteger("spawnCount", map.spawns.size());
             for (int i = 0; i < map.spawns.size(); i++) {
@@ -227,8 +229,9 @@ public class TDMData extends WorldSavedData {
     }
 
     private TDMManager.SpawnPoint readSpawn(NBTTagCompound spawnTag) {
+        String type=spawnTag.hasKey("type")?spawnTag.getString("type"):"team";
         TDMManager.Team team = TDMManager.Team.fromName(spawnTag.getString("team"));
-        if (team == null) {
+        if (team == null && !"ffa".equals(type)) {
             return null;
         }
 
@@ -243,7 +246,8 @@ public class TDMData extends WorldSavedData {
 
     private NBTTagCompound writeSpawn(TDMManager.SpawnPoint spawn) {
         NBTTagCompound spawnTag = new NBTTagCompound();
-        spawnTag.setString("team", spawn.team.name);
+        spawnTag.setString("type",spawn.team==null?"ffa":"team");
+        if(spawn.team!=null)spawnTag.setString("team", spawn.team.name);
         spawnTag.setInteger("dim", spawn.dim);
         spawnTag.setInteger("x", spawn.x);
         spawnTag.setInteger("y", spawn.y);

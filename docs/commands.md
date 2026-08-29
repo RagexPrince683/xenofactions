@@ -238,3 +238,13 @@ All commands require current `/xc` operator authorization. The console may use o
 `/tdm teamless` is an operator-level command which removes the executing player
 from both competitive teams. Use `/tdm setteam <player> <red|blue>` to return the
 observer to play.
+
+### FFA and economy map settings
+
+- `/tdm map mode <map> <deathmatch|bomb|ffa>`
+- `/tdm map addspawn <map> <red|blue|ffa>`
+- `/tdm map roundstartscore <map> <amount>`
+- `/tdm map killscore <map> <amount>`
+- `/tdm map roundwinscore <map> <amount>`
+
+Reward amounts must be non-negative; zero disables that reward. FFA competitors are not assigned RED or BLUE, and `/tdm teamless` continues to designate an observer rather than a competitor.

@@ -645,3 +645,11 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Corrected the buy key route and consolidated server validation around active buy time plus a bounded four-block team-spawn check.
 - Removed the alternate infinite-respawn BOMB lifecycle and migrated legacy BOMB maps to round elimination while retaining the deathmatch respawn setting.
 - Source-level call-site and state-cleanup inspection was completed; dedicated-server multiplayer runtime validation remains required.
+
+2026-08-29 00:00 — TDM transition placement, built-in sounds, FFA, and map economy
+
+- Separated TDM spawn placement eligibility from combat/round-waiting eligibility so login, respawn, voting, intermission, and waiting phases retain selected-map spatial ownership.
+- Corrected the built-in CT victory sound declaration to the bundled `tdm_ct_win_1.ogg` asset.
+- Added explicit FFA mode data, neutral spawn persistence, hostile-player kill handling, elimination winner resolution, and a neutral single-roster menu.
+- Added persisted per-map round-start, kill, and round-win buy-score rewards with backward-compatible defaults of 1, 2, and 3 and non-negative admin settings.
+- Runtime Forge/client-server validation remains required; source-only checks were used for this pass.
