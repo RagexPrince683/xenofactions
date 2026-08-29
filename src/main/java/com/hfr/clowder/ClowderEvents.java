@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import com.hbm.extprop.HbmLivingProps;
-import com.hbm.potion.HbmPotion;
 import com.hfr.blocks.BlockDummyable;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder.ScheduledTeleport;
@@ -19,6 +17,7 @@ import com.hfr.command.MuteManager;
 import com.hfr.command.*;
 import com.hfr.config.XFConfig;
 import com.hfr.compat.HbmCsgoChargeIntegration;
+import com.hfr.compat.OptionalHbmRadiationCompat;
 import com.hfr.data.ClowderData;
 import com.hfr.handler.BobbyBreaker;
 import com.hfr.handler.ExplosionSound;
@@ -1233,16 +1232,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 				e.addPotionEffect(new PotionEffect(Potion.regeneration.id, 40));
 				e.addPotionEffect(new PotionEffect(Potion.resistance.id, 40));
 				e.heal(5.0F);
-				//todo: radaway given or just set player's rad to 0 without reflections
-				//fuck it we're importing NTM too
-				//FUCK NTM FUCK EVERYTHING ABOUT NTM WHY ARE YOU USING REFLECTIONS FOR FUCKING POTIONS YOU STUPID ASS FUCKING RETARD
-				//FUCK YOUR ENTIRE EBT CARD ASS MOD ITS COMPLETE PONY BRONIE HORSE SHIT AND YOU SHOULD DIE IN A FIRE
-				e.addPotionEffect(new PotionEffect(HbmPotion.radaway.id, 50));
-				e.addPotionEffect(new PotionEffect(HbmPotion.radx.id, 110));
-				HbmLivingProps.incrementRadiation(e, -HbmLivingProps.getRadiation(e));
-				e.removePotionEffect(HbmPotion.radiation.id);
-
-
+				OptionalHbmRadiationCompat.clearRadiation((EntityPlayer) e);
 
 				IAttributeInstance knockbackResistance = e.getEntityAttribute(SharedMonsterAttributes.knockbackResistance);
 				if (knockbackResistance != null) {
