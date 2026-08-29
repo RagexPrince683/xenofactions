@@ -299,6 +299,33 @@ The `20_tdm` configuration category accepts string lists for `ctWinSounds`,
 `bombPlantedSounds`. Entries are Minecraft sound IDs; one non-blank entry is
 selected randomly for each authoritative event. Empty lists disable that event.
 
+The bundled defaults are written by Forge in its 1.7.10 string-list syntax:
+
+```cfg
+I:tdmSoundConfigVersion=1
+S:ctWinSounds <
+    hfr:tdm.ct_win1
+>
+S:terroristWinSounds <
+    hfr:tdm.t_win1
+>
+S:ctRoundStartSounds <
+    hfr:tdm.ct_round_start1
+>
+S:terroristRoundStartSounds <
+    hfr:tdm.t_round_start1
+>
+S:bombPlantedSounds <
+    hfr:tdm.bomb_plant1
+>
+```
+
+`tdmSoundConfigVersion` is an internal migration marker. When version 1 is first
+applied, a missing, empty, or blank-only sound list is repaired to its bundled
+default, while every non-empty custom list is preserved. After the marker is
+written, administrators may intentionally clear any list to disable that event;
+later loads and reloads preserve the empty list.
+
 ## TDM FFA and economy
 
 `/tdm map mode <map> ffa` selects round-elimination Free-For-All. Add neutral spawn locations with `/tdm map addspawn <map> ffa`; these are stored independently from RED/BLUE spawns. Existing map saves remain valid and maps without FFA spawn records retain their team-mode behavior.
@@ -312,4 +339,4 @@ TDM maps persist three non-negative economy rewards. Missing fields use these de
 Configure them with `/tdm map roundstartscore <map> <amount>`, `/tdm map killscore <map> <amount>`, and `/tdm map roundwinscore <map> <amount>`. Zero disables an individual reward. `/tdm map economy <map> false` disables map economy as a whole.
 
 Bundled sound event IDs are `hfr:tdm.ct_win1`, `hfr:tdm.t_win1`, `hfr:tdm.ct_round_start1`, `hfr:tdm.t_round_start1`, and `hfr:tdm.bomb_plant1`. Each configured event accepts a variant list; blank entries are ignored and an empty list disables playback.
-The values name sound **events**, not `.ogg` files or paths. An ID without a namespace uses `hfr`; an explicit namespace (for example `othermod:custom.roundwin`) is preserved. The server selects one variant and sends an explicit playback packet to each eligible player in the same world/dimension. Operators can exercise that same path with `/tdm testsound <ctwin|twin|ctstart|tstart|bombplant>`; start tests target only the operator, while win and plant tests use normal global TDM recipients. Enable legacy `enableDebugLogging` to log the trigger, configured variants, normalized event ID, recipient count, dispatch route, and client playback.
+The values name sound **events**, not `.ogg` files or paths. An ID without a namespace uses `hfr`; an explicit namespace (for example `othermod:custom.roundwin`) is preserved. The server selects one variant and sends an explicit playback packet to each eligible player in the same world/dimension. Operators can exercise that same path with `/tdm testsound <ctwin|twin|ctstart|tstart|bombplant>`; start tests target only the operator, while win and plant tests use normal global TDM recipients. If an event is disabled, the command reports the event type, property name, raw values, and normalized effective values. Enable legacy `enableDebugLogging` to log the trigger, configured variants, normalized event ID, recipient count, dispatch route, and client playback.
