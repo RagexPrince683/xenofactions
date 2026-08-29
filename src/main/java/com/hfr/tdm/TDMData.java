@@ -32,6 +32,11 @@ public class TDMData extends WorldSavedData {
     public final Map<String, TDMManager.TDMMap> maps = new LinkedHashMap<String, TDMManager.TDMMap>();
     public final Map<String, TDMManager.Team> playerTeams = new HashMap<String, TDMManager.Team>();
     public final Map<String, String> mapVotes = new HashMap<String, String>();
+    /** Runtime-only player vote to end the current map; never persisted across server/map lifecycles. */
+    public boolean skipVoteActive = false;
+    public long skipVoteEndTick = 0;
+    public String skipVoteInitiator = "";
+    public final Map<String, Boolean> skipVotes = new HashMap<String, Boolean>();
     public final Map<String, Integer> playerKills = new HashMap<String, Integer>();
     public final Map<String, Integer> playerDeaths = new HashMap<String, Integer>();
     /** Match-scoped balances, persisted only so reconnects cannot reset money. */

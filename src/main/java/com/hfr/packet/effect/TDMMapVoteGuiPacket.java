@@ -14,17 +14,20 @@ public class TDMMapVoteGuiPacket implements IMessage {
 
     private String[] mapNames;
     private int voteSeconds;
+    private String currentMap;
 
     public TDMMapVoteGuiPacket() { }
 
-    public TDMMapVoteGuiPacket(String[] mapNames, int voteSeconds) {
+    public TDMMapVoteGuiPacket(String[] mapNames, int voteSeconds, String currentMap) {
         this.mapNames = mapNames;
         this.voteSeconds = voteSeconds;
+        this.currentMap = currentMap;
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
         voteSeconds = buf.readInt();
+        currentMap = ByteBufUtils.readUTF8String(buf);
         int count = buf.readInt();
         mapNames = new String[count];
         for (int i = 0; i < count; i++) {
@@ -35,6 +38,7 @@ public class TDMMapVoteGuiPacket implements IMessage {
     @Override
     public void toBytes(ByteBuf buf) {
         buf.writeInt(voteSeconds);
+        ByteBufUtils.writeUTF8String(buf, currentMap);
         buf.writeInt(mapNames.length);
         for (int i = 0; i < mapNames.length; i++) {
             ByteBufUtils.writeUTF8String(buf, mapNames[i]);
@@ -51,7 +55,7 @@ public class TDMMapVoteGuiPacket implements IMessage {
                 @Override
                 public void run() {
                     Minecraft.getMinecraft().displayGuiScreen(
-                            new GUITDMMapVote(message.mapNames, message.voteSeconds)
+                            new GUITDMMapVote(message.mapNames, message.voteSeconds, message.currentMap)
                     );
                 }
             });

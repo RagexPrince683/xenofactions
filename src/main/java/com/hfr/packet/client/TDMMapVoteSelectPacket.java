@@ -35,7 +35,7 @@ public class TDMMapVoteSelectPacket implements IMessage {
         public IMessage onMessage(TDMMapVoteSelectPacket message, MessageContext ctx) {
             EntityPlayer player = ctx.getServerHandler().playerEntity;
             if (!TDMManager.isMapVoteActive(player.worldObj) || TDMManager.voteForMap(player.worldObj, player.getCommandSenderName(), message.mapName) == null) {
-                player.addChatMessage(new ChatComponentText("Unable to vote for that TDM map."));
+                player.addChatMessage(new ChatComponentText("Unable to vote for that TDM map; the current map and unknown maps are unavailable."));
             } else {
                 player.addChatMessage(new ChatComponentText("Voted for TDM map " + TDMManager.normalizeMapName(message.mapName) + "."));
             }

@@ -677,3 +677,10 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Removed direct HBM class references from always-loaded safezone and common event handlers, eliminating their HBM-driven classloading failure path.
 - Added a one-time, reflection-backed radiation compatibility bridge selected only when Forge reports mod ID `hbm`; absent or incompatible HBM installations degrade to a no-op with at most one warning per failure boundary.
 - Preserved the existing safezone radaway, Rad-X, radiation reset, and radiation-potion removal behavior when the expected HBM API is available. HBM-free and HBM-present dedicated-server runtime validation remains required.
+
+2026-08-29 23:59 — Add TDM skip voting and current-map exclusion
+
+- Added `/tdm skip [yes|no|status]` as a 60-second, strict-majority vote for active competitors, with duplicate prevention, disconnect-aware eligibility, result feedback, and lifecycle cleanup.
+- Routed successful skips through the existing map-vote transition so combat, objective, freeze, waiting, kit, and buy-phase state are cleaned without producing a team, FFA, bomb, or economy result.
+- Kept the stable normalized map key visible but disabled in the map-vote GUI, rejected current-map selections authoritatively, excluded it from winner resolution, and retained the current match when no alternative exists.
+- Updated command help, completion, command-menu localization, and TDM documentation. Source-level validation was completed; multiplayer and dedicated-server runtime validation remains required.

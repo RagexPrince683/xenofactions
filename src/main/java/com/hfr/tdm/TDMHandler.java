@@ -127,6 +127,7 @@ public class TDMHandler {
 
     @SubscribeEvent
     public void onLogout(cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent event) {
+        TDMManager.onPlayerDisconnected(event.player.worldObj, event.player);
         pendingRespawns.remove(getKey(event.player));
         TDMManager.clearSurvivorChoice(event.player);
         TDMManager.releaseRoundWaiting(event.player);
