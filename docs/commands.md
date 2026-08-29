@@ -217,6 +217,8 @@ TDM always stores players on the **RED** or **BLUE** team. A bomb map adds objec
 
 Use `/tdm map mode <map> <deathmatch|bomb>` to select the mode. BOMB always uses round elimination; `/tdm map hardcorerespawns <map> <true|false>` is retained only for deathmatch maps. Configure A or B as normalized cuboids with `/tdm map bombsite <map> <a|b> pos1`, `pos2`, or `clear`; positions use the executing player's floored block coordinate and both corners must share a dimension.
 
+`/tdm map lossscore <map> <amount>` configures the end-of-round losing-side bonus, while `/tdm map plantscore <map> <amount>` configures the individual successful-plant reward; both default to **1** and accept zero to disable the reward. Map listings show loss, kill, win, plant, and defuse economy values.
+
 `/tdm map scorelimit` and `/tdm map timer` retain their deathmatch meanings on deathmatch maps. On bomb maps they configure wins required (default **13**) and the pre-plant round timer (default **120 seconds**) using separate persisted overrides. `/tdm maps` shows roles, hardcore behavior, effective defaults, and bombsite readiness.
 
 HBM remains optional for Xenofactions and ordinary deathmatch. Playing a BOMB map requires HBM's exact runtime block registration `hbm:tile.charge_c4csgo` (with legacy `hbm:charge_c4csgo` fallback); no HBM classes are compile-time dependencies. After buy-time kit setup, each live round gives one CSGO charge to a random active player on the map's configured Terrorist team. The narrow PR #195 Warzone exception remains in effect outside controlled bomb rounds.
@@ -243,9 +245,10 @@ observer to play.
 
 - `/tdm map mode <map> <deathmatch|bomb|ffa>`
 - `/tdm map addspawn <map> <red|blue|ffa>`
-- `/tdm map roundstartscore <map> <amount>`
+- `/tdm map lossscore <map> <amount>`
 - `/tdm map killscore <map> <amount>`
 - `/tdm map roundwinscore <map> <amount>`
+- `/tdm map plantscore <map> <amount>`
 
 Reward amounts must be non-negative; zero disables that reward. FFA competitors are not assigned RED or BLUE, and `/tdm teamless` continues to designate an observer rather than a competitor.
 # TDM sound diagnostics

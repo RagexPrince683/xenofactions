@@ -31,3 +31,10 @@ Leaving a world or server clears the client TDM HUD, scores, timers, BOMB state,
 Changing the selected, enabled map with `/tdm map mode <map> <deathmatch|bomb>` starts a clean match in the requested mode immediately. Changing an unselected map only updates that map's configuration.
 
 BOMB normally waits for at least one eligible RED player and one eligible BLUE player. Operators may explicitly enable the transient development override with `/tdm bombtest on`; this permits one eligible player to exercise the round lifecycle without creating a fake opponent or changing team persistence. `/tdm bombtest off` safely returns a one-team test round to the normal waiting state, and the override resets when the server lifecycle initializes.
+
+
+## Round-result and plant rewards
+
+The first buy period starts from zero buy score. At authoritative round completion, the winning side receives the configured round-win reward and captured active competitors on the losing side receive `roundLossBuyScoreReward` before the next `PRE_ROUND` period. Teamless observers and late non-participants are excluded. FFA pays the win reward only to the individual winner and the loss reward to every other captured competitor; a no-winner draw pays the loss reward to all captured competitors.
+
+A successful HBM CSGO plant pays `bombPlantBuyScoreReward` to the planter only when Xenofactions accepts the placed block and transitions from `LIVE` to `BOMB_PLANTED`. Attempts, planted-state ticks, defuse/detonation processing, and explosion rewards do not repeat that payment. Defaults are kill **2**, round win **3**, round loss **1**, and bomb plant **1**.

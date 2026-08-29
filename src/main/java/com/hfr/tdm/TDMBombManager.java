@@ -37,6 +37,8 @@ public final class TDMBombManager {
     /** Players whose inventory may be replaced while the next round is prepared. */
     private static final Set<String> freshLoadoutPlayers = new HashSet<String>();
     private static final Set<String> survivorLoadoutPlayers = new HashSet<String>();
+    /** Snapshot prevents late joiners and teamless observers from receiving this round's result economy. */
+    private static final Set<String> roundParticipants = new HashSet<String>();
     private static boolean firstRoundOfMatch = true;
     private static TrackedBomb bomb;
     private static PendingPlant pendingPlant;
@@ -170,7 +172,7 @@ public final class TDMBombManager {
             waitForTeams(world);
             return;
         }
-        TDMManager.awardRoundStartBuyScore(world);
+        TDMManager.captureActiveRoundParticipants(world, roundParticipants);
         TDMManager.playConfiguredSound(world, "t_round_start", XFConfig.tdmTRoundStartSounds, TDMManager.getTerroristTeam(world));
         TDMManager.playConfiguredSound(world, "ct_round_start", XFConfig.tdmCtRoundStartSounds, TDMManager.getCounterTerroristTeam(world));
         TDMManager.sendStatusToAll(world);
@@ -211,6 +213,7 @@ public final class TDMBombManager {
     private static void acceptPlant(EntityPlayer player,int x,int y,int z){String site=TDMManager.getBombsiteAt(player.worldObj,player.dimension,x,y,z);if(!"A".equals(site)&&!"B".equals(site))return;
         bomb=new TrackedBomb(player.worldObj,player.dimension,x,y,z,site,player.getCommandSenderName(),TDMManager.getOrAssignPlayerTeam(player),TDMManager.getBombRole(player),player.worldObj.getBlock(x,y,z),player.worldObj.getBlockMetadata(x,y,z),player.worldObj.getTotalWorldTime());bomb.observe();HbmCsgoChargeIntegration.describeImplementation(player.worldObj,x,y,z);missingBombSince=-1L;missingBombWarningLogged=false;
         state=BombRoundState.BOMB_PLANTED;
+        TDMManager.awardBombPlantBuyScore(player);
         TDMManager.playConfiguredSound(player.worldObj, "bomb_planted", XFConfig.tdmBombPlantedSounds, null);
         TDMManager.sendStatusToAll(player.worldObj);
     }
@@ -277,7 +280,7 @@ public final class TDMBombManager {
                 if(player.worldObj==world&&TDMManager.getPlayerTeam(world,player.getCommandSenderName())==winner)
                     TDMManager.awardDefuseBuyScore(player);
         }
-        TDMManager.awardRoundWinBuyScore(world,winner,null);
+        TDMManager.awardRoundResultBuyScore(world,winner,null,roundParticipants);
         if(winner==TDMManager.Team.RED){d.redBombWins++;d.blueBombLosses++;}else{d.blueBombWins++;d.redBombLosses++;} d.markDirty(); stateEndTick=world.getTotalWorldTime()+INTERMISSION_TICKS;
         TDMManager.BombRole role=TDMManager.getBombRole(world,winner); broadcast((role==TDMManager.BombRole.TERRORIST?"Terrorists":"Counter-Terrorists")+" win: "+reasonText(reason)+".");
         TDMManager.playConfiguredSound(world, role==TDMManager.BombRole.TERRORIST ? "t_victory" : "ct_victory", role==TDMManager.BombRole.TERRORIST ? XFConfig.tdmTWinSounds : XFConfig.tdmCtWinSounds, null);
@@ -306,6 +309,7 @@ public final class TDMBombManager {
         }
         roundDeaths.clear();
         freshLoadoutPlayers.clear();
+        roundParticipants.clear();
         firstRoundOfMatch = true;
         state = BombRoundState.DISABLED;
     }

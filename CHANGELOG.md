@@ -663,3 +663,11 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Added a one-time TDM sound-config version migration that repairs legacy empty lists to the five bundled event IDs without overwriting non-empty custom values.
 - Separated immutable Forge defaults from live loaded arrays so reloads cannot turn an earlier empty configured value into the default for a subsequently missing property.
 - Expanded disabled `/tdm testsound` feedback with the event type, property name, raw variants, and normalized effective variants. Source inspection was completed; the command and client playback still require in-game validation.
+
+2026-08-29 23:30 — TDM team placement, respawn, and round economy fixes
+
+- Re-resolved team spawns and rebuilt waiting/buy freeze anchors immediately after automatic balancing, while retry entries now retain only lifecycle context and always use persisted current team membership.
+- Routed Forge respawn events for replacement player entities directly through immediate selected-map placement with bounded name-keyed retries, including RED, BLUE, FFA, and eliminated waiting placement.
+- Replaced the universal round-start score with a result-time losing-side bonus, including captured-participant filtering and deterministic all-loser FFA draws.
+- Migrated legacy `roundStartBuyScoreReward` data to `roundLossBuyScoreReward`, added the configurable `bombPlantBuyScoreReward`, and awarded it once at the authoritative unplanted-to-planted transition.
+- Updated TDM map commands and documentation. Source-level lifecycle, persistence, and call-site inspection was completed; dedicated-server multiplayer runtime validation remains required.
