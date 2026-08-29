@@ -1,3 +1,9 @@
+# Pull request: schedule TDM packet GUIs on the client thread
+
+- Scheduled the `/tdm menu` GUI transition through Minecraft's Forge 1.7.10 client task queue instead of changing the current screen from the network handler thread.
+- Applied the same client-thread scheduling to the TDM map vote GUI packet while preserving packet formats, registration order, and all existing menu behavior.
+- Audited TDM GUI packet handlers and confirmed the kit GUI and kit-result transitions already use the client task queue.
+
 # Pull request: fix dedicated-server TDM food restoration
 
 - Replaced client-side-only `FoodStats` setter calls in TDM new-life restoration with the common-side NBT read/write path required by Forge 1.7.10 dedicated servers.

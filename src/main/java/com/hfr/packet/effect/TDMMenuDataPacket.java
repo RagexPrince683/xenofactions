@@ -9,6 +9,7 @@ import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 
@@ -70,8 +71,20 @@ public class TDMMenuDataPacket implements IMessage {
     public static class Handler implements IMessageHandler<TDMMenuDataPacket, IMessage> {
         @Override
         @SideOnly(Side.CLIENT)
-        public IMessage onMessage(TDMMenuDataPacket message, MessageContext ctx) {
-            EventHandlerClient.openTDMMenu(message.currentTeam, message.cooldownSeconds, message.friendlyLines, message.enemyLines,message.canOpenBuyMenu);
+        public IMessage onMessage(final TDMMenuDataPacket message, MessageContext ctx) {
+            // Forge 1.7.10 SimpleNetworkWrapper handlers can run off-thread, so GUI state must change on the client thread.
+            Minecraft.getMinecraft().func_152344_a(new Runnable() {
+                @Override
+                public void run() {
+                    EventHandlerClient.openTDMMenu(
+                            message.currentTeam,
+                            message.cooldownSeconds,
+                            message.friendlyLines,
+                            message.enemyLines,
+                            message.canOpenBuyMenu
+                    );
+                }
+            });
             return null;
         }
     }
