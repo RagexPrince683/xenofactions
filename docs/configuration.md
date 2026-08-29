@@ -292,3 +292,9 @@ Phase 1's template-backed Earth type is controlled by `enableEarthWorldType`, `e
 # Builder schematic limits
 
 Builder schematic processing is bounded by `builderMaxSchematicBlocks`, `builderMaxSchematicWidth`, `builderMaxSchematicHeight`, `builderMaxSchematicLength`, and `builderMaxUploadBytes` in `XENOFACTIONS_19_BUILDERS`. Defaults are 262144 blocks, 256×128×256 dimensions, and 8 MiB encoded upload data. Lower these values for smaller servers; existing persisted jobs are not replaced.
+# TDM event sounds
+
+The `20_tdm` configuration category accepts string lists for `ctWinSounds`,
+`terroristWinSounds`, `ctRoundStartSounds`, `terroristRoundStartSounds`, and
+`bombPlantedSounds`. Entries are Minecraft sound IDs; one non-blank entry is
+selected randomly for each authoritative event. Empty lists disable that event.

@@ -233,3 +233,8 @@ HBM remains optional for Xenofactions and ordinary deathmatch. Playing a BOMB ma
 | `/xc worldborder clearexemptions` | Remove every saved exemption without changing border state or geometry. |
 
 All commands require current `/xc` operator authorization. The console may use on, off, status, and clearexemptions; wand and exempt require an in-game administrator. Create an exemption with `/xc worldborder wand`, left-click position 1, right-click position 2, then `/xc worldborder exempt`. Exemptions persist automatically and bypass only Earth boundary enforcement. Players who leave an out-of-map exemption are returned safely to the configured Earth map center; ordinary non-exempt crossings retain the existing wrap behavior. For a world without runtime saved data, the configured `earthBoundaryEnabled` value is used.
+# TDM observer administration
+
+`/tdm teamless` is an operator-level command which removes the executing player
+from both competitive teams. Use `/tdm setteam <player> <red|blue>` to return the
+observer to play.

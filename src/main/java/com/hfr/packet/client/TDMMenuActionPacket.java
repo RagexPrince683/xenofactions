@@ -28,10 +28,10 @@ public class TDMMenuActionPacket implements IMessage {
                         return;
                     }
 
-                    if (message.requestSwap) {
+                    if (message.requestSwap && TDMManager.hasPlayerTeam(player)) {
                         TDMManager.changePlayerTeamWithCooldown(player);
                     }
-                    if (message.requestBuyMenu && TDMManager.isBombMode(player.worldObj)
+                    if (message.requestBuyMenu && TDMManager.hasPlayerTeam(player) && TDMManager.isBombMode(player.worldObj)
                             && com.hfr.tdm.TDMBombManager.getState()
                                     == com.hfr.tdm.TDMBombManager.BombRoundState.PRE_ROUND
                             && !TDMManager.hasSelectedKit(player)) {

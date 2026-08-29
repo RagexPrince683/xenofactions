@@ -50,8 +50,8 @@ public class GUITDMMenu extends GuiScreen {
         drawRect(leftX, panelTop, leftX + panelWidth, panelTop + 14, 0xCC2E6DA4);
         drawRect(rightX, panelTop, rightX + panelWidth, panelTop + 14, 0xCC9C2D2D);
 
-        drawString(this.fontRendererObj, "FRIENDLY", leftX + 5, panelTop + 3, 0xFFFFFF);
-        drawString(this.fontRendererObj, "ENEMY", rightX + 5, panelTop + 3, 0xFFFFFF);
+        drawString(this.fontRendererObj, "BLUE", leftX + 5, panelTop + 3, 0xFFFFFF);
+        drawString(this.fontRendererObj, "RED", rightX + 5, panelTop + 3, 0xFFFFFF);
         drawString(this.fontRendererObj, "PLAYER | K/D | KDR", leftX + 5, panelTop + 18, 0x8FD3FF);
         drawString(this.fontRendererObj, "PLAYER | K/D | KDR", rightX + 5, panelTop + 18, 0xFF8C8C);
 

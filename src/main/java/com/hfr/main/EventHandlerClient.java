@@ -382,6 +382,9 @@ public class EventHandlerClient {
 					}
 					
 					lock = true;
+				} else if(Keyboard.isKeyDown(ClientProxy.tdmBuyMenu.getKeyCode())) {
+					if(!lock) PacketDispatcher.wrapper.sendToServer(new TDMMenuActionPacket(false, true));
+					lock = true;
 				
 				//logger
 				} else if(Keyboard.isKeyDown(ClientProxy.flushLog.getKeyCode())) {
