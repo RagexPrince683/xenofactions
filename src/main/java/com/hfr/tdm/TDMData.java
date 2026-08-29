@@ -105,6 +105,7 @@ public class TDMData extends WorldSavedData {
             try { map.mode=TDMManager.TDMGameMode.valueOf(mapTag.hasKey("mode")?mapTag.getString("mode"):"DEATHMATCH"); } catch(IllegalArgumentException e){map.mode=TDMManager.TDMGameMode.DEATHMATCH;}
             TDMManager.Team terrorist=TDMManager.Team.fromName(mapTag.hasKey("terroristTeam")?mapTag.getString("terroristTeam"):"red");map.terroristTeam=terrorist==null?TDMManager.Team.RED:terrorist;
             map.hardcoreRespawns=mapTag.hasKey("hardcoreRespawns")&&mapTag.getBoolean("hardcoreRespawns");
+            if(map.mode==TDMManager.TDMGameMode.BOMB)map.hardcoreRespawns=true; // legacy infinite-respawn BOMB saves migrate to round elimination
             map.bombScoreLimitOverride=mapTag.hasKey("bombScoreLimit")?Math.max(0,mapTag.getInteger("bombScoreLimit")):0;
             map.bombRoundTicksOverride=mapTag.hasKey("bombRoundTicks")?Math.max(0,mapTag.getInteger("bombRoundTicks")):0;
             map.buyScoreEnabled=mapTag.hasKey("buyScoreEnabled")&&mapTag.getBoolean("buyScoreEnabled");
@@ -181,7 +182,7 @@ public class TDMData extends WorldSavedData {
             mapTag.setString("name", map.name);
             if (map.scoreLimitOverride > 0) mapTag.setInteger("scoreLimit", map.scoreLimitOverride);
             if (map.roundTicksOverride > 0) mapTag.setInteger("roundTicks", map.roundTicksOverride);
-            mapTag.setString("mode",map.mode.name());mapTag.setString("terroristTeam",map.terroristTeam.name);mapTag.setBoolean("hardcoreRespawns",map.hardcoreRespawns);
+            mapTag.setString("mode",map.mode.name());mapTag.setString("terroristTeam",map.terroristTeam.name);if(map.mode!=TDMManager.TDMGameMode.BOMB)mapTag.setBoolean("hardcoreRespawns",map.hardcoreRespawns);
             if(map.bombScoreLimitOverride>0)mapTag.setInteger("bombScoreLimit",map.bombScoreLimitOverride);if(map.bombRoundTicksOverride>0)mapTag.setInteger("bombRoundTicks",map.bombRoundTicksOverride);
             mapTag.setBoolean("buyScoreEnabled",map.buyScoreEnabled);if(map.killBuyScoreReward>0)mapTag.setInteger("killBuyScoreReward",map.killBuyScoreReward);if(map.bombDefuseBuyScoreReward>0)mapTag.setInteger("bombDefuseBuyScoreReward",map.bombDefuseBuyScoreReward);
             writeBombsite(mapTag,"bombsiteA",map.bombsiteA);writeBombsite(mapTag,"bombsiteB",map.bombsiteB);

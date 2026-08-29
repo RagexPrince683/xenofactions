@@ -113,6 +113,8 @@ public class PacketDispatcher {
 		wrapper.registerMessage(BuilderPlanPacket.Handler.class, BuilderPlanPacket.class, i++, Side.SERVER);
 		wrapper.registerMessage(BuilderSchematicDataRequestPacket.Handler.class, BuilderSchematicDataRequestPacket.class, i++, Side.SERVER);
 		wrapper.registerMessage(BuilderSchematicDataChunkPacket.Handler.class, BuilderSchematicDataChunkPacket.class, i++, Side.CLIENT);
+		wrapper.registerMessage(TDMSurvivorChoiceGuiPacket.Handler.class, TDMSurvivorChoiceGuiPacket.class, i++, Side.CLIENT);
+		wrapper.registerMessage(TDMSurvivorChoicePacket.Handler.class, TDMSurvivorChoicePacket.class, i++, Side.SERVER);
 
 	}
 	

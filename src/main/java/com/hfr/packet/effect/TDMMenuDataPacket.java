@@ -27,7 +27,7 @@ public class TDMMenuDataPacket implements IMessage {
         this.cooldownSeconds = cooldownSeconds;
         TDMManager.Team self = TDMManager.getPlayerTeam(player.worldObj, player.getCommandSenderName());
         this.currentTeam = self == null ? "teamless" : self.name;
-        this.canOpenBuyMenu=TDMManager.isBombMode(player.worldObj)&&com.hfr.tdm.TDMBombManager.getState()==com.hfr.tdm.TDMBombManager.BombRoundState.PRE_ROUND&&!TDMManager.hasSelectedKit(player);
+        this.canOpenBuyMenu=TDMManager.isBombMode(player.worldObj)&&com.hfr.tdm.TDMBombManager.getState()==com.hfr.tdm.TDMBombManager.BombRoundState.PRE_ROUND;
         List<String> friend = new ArrayList<String>();
         List<String> enemy = new ArrayList<String>();
         for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {

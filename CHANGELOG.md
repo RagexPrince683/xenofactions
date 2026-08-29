@@ -637,3 +637,11 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Added configurable variant lists for team win, team round-start, and bomb-planted sounds.
 - Added an admin-only `/tdm teamless` observer command, explicit Blue/Red menu rosters, and remappable TDM menu/buy-menu keys.
 - Source inspection was completed; multiplayer and dedicated-server runtime validation remains required.
+
+2026-08-29 00:00 — TDM round waiting, survivor economy, and buy authorization
+
+- Added explicit server-authoritative round-waiting state so eliminated respawns and mid-round joiners are placed at team spawns, frozen, protected, excluded from combat, and released at the next round.
+- Replaced the incomplete survivor inventory carryover with a dedicated keep-current-kit or buy-different-kit choice; free restores reconstruct the authoritative saved kit without spending buy score.
+- Corrected the buy key route and consolidated server validation around active buy time plus a bounded four-block team-spawn check.
+- Removed the alternate infinite-respawn BOMB lifecycle and migrated legacy BOMB maps to round elimination while retaining the deathmatch respawn setting.
+- Source-level call-site and state-cleanup inspection was completed; dedicated-server multiplayer runtime validation remains required.

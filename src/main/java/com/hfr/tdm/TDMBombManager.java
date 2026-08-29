@@ -36,6 +36,7 @@ public final class TDMBombManager {
     private static final Set<String> roundDeaths = new HashSet<String>();
     /** Players whose inventory may be replaced while the next round is prepared. */
     private static final Set<String> freshLoadoutPlayers = new HashSet<String>();
+    private static final Set<String> survivorLoadoutPlayers = new HashSet<String>();
     private static boolean firstRoundOfMatch = true;
     private static TrackedBomb bomb;
     private static PendingPlant pendingPlant;
@@ -95,7 +96,6 @@ public final class TDMBombManager {
         if(state==BombRoundState.PRE_ROUND&&now>=stateEndTick) startRound(world);
         else if(state==BombRoundState.LIVE&&now>=stateEndTick) completeRound(world,TDMManager.getCounterTerroristTeam(world),BombRoundWinReason.TIME_EXPIRED);
         else if(state==BombRoundState.ROUND_END&&now>=stateEndTick){if(hasEnoughPlayersForBombRound(world))beginNextBombRound(world);else waitForTeams(world);}
-        if(state==BombRoundState.LIVE&&!TDMManager.isHardcoreRespawns(world))ensureLiveRoundBombAssigned(world);
         sanitizeBombInventories(world);
         TDMSpectatorManager.tick();
     }
@@ -110,7 +110,8 @@ public final class TDMBombManager {
         }
 
         for (EntityPlayerMP player : TDMManager.getOnlinePlayers()) {
-            if (!TDMManager.isAliveForTDM(player)) {
+            TDMManager.releaseRoundWaiting(player);
+            if (!TDMManager.isAliveForTDM(player) || !TDMManager.hasPlayerTeam(player)) {
                 continue;
             }
             if (!TDMManager.placePlayerAtSelectedMapSpawn(player, random)) {
@@ -124,6 +125,9 @@ public final class TDMBombManager {
                 clearPlayerEquipment(player);
                 TDMManager.clearKitSelection(player);
                 TDMManager.promptForKit(player, TDMManager.KitSelectionContext.BUY_PHASE);
+            } else if (survivorLoadoutPlayers.contains(key(player))) {
+                clearPlayerEquipment(player);
+                TDMManager.offerSurvivorChoice(player);
             }
             // Freeze anchors are intentionally created only after authoritative placement.
             TDMManager.enrollGlobalBuyProtection(player);
@@ -133,60 +137,7 @@ public final class TDMBombManager {
     }
 
     public static void beginNextBombRound(World world) {
-        if (TDMManager.isHardcoreRespawns(world)) {
-            beginBuyTime(world);
-        } else {
-            startRoundWithoutBuyTime(world);
-        }
-    }
-    public static void startRoundWithoutBuyTime(World world) {
-        if (world == null || world.isRemote || TDMManager.isMapVoteActive(world)) {
-            return;
-        }
-        TDMManager.TDMMap map = TDMManager.getSelectedMapData(world);
-        if (map == null || map.mode != TDMManager.TDMGameMode.BOMB
-                || TDMManager.isHardcoreRespawns(world)) {
-            return;
-        }
-        if (!hasEnoughPlayersForBombRound(world)) {
-            waitForTeams(world);
-            return;
-        }
-
-        prepareFreshLoadoutDecisions(world);
-        cleanupTransientState(world);
-        purgeBombObjectiveItems(world);
-        eliminated.clear();
-        Random random = new Random();
-        List<EntityPlayerMP> placedPlayers = new ArrayList<EntityPlayerMP>();
-        for (EntityPlayerMP player : TDMManager.getOnlinePlayers()) {
-            if (!TDMManager.isAliveForTDM(player)) {
-                continue;
-            }
-            if (!TDMManager.placePlayerAtSelectedMapSpawn(player, random)) {
-                continue;
-            }
-
-            // Restore the new life before protection makes this live round playable.
-            TDMManager.restorePlayerForRound(player);
-            TDMManager.resetTDMTransientPlayerState(player);
-            if (needsFreshLoadout(player)) {
-                clearPlayerEquipment(player);
-                placedPlayers.add(player);
-            }
-        }
-
-        state = BombRoundState.LIVE;
-        stateEndTick = world.getTotalWorldTime()
-                + TDMManager.getEffectiveBombRoundTicks(world, map.name);
-        for (EntityPlayerMP player : placedPlayers) {
-            TDMManager.promptForKit(player, TDMManager.KitSelectionContext.RESPAWN_LOCK);
-        }
-        finishFreshLoadoutPreparation();
-        ensureLiveRoundBombAssigned(world);
-        TDMManager.playConfiguredSound(world, XFConfig.tdmTRoundStartSounds, TDMManager.getTerroristTeam(world));
-        TDMManager.playConfiguredSound(world, XFConfig.tdmCtRoundStartSounds, TDMManager.getCounterTerroristTeam(world));
-        TDMManager.sendStatusToAll(world);
+        beginBuyTime(world);
     }
 
     public static void startRound(World world) {
@@ -198,6 +149,7 @@ public final class TDMBombManager {
             return;
         }
         for (EntityPlayerMP player : TDMManager.getOnlinePlayers()) {
+            TDMManager.resolvePendingSurvivorChoice(player);
             if (TDMManager.isAliveForTDM(player) && needsFreshLoadout(player) && !TDMManager.hasSelectedKit(player)) {
                 selectFallbackKit(player, map);
             }
@@ -210,6 +162,7 @@ public final class TDMBombManager {
             player.inventoryContainer.detectAndSendChanges();
         }
         freshLoadoutPlayers.clear();
+        survivorLoadoutPlayers.clear();
         purgeBombObjectiveItems(world);
         state = BombRoundState.LIVE;
         stateEndTick = world.getTotalWorldTime() + TDMManager.getEffectiveBombRoundTicks(world, map.name);
@@ -362,9 +315,12 @@ public final class TDMBombManager {
      */
     private static void prepareFreshLoadoutDecisions(World world) {
         freshLoadoutPlayers.clear();
+        survivorLoadoutPlayers.clear();
         for (EntityPlayerMP player : TDMManager.getOnlinePlayers()) {
             if (player.worldObj == world && TDMManager.hasPlayerTeam(player)) {
-                freshLoadoutPlayers.add(key(player));
+                String key=key(player);
+                if(!firstRoundOfMatch&&!roundDeaths.contains(key)&&TDMManager.hasValidSelectedKit(player))survivorLoadoutPlayers.add(key);
+                else freshLoadoutPlayers.add(key);
             }
         }
     }
@@ -375,6 +331,7 @@ public final class TDMBombManager {
 
     private static void finishFreshLoadoutPreparation() {
         roundDeaths.clear();
+        survivorLoadoutPlayers.clear();
         firstRoundOfMatch = false;
     }
 

@@ -5,6 +5,7 @@ import com.hfr.packet.effect.TDMKitGuiPacket;
 import com.hfr.packet.effect.TDMKitSelectResultPacket;
 import com.hfr.packet.effect.TDMMapVoteGuiPacket;
 import com.hfr.packet.effect.TDMStatusPacket;
+import com.hfr.packet.effect.TDMSurvivorChoiceGuiPacket;
 import com.hfr.compat.HbmCsgoChargeIntegration;
 import com.hfr.config.XFConfig;
 import com.hfr.main.MainRegistry;
@@ -40,6 +41,12 @@ public class TDMManager {
     private static final Map<String, Long> nextTeamChangeTick = new HashMap<String, Long>();
     private static boolean bombTestMode;
     private static final Set<String> teamlessPlayers = new HashSet<String>();
+    /** Explicit server-owned state for participants who have no life in the current round. */
+    private static final Set<String> roundWaitingPlayers = new HashSet<String>();
+    private static final Map<String, FreezeAnchor> roundWaitingAnchors = new HashMap<String, FreezeAnchor>();
+    /** Last successfully purchased kit; eligibility is granted separately at round completion. */
+    private static final Map<String, Integer> selectedKits = new HashMap<String, Integer>();
+    private static final Set<String> survivorChoicePending = new HashSet<String>();
 
     public static void makePlayerTeamless(EntityPlayer player) {
         if (player == null) return;
@@ -47,6 +54,7 @@ public class TDMManager {
         data.playerTeams.remove(getPlayerKey(player));
         teamlessPlayers.add(getPlayerKey(player));
         cancelKitSelection(player);
+        clearRoundPlayerState(player);
         TDMSpectatorManager.restore(player);
         data.markDirty();
         sendStatusToAll(player.worldObj);
@@ -146,12 +154,12 @@ public class TDMManager {
     public static BombRole getBombRole(EntityPlayer player) { return getBombRole(player.worldObj, getOrAssignPlayerTeam(player)); }
     public static boolean isTerrorist(EntityPlayer player) { return getBombRole(player) == BombRole.TERRORIST; }
     public static boolean isCounterTerrorist(EntityPlayer player) { return getBombRole(player) == BombRole.COUNTER_TERRORIST; }
-    public static boolean isHardcoreRespawns(World world) { TDMMap m=getSelectedMapData(world); return m != null && m.hardcoreRespawns; }
+    public static boolean isHardcoreRespawns(World world) { TDMMap m=getSelectedMapData(world); return m != null && (m.mode == TDMGameMode.BOMB || m.hardcoreRespawns); }
     public static boolean isBombMode(World world) { return getGameMode(world) == TDMGameMode.BOMB; }
 
     public static boolean configureMap(World world, String name, TDMGameMode mode, Team terrorists, Boolean hardcore) {
         TDMMap map=getMap(world,name); if(map==null)return false;
-        if(mode!=null&&!setMapMode(world,name,mode))return false; if(terrorists!=null)map.terroristTeam=terrorists; if(hardcore!=null)map.hardcoreRespawns=hardcore.booleanValue();
+        if(mode!=null&&!setMapMode(world,name,mode))return false; if(terrorists!=null)map.terroristTeam=terrorists; if(hardcore!=null&&map.mode!=TDMGameMode.BOMB)map.hardcoreRespawns=hardcore.booleanValue();
         TDMData.get(world).markDirty(); return true;
     }
 
@@ -163,6 +171,7 @@ public class TDMManager {
         TDMGameMode oldMode = map.mode;
         if (oldMode == mode) return true;
         map.mode = mode;
+        if(mode==TDMGameMode.BOMB)map.hardcoreRespawns=true;
         data.markDirty();
         if (!data.enabled || !data.selectedMap.equals(map.name)) return true;
 
@@ -245,6 +254,7 @@ public class TDMManager {
         freezeAnchors.clear();
         nextTeamChangeTick.clear();
         teamlessPlayers.clear();
+        roundWaitingPlayers.clear(); roundWaitingAnchors.clear(); selectedKits.clear(); survivorChoicePending.clear();
     }
 
     public static boolean isEnabled(World world) {
@@ -608,6 +618,7 @@ public class TDMManager {
 
     /** Starts a validated full map match; bomb combat rounds own their own placement lifecycle. */
     private static void startMatch(World world, boolean resetVotes) {
+        for(EntityPlayerMP player:getOnlinePlayers())clearRoundPlayerState(player);
         TDMData data = TDMData.get(world);
         data.redScore = 0;
         data.blueScore = 0;
@@ -867,6 +878,7 @@ public class TDMManager {
         setPlayerTeam(player.worldObj, player.getCommandSenderName(), newTeam);
         nextTeamChangeTick.put(getPlayerKey(player), Long.valueOf(player.worldObj.getTotalWorldTime() + TEAM_CHANGE_COOLDOWN_TICKS));
         pendingKitSelection.remove(getPlayerKey(player));
+        clearRoundPlayerState(player);
         player.addChatMessage(new ChatComponentText("You changed to the " + newTeam.name + " TDM team."));
 
         if (!respawnPlayer(player, new Random())) {
@@ -1037,8 +1049,40 @@ public class TDMManager {
     public static KitSelectionContext getKitSelectionContext(EntityPlayer player){KitSelectionContext c=player==null?null:kitSelectionContexts.get(getPlayerKey(player));return c==null?KitSelectionContext.NONE:c;}
 
     public static boolean isAliveForTDM(EntityPlayer player) {
-        return player != null && player.worldObj != null && !player.isDead && player.getHealth() > 0.0F;
+        return player != null && player.worldObj != null && !player.isDead && player.getHealth() > 0.0F
+                && !roundWaitingPlayers.contains(getPlayerKey(player));
     }
+
+    public static boolean isRoundWaiting(EntityPlayer player) { return player != null && roundWaitingPlayers.contains(getPlayerKey(player)); }
+    public static void putInRoundWaiting(EntityPlayer player) {
+        if (player == null || !hasPlayerTeam(player)) return;
+        String key=getPlayerKey(player); cancelKitSelection(player); releaseGlobalBuyProtection(player); clearKitSelectionProtection(player);
+        roundWaitingPlayers.add(key); roundWaitingAnchors.put(key,new FreezeAnchor(player)); applyOwnedProtectionEffects(player); enforceFreeze(player,roundWaitingAnchors.get(key));
+    }
+    public static void releaseRoundWaiting(EntityPlayer player) {
+        if(player==null)return; String key=getPlayerKey(player); roundWaitingPlayers.remove(key);roundWaitingAnchors.remove(key);
+        if(!hasKitSelectionProtection(player))removeOwnedProtectionEffects(player);
+    }
+    public static void tickRoundWaiting(EntityPlayer player) {
+        if(!isRoundWaiting(player))return;
+        if(!isEnabled(player.worldObj)||!hasPlayerTeam(player)){releaseRoundWaiting(player);return;}
+        applyOwnedProtectionEffects(player);enforceFreeze(player,roundWaitingAnchors.get(getPlayerKey(player)));
+    }
+    public static void clearRoundPlayerState(EntityPlayer player){if(player==null)return;releaseRoundWaiting(player);survivorChoicePending.remove(getPlayerKey(player));selectedKits.remove(getPlayerKey(player));}
+    public static void releaseAllRoundWaiting(){for(EntityPlayerMP p:getOnlinePlayers())releaseRoundWaiting(p);roundWaitingPlayers.clear();roundWaitingAnchors.clear();}
+
+    public static boolean hasValidSelectedKit(EntityPlayer player){Integer i=selectedKits.get(getPlayerKey(player));Team t=getPlayerTeam(player.worldObj,player.getCommandSenderName());return i!=null&&t!=null&&TDMKitManager.getKitCost(getSelectedMap(player.worldObj),t,i.intValue())>=0;}
+    public static void offerSurvivorChoice(EntityPlayer player){if(!(player instanceof EntityPlayerMP)||!hasValidSelectedKit(player))return;survivorChoicePending.add(getPlayerKey(player));PacketDispatcher.wrapper.sendTo(new TDMSurvivorChoiceGuiPacket(),(EntityPlayerMP)player);}
+    public static boolean handleSurvivorChoice(EntityPlayer player,boolean keep){String key=getPlayerKey(player);if(!survivorChoicePending.remove(key)||!isGlobalBombBuyPeriod(player)||!hasValidSelectedKit(player))return false;if(!keep){promptForKit(player,KitSelectionContext.BUY_PHASE);return true;}Team team=getPlayerTeam(player.worldObj,player.getCommandSenderName());boolean applied=TDMKitManager.applyKit(getSelectedMap(player.worldObj),team,selectedKits.get(key).intValue(),player);if(applied)closeKitGui(player);return applied;}
+    public static void clearSurvivorChoice(EntityPlayer player){if(player!=null)survivorChoicePending.remove(getPlayerKey(player));}
+    public static void resolvePendingSurvivorChoice(EntityPlayer player){if(player!=null&&survivorChoicePending.contains(getPlayerKey(player)))handleSurvivorChoice(player,true);}
+
+    /** One authoritative gate shared by the key binding and menu button. */
+    public static boolean requestBuyMenu(EntityPlayer player){
+        if(player==null||!isEnabled(player.worldObj)||!isBombMode(player.worldObj)||TDMBombManager.getState()!=TDMBombManager.BombRoundState.PRE_ROUND||!hasPlayerTeam(player)||isRoundWaiting(player)||!isNearTeamSpawn(player,4.0D))return false;
+        survivorChoicePending.remove(getPlayerKey(player));promptForKit(player,KitSelectionContext.BUY_PHASE);return true;
+    }
+    private static boolean isNearTeamSpawn(EntityPlayer player,double radius){TDMMap map=getSelectedMapData(player.worldObj);if(map==null)return false;List<SpawnPoint> source=map.spawns.isEmpty()?TDMData.get(player.worldObj).spawns:map.spawns;Team team=getPlayerTeam(player.worldObj,player.getCommandSenderName());double max=radius*radius;for(SpawnPoint s:source)if(s.team==team&&s.dim==player.dimension&&player.getDistanceSq(s.x+.5D,s.y,s.z+.5D)<=max)return true;return false;}
 
     /** True for living participants in the selected map dimension throughout hardcore PRE_ROUND. */
     public static boolean isGlobalBombBuyPeriod(EntityPlayer player) {
@@ -1128,6 +1172,8 @@ public class TDMManager {
     /** Clears only transient state owned by TDM; spectator flags and kit potions remain independent. */
     public static void resetTDMTransientPlayerState(EntityPlayer player) {
         cancelKitSelection(player);
+        releaseRoundWaiting(player);
+        survivorChoicePending.remove(getPlayerKey(player));
         TDMSpectatorManager.restore(player);
     }
 
@@ -1266,6 +1312,7 @@ public class TDMManager {
         int savedCost=TDMKitManager.getKitCost(mapName,team,kitIndex); if(savedCost<0)return KitSelectionResult.INVALID_SELECTION;
         TDMMap map=getSelectedMapData(player.worldObj);int effectiveCost=map!=null&&map.buyScoreEnabled?savedCost:0;if(getBuyScore(player)<effectiveCost)return KitSelectionResult.INSUFFICIENT_FUNDS;
         if (!TDMKitManager.applyKit(mapName, team, kitIndex, player)) return KitSelectionResult.INVALID_SELECTION;
+        selectedKits.put(getPlayerKey(player),Integer.valueOf(kitIndex));
         if(effectiveCost>0){TDMData d=TDMData.get(player.worldObj);d.playerBuyScores.put(getPlayerKey(player),Integer.valueOf(getBuyScore(player)-effectiveCost));d.markDirty();}
         pendingKitSelection.remove(getPlayerKey(player));
         kitSelectionContexts.remove(getPlayerKey(player));
