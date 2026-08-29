@@ -653,3 +653,7 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Added explicit FFA mode data, neutral spawn persistence, hostile-player kill handling, elimination winner resolution, and a neutral single-roster menu.
 - Added persisted per-map round-start, kill, and round-win buy-score rewards with backward-compatible defaults of 1, 2, and 3 and non-negative admin settings.
 - Runtime Forge/client-server validation remains required; source-only checks were used for this pass.
+2026-08-29 00:00 — Runtime-safe TDM sound dispatch and diagnostics
+
+- Replaced implicit server-side player sound calls with an explicit per-recipient client packet, normalized configured event IDs without rewriting custom namespaces, and added debug-gated dispatch/client diagnostics.
+- Added the operator-only `/tdm testsound` command through the gameplay resolver/dispatcher and documented event-ID configuration semantics. Bundled declarations retain extensionless paths, including the intentionally underscored CT victory filename. In-game audio playback remains to be validated with the command.

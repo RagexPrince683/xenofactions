@@ -6,6 +6,7 @@ import com.hfr.packet.effect.TDMKitSelectResultPacket;
 import com.hfr.packet.effect.TDMMapVoteGuiPacket;
 import com.hfr.packet.effect.TDMStatusPacket;
 import com.hfr.packet.effect.TDMSurvivorChoiceGuiPacket;
+import com.hfr.packet.effect.TDMSoundPacket;
 import com.hfr.compat.HbmCsgoChargeIntegration;
 import com.hfr.config.XFConfig;
 import com.hfr.main.MainRegistry;
@@ -63,18 +64,39 @@ public class TDMManager {
         sendStatusToAll(player.worldObj);
     }
 
-    public static void playConfiguredSound(World world, String[] variants, Team onlyTeam) {
-        if (world == null || variants == null) return;
+    public static String playConfiguredSound(World world, String eventType, String[] variants, Team onlyTeam) {
+        return playConfiguredSound(world, eventType, variants, onlyTeam, null);
+    }
+
+    public static String playConfiguredSound(World world, String eventType, String[] variants, Team onlyTeam, EntityPlayerMP onlyPlayer) {
+        if (world == null || variants == null || world.isRemote) return null;
         List<String> valid = new ArrayList<String>();
-        for (String sound : variants) if (sound != null && sound.trim().length() > 0) valid.add(sound.trim());
-        if (valid.isEmpty()) return;
-        String sound = valid.get(world.rand.nextInt(valid.size()));
-        for (EntityPlayerMP player : getOnlinePlayers()) {
-            if (player.worldObj != world || TDMSpectatorManager.isObserving(player)) continue;
-            Team team = getPlayerTeam(world, player.getCommandSenderName());
-            if (team == null || (onlyTeam != null && team != onlyTeam)) continue;
-            player.playSound(sound, 1.0F, 1.0F);
+        for (String sound : variants) {
+            String normalized = normalizeSoundEventId(sound);
+            if (normalized != null) valid.add(normalized);
         }
+        if (valid.isEmpty()) return null;
+        String sound = valid.get(world.rand.nextInt(valid.size()));
+        int recipients = 0;
+        for (EntityPlayerMP player : getOnlinePlayers()) {
+            if (onlyPlayer != null && player != onlyPlayer) continue;
+            if (player.worldObj != world || (onlyPlayer == null && TDMSpectatorManager.isObserving(player))) continue;
+            Team team = getPlayerTeam(world, player.getCommandSenderName());
+            if (onlyPlayer == null && (team == null || (onlyTeam != null && team != onlyTeam))) continue;
+            PacketDispatcher.wrapper.sendTo(new TDMSoundPacket(sound), player);
+            recipients++;
+        }
+        if (XFConfig.enableDebugLogging && MainRegistry.logger != null)
+            MainRegistry.logger.info("TDM SOUND dispatch: type={}, configured={}, event={}, recipients={}, route=explicit-player-packet", eventType, Arrays.toString(variants), sound, recipients);
+        return sound;
+    }
+
+    /** Config values are event IDs. Unqualified IDs use this mod's namespace; explicit namespaces are preserved. */
+    public static String normalizeSoundEventId(String configured) {
+        if (configured == null) return null;
+        String value = configured.trim();
+        if (value.length() == 0) return null;
+        return value.indexOf(':') < 0 ? "hfr:" + value : value;
     }
 
     public enum Team {

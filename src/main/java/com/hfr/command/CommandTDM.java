@@ -5,6 +5,7 @@ import com.hfr.packet.effect.TDMMenuDataPacket;
 import com.hfr.tdm.TDMKitManager;
 import com.hfr.tdm.TDMBombManager;
 import com.hfr.tdm.TDMManager;
+import com.hfr.config.XFConfig;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
@@ -119,6 +120,11 @@ public class CommandTDM extends CommandBase {
             }
             TDMManager.setBombTestMode(world, enabled.booleanValue());
             sender.addChatMessage(new ChatComponentText("Single-player BOMB testing " + (enabled.booleanValue() ? "enabled." : "disabled.")));
+            return;
+        }
+
+        if (args[0].equalsIgnoreCase("testsound")) {
+            processTestSound(sender, args, world);
             return;
         }
 
@@ -291,6 +297,7 @@ public class CommandTDM extends CommandBase {
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-kit remove <red|blue> <number> [map|global]" + TITLE + " - Deletes a kit"));
         sender.addChatMessage(new ChatComponentText(TITLE + "Match controls"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forceroundend <red|blue|terrorist|ct|counterterrorist|abort>" + TITLE + " - Forces or aborts the current BOMB round"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-testsound <ctwin|twin|ctstart|tstart|bombplant>" + TITLE + " - Dispatches a configured sound through the gameplay path"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-forcemapvote" + TITLE + " - Starts a 30 second map vote"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-friendlyfire <on|off>" + TITLE + " - Toggles friendly fire"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-autobalance <on|off|now>" + TITLE + " - Configures or runs auto balance"));
@@ -312,6 +319,31 @@ public class CommandTDM extends CommandBase {
         }
 
         PacketDispatcher.wrapper.sendTo(new TDMMenuDataPacket((EntityPlayerMP) player, TDMManager.getTeamChangeCooldownSeconds(player)), (EntityPlayerMP) player);
+    }
+
+    private void processTestSound(ICommandSender sender, String[] args, World world) {
+        if (!(sender instanceof EntityPlayerMP)) {
+            sender.addChatMessage(new ChatComponentText("/tdm testsound must be run by an in-game operator."));
+            return;
+        }
+        if (args.length != 2) {
+            sender.addChatMessage(new ChatComponentText("Usage: /tdm testsound <ctwin|twin|ctstart|tstart|bombplant>"));
+            return;
+        }
+        String type = args[1].toLowerCase();
+        String eventType;
+        String[] variants;
+        boolean global;
+        if ("ctwin".equals(type)) { eventType = "ct_victory_test"; variants = XFConfig.tdmCtWinSounds; global = true; }
+        else if ("twin".equals(type)) { eventType = "t_victory_test"; variants = XFConfig.tdmTWinSounds; global = true; }
+        else if ("ctstart".equals(type)) { eventType = "ct_round_start_test"; variants = XFConfig.tdmCtRoundStartSounds; global = false; }
+        else if ("tstart".equals(type)) { eventType = "t_round_start_test"; variants = XFConfig.tdmTRoundStartSounds; global = false; }
+        else if ("bombplant".equals(type)) { eventType = "bomb_planted_test"; variants = XFConfig.tdmBombPlantedSounds; global = true; }
+        else { sender.addChatMessage(new ChatComponentText("Unknown sound type. Use ctwin, twin, ctstart, tstart, or bombplant.")); return; }
+        EntityPlayerMP player = (EntityPlayerMP) sender;
+        String selected = TDMManager.playConfiguredSound(world, eventType, variants, null, global ? null : player);
+        if (selected == null) sender.addChatMessage(new ChatComponentText("TDM sound is disabled (no non-blank configured variants)."));
+        else sender.addChatMessage(new ChatComponentText("Dispatched TDM sound event " + selected + (global ? " to eligible TDM players in this dimension." : " to you.")));
     }
 
     private String[] prependArg(String first, String[] args) {

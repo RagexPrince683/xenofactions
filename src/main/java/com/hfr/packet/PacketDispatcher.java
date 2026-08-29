@@ -115,6 +115,7 @@ public class PacketDispatcher {
 		wrapper.registerMessage(BuilderSchematicDataChunkPacket.Handler.class, BuilderSchematicDataChunkPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(TDMSurvivorChoiceGuiPacket.Handler.class, TDMSurvivorChoiceGuiPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(TDMSurvivorChoicePacket.Handler.class, TDMSurvivorChoicePacket.class, i++, Side.SERVER);
+		wrapper.registerMessage(TDMSoundPacket.Handler.class, TDMSoundPacket.class, i++, Side.CLIENT);
 
 	}
 	
