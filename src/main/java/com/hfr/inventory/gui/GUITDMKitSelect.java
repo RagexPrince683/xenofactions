@@ -168,6 +168,10 @@ public class GUITDMKitSelect extends GuiScreen {
         }
     }
 
+    public boolean isBombBuySelection() {
+        return buying;
+    }
+
     private void setButtonsEnabled(boolean enabled) {
         for (Object entry : buttonList) {
             GuiButton button = (GuiButton) entry;

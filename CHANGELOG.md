@@ -1,3 +1,9 @@
+# Pull request: prevent BOMB buy state from leaking into DEATHMATCH
+
+- Stopped the active BOMB lifecycle before changing the selected map's mode, then started DEATHMATCH only after buy, waiting, spectator, objective, timer, and kit-selection ownership was released.
+- Made kit-selection replacement and cancellation release its freeze anchor and TDM-owned protection effects on every path, while retaining independent DEATHMATCH respawn and FFA round-start selections.
+- Cleared stale mandatory BOMB buy GUIs when the client receives a non-BOMB status without disabling legitimate mandatory kit selections in the new mode.
+
 # Pull request: restart single-map TDM matches at round end
 
 - Restarted the selected DEATHMATCH map through the full new-match lifecycle when automatic rotation has no alternative map, instead of repeatedly attempting a map vote.

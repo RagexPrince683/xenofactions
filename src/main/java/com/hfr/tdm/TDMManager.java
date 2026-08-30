@@ -216,18 +216,29 @@ public class TDMManager {
         if (map == null || mode == null) return false;
         TDMGameMode oldMode = map.mode;
         if (oldMode == mode) return true;
+
+        boolean changingSelectedActiveMap = data.enabled && data.selectedMap.equals(map.name);
+        if (changingSelectedActiveMap) {
+            stopSelectedMapLifecycle(world);
+        }
+
         map.mode = mode;
         if (mode == TDMGameMode.FFA) {
             map.hardcoreRespawns = true;
         }
         data.markDirty();
-        if (!data.enabled || !data.selectedMap.equals(map.name)) return true;
+        if (!changingSelectedActiveMap) return true;
 
-        // startRound owns validation, match reset, and the selected-map spawn transition.
-        cancelAllKitSelections();
+        // The old lifecycle is fully stopped before the new mode can create player state.
         data.roundEndTick = 0;
         startRound(world, false);
         return true;
+    }
+
+    /** Stops ownership belonging to the selected mode before its map data is changed. */
+    private static void stopSelectedMapLifecycle(World world) {
+        TDMBombManager.cleanup(world, true);
+        resetTDMTransientPlayerState(world);
     }
 
     public static boolean isBombTestMode() { return bombTestMode; }
@@ -244,7 +255,11 @@ public class TDMManager {
 
     public static void cancelAllKitSelections() {
         for (EntityPlayerMP player : getOnlinePlayers()) {
-            if (pendingKitSelection.contains(getPlayerKey(player)) || hasKitSelectionProtection(player)) {
+            String playerKey = getPlayerKey(player);
+            if (pendingKitSelection.contains(playerKey)
+                    || buyProtectionActive.contains(playerKey)
+                    || respawnLockProtectionActive.contains(playerKey)
+                    || freezeAnchors.containsKey(playerKey)) {
                 cancelKitSelection(player);
             }
         }
@@ -407,7 +422,10 @@ public class TDMManager {
             return false;
         }
 
-        TDMBombManager.cleanup(world,true);TDMSpectatorManager.restoreAll();data.playerBuyScores.clear();clearSkipVote(data);data.selectedMap = normalized;
+        stopSelectedMapLifecycle(world);
+        data.playerBuyScores.clear();
+        clearSkipVote(data);
+        data.selectedMap = normalized;
         data.markDirty();
         return true;
     }
@@ -964,8 +982,8 @@ public class TDMManager {
                 continue;
             }
 
+            cancelKitSelection(player);
             if (respawnPlayer(player, random)) {
-                pendingKitSelection.remove(getPlayerKey(player));
                 if (!TDMSpectatorManager.isObserving(player) && context != KitSelectionContext.NONE) {
                     promptForKit(player, context);
                 }
@@ -1085,7 +1103,7 @@ public class TDMManager {
         Team newTeam = currentTeam == Team.RED ? Team.BLUE : Team.RED;
         setPlayerTeam(player.worldObj, player.getCommandSenderName(), newTeam);
         nextTeamChangeTick.put(getPlayerKey(player), Long.valueOf(player.worldObj.getTotalWorldTime() + TEAM_CHANGE_COOLDOWN_TICKS));
-        pendingKitSelection.remove(getPlayerKey(player));
+        cancelKitSelection(player);
         clearRoundPlayerState(player);
         player.addChatMessage(new ChatComponentText("You changed to the " + newTeam.name + " TDM team."));
 
@@ -1275,7 +1293,9 @@ public class TDMManager {
     public static void awardDefuseBuyScore(EntityPlayer player){TDMMap map=getSelectedMapData(player.worldObj);if(map!=null&&map.buyScoreEnabled)addBuyScore(player,map.bombDefuseBuyScoreReward);}
     public static void awardBombPlantBuyScore(EntityPlayer player){TDMMap map=getSelectedMapData(player.worldObj);if(map!=null&&map.buyScoreEnabled&&isCompetitivePlayer(player))addBuyScore(player,map.bombPlantBuyScoreReward);}
     public static void captureActiveRoundParticipants(World world, Set<String> target){target.clear();for(EntityPlayerMP p:getOnlinePlayers())if(p.worldObj==world&&isCompetitivePlayer(p))target.add(getPlayerKey(p));}
-    public static void clearKitSelection(EntityPlayer player){if(player!=null){String key=getPlayerKey(player);pendingKitSelection.remove(key);kitSelectionContexts.remove(key);pendingKitMaps.remove(key);}}
+    public static void clearKitSelection(EntityPlayer player) {
+        cancelKitSelection(player);
+    }
     public static boolean hasSelectedKit(EntityPlayer player){return !pendingKitSelection.contains(getPlayerKey(player));}
     public static KitSelectionContext getKitSelectionContext(EntityPlayer player){KitSelectionContext c=player==null?null:kitSelectionContexts.get(getPlayerKey(player));return c==null?KitSelectionContext.NONE:c;}
 
@@ -1566,12 +1586,7 @@ public class TDMManager {
         }
         KitSelectionContext context = getKitSelectionContext(player);
         if (isGlobalBombBuyPeriod(player)) {
-            buyProtectionActive.add(key);
-            applyOwnedProtectionEffects(player);
-            if (!freezeAnchors.containsKey(key)) {
-                freezeAnchors.put(key, new FreezeAnchor(player));
-            }
-            enforceFreeze(player, freezeAnchors.get(key));
+            enrollGlobalBuyProtection(player);
             return;
         }
         releaseGlobalBuyProtection(player);

@@ -313,7 +313,25 @@ public final class TDMBombManager {
     public static void purgeBombObjectiveItems(World world){if(world==null)return;for(EntityPlayerMP p:TDMManager.getOnlinePlayers())if(p.worldObj==world)for(int i=0;i<p.inventory.mainInventory.length;i++)if(isBombStack(p.inventory.mainInventory[i]))p.inventory.mainInventory[i]=null;for(Object o:new ArrayList<Object>(world.loadedEntityList))if(o instanceof EntityItem&&isBombStack(((EntityItem)o).getEntityItem()))((EntityItem)o).setDead();}
     private static void purgeBombDropsNear(TrackedBomb b){for(Object o:new ArrayList<Object>(b.world.loadedEntityList))if(o instanceof EntityItem){EntityItem e=(EntityItem)o;if(isBombStack(e.getEntityItem())&&e.getDistanceSq(b.x+.5,b.y+.5,b.z+.5)<=16)e.setDead();}}
     private static void invalidateTrackedBomb(){if(bomb!=null)bomb.invalidated=true;bomb=null;pendingPlant=null;missingBombSince=-1L;missingBombWarningLogged=false;}
-    private static void cleanupTransientState(World world){TrackedBomb tracked=bomb;invalidateTrackedBomb();if(tracked!=null&&world==tracked.world&&world.provider.dimensionId==tracked.dim&&HbmCsgoChargeIntegration.isCsgoCharge(world.getBlock(tracked.x,tracked.y,tracked.z)))world.setBlockToAir(tracked.x,tracked.y,tracked.z);eliminated.clear();stateEndTick=0;TDMSpectatorManager.restoreAll();TDMManager.clearPendingKitSelections();TDMManager.closeBombBuyGuis();}
+    private static void cleanupTransientState(World world) {
+        TrackedBomb trackedBomb = bomb;
+        invalidateTrackedBomb();
+        if (trackedBomb != null
+                && world == trackedBomb.world
+                && world.provider.dimensionId == trackedBomb.dim
+                && HbmCsgoChargeIntegration.isCsgoCharge(
+                        world.getBlock(trackedBomb.x, trackedBomb.y, trackedBomb.z))) {
+            world.setBlockToAir(trackedBomb.x, trackedBomb.y, trackedBomb.z);
+        }
+
+        eliminated.clear();
+        stateEndTick = 0;
+        purgeBombObjectiveItems(world);
+        TDMSpectatorManager.restoreAll();
+        TDMManager.clearPendingKitSelections();
+        TDMManager.releaseAllRoundWaiting();
+        TDMManager.closeBombBuyGuis();
+    }
     public static void cleanup(World world, boolean removeTracked) {
         if (removeTracked) {
             cleanupTransientState(world);
@@ -327,6 +345,7 @@ public final class TDMBombManager {
         }
         roundDeaths.clear();
         freshLoadoutPlayers.clear();
+        survivorLoadoutPlayers.clear();
         roundParticipants.clear();
         firstRoundOfMatch = true;
         state = BombRoundState.DISABLED;
