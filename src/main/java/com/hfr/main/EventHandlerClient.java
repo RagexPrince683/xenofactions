@@ -178,6 +178,11 @@ public class EventHandlerClient {
 		tdmBuyScore = buyScore;
 		tdmRedPlayerCount = redPlayerCount;
 		tdmBluePlayerCount = bluePlayerCount;
+		if (!"BOMB".equals(mode)
+				&& mandatoryKitGui != null
+				&& mandatoryKitGui.isBombBuySelection()) {
+			clearMandatoryKitGui(true);
+		}
 	}
 
 	public static void resetTDMClientState() {
