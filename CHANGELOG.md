@@ -710,3 +710,10 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Migrated the legacy forced hardcore flag to `false` only while loading FFA maps, preventing already-polluted FFA configuration from leaking into a later DEATHMATCH mode without changing DEATHMATCH or BOMB settings.
 - Isolated BOMB, FFA, and hardcore DEATHMATCH eliminated-player state and made respawn, login, retry placement, and protection enforcement validate the current mode.
 - Rejected `hardcorerespawns` configuration while a map is FFA and clarified that FFA always uses round elimination.
+
+2026-08-30 00:00 — Separate continuous-mode loadouts and command help
+
+- Split `/tdm help` into permission-aware General, Match, Teams, Kits, Maps, and Administration pages, and added server-authoritative completion for commands, subcommands, players, maps, teams, modes, settings, and fixed argument values.
+- Introduced an explicit economy-free Deathmatch/FFA loadout-selection lifecycle separate from competitive BOMB buy and survivor-kit state; the shared kit GUI now labels respawn loadouts without displaying prices.
+- Made Deathmatch and FFA login/respawn paths enter continuous gameplay immediately rather than inheriting competitive round-waiting/elimination policy, while retaining active hardcore BOMB late-join waiting.
+- Restricted buy-score awards, economy configuration, and hardcore round-elimination configuration to BOMB maps, and retained mode-transition cleanup of incompatible transient state. Source/call-site inspection and static checks were completed; multiplayer runtime validation remains required.

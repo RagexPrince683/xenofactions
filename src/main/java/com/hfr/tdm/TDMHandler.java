@@ -90,23 +90,9 @@ public class TDMHandler {
             tryImmediatePlacement(event.player, TDMManager.KitSelectionContext.NONE);
             return;
         }
-        if (mode == TDMManager.TDMGameMode.FFA
-                && TDMManager.isFfaEliminated(event.player)) {
-            TDMSpectatorManager.restore(event.player);
-            tryImmediatePlacement(event.player, TDMManager.KitSelectionContext.NONE);
-            return;
-        }
-        if (mode == TDMManager.TDMGameMode.DEATHMATCH
-                && hardcore
-                && TDMManager.isDeathmatchEliminated(event.player)) {
-            TDMSpectatorManager.restore(event.player);
-            tryImmediatePlacement(event.player, TDMManager.KitSelectionContext.NONE);
-            return;
-        }
-
         TDMManager.KitSelectionContext context;
-        if (mode == TDMManager.TDMGameMode.FFA) {
-            context = TDMManager.KitSelectionContext.FFA_ROUND_START;
+        if (mode == TDMManager.TDMGameMode.FFA || mode == TDMManager.TDMGameMode.DEATHMATCH) {
+            context = TDMManager.KitSelectionContext.LOADOUT_SELECTION;
         } else if (mode == TDMManager.TDMGameMode.BOMB
                 && hardcore
                 && TDMBombManager.getState() == TDMBombManager.BombRoundState.PRE_ROUND) {
@@ -142,16 +128,10 @@ public class TDMHandler {
             tryImmediatePlacement(event.player, TDMManager.KitSelectionContext.NONE);
             return;
         }
-        if (mode == TDMManager.TDMGameMode.FFA) {
-            TDMManager.markLateJoinerFfaEliminated(event.player);
+        if (mode == TDMManager.TDMGameMode.FFA || mode == TDMManager.TDMGameMode.DEATHMATCH) {
+            // Continuous modes grant a live, protected loadout selection immediately.
             TDMSpectatorManager.restore(event.player);
-            tryImmediatePlacement(event.player, TDMManager.KitSelectionContext.NONE);
-            return;
-        }
-        if (mode == TDMManager.TDMGameMode.DEATHMATCH && hardcore) {
-            TDMManager.markLateJoinerDeathmatchEliminated(event.player);
-            TDMSpectatorManager.restore(event.player);
-            tryImmediatePlacement(event.player, TDMManager.KitSelectionContext.NONE);
+            tryImmediatePlacement(event.player, TDMManager.KitSelectionContext.LOADOUT_SELECTION);
             return;
         }
 
@@ -234,9 +214,9 @@ public class TDMHandler {
                 TDMManager.awardKillBuyScore(attacker);
             }
         }
-        TDMManager.eliminateFfaPlayer(victim);
-        TDMManager.eliminateDeathmatchPlayer(victim);
-        TDMBombManager.eliminate(victim);
+        if (TDMManager.isBombMode(victim.worldObj)) {
+            TDMBombManager.eliminate(victim);
+        }
     }
 
     @SubscribeEvent

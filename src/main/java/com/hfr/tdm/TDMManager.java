@@ -133,7 +133,8 @@ public class TDMManager {
     public enum TDMGameMode { DEATHMATCH, BOMB, FFA }
     public enum BombRole { TERRORIST, COUNTER_TERRORIST }
     public enum KitSelectionResult { SUCCESS, INSUFFICIENT_FUNDS, INVALID_SELECTION, BUY_PHASE_ENDED, ALREADY_SELECTED }
-    public enum KitSelectionContext { NONE, BUY_PHASE, RESPAWN_LOCK, FFA_ROUND_START }
+    /** BUY_PHASE is competitive BOMB economy state; LOADOUT_SELECTION is economy-free DM/FFA state. */
+    public enum KitSelectionContext { NONE, BUY_PHASE, RESPAWN_LOCK, LOADOUT_SELECTION }
 
     private static final class SelectedKit {
         final Team pool;
@@ -727,9 +728,7 @@ public class TDMManager {
         } else {
             TDMBombManager.cleanup(world, true);
             if(isFfaMode(world)){ffaEliminated.clear();ffaNextRoundTick=0L;ffaRoundWinner=null;}
-            placeAllPlayersAtSelectedMap(world, isFfaMode(world)
-                    ? KitSelectionContext.FFA_ROUND_START
-                    : KitSelectionContext.RESPAWN_LOCK);
+            placeAllPlayersAtSelectedMap(world, KitSelectionContext.LOADOUT_SELECTION);
             captureActiveRoundParticipants(world, activeRoundParticipants);
         }
         sendStatusToAll(world);
@@ -1277,12 +1276,12 @@ public class TDMManager {
     }
 
     public static int getBuyScore(EntityPlayer player){Integer v=TDMData.get(player.worldObj).playerBuyScores.get(getPlayerKey(player));return v==null?0:Math.max(0,v.intValue());}
-    public static void addBuyScore(EntityPlayer player,int amount){TDMMap map=getSelectedMapData(player.worldObj);if(map==null||!map.buyScoreEnabled||amount<=0)return;TDMData d=TDMData.get(player.worldObj);int old=getBuyScore(player);int next=old>Integer.MAX_VALUE-amount?Integer.MAX_VALUE:old+amount;d.playerBuyScores.put(getPlayerKey(player),Integer.valueOf(next));d.markDirty();sendStatusToAll(player.worldObj);}
-    public static void awardKillBuyScore(EntityPlayer player){TDMMap map=getSelectedMapData(player.worldObj);if(map!=null&&map.buyScoreEnabled&&isCompetitivePlayer(player)&&(map.mode!=TDMGameMode.BOMB||TDMBombManager.isRoundActive()))addBuyScore(player,map.killBuyScoreReward);}
+    public static void addBuyScore(EntityPlayer player,int amount){TDMMap map=getSelectedMapData(player.worldObj);if(map==null||map.mode!=TDMGameMode.BOMB||!map.buyScoreEnabled||amount<=0)return;TDMData d=TDMData.get(player.worldObj);int old=getBuyScore(player);int next=old>Integer.MAX_VALUE-amount?Integer.MAX_VALUE:old+amount;d.playerBuyScores.put(getPlayerKey(player),Integer.valueOf(next));d.markDirty();sendStatusToAll(player.worldObj);}
+    public static void awardKillBuyScore(EntityPlayer player){TDMMap map=getSelectedMapData(player.worldObj);if(map!=null&&map.mode==TDMGameMode.BOMB&&map.buyScoreEnabled&&isCompetitivePlayer(player)&&TDMBombManager.isRoundActive())addBuyScore(player,map.killBuyScoreReward);}
     public static void awardRoundWinBuyScore(World world,Team team,EntityPlayer individual){TDMMap map=getSelectedMapData(world);if(map==null)return;if(individual!=null){if(isCompetitivePlayer(individual))addBuyScore(individual,map.roundWinBuyScoreReward);return;}for(EntityPlayerMP p:getOnlinePlayers())if(p.worldObj==world&&isCompetitivePlayer(p)&&getPlayerTeam(world,p.getCommandSenderName())==team)addBuyScore(p,map.roundWinBuyScoreReward);}
-    /** Finalizes winner and loser economy once the authoritative result is known. A null FFA winner is a draw, so every captured competitor receives the loss bonus. */
+    /** Finalizes competitive BOMB winner and loser economy once the authoritative result is known. */
     public static void awardRoundResultBuyScore(World world, Team winningTeam, String individualWinner, Set<String> participants) {
-        TDMMap map=getSelectedMapData(world); if(map==null||!map.buyScoreEnabled||participants==null)return;
+        TDMMap map=getSelectedMapData(world); if(map==null||map.mode!=TDMGameMode.BOMB||!map.buyScoreEnabled||participants==null)return;
         TDMData data=TDMData.get(world);
         for(String key:participants){
             if(teamlessPlayers.contains(key))continue;
@@ -1401,7 +1400,7 @@ public class TDMManager {
         ffaRoundWinner = null;
         ffaNextRoundTick = 0L;
         releaseAllRoundWaiting();
-        placeAllPlayersAtSelectedMap(world, KitSelectionContext.FFA_ROUND_START);
+        placeAllPlayersAtSelectedMap(world, KitSelectionContext.LOADOUT_SELECTION);
         captureActiveRoundParticipants(world, activeRoundParticipants);
     }
 
@@ -1567,7 +1566,7 @@ public class TDMManager {
     public static void promptForKit(EntityPlayer player) {
         KitSelectionContext context;
         if (isFfaMode(player.worldObj)) {
-            context = KitSelectionContext.FFA_ROUND_START;
+            context = KitSelectionContext.LOADOUT_SELECTION;
         } else if (isGlobalBombBuyPeriod(player)) {
             context = KitSelectionContext.BUY_PHASE;
         } else {
@@ -1586,10 +1585,10 @@ public class TDMManager {
             return;
         }
         if (context == KitSelectionContext.RESPAWN_LOCK
-                && (isHardcoreRespawns(player.worldObj) || isFfaMode(player.worldObj))) {
+                && (!isBombMode(player.worldObj) || isHardcoreRespawns(player.worldObj))) {
             return;
         }
-        if (context == KitSelectionContext.FFA_ROUND_START && !isFfaMode(player.worldObj)) {
+        if (context == KitSelectionContext.LOADOUT_SELECTION && isBombMode(player.worldObj)) {
             return;
         }
 
@@ -1615,12 +1614,13 @@ public class TDMManager {
         kitSelectionContexts.put(playerKey, context);
         pendingKitMaps.put(playerKey, mapName);
         if (context == KitSelectionContext.RESPAWN_LOCK
-                || context == KitSelectionContext.FFA_ROUND_START) {
+                || context == KitSelectionContext.LOADOUT_SELECTION) {
             applyKitSelectionProtection(player);
         }
 
         TDMMap map = getSelectedMapData(player.worldObj);
-        boolean economy = map != null && map.buyScoreEnabled;
+        boolean economy = context != KitSelectionContext.LOADOUT_SELECTION
+                && map != null && map.mode == TDMGameMode.BOMB && map.buyScoreEnabled;
         if (economy && !hasAffordableKit(player, mapName, ffa, team)) {
             String message = "No configured TDM kit is affordable for your new life.";
             player.addChatMessage(new ChatComponentText(message));
@@ -1691,12 +1691,12 @@ public class TDMManager {
         releaseGlobalBuyProtection(player);
         if (context == KitSelectionContext.BUY_PHASE
                 || (context == KitSelectionContext.RESPAWN_LOCK && isHardcoreRespawns(player.worldObj))
-                || (context == KitSelectionContext.FFA_ROUND_START && !isFfaMode(player.worldObj))) {
+                || (context == KitSelectionContext.LOADOUT_SELECTION && isBombMode(player.worldObj))) {
             cancelKitSelection(player);
             return;
         }
         boolean protectedContext = context == KitSelectionContext.RESPAWN_LOCK
-                || context == KitSelectionContext.FFA_ROUND_START;
+                || context == KitSelectionContext.LOADOUT_SELECTION;
         if (protectedContext && pendingKitSelection.contains(key) && isAliveForTDM(player)
                 && !TDMSpectatorManager.isObserving(player)) {
             applyKitSelectionProtection(player);
@@ -1745,13 +1745,13 @@ public class TDMManager {
         if (context == KitSelectionContext.RESPAWN_LOCK && isHardcoreRespawns(player.worldObj)) {
             return expireKitSelection(player);
         }
-        if (context == KitSelectionContext.FFA_ROUND_START && !ffa) {
+        if (context == KitSelectionContext.LOADOUT_SELECTION && isBombMode(player.worldObj)) {
             return expireKitSelection(player);
         }
 
         Team pool;
         if (ffa) {
-            if (context != KitSelectionContext.FFA_ROUND_START || requestedPool == null) {
+            if (context != KitSelectionContext.LOADOUT_SELECTION || requestedPool == null) {
                 return KitSelectionResult.INVALID_SELECTION;
             }
             pool = requestedPool;
@@ -1767,14 +1767,18 @@ public class TDMManager {
             return KitSelectionResult.INVALID_SELECTION;
         }
         TDMMap map = getSelectedMapData(player.worldObj);
-        int effectiveCost = map != null && map.buyScoreEnabled ? savedCost : 0;
+        int effectiveCost = context != KitSelectionContext.LOADOUT_SELECTION
+                && map != null && map.mode == TDMGameMode.BOMB && map.buyScoreEnabled ? savedCost : 0;
         if (getBuyScore(player) < effectiveCost) {
             return KitSelectionResult.INSUFFICIENT_FUNDS;
         }
         if (!TDMKitManager.applyKit(mapName, pool, kitIndex, player)) {
             return KitSelectionResult.INVALID_SELECTION;
         }
-        selectedKits.put(playerKey, new SelectedKit(pool, kitIndex));
+        // Survivor-kit state belongs exclusively to competitive BOMB purchases.
+        if (context != KitSelectionContext.LOADOUT_SELECTION && isBombMode(player.worldObj)) {
+            selectedKits.put(playerKey, new SelectedKit(pool, kitIndex));
+        }
         if (effectiveCost > 0) {
             TDMData data = TDMData.get(player.worldObj);
             data.playerBuyScores.put(playerKey, Integer.valueOf(getBuyScore(player) - effectiveCost));
