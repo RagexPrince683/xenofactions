@@ -684,3 +684,10 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Routed successful skips through the existing map-vote transition so combat, objective, freeze, waiting, kit, and buy-phase state are cleaned without producing a team, FFA, bomb, or economy result.
 - Kept the stable normalized map key visible but disabled in the map-vote GUI, rejected current-map selections authoritatively, excluded it from winner resolution, and retained the current match when no alternative exists.
 - Updated command help, completion, command-menu localization, and TDM documentation. Source-level validation was completed; multiplayer and dedicated-server runtime validation remains required.
+
+## Pull request: restore non-hardcore BOMB respawns and FFA kit pools
+
+- Restored persisted per-map hardcore respawn settings for BOMB maps.
+- Kept timed buy phases exclusive to hardcore BOMB while adding protected per-respawn kit selection to non-hardcore BOMB.
+- Added mandatory FFA round-start loadouts backed by existing RED and BLUE map kit pools.
+- Added an FFA-only RED/BLUE pool switch to the kit selection GUI and server-authoritative pool validation.

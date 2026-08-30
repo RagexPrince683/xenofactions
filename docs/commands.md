@@ -215,7 +215,7 @@ The source contains `CommandOrewand`, `CommandXCum`, and `CommandXCustomImage`, 
 
 TDM always stores players on the **RED** or **BLUE** team. A bomb map adds objective roles without changing membership: `/tdm map terroristteam <map> <red|blue>` chooses which stored team is Terrorist and the other team is Counter-Terrorist. Sides do not swap automatically.
 
-Use `/tdm map mode <map> <deathmatch|bomb>` to select the mode. BOMB always uses round elimination; `/tdm map hardcorerespawns <map> <true|false>` is retained only for deathmatch maps. Configure A or B as normalized cuboids with `/tdm map bombsite <map> <a|b> pos1`, `pos2`, or `clear`; positions use the executing player's floored block coordinate and both corners must share a dimension.
+Use `/tdm map mode <map> <deathmatch|bomb|ffa>` to select the mode. `/tdm map hardcorerespawns <map> <true|false>` also applies to BOMB: `true` uses round elimination and the timed buy phase, while `false` permits normal respawns and opens protected kit selection after each respawn without a buy timer. Configure A or B as normalized cuboids with `/tdm map bombsite <map> <a|b> pos1`, `pos2`, or `clear`; positions use the executing player's floored block coordinate and both corners must share a dimension.
 
 `/tdm map lossscore <map> <amount>` configures the end-of-round losing-side bonus, while `/tdm map plantscore <map> <amount>` configures the individual successful-plant reward; both default to **1** and accept zero to disable the reward. Map listings show loss, kill, win, plant, and defuse economy values.
 
