@@ -19,10 +19,19 @@ public class GUITDMKitSelect extends GuiScreen {
     private static final int BUTTON_HEIGHT = 20;
     private static final int BUTTON_SPACING = 24;
 
-    private final String team;
-    private final String[] kitNames;
-    private final int[] costs;
-    private final ItemStack[][] kitPreviews;
+    private static final int POOL_TOGGLE_BUTTON = 1000;
+
+    private final String[] redNames;
+    private final int[] redCosts;
+    private final ItemStack[][] redPreviews;
+    private final String[] blueNames;
+    private final int[] blueCosts;
+    private final ItemStack[][] bluePreviews;
+    private final boolean ffa;
+    private String selectedPool;
+    private String[] kitNames;
+    private int[] costs;
+    private ItemStack[][] kitPreviews;
     private final boolean economy;
     private final boolean buying;
     private final boolean mandatory;
@@ -39,13 +48,19 @@ public class GUITDMKitSelect extends GuiScreen {
     private int contentY;
     private boolean awaitingSelectionResult;
 
-    public GUITDMKitSelect(String team, String[] names, int[] costs,
-            ItemStack[][] kitPreviews, boolean economy, int balance, int seconds,
-            boolean buying, boolean mandatory) {
-        this.team = team;
-        this.kitNames = names;
-        this.costs = costs;
-        this.kitPreviews = kitPreviews;
+    public GUITDMKitSelect(String initialPool, String[] redNames, int[] redCosts,
+            ItemStack[][] redPreviews, String[] blueNames, int[] blueCosts,
+            ItemStack[][] bluePreviews, boolean ffa, boolean economy, int balance,
+            int seconds, boolean buying, boolean mandatory) {
+        this.selectedPool = initialPool;
+        this.redNames = redNames;
+        this.redCosts = redCosts;
+        this.redPreviews = redPreviews;
+        this.blueNames = blueNames;
+        this.blueCosts = blueCosts;
+        this.bluePreviews = bluePreviews;
+        this.ffa = ffa;
+        selectPool(initialPool);
         this.economy = economy;
         this.balance = balance;
         this.seconds = seconds;
@@ -62,7 +77,7 @@ public class GUITDMKitSelect extends GuiScreen {
         contentX = Math.min(width - 190, listX + listWidth + 8);
         contentY = 42;
 
-        int availableButtonHeight = Math.max(BUTTON_HEIGHT, height - contentY - 12);
+        int availableButtonHeight = Math.max(BUTTON_HEIGHT, height - contentY - (ffa ? 40 : 12));
         visibleKitCount = Math.max(1, availableButtonHeight / BUTTON_SPACING);
         visibleKitCount = Math.min(visibleKitCount, kitNames.length);
         clampScroll();
@@ -71,6 +86,12 @@ public class GUITDMKitSelect extends GuiScreen {
 
     private void rebuildButtons() {
         buttonList.clear();
+        if (ffa) {
+            String destination = "red".equals(selectedPool) ? "BLUE" : "RED";
+            buttonList.add(new GuiButton(POOL_TOGGLE_BUTTON, listX,
+                    height - BUTTON_HEIGHT - 8, listWidth, BUTTON_HEIGHT,
+                    "View " + destination + " Kits"));
+        }
         for (int row = 0; row < visibleKitCount; row++) {
             int kitIndex = firstVisibleKit + row;
             GuiButton button = new GuiButton(
@@ -103,11 +124,21 @@ public class GUITDMKitSelect extends GuiScreen {
         if (awaitingSelectionResult || !button.enabled) {
             return;
         }
+        if (button.id == POOL_TOGGLE_BUTTON) {
+            selectPool("red".equals(selectedPool) ? "blue" : "red");
+            firstVisibleKit = 0;
+            selectedPreviewKit = 0;
+            int availableButtonHeight = Math.max(BUTTON_HEIGHT, height - contentY - 40);
+            visibleKitCount = Math.min(Math.max(1, availableButtonHeight / BUTTON_SPACING),
+                    kitNames.length);
+            rebuildButtons();
+            return;
+        }
         if (buying || mandatory) {
             awaitingSelectionResult = true;
             setButtonsEnabled(false);
         }
-        PacketDispatcher.wrapper.sendToServer(new TDMKitSelectPacket(button.id));
+        PacketDispatcher.wrapper.sendToServer(new TDMKitSelectPacket(button.id, selectedPool));
         if (!buying && !mandatory) {
             mc.displayGuiScreen(null);
         }
@@ -140,7 +171,8 @@ public class GUITDMKitSelect extends GuiScreen {
     private void setButtonsEnabled(boolean enabled) {
         for (Object entry : buttonList) {
             GuiButton button = (GuiButton) entry;
-            button.enabled = enabled && canAfford(button.id);
+            button.enabled = button.id == POOL_TOGGLE_BUTTON
+                    ? enabled : enabled && canAfford(button.id);
         }
     }
 
@@ -197,7 +229,9 @@ public class GUITDMKitSelect extends GuiScreen {
     }
 
     private void drawHeader() {
-        String title = EnumChatFormatting.BOLD + "Select a " + team + " TDM Kit";
+        String title = EnumChatFormatting.BOLD + (ffa
+                ? selectedPool.toUpperCase() + " Kits"
+                : "Select a " + selectedPool + " TDM Kit");
         drawCenteredString(fontRendererObj, title, width / 2, 10, 0xFFFFFF);
 
         int remaining = buying
@@ -226,6 +260,11 @@ public class GUITDMKitSelect extends GuiScreen {
         int panelRight = contentX + 188;
         int panelBottom = contentY + 118;
         drawGradientRect(contentX, contentY, panelRight, panelBottom, 0xE0101010, 0xE0202020);
+        if (kitNames.length == 0) {
+            drawCenteredString(fontRendererObj, "No " + selectedPool.toUpperCase()
+                    + " kits are configured.", contentX + 94, contentY + 52, 0xFF8080);
+            return;
+        }
 
         int kitIndex = Math.max(0, Math.min(selectedPreviewKit, kitNames.length - 1));
         String price = costs[kitIndex] == 0 ? "FREE" : Integer.toString(costs[kitIndex]);
@@ -280,6 +319,9 @@ public class GUITDMKitSelect extends GuiScreen {
     }
 
     private ItemStack getHoveredPreviewStack(int mouseX, int mouseY) {
+        if (kitPreviews.length == 0) {
+            return null;
+        }
         int kitIndex = Math.max(0, Math.min(selectedPreviewKit, kitPreviews.length - 1));
         ItemStack[] preview = kitPreviews[kitIndex];
 
@@ -318,6 +360,25 @@ public class GUITDMKitSelect extends GuiScreen {
             }
         }
         return false;
+    }
+
+    private void selectPool(String pool) {
+        selectedPool = "blue".equalsIgnoreCase(pool) ? "blue" : "red";
+        if (!ffa) {
+            kitNames = redNames;
+            costs = redCosts;
+            kitPreviews = redPreviews;
+            return;
+        }
+        if ("blue".equals(selectedPool)) {
+            kitNames = blueNames;
+            costs = blueCosts;
+            kitPreviews = bluePreviews;
+        } else {
+            kitNames = redNames;
+            costs = redCosts;
+            kitPreviews = redPreviews;
+        }
     }
 
     @Override

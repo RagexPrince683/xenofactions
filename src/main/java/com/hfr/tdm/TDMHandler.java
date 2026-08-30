@@ -67,7 +67,11 @@ public class TDMHandler {
 
         TDMManager.cancelKitSelection(event.entityPlayer);
 
-        if (TDMBombManager.isEliminated(event.original) && TDMManager.isHardcoreRespawns(event.entityPlayer.worldObj)) TDMSpectatorManager.observe(event.entityPlayer);
+        if (TDMManager.isHardcoreRespawns(event.entityPlayer.worldObj)
+                && (TDMBombManager.isEliminated(event.original)
+                    || TDMManager.isFfaEliminated(event.original))) {
+            TDMSpectatorManager.observe(event.entityPlayer);
+        }
         // PlayerRespawnEvent owns non-hardcore per-life setup; Clone is too early for a gameplay GUI.
     }
 
@@ -86,10 +90,15 @@ public class TDMHandler {
             return;
         }
 
-        TDMManager.KitSelectionContext context = hardcoreBomb
-                && TDMBombManager.getState() == TDMBombManager.BombRoundState.PRE_ROUND
-                ? TDMManager.KitSelectionContext.BUY_PHASE
-                : TDMManager.KitSelectionContext.RESPAWN_LOCK;
+        TDMManager.KitSelectionContext context;
+        if (TDMManager.isFfaMode(event.player.worldObj)) {
+            context = TDMManager.KitSelectionContext.FFA_ROUND_START;
+        } else if (hardcoreBomb
+                && TDMBombManager.getState() == TDMBombManager.BombRoundState.PRE_ROUND) {
+            context = TDMManager.KitSelectionContext.BUY_PHASE;
+        } else {
+            context = TDMManager.KitSelectionContext.RESPAWN_LOCK;
+        }
         if (context == TDMManager.KitSelectionContext.BUY_PHASE) {
             TDMSpectatorManager.restore(event.player);
         }
@@ -118,10 +127,15 @@ public class TDMHandler {
             return;
         }
 
-        TDMManager.KitSelectionContext context = hardcoreBomb
-                && TDMBombManager.getState() == TDMBombManager.BombRoundState.PRE_ROUND
-                ? TDMManager.KitSelectionContext.BUY_PHASE
-                : TDMManager.KitSelectionContext.RESPAWN_LOCK;
+        TDMManager.KitSelectionContext context;
+        if (TDMManager.isFfaMode(event.player.worldObj)) {
+            context = TDMManager.KitSelectionContext.FFA_ROUND_START;
+        } else if (hardcoreBomb
+                && TDMBombManager.getState() == TDMBombManager.BombRoundState.PRE_ROUND) {
+            context = TDMManager.KitSelectionContext.BUY_PHASE;
+        } else {
+            context = TDMManager.KitSelectionContext.RESPAWN_LOCK;
+        }
         tryImmediatePlacement(event.player, context);
     }
 

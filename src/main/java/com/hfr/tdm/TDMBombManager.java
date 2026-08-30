@@ -139,7 +139,15 @@ public final class TDMBombManager {
     }
 
     public static void beginNextBombRound(World world) {
-        beginBuyTime(world);
+        if (TDMManager.isHardcoreRespawns(world)) {
+            beginBuyTime(world);
+            return;
+        }
+        cleanupTransientState(world);
+        state = BombRoundState.PRE_ROUND;
+        stateEndTick = world.getTotalWorldTime();
+        TDMManager.placeAllPlayersAtSelectedMap(world, TDMManager.KitSelectionContext.RESPAWN_LOCK);
+        TDMManager.sendStatusToAll(world);
     }
 
     public static void startRound(World world) {
@@ -150,13 +158,19 @@ public final class TDMBombManager {
             waitForTeams(world);
             return;
         }
+        boolean hardcore = TDMManager.isHardcoreRespawns(world);
         for (EntityPlayerMP player : TDMManager.getOnlinePlayers()) {
-            TDMManager.resolvePendingSurvivorChoice(player);
-            if (TDMManager.isAliveForTDM(player) && needsFreshLoadout(player) && !TDMManager.hasSelectedKit(player)) {
-                selectFallbackKit(player, map);
+            if (hardcore) {
+                TDMManager.resolvePendingSurvivorChoice(player);
+                if (TDMManager.isAliveForTDM(player) && needsFreshLoadout(player)
+                        && !TDMManager.hasSelectedKit(player)) {
+                    selectFallbackKit(player, map);
+                }
             }
-            boolean protectedByBuy = TDMManager.hasKitSelectionProtection(player);
-            TDMManager.cancelKitSelection(player);
+            boolean protectedByBuy = hardcore && TDMManager.hasKitSelectionProtection(player);
+            if (hardcore) {
+                TDMManager.cancelKitSelection(player);
+            }
             if (protectedByBuy && XFConfig.tdmBombLifecycleDebug && MainRegistry.logger != null) {
                 MainRegistry.logger.info("TDM kit protection cleared for {} entering LIVE", player.getCommandSenderName());
             }
@@ -168,9 +182,13 @@ public final class TDMBombManager {
         purgeBombObjectiveItems(world);
         state = BombRoundState.LIVE;
         stateEndTick = world.getTotalWorldTime() + TDMManager.getEffectiveBombRoundTicks(world, map.name);
-        if (!assignBombToRandomTerrorist(world)) {
-            waitForTeams(world);
-            return;
+        if (hardcore) {
+            if (!assignBombToRandomTerrorist(world)) {
+                waitForTeams(world);
+                return;
+            }
+        } else {
+            ensureLiveRoundBombAssigned(world);
         }
         TDMManager.captureActiveRoundParticipants(world, roundParticipants);
         TDMManager.playConfiguredSound(world, "t_round_start", XFConfig.tdmTRoundStartSounds, TDMManager.getTerroristTeam(world));

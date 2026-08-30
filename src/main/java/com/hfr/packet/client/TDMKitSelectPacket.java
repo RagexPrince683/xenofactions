@@ -13,21 +13,36 @@ import net.minecraft.entity.player.EntityPlayerMP;
 public class TDMKitSelectPacket implements IMessage {
 
     private int kitIndex;
+    private String kitPool = "";
 
     public TDMKitSelectPacket() { }
 
-    public TDMKitSelectPacket(int kitIndex) {
+    public TDMKitSelectPacket(int kitIndex, String kitPool) {
         this.kitIndex = kitIndex;
+        this.kitPool = kitPool == null ? "" : kitPool;
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
         kitIndex = buf.readInt();
+        int poolLength = buf.readUnsignedByte();
+        if (poolLength > 4 || buf.readableBytes() < poolLength) {
+            throw new IllegalArgumentException("Invalid TDM kit pool");
+        }
+        byte[] poolBytes = new byte[poolLength];
+        buf.readBytes(poolBytes);
+        kitPool = new String(poolBytes, java.nio.charset.Charset.forName("US-ASCII"));
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
         buf.writeInt(kitIndex);
+        byte[] poolBytes = kitPool.getBytes(java.nio.charset.Charset.forName("US-ASCII"));
+        if (poolBytes.length > 4) {
+            throw new IllegalArgumentException("Invalid TDM kit pool");
+        }
+        buf.writeByte(poolBytes.length);
+        buf.writeBytes(poolBytes);
     }
 
     public static class Handler implements IMessageHandler<TDMKitSelectPacket, IMessage> {
@@ -43,7 +58,8 @@ public class TDMKitSelectPacket implements IMessage {
                     }
 
                     TDMManager.KitSelectionResult result =
-                            TDMManager.selectKit(player, message.kitIndex);
+                            TDMManager.selectKit(player, message.kitIndex,
+                                    TDMManager.Team.fromName(message.kitPool));
                     if (result != TDMManager.KitSelectionResult.SUCCESS) {
                         PacketDispatcher.wrapper.sendTo(
                                 new TDMKitSelectResultPacket(result), player);
