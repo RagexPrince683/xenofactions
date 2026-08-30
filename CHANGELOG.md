@@ -703,3 +703,10 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Kept timed buy phases exclusive to hardcore BOMB while adding protected per-respawn kit selection to non-hardcore BOMB.
 - Added mandatory FFA round-start loadouts backed by existing RED and BLUE map kit pools.
 - Added an FFA-only RED/BLUE pool switch to the kit selection GUI and server-authoritative pool validation.
+
+## Pull request: fix TDM cross-mode elimination ownership softlock
+
+- Stopped FFA mode changes from persisting `hardcoreRespawns=true`; FFA round elimination is now derived from its active mode.
+- Migrated the legacy forced hardcore flag to `false` only while loading FFA maps, preventing already-polluted FFA configuration from leaking into a later DEATHMATCH mode without changing DEATHMATCH or BOMB settings.
+- Isolated BOMB, FFA, and hardcore DEATHMATCH eliminated-player state and made respawn, login, retry placement, and protection enforcement validate the current mode.
+- Rejected `hardcorerespawns` configuration while a map is FFA and clarified that FFA always uses round elimination.

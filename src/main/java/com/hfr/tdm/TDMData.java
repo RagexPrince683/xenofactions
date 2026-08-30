@@ -70,6 +70,7 @@ public class TDMData extends WorldSavedData {
 
     @Override
     public void readFromNBT(NBTTagCompound nbt) {
+        boolean migratedLegacyFfaHardcore = false;
         enabled = nbt.getBoolean("enabled");
         friendlyFireEnabled = !nbt.hasKey("friendlyFireEnabled") || nbt.getBoolean("friendlyFireEnabled");
         autoBalanceEnabled = !nbt.hasKey("autoBalanceEnabled") || nbt.getBoolean("autoBalanceEnabled");
@@ -112,6 +113,12 @@ public class TDMData extends WorldSavedData {
             map.hardcoreRespawns = mapTag.hasKey("hardcoreRespawns")
                     ? mapTag.getBoolean("hardcoreRespawns")
                     : map.mode == TDMManager.TDMGameMode.BOMB;
+            if (map.mode == TDMManager.TDMGameMode.FFA && map.hardcoreRespawns) {
+                // Older releases wrote true solely to implement FFA elimination. FFA now owns
+                // that runtime behavior, so this legacy value must not leak into a later mode.
+                map.hardcoreRespawns = false;
+                migratedLegacyFfaHardcore = true;
+            }
             map.bombScoreLimitOverride=mapTag.hasKey("bombScoreLimit")?Math.max(0,mapTag.getInteger("bombScoreLimit")):0;
             map.bombRoundTicksOverride=mapTag.hasKey("bombRoundTicks")?Math.max(0,mapTag.getInteger("bombRoundTicks")):0;
             map.buyScoreEnabled=!mapTag.hasKey("buyScoreEnabled")||mapTag.getBoolean("buyScoreEnabled");
@@ -129,6 +136,10 @@ public class TDMData extends WorldSavedData {
                 }
             }
             maps.put(map.name, map);
+        }
+
+        if (migratedLegacyFfaHardcore) {
+            markDirty();
         }
 
         if (selectedMap.length() > 0 && !maps.containsKey(selectedMap)) {

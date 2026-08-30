@@ -59,12 +59,21 @@ public final class TDMBombManager {
     public static String getPlantedSite(){return bomb==null?"":bomb.site;}
     public static int getRemainingSeconds(World w){return (state==BombRoundState.LIVE||state==BombRoundState.PRE_ROUND)?(int)Math.max(0,(stateEndTick-w.getTotalWorldTime()+19)/20):0;}
     public static boolean isEliminated(EntityPlayer player) {
-        return eliminated.contains(key(player));
+        return player != null
+                && TDMManager.isBombMode(player.worldObj)
+                && TDMManager.isHardcoreRespawns(player.worldObj)
+                && eliminated.contains(key(player));
+    }
+
+    public static void clearEliminatedPlayers() {
+        eliminated.clear();
     }
 
     /** Records a late hardcore join without evaluating an already-running round again. */
     public static void markLateJoinerEliminated(EntityPlayer player) {
-        if (player != null && TDMManager.isHardcoreRespawns(player.worldObj)) {
+        if (player != null
+                && TDMManager.isBombMode(player.worldObj)
+                && TDMManager.isHardcoreRespawns(player.worldObj)) {
             eliminated.add(key(player));
         }
     }
@@ -279,16 +288,34 @@ public final class TDMBombManager {
         }
     }
     private static boolean isTrackedBombSupportStillValid(TrackedBomb b){return b!=null&&b.attachmentDirection!=ForgeDirection.UNKNOWN&&b.world.isSideSolid(b.supportX,b.supportY,b.supportZ,b.attachmentDirection);}
-    public static void eliminate(EntityPlayer p){
-        if (TDMManager.isBombMode(p.worldObj) && isRoundActive()) {
+    public static void eliminate(EntityPlayer p) {
+        if (p == null || !TDMManager.isBombMode(p.worldObj)) {
+            return;
+        }
+        if (isRoundActive()) {
             roundDeaths.add(key(p));
         }
-        if(!TDMManager.isHardcoreRespawns(p.worldObj))return; eliminated.add(key(p));
-        if(!TDMManager.isBombMode(p.worldObj)||!isRoundActive())return;
-        if(TDMManager.isBombTestMode()&&!hasBothTeams(p.worldObj))return;
-        TDMManager.Team ct=TDMManager.getCounterTerroristTeam(p.worldObj),tt=TDMManager.getTerroristTeam(p.worldObj);
-        if(living(p.worldObj,ct)==0)completeRound(p.worldObj,tt,BombRoundWinReason.COUNTER_TERRORISTS_ELIMINATED);
-        else if(state!=BombRoundState.BOMB_PLANTED&&living(p.worldObj,tt)==0)completeRound(p.worldObj,ct,BombRoundWinReason.TERRORISTS_ELIMINATED);
+        if (!TDMManager.isHardcoreRespawns(p.worldObj)) {
+            return;
+        }
+        eliminated.add(key(p));
+        if (!isRoundActive()) {
+            return;
+        }
+        if (TDMManager.isBombTestMode() && !hasBothTeams(p.worldObj)) {
+            return;
+        }
+
+        TDMManager.Team counterTerrorists = TDMManager.getCounterTerroristTeam(p.worldObj);
+        TDMManager.Team terrorists = TDMManager.getTerroristTeam(p.worldObj);
+        if (living(p.worldObj, counterTerrorists) == 0) {
+            completeRound(p.worldObj, terrorists,
+                    BombRoundWinReason.COUNTER_TERRORISTS_ELIMINATED);
+        } else if (state != BombRoundState.BOMB_PLANTED
+                && living(p.worldObj, terrorists) == 0) {
+            completeRound(p.worldObj, counterTerrorists,
+                    BombRoundWinReason.TERRORISTS_ELIMINATED);
+        }
     }
     private static int living(World w,TDMManager.Team team){int n=0;for(EntityPlayerMP p:TDMManager.getOnlinePlayers())if(TDMManager.getPlayerTeam(w,p.getCommandSenderName())==team&&!isEliminated(p)&&!TDMSpectatorManager.isObserving(p))n++;return n;}
     public static synchronized void completeRound(World world,TDMManager.Team winner,BombRoundWinReason reason){

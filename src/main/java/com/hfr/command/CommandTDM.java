@@ -302,7 +302,7 @@ public class CommandTDM extends CommandBase {
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map timer <map> <seconds|default>" + TITLE + " - Sets a map round timer"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map mode <map> <deathmatch|bomb|ffa>" + TITLE + " - Sets the map game mode"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map terroristteam <map> <red|blue>" + TITLE + " - Maps RED/BLUE to the T role"));
-        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map hardcorerespawns <map> <true|false>" + TITLE + " - BOMB true: elimination and timed buy; false: respawn kit selection without a timer"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map hardcorerespawns <map> <true|false>" + TITLE + " - DEATHMATCH/BOMB round elimination; FFA is always elimination"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map bombsite <map> <a|b> <pos1|pos2|clear>" + TITLE + " - Configures an objective cuboid"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map economy <map> <true|false>" + TITLE + " - Enables the BOMB kit economy"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map killscore <map> <amount>" + TITLE + " - Sets enemy-kill buy score"));
@@ -564,6 +564,12 @@ public class CommandTDM extends CommandBase {
                     && !args[3].equalsIgnoreCase("false"))) {
                 sender.addChatMessage(new ChatComponentText(
                         "Usage: /tdm map hardcorerespawns <map> <true|false>"));
+                return;
+            }
+            TDMManager.TDMMap map = TDMManager.getMap(world, mapName);
+            if (map.mode == TDMManager.TDMGameMode.FFA) {
+                sender.addChatMessage(new ChatComponentText(
+                        "FFA is always round-elimination. Change the map to DEATHMATCH or BOMB before configuring hardcore respawns."));
                 return;
             }
             TDMManager.configureMap(world, mapName, null, null, Boolean.valueOf(args[3]));

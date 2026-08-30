@@ -51,6 +51,8 @@ public class TDMManager {
     private static final Map<String, SelectedKit> selectedKits = new HashMap<String, SelectedKit>();
     private static final Set<String> survivorChoicePending = new HashSet<String>();
     private static final Set<String> ffaEliminated = new HashSet<String>();
+    /** Eliminated players owned exclusively by an active hardcore DEATHMATCH round. */
+    private static final Set<String> deathmatchEliminated = new HashSet<String>();
     private static long ffaNextRoundTick;
     private static String ffaRoundWinner;
     /** Names captured when the current non-BOMB competitive round starts. */
@@ -223,9 +225,6 @@ public class TDMManager {
         }
 
         map.mode = mode;
-        if (mode == TDMGameMode.FFA) {
-            map.hardcoreRespawns = true;
-        }
         data.markDirty();
         if (!changingSelectedActiveMap) return true;
 
@@ -238,6 +237,7 @@ public class TDMManager {
     /** Stops ownership belonging to the selected mode before its map data is changed. */
     private static void stopSelectedMapLifecycle(World world) {
         TDMBombManager.cleanup(world, true);
+        clearAllModeEliminationState();
         resetTDMTransientPlayerState(world);
     }
 
@@ -320,7 +320,9 @@ public class TDMManager {
         nextTeamChangeTick.clear();
         teamlessPlayers.clear();
         roundWaitingPlayers.clear(); roundWaitingAnchors.clear(); selectedKits.clear(); survivorChoicePending.clear();
-        ffaEliminated.clear(); ffaNextRoundTick=0L; ffaRoundWinner=null; activeRoundParticipants.clear();
+        ffaEliminated.clear();
+        deathmatchEliminated.clear();
+        ffaNextRoundTick=0L; ffaRoundWinner=null; activeRoundParticipants.clear();
     }
 
     public static boolean isEnabled(World world) {
@@ -337,6 +339,7 @@ public class TDMManager {
             startRound(world, false);
         } else {
             TDMBombManager.cleanup(world, true);
+            clearAllModeEliminationState();
             resetTDMTransientPlayerState(world);
             data.roundEndTick = 0;
             data.mapVoteActive = false;
@@ -701,6 +704,7 @@ public class TDMManager {
 
     /** Starts a validated full map match; bomb combat rounds own their own placement lifecycle. */
     private static void startMatch(World world, boolean resetVotes) {
+        clearAllModeEliminationState();
         for(EntityPlayerMP player:getOnlinePlayers())clearRoundPlayerState(player);
         TDMData data = TDMData.get(world);
         data.redScore = 0;
@@ -1306,14 +1310,91 @@ public class TDMManager {
     /** Spatial eligibility deliberately ignores combat-phase and round-waiting state. */
     public static boolean canPlaceAtTdmSpawn(EntityPlayer player){return player!=null&&player.worldObj!=null&&!player.isDead&&player.getHealth()>0.0F;}
 
-    public static boolean isFfaEliminated(EntityPlayer player){return player!=null&&ffaEliminated.contains(getPlayerKey(player));}
-    public static void markLateJoinerFfaEliminated(EntityPlayer player){if(player!=null&&isFfaMode(player.worldObj))ffaEliminated.add(getPlayerKey(player));}
-    public static void eliminateFfaPlayer(EntityPlayer victim){
-        if(victim==null||!isFfaMode(victim.worldObj)||ffaNextRoundTick>0L||!isCompetitivePlayer(victim))return;
+    public static boolean isFfaEliminated(EntityPlayer player) {
+        return player != null
+                && isFfaMode(player.worldObj)
+                && ffaEliminated.contains(getPlayerKey(player));
+    }
+    public static void markLateJoinerFfaEliminated(EntityPlayer player) {
+        if (player != null && isFfaMode(player.worldObj)) {
+            ffaEliminated.add(getPlayerKey(player));
+        }
+    }
+
+    public static void eliminateFfaPlayer(EntityPlayer victim) {
+        if (victim == null
+                || !isFfaMode(victim.worldObj)
+                || ffaNextRoundTick > 0L
+                || !isCompetitivePlayer(victim)) {
+            return;
+        }
         ffaEliminated.add(getPlayerKey(victim));
-        List<EntityPlayerMP> alive=new ArrayList<EntityPlayerMP>();
-        for(EntityPlayerMP p:getOnlinePlayers())if(p.worldObj==victim.worldObj&&isCompetitivePlayer(p)&&!ffaEliminated.contains(getPlayerKey(p)))alive.add(p);
-        if(alive.size()<=1){ffaRoundWinner=alive.isEmpty()?null:getPlayerKey(alive.get(0));awardRoundResultBuyScore(victim.worldObj,null,ffaRoundWinner,activeRoundParticipants);ffaNextRoundTick=victim.worldObj.getTotalWorldTime()+100L;sendStatusToAll(victim.worldObj);}
+        List<EntityPlayerMP> alive = new ArrayList<EntityPlayerMP>();
+        for (EntityPlayerMP player : getOnlinePlayers()) {
+            if (player.worldObj == victim.worldObj
+                    && isCompetitivePlayer(player)
+                    && !ffaEliminated.contains(getPlayerKey(player))) {
+                alive.add(player);
+            }
+        }
+        if (alive.size() <= 1) {
+            ffaRoundWinner = alive.isEmpty() ? null : getPlayerKey(alive.get(0));
+            awardRoundResultBuyScore(victim.worldObj, null, ffaRoundWinner,
+                    activeRoundParticipants);
+            ffaNextRoundTick = victim.worldObj.getTotalWorldTime() + 100L;
+            sendStatusToAll(victim.worldObj);
+        }
+    }
+
+    public static boolean isDeathmatchEliminated(EntityPlayer player) {
+        return player != null
+                && getGameMode(player.worldObj) == TDMGameMode.DEATHMATCH
+                && isHardcoreRespawns(player.worldObj)
+                && deathmatchEliminated.contains(getPlayerKey(player));
+    }
+
+    public static void eliminateDeathmatchPlayer(EntityPlayer player) {
+        if (player == null
+                || getGameMode(player.worldObj) != TDMGameMode.DEATHMATCH
+                || !isHardcoreRespawns(player.worldObj)
+                || !isCompetitivePlayer(player)) {
+            return;
+        }
+        deathmatchEliminated.add(getPlayerKey(player));
+    }
+
+    public static void markLateJoinerDeathmatchEliminated(EntityPlayer player) {
+        if (player != null
+                && getGameMode(player.worldObj) == TDMGameMode.DEATHMATCH
+                && isHardcoreRespawns(player.worldObj)) {
+            deathmatchEliminated.add(getPlayerKey(player));
+        }
+    }
+
+    /** Resolves elimination using only the state owned by the selected mode. */
+    public static boolean isCurrentModeEliminated(EntityPlayer player) {
+        if (player == null || player.worldObj == null || !isEnabled(player.worldObj)) {
+            return false;
+        }
+
+        TDMGameMode mode = getGameMode(player.worldObj);
+        if (mode == TDMGameMode.BOMB) {
+            return isHardcoreRespawns(player.worldObj)
+                    && TDMBombManager.isEliminated(player);
+        }
+        if (mode == TDMGameMode.FFA) {
+            return isFfaEliminated(player);
+        }
+        if (mode == TDMGameMode.DEATHMATCH) {
+            return isDeathmatchEliminated(player);
+        }
+        return false;
+    }
+
+    private static void clearAllModeEliminationState() {
+        TDMBombManager.clearEliminatedPlayers();
+        ffaEliminated.clear();
+        deathmatchEliminated.clear();
     }
     private static void startFfaRound(World world) {
         ffaEliminated.clear();
@@ -1324,20 +1405,38 @@ public class TDMManager {
         captureActiveRoundParticipants(world, activeRoundParticipants);
     }
 
-    public static boolean isRoundWaiting(EntityPlayer player) { return player != null && roundWaitingPlayers.contains(getPlayerKey(player)); }
+    public static boolean isRoundWaiting(EntityPlayer player) {
+        return player != null
+                && roundWaitingPlayers.contains(getPlayerKey(player))
+                && isCurrentModeEliminated(player);
+    }
+
     public static void putInRoundWaiting(EntityPlayer player) {
-        if (player == null || (!hasPlayerTeam(player) && !isFfaMode(player.worldObj))) return;
-        String key=getPlayerKey(player); cancelKitSelection(player); releaseGlobalBuyProtection(player); clearKitSelectionProtection(player);
-        roundWaitingPlayers.add(key); roundWaitingAnchors.put(key,new FreezeAnchor(player)); applyOwnedProtectionEffects(player); enforceFreeze(player,roundWaitingAnchors.get(key));
+        if (player == null
+                || !isCurrentModeEliminated(player)
+                || (!hasPlayerTeam(player) && !isFfaMode(player.worldObj))) {
+            return;
+        }
+        String key = getPlayerKey(player);
+        cancelKitSelection(player);
+        releaseGlobalBuyProtection(player);
+        clearKitSelectionProtection(player);
+        roundWaitingPlayers.add(key);
+        roundWaitingAnchors.put(key, new FreezeAnchor(player));
+        applyOwnedProtectionEffects(player);
+        enforceFreeze(player, roundWaitingAnchors.get(key));
     }
     public static void releaseRoundWaiting(EntityPlayer player) {
         if(player==null)return; String key=getPlayerKey(player); roundWaitingPlayers.remove(key);roundWaitingAnchors.remove(key);
         if(!hasKitSelectionProtection(player))removeOwnedProtectionEffects(player);
     }
     public static void tickRoundWaiting(EntityPlayer player) {
-        if(!isRoundWaiting(player))return;
+        if (player == null || !roundWaitingPlayers.contains(getPlayerKey(player))) {
+            return;
+        }
         if (!isEnabled(player.worldObj)
-                || (!hasPlayerTeam(player) && !isFfaMode(player.worldObj))) {
+                || (!hasPlayerTeam(player) && !isFfaMode(player.worldObj))
+                || !isCurrentModeEliminated(player)) {
             releaseRoundWaiting(player);
             return;
         }

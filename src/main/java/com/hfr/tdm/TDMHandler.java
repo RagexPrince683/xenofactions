@@ -67,9 +67,7 @@ public class TDMHandler {
 
         TDMManager.cancelKitSelection(event.entityPlayer);
 
-        if (TDMManager.isHardcoreRespawns(event.entityPlayer.worldObj)
-                && (TDMBombManager.isEliminated(event.original)
-                    || TDMManager.isFfaEliminated(event.original))) {
+        if (TDMManager.isCurrentModeEliminated(event.original)) {
             TDMSpectatorManager.observe(event.entityPlayer);
         }
         // PlayerRespawnEvent owns non-hardcore per-life setup; Clone is too early for a gameplay GUI.
@@ -82,18 +80,35 @@ public class TDMHandler {
             return;
         }
 
-        boolean roundElimination = TDMManager.isHardcoreRespawns(event.player.worldObj);
-        boolean hardcoreBomb = TDMManager.isBombMode(event.player.worldObj) && roundElimination;
-        if (roundElimination && (TDMBombManager.isEliminated(event.player) || TDMManager.isFfaEliminated(event.player))) {
+        TDMManager.TDMGameMode mode = TDMManager.getGameMode(event.player.worldObj);
+        boolean hardcore = TDMManager.isHardcoreRespawns(event.player.worldObj);
+
+        if (mode == TDMManager.TDMGameMode.BOMB
+                && hardcore
+                && TDMBombManager.isEliminated(event.player)) {
+            TDMSpectatorManager.restore(event.player);
+            tryImmediatePlacement(event.player, TDMManager.KitSelectionContext.NONE);
+            return;
+        }
+        if (mode == TDMManager.TDMGameMode.FFA
+                && TDMManager.isFfaEliminated(event.player)) {
+            TDMSpectatorManager.restore(event.player);
+            tryImmediatePlacement(event.player, TDMManager.KitSelectionContext.NONE);
+            return;
+        }
+        if (mode == TDMManager.TDMGameMode.DEATHMATCH
+                && hardcore
+                && TDMManager.isDeathmatchEliminated(event.player)) {
             TDMSpectatorManager.restore(event.player);
             tryImmediatePlacement(event.player, TDMManager.KitSelectionContext.NONE);
             return;
         }
 
         TDMManager.KitSelectionContext context;
-        if (TDMManager.isFfaMode(event.player.worldObj)) {
+        if (mode == TDMManager.TDMGameMode.FFA) {
             context = TDMManager.KitSelectionContext.FFA_ROUND_START;
-        } else if (hardcoreBomb
+        } else if (mode == TDMManager.TDMGameMode.BOMB
+                && hardcore
                 && TDMBombManager.getState() == TDMBombManager.BombRoundState.PRE_ROUND) {
             context = TDMManager.KitSelectionContext.BUY_PHASE;
         } else {
@@ -111,26 +126,38 @@ public class TDMHandler {
             return;
         }
 
-        if(!TDMManager.isFfaMode(event.player.worldObj))TDMManager.getOrAssignPlayerTeam(event.player);
-        boolean hardcoreBomb = TDMManager.isBombMode(event.player.worldObj)
-                && TDMManager.isHardcoreRespawns(event.player.worldObj);
-        boolean activeEliminationRound = TDMManager.isHardcoreRespawns(event.player.worldObj)
-                && (!TDMManager.isBombMode(event.player.worldObj)
-                    || (TDMBombManager.getState() != TDMBombManager.BombRoundState.PRE_ROUND
-                        && TDMBombManager.getState() != TDMBombManager.BombRoundState.WAITING_FOR_TEAMS));
-        if (activeEliminationRound) {
-            // Joining an active hardcore round grants map context, never combat eligibility.
+        TDMManager.TDMGameMode mode = TDMManager.getGameMode(event.player.worldObj);
+        boolean hardcore = TDMManager.isHardcoreRespawns(event.player.worldObj);
+        if (mode != TDMManager.TDMGameMode.FFA) {
+            TDMManager.getOrAssignPlayerTeam(event.player);
+        }
+
+        boolean activeBombRound = mode == TDMManager.TDMGameMode.BOMB
+                && hardcore
+                && TDMBombManager.getState() != TDMBombManager.BombRoundState.PRE_ROUND
+                && TDMBombManager.getState() != TDMBombManager.BombRoundState.WAITING_FOR_TEAMS;
+        if (activeBombRound) {
             TDMBombManager.markLateJoinerEliminated(event.player);
+            TDMSpectatorManager.restore(event.player);
+            tryImmediatePlacement(event.player, TDMManager.KitSelectionContext.NONE);
+            return;
+        }
+        if (mode == TDMManager.TDMGameMode.FFA) {
             TDMManager.markLateJoinerFfaEliminated(event.player);
+            TDMSpectatorManager.restore(event.player);
+            tryImmediatePlacement(event.player, TDMManager.KitSelectionContext.NONE);
+            return;
+        }
+        if (mode == TDMManager.TDMGameMode.DEATHMATCH && hardcore) {
+            TDMManager.markLateJoinerDeathmatchEliminated(event.player);
             TDMSpectatorManager.restore(event.player);
             tryImmediatePlacement(event.player, TDMManager.KitSelectionContext.NONE);
             return;
         }
 
         TDMManager.KitSelectionContext context;
-        if (TDMManager.isFfaMode(event.player.worldObj)) {
-            context = TDMManager.KitSelectionContext.FFA_ROUND_START;
-        } else if (hardcoreBomb
+        if (mode == TDMManager.TDMGameMode.BOMB
+                && hardcore
                 && TDMBombManager.getState() == TDMBombManager.BombRoundState.PRE_ROUND) {
             context = TDMManager.KitSelectionContext.BUY_PHASE;
         } else {
@@ -173,7 +200,10 @@ public class TDMHandler {
         if (!TDMManager.canPlaceAtTdmSpawn(event.player)) return;
         if (TDMManager.respawnPlayer(event.player, random)) {
             pendingRespawns.remove(playerName);
-            if(pending.context==TDMManager.KitSelectionContext.NONE&&(TDMBombManager.isEliminated(event.player)||TDMManager.isFfaEliminated(event.player)))TDMManager.putInRoundWaiting(event.player);
+            if (pending.context == TDMManager.KitSelectionContext.NONE
+                    && TDMManager.isCurrentModeEliminated(event.player)) {
+                TDMManager.putInRoundWaiting(event.player);
+            }
             if(pending.context==TDMManager.KitSelectionContext.BUY_PHASE)TDMManager.enrollGlobalBuyProtection(event.player);
             TDMManager.promptForKit(event.player, pending.context);
         } else if (pending.ticks <= 1) {
@@ -205,6 +235,7 @@ public class TDMHandler {
             }
         }
         TDMManager.eliminateFfaPlayer(victim);
+        TDMManager.eliminateDeathmatchPlayer(victim);
         TDMBombManager.eliminate(victim);
     }
 
@@ -340,7 +371,10 @@ public class TDMHandler {
 
         if (placed) {
             pendingRespawns.remove(getKey(player));
-            if(context==TDMManager.KitSelectionContext.NONE&&(TDMBombManager.isEliminated(player)||TDMManager.isFfaEliminated(player)))TDMManager.putInRoundWaiting(player);
+            if (context == TDMManager.KitSelectionContext.NONE
+                    && TDMManager.isCurrentModeEliminated(player)) {
+                TDMManager.putInRoundWaiting(player);
+            }
             if (context == TDMManager.KitSelectionContext.BUY_PHASE) {
                 TDMManager.enrollGlobalBuyProtection(player);
             }
