@@ -177,36 +177,13 @@ Usage: `/cc <message>`; permission level: 0.
 
 ## Optional TDM: `/tdm`
 
-Registered only when `enableTDM=true`.
+Registered only when `enableTDM=true`. `/tdm help [category]` provides paged, permission-aware help. Player pages are `general`, `match`, and `teams`; operators additionally see `kits`, `maps`, and `admin`. Tab completion is server-authoritative for online players and configured maps, and covers command names, subcommands, teams, modes, map settings, and other fixed values.
 
-Common subcommands parsed by source include:
+Player commands are `/tdm menu`, `/tdm maps`, `/tdm vote <map>`, `/tdm skip [yes|no|status]`, and `/tdm teamchange`. Setup and match-control commands remain operator-only and are not suggested to ordinary players. Use the categorized help pages for exact required/optional arguments and examples.
 
-```text
-/tdm help
-/tdm maps
-/tdm map scorelimit <map> <points|default>
-/tdm map timer <map> <seconds|default>
-/tdm kits
-/tdm menu
-/tdm vote
-/tdm team
-/tdm switchteam
-/tdm setteam
-/tdm add
-/tdm remove
-/tdm addspawn
-/tdm clear
-/tdm save
-/tdm toggle
-/tdm friendlyfire
-/tdm autobalance
-/tdm forcevote
-/tdm forcemapvote
-```
+Deathmatch and FFA are continuous modes: login and respawn place a player immediately at a mode-appropriate spawn and open a protected respawn-loadout selector. That selector ignores kit prices, buy score, survivor kits, and BOMB buy timing. FFA loadouts may be selected from either configured RED or BLUE kit pool, but FFA does not assign a team. Competitive BOMB alone owns economy and survivor-kit state; active hardcore BOMB late joiners retain the established round-waiting behavior.
 
-Map listings show effective score limits and round durations, marking inherited global defaults. Map-specific score limits must be positive points, and map-specific timers must be positive whole seconds; use `default` to restore the global 10,000-point or 20-minute setting. The map vote remains 30 seconds. Server staff should validate map and kit setup in game because the exact argument requirements depend on TDM manager data.
-
-While TDM is enabled, the selected map owns participant spawn placement on login, respawn, and every match or map transition. Map-specific RED and BLUE spawns are authoritative (including their configured dimensions). Legacy global spawns are used only when the selected map has no map-specific spawn data. A match with missing required team spawns is refused and logged rather than falling through to vanilla worldspawn.
+Map-specific spawns are authoritative, including their configured dimensions. Legacy global spawns are used only when the selected map has no map-specific spawn data. A match with missing required spawns is refused and logged rather than falling through to vanilla worldspawn. Mode changes stop the old lifecycle and clear pending kit, protection, waiting, elimination, objective, and survivor state before starting the new mode.
 
 ## Registered-but-not-currently-registered commands
 
@@ -215,7 +192,7 @@ The source contains `CommandOrewand`, `CommandXCum`, and `CommandXCustomImage`, 
 
 TDM always stores players on the **RED** or **BLUE** team. A bomb map adds objective roles without changing membership: `/tdm map terroristteam <map> <red|blue>` chooses which stored team is Terrorist and the other team is Counter-Terrorist. Sides do not swap automatically.
 
-Use `/tdm map mode <map> <deathmatch|bomb|ffa>` to select the mode. `/tdm map hardcorerespawns <map> <true|false>` controls round elimination for DEATHMATCH and BOMB; in BOMB, `true` also uses the timed buy phase, while `false` permits normal respawns and opens protected kit selection after each respawn without a buy timer. FFA always uses round elimination and rejects this setting, so change the map to DEATHMATCH or BOMB before configuring it. Configure A or B as normalized cuboids with `/tdm map bombsite <map> <a|b> pos1`, `pos2`, or `clear`; positions use the executing player's floored block coordinate and both corners must share a dimension.
+Use `/tdm map mode <map> <deathmatch|bomb|ffa>` to select the mode. `/tdm map hardcorerespawns <map> <true|false>` is BOMB-only: `true` uses competitive elimination and the timed buy phase, while `false` permits BOMB respawns and opens protected competitive kit selection after each respawn without a buy timer. Deathmatch and FFA reject this setting because both are continuous. Configure A or B as normalized cuboids with `/tdm map bombsite <map> <a|b> pos1`, `pos2`, or `clear`; positions use the executing player's floored block coordinate and both corners must share a dimension.
 
 `/tdm map lossscore <map> <amount>` configures the end-of-round losing-side bonus, while `/tdm map plantscore <map> <amount>` configures the individual successful-plant reward; both default to **1** and accept zero to disable the reward. Map listings show loss, kill, win, plant, and defuse economy values.
 

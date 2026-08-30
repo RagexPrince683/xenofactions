@@ -107,6 +107,9 @@ public class GUITDMKitSelect extends GuiScreen {
     }
 
     private String getButtonLabel(int kitIndex) {
+        if (!economy) {
+            return fontRendererObj.trimStringToWidth(kitNames[kitIndex], listWidth - 8);
+        }
         String price = costs[kitIndex] == 0 ? "FREE" : Integer.toString(costs[kitIndex]);
         String label = kitNames[kitIndex] + " - " + price;
         if (economy && !canAfford(kitIndex)) {
@@ -233,9 +236,9 @@ public class GUITDMKitSelect extends GuiScreen {
     }
 
     private void drawHeader() {
-        String title = EnumChatFormatting.BOLD + (ffa
-                ? selectedPool.toUpperCase() + " Kits"
-                : "Select a " + selectedPool + " TDM Kit");
+        String title = EnumChatFormatting.BOLD + (!economy && !buying
+                ? (ffa ? "FFA Respawn Loadouts" : "Respawn Loadout")
+                : (ffa ? selectedPool.toUpperCase() + " Kits" : "Select a " + selectedPool + " TDM Kit"));
         drawCenteredString(fontRendererObj, title, width / 2, 10, 0xFFFFFF);
 
         int remaining = buying
