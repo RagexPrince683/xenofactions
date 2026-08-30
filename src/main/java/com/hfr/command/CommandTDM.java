@@ -298,7 +298,7 @@ public class CommandTDM extends CommandBase {
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map delete <map>" + TITLE + " - Deletes a playable map"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map select <map>" + TITLE + " - Selects the current map"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map addspawn <map> <red|blue|ffa>" + TITLE + " - Adds your position as a map spawn"));
-        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map scorelimit <map> <value|default>" + TITLE + " - Sets points, or BOMB round wins required"));
+        sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map scorelimit <map> <value|default>" + TITLE + " - Sets score points (100 per kill), or BOMB round wins required"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map timer <map> <seconds|default>" + TITLE + " - Sets a map round timer"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map mode <map> <deathmatch|bomb|ffa>" + TITLE + " - Sets the map game mode"));
         sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-map terroristteam <map> <red|blue>" + TITLE + " - Maps RED/BLUE to the T role"));
@@ -663,14 +663,14 @@ public class CommandTDM extends CommandBase {
         } else {
             TDMManager.setMapScoreLimit(world, mapName, value);
             boolean bomb=TDMManager.getMap(world,mapName).mode==TDMManager.TDMGameMode.BOMB;
-            String label = bomb ? "round-win limit" : "score limit";
+            String label = bomb ? "round-win limit" : "score-point limit (100 points per kill)";
             sender.addChatMessage(new ChatComponentText("Map " + mapName + " " + label + ": " + (useDefault ? "default" : Integer.toString(value)) + "; effective: " + (bomb?TDMManager.getEffectiveBombScoreLimit(world,mapName):TDMManager.getEffectiveScoreLimit(world, mapName)) + "."));
         }
     }
 
     private void sendMapUsage(ICommandSender sender) {
         sender.addChatMessage(new ChatComponentText("Usage: /tdm map <create|delete|select|addspawn|clearspawns|mode|terroristteam|hardcorerespawns|bombsite|economy|lossscore|killscore|roundwinscore|plantscore|defusescore|scorelimit|timer|list>"));
-        sender.addChatMessage(new ChatComponentText("  /tdm map scorelimit <map> <value|default> (BOMB: first team to this many round wins; default 13)"));
+        sender.addChatMessage(new ChatComponentText("  /tdm map scorelimit <map> <value|default> (DEATHMATCH: score points, 100 per kill; BOMB: round wins, default 13)"));
         sender.addChatMessage(new ChatComponentText("  /tdm map timer <map> <seconds|default>"));
         sender.addChatMessage(new ChatComponentText("  /tdm map bombsite <map> <a|b> <pos1|pos2|clear>"));
     }
@@ -689,7 +689,8 @@ public class CommandTDM extends CommandBase {
             if(details.mode==TDMManager.TDMGameMode.BOMB){sender.addChatMessage(new ChatComponentText("- "+map+": BOMB (hardcore="+details.hardcoreRespawns+"), T="+details.terroristTeam.name+", CT="+(details.terroristTeam==TDMManager.Team.RED?"blue":"red")+", economy="+details.buyScoreEnabled+", loss/kill/win/plant buy score="+details.roundLossBuyScoreReward+"/"+details.killBuyScoreReward+"/"+details.roundWinBuyScoreReward+"/"+details.bombPlantBuyScoreReward+", defuse buy score="+details.bombDefuseBuyScoreReward+", wins="+TDMManager.getEffectiveBombScoreLimit(world,map)+(details.bombScoreLimitOverride==0?" (default)":"")+", timer="+(TDMManager.getEffectiveBombRoundTicks(world,map)/20)+"s"+(details.bombRoundTicksOverride==0?" (default)":"")+", sites A="+details.bombsiteA.isComplete()+" B="+details.bombsiteB.isComplete()));continue;}
             boolean defaultScore = TDMManager.getScoreLimitOverride(world, map) == 0;
             boolean defaultTimer = TDMManager.getRoundTicksOverride(world, map) == 0;
-            sender.addChatMessage(new ChatComponentText("- " + map + ": "+details.mode.name()+", hardcore="+details.hardcoreRespawns+", score " + TDMManager.getEffectiveScoreLimit(world, map)
+            String scoreLabel = details.mode == TDMManager.TDMGameMode.DEATHMATCH ? "score points " : "score ";
+            sender.addChatMessage(new ChatComponentText("- " + map + ": "+details.mode.name()+", hardcore="+details.hardcoreRespawns+", " + scoreLabel + TDMManager.getEffectiveScoreLimit(world, map)
                     + (defaultScore ? " (default)" : "") + ", round " + (TDMManager.getEffectiveRoundTicks(world, map) / 20)
                     + "s" + (defaultTimer ? " (default)" : "") + ", economy=" + details.buyScoreEnabled
                     + ", loss/kill/win buy score=" + details.roundLossBuyScoreReward + "/" + details.killBuyScoreReward + "/" + details.roundWinBuyScoreReward));

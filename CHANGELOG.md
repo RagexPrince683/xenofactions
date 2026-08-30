@@ -1,3 +1,9 @@
+# Pull request: restart single-map TDM matches at round end
+
+- Restarted the selected DEATHMATCH map through the full new-match lifecycle when automatic rotation has no alternative map, instead of repeatedly attempting a map vote.
+- Preserved normal multi-map voting and single-map skip-vote refusal while clearing stale votes, scores, statistics, buy score, timers, and transient player state during the same-map restart.
+- Clarified that DEATHMATCH score limits are score points and that each kill awards 100 points; BOMB limits remain round wins.
+
 # Pull request: schedule TDM packet GUIs on the client thread
 
 - Scheduled the `/tdm menu` GUI transition through Minecraft's Forge 1.7.10 client task queue instead of changing the current screen from the network handler thread.

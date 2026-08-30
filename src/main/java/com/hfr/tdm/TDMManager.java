@@ -654,7 +654,11 @@ public class TDMManager {
 
         int scoreLimit = getEffectiveScoreLimit(world);
         if (now >= data.roundEndTick || data.redScore >= scoreLimit || data.blueScore >= scoreLimit) {
-            startMapVote(world);
+            if (getGameMode(world) == TDMGameMode.DEATHMATCH) {
+                rotateAfterDeathmatch(world);
+            } else {
+                startMapVote(world);
+            }
             return;
         }
 
@@ -725,7 +729,13 @@ public class TDMManager {
 
         int scoreLimit = getEffectiveScoreLimit(world);
         if (data.redScore >= scoreLimit || data.blueScore >= scoreLimit) {
-            startMapVote(world);
+            if (hasAlternativeMap(data)) {
+                startMapVote(world);
+            } else {
+                // The death event records its final kill and death after this method returns.
+                // Let tickRound restart the match so startRound clears those final statistics too.
+                sendStatusToAll(world);
+            }
         } else {
             sendStatusToAll(world);
         }
@@ -733,6 +743,23 @@ public class TDMManager {
 
     private static int addScore(int score) {
         return score > Integer.MAX_VALUE - POINTS_PER_KILL ? Integer.MAX_VALUE : score + POINTS_PER_KILL;
+    }
+
+    /** Handles automatic DEATHMATCH rotation without changing manual skip-vote behavior. */
+    private static void rotateAfterDeathmatch(World world) {
+        TDMData data = TDMData.get(world);
+        if (hasAlternativeMap(data)) {
+            startMapVote(world);
+            return;
+        }
+
+        // A same-map restart is a complete new match, not a map vote or timer extension.
+        // resetVotes also removes any stale persisted votes without changing selectedMap.
+        startRound(world, true);
+    }
+
+    private static boolean hasAlternativeMap(TDMData data) {
+        return !getAlternativeMapNames(data).isEmpty();
     }
 
     public static void startMapVote(World world) {
