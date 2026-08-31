@@ -276,10 +276,10 @@ public class EventHandlerClient {
 	}
 
 
-	public static void openTDMMenu(String currentTeam, int cooldownSeconds, String[] friendlyLines, String[] enemyLines,boolean canOpenBuyMenu,boolean ffa) {
+	public static void openTDMMenu(String currentTeam, int cooldownSeconds, String[] friendlyLines, String[] enemyLines,boolean canOpenBuyMenu,boolean ffa,boolean showUtility,boolean showKillstreaks,int killScore) {
 		Minecraft mc = Minecraft.getMinecraft();
 		if (mc != null) {
-			mc.displayGuiScreen(new GUITDMMenu(currentTeam, cooldownSeconds, friendlyLines, enemyLines,canOpenBuyMenu,ffa));
+			mc.displayGuiScreen(new GUITDMMenu(currentTeam, cooldownSeconds, friendlyLines, enemyLines,canOpenBuyMenu,ffa,showUtility,showKillstreaks,killScore));
 		}
 	}
 

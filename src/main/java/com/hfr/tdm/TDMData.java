@@ -20,8 +20,9 @@ public class TDMData extends WorldSavedData {
     public boolean friendlyFireEnabled = true;
     public boolean autoBalanceEnabled = true;
     public String selectedMap = "";
-    public int redScore = 0;
-    public int blueScore = 0;
+    /** Non-spendable DEATHMATCH victory points. Legacy NBT keys are retained for save compatibility. */
+    public int redPointScore = 0;
+    public int bluePointScore = 0;
     public int redBombWins = 0;
     public int blueBombWins = 0;
     public int redBombLosses = 0, blueBombLosses = 0;
@@ -41,6 +42,10 @@ public class TDMData extends WorldSavedData {
     public final Map<String, Integer> playerDeaths = new HashMap<String, Integer>();
     /** Match-scoped balances, persisted only so reconnects cannot reset money. */
     public final Map<String, Integer> playerBuyScores = new HashMap<String, Integer>();
+    /** Match-scoped, spendable killstreak currency; deliberately separate from kills and buy score. */
+    public final Map<String, Integer> playerKillScores = new HashMap<String, Integer>();
+    /** Non-spendable FFA victory points. */
+    public final Map<String, Integer> playerPointScores = new HashMap<String, Integer>();
 
     public TDMData(String name) {
         super(name);
@@ -75,8 +80,8 @@ public class TDMData extends WorldSavedData {
         friendlyFireEnabled = !nbt.hasKey("friendlyFireEnabled") || nbt.getBoolean("friendlyFireEnabled");
         autoBalanceEnabled = !nbt.hasKey("autoBalanceEnabled") || nbt.getBoolean("autoBalanceEnabled");
         selectedMap = nbt.hasKey("selectedMap") ? nbt.getString("selectedMap").toLowerCase() : "";
-        redScore = nbt.getInteger("redScore");
-        blueScore = nbt.getInteger("blueScore");
+        redPointScore = nbt.getInteger("redScore");
+        bluePointScore = nbt.getInteger("blueScore");
         redBombWins=nbt.getInteger("redBombWins"); blueBombWins=nbt.getInteger("blueBombWins");redBombLosses=nbt.getInteger("redBombLosses");blueBombLosses=nbt.getInteger("blueBombLosses");
         roundEndTick = nbt.hasKey("roundEndTick") ? nbt.getLong("roundEndTick") : 0;
         mapVoteActive = nbt.getBoolean("mapVoteActive");
@@ -87,6 +92,8 @@ public class TDMData extends WorldSavedData {
         mapVotes.clear();
         playerKills.clear();
         playerDeaths.clear();
+        playerKillScores.clear();
+        playerPointScores.clear();
 
         int spawnCount = nbt.getInteger("spawnCount");
         for (int i = 0; i < spawnCount; i++) {
@@ -122,6 +129,8 @@ public class TDMData extends WorldSavedData {
             map.bombScoreLimitOverride=mapTag.hasKey("bombScoreLimit")?Math.max(0,mapTag.getInteger("bombScoreLimit")):0;
             map.bombRoundTicksOverride=mapTag.hasKey("bombRoundTicks")?Math.max(0,mapTag.getInteger("bombRoundTicks")):0;
             map.buyScoreEnabled=!mapTag.hasKey("buyScoreEnabled")||mapTag.getBoolean("buyScoreEnabled");
+            map.killstreaksEnabled=mapTag.hasKey("killstreaksEnabled")&&mapTag.getBoolean("killstreaksEnabled");
+            map.killScoreReward=mapTag.hasKey("killScoreReward")?Math.max(0,mapTag.getInteger("killScoreReward")):1;
             map.roundLossBuyScoreReward=mapTag.hasKey("roundLossBuyScoreReward")?Math.max(0,mapTag.getInteger("roundLossBuyScoreReward")):(mapTag.hasKey("roundStartBuyScoreReward")?Math.max(0,mapTag.getInteger("roundStartBuyScoreReward")):1);
             map.killBuyScoreReward=mapTag.hasKey("killBuyScoreReward")?Math.max(0,mapTag.getInteger("killBuyScoreReward")):2;
             map.roundWinBuyScoreReward=mapTag.hasKey("roundWinBuyScoreReward")?Math.max(0,mapTag.getInteger("roundWinBuyScoreReward")):3;
@@ -167,6 +176,8 @@ public class TDMData extends WorldSavedData {
         }
 
         playerBuyScores.clear(); int buyCount=nbt.getInteger("buyScoreCount"); for(int i=0;i<buyCount;i++){String player=nbt.getString("buyScorePlayer"+i).toLowerCase();if(player.length()>0)playerBuyScores.put(player,Integer.valueOf(Math.max(0,nbt.getInteger("buyScore"+i))));}
+        int killScoreCount=nbt.getInteger("killScoreCount");for(int i=0;i<killScoreCount;i++){String player=nbt.getString("killScorePlayer"+i).toLowerCase();if(player.length()>0)playerKillScores.put(player,Integer.valueOf(Math.max(0,nbt.getInteger("killScore"+i))));}
+        int pointScoreCount=nbt.getInteger("pointScoreCount");for(int i=0;i<pointScoreCount;i++){String player=nbt.getString("pointScorePlayer"+i).toLowerCase();if(player.length()>0)playerPointScores.put(player,Integer.valueOf(Math.max(0,nbt.getInteger("pointScore"+i))));}
 
         int voteCount = nbt.getInteger("voteCount");
         for (int i = 0; i < voteCount; i++) {
@@ -184,8 +195,8 @@ public class TDMData extends WorldSavedData {
         nbt.setBoolean("friendlyFireEnabled", friendlyFireEnabled);
         nbt.setBoolean("autoBalanceEnabled", autoBalanceEnabled);
         nbt.setString("selectedMap", selectedMap);
-        nbt.setInteger("redScore", redScore);
-        nbt.setInteger("blueScore", blueScore);
+        nbt.setInteger("redScore", redPointScore);
+        nbt.setInteger("blueScore", bluePointScore);
         nbt.setInteger("redBombWins",redBombWins);nbt.setInteger("blueBombWins",blueBombWins);nbt.setInteger("redBombLosses",redBombLosses);nbt.setInteger("blueBombLosses",blueBombLosses);
         nbt.setLong("roundEndTick", roundEndTick);
         nbt.setBoolean("mapVoteActive", mapVoteActive);
@@ -205,6 +216,7 @@ public class TDMData extends WorldSavedData {
             mapTag.setString("mode",map.mode.name());mapTag.setString("terroristTeam",map.terroristTeam.name);mapTag.setBoolean("hardcoreRespawns", map.hardcoreRespawns);
             if(map.bombScoreLimitOverride>0)mapTag.setInteger("bombScoreLimit",map.bombScoreLimitOverride);if(map.bombRoundTicksOverride>0)mapTag.setInteger("bombRoundTicks",map.bombRoundTicksOverride);
             mapTag.setBoolean("buyScoreEnabled",map.buyScoreEnabled);mapTag.setInteger("roundLossBuyScoreReward",Math.max(0,map.roundLossBuyScoreReward));mapTag.setInteger("killBuyScoreReward",Math.max(0,map.killBuyScoreReward));mapTag.setInteger("roundWinBuyScoreReward",Math.max(0,map.roundWinBuyScoreReward));mapTag.setInteger("bombPlantBuyScoreReward",Math.max(0,map.bombPlantBuyScoreReward));if(map.bombDefuseBuyScoreReward>0)mapTag.setInteger("bombDefuseBuyScoreReward",map.bombDefuseBuyScoreReward);
+            mapTag.setBoolean("killstreaksEnabled",map.killstreaksEnabled);mapTag.setInteger("killScoreReward",Math.max(0,map.killScoreReward));
             writeBombsite(mapTag,"bombsiteA",map.bombsiteA);writeBombsite(mapTag,"bombsiteB",map.bombsiteB);
             mapTag.setInteger("spawnCount", map.spawns.size());
             for (int i = 0; i < map.spawns.size(); i++) {
@@ -236,6 +248,8 @@ public class TDMData extends WorldSavedData {
         nbt.setInteger("statCount", statIndex);
 
         int buyIndex=0;for(Map.Entry<String,Integer> entry:playerBuyScores.entrySet()){nbt.setString("buyScorePlayer"+buyIndex,entry.getKey());nbt.setInteger("buyScore"+buyIndex,Math.max(0,entry.getValue().intValue()));buyIndex++;}nbt.setInteger("buyScoreCount",buyIndex);
+        int killScoreIndex=0;for(Map.Entry<String,Integer> entry:playerKillScores.entrySet()){nbt.setString("killScorePlayer"+killScoreIndex,entry.getKey());nbt.setInteger("killScore"+killScoreIndex,Math.max(0,entry.getValue().intValue()));killScoreIndex++;}nbt.setInteger("killScoreCount",killScoreIndex);
+        int pointScoreIndex=0;for(Map.Entry<String,Integer> entry:playerPointScores.entrySet()){nbt.setString("pointScorePlayer"+pointScoreIndex,entry.getKey());nbt.setInteger("pointScore"+pointScoreIndex,Math.max(0,entry.getValue().intValue()));pointScoreIndex++;}nbt.setInteger("pointScoreCount",pointScoreIndex);
 
         int voteIndex = 0;
         for (Map.Entry<String, String> entry : mapVotes.entrySet()) {

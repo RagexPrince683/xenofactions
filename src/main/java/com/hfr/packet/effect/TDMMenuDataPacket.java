@@ -23,6 +23,8 @@ public class TDMMenuDataPacket implements IMessage {
     public String[] enemyLines;
     public boolean canOpenBuyMenu;
     public boolean ffa;
+    public boolean showUtility,showKillstreaks;
+    public int killScore;
     public TDMMenuDataPacket() {}
     public TDMMenuDataPacket(EntityPlayerMP player, int cooldownSeconds) {
         this.cooldownSeconds = cooldownSeconds;
@@ -30,6 +32,10 @@ public class TDMMenuDataPacket implements IMessage {
         this.currentTeam = self == null ? "teamless" : self.name;
         this.canOpenBuyMenu=TDMManager.isBombMode(player.worldObj)&&com.hfr.tdm.TDMBombManager.getState()==com.hfr.tdm.TDMBombManager.BombRoundState.PRE_ROUND;
         this.ffa=TDMManager.isFfaMode(player.worldObj);
+        TDMManager.TDMMap map=TDMManager.getSelectedMapData(player.worldObj);
+        this.showUtility=map!=null&&map.mode==TDMManager.TDMGameMode.BOMB&&canOpenBuyMenu&&map.buyScoreEnabled;
+        this.showKillstreaks=map!=null&&map.killstreaksEnabled&&(map.mode==TDMManager.TDMGameMode.DEATHMATCH||map.mode==TDMManager.TDMGameMode.FFA);
+        this.killScore=TDMManager.getPlayerKillScore(player);
         if(ffa)this.currentTeam=TDMManager.isCompetitivePlayer(player)?"ffa":"observer";
         List<String> friend = new ArrayList<String>();
         List<String> enemy = new ArrayList<String>();
@@ -41,7 +47,7 @@ public class TDMMenuDataPacket implements IMessage {
             int k = TDMManager.getKills(player.worldObj, p.getCommandSenderName());
             int d = TDMManager.getDeaths(player.worldObj, p.getCommandSenderName());
             float kdr = d <= 0 ? (float)k : ((float)k / (float)d);
-            String line = p.getCommandSenderName() + " | " + k + "/" + d + " | " + String.format(java.util.Locale.US, "%.2f", kdr);
+            String line = p.getCommandSenderName() + (ffa ? " | P:"+TDMManager.getPlayerPointScore(player.worldObj,p.getCommandSenderName()) : "") + " | " + k + "/" + d + " | " + String.format(java.util.Locale.US, "%.2f", kdr);
             if (ffa || team == TDMManager.Team.BLUE) {
                 friend.add(line);
             } else {
@@ -56,6 +62,7 @@ public class TDMMenuDataPacket implements IMessage {
         cooldownSeconds = buf.readInt();
         canOpenBuyMenu=buf.readBoolean();
         ffa=buf.readBoolean();
+        showUtility=buf.readBoolean();showKillstreaks=buf.readBoolean();killScore=buf.readInt();
         int friendlyCount = buf.readInt();
         friendlyLines = new String[friendlyCount];
         for(int i = 0; i < friendlyCount; i++) friendlyLines[i] = ByteBufUtils.readUTF8String(buf);
@@ -68,6 +75,7 @@ public class TDMMenuDataPacket implements IMessage {
         buf.writeInt(cooldownSeconds);
         buf.writeBoolean(canOpenBuyMenu);
         buf.writeBoolean(ffa);
+        buf.writeBoolean(showUtility);buf.writeBoolean(showKillstreaks);buf.writeInt(killScore);
         buf.writeInt(friendlyLines.length);
         for(String s : friendlyLines) ByteBufUtils.writeUTF8String(buf, s);
         buf.writeInt(enemyLines.length);
@@ -87,7 +95,7 @@ public class TDMMenuDataPacket implements IMessage {
                             message.cooldownSeconds,
                             message.friendlyLines,
                             message.enemyLines,
-                            message.canOpenBuyMenu,message.ffa
+                            message.canOpenBuyMenu,message.ffa,message.showUtility,message.showKillstreaks,message.killScore
                     );
                 }
             });

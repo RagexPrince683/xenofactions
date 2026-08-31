@@ -12,25 +12,33 @@ public class GUITDMMenu extends GuiScreen {
     private final String[] enemyLines;
     private final boolean canOpenBuyMenu;
     private final boolean ffa;
-    public GUITDMMenu(String currentTeam, int cooldownSeconds, String[] friendlyLines, String[] enemyLines,boolean canOpenBuyMenu,boolean ffa){
+    private final boolean showUtility,showKillstreaks;private final int killScore;
+    public GUITDMMenu(String currentTeam, int cooldownSeconds, String[] friendlyLines, String[] enemyLines,boolean canOpenBuyMenu,boolean ffa,boolean showUtility,boolean showKillstreaks,int killScore){
         this.currentTeam = currentTeam;
         this.cooldownSeconds = cooldownSeconds;
         this.friendlyLines = friendlyLines == null ? new String[0] : friendlyLines;
         this.enemyLines = enemyLines == null ? new String[0] : enemyLines;
         this.canOpenBuyMenu=canOpenBuyMenu;
         this.ffa=ffa;
+        this.showUtility=showUtility;this.showKillstreaks=showKillstreaks;this.killScore=killScore;
     }
     public void initGui() {
         this.buttonList.clear();
         this.buttonList.add(new GuiButton(0, this.width/2-100, this.height-40, 200, 20, ffa ? "FFA has no teams" : (cooldownSeconds > 0 ? "Swap Team ("+cooldownSeconds+"s)" : "Swap Team")));
         ((GuiButton)this.buttonList.get(0)).enabled = !ffa && cooldownSeconds <= 0;
         if(canOpenBuyMenu)this.buttonList.add(new GuiButton(1,this.width/2-100,this.height-64,200,20,"Reopen Buy Menu"));
+        if(showUtility)this.buttonList.add(new GuiButton(2,this.width/2-100,this.height-88,200,20,"Utility (use /tdm utility buy <#>)"));
+        if(showKillstreaks)this.buttonList.add(new GuiButton(3,this.width/2-100,this.height-88,200,20,"Killstreaks - "+killScore+" kill score"));
     }
     protected void actionPerformed(GuiButton button) {
         if (button.id == 0) {
             PacketDispatcher.wrapper.sendToServer(new TDMMenuActionPacket(true));
         } else if(button.id==1){
             PacketDispatcher.wrapper.sendToServer(new TDMMenuActionPacket(false,true));
+        } else if(button.id==2){
+            mc.thePlayer.sendChatMessage("/tdm utility list");mc.displayGuiScreen(null);
+        } else if(button.id==3){
+            mc.thePlayer.sendChatMessage("/tdm killstreak list");mc.displayGuiScreen(null);
         }
     }
     public void drawScreen(int mx,int my,float pt){
