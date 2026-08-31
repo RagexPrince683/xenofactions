@@ -16,6 +16,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.world.World;
@@ -213,6 +214,23 @@ public class TDMManager {
     }
     public static boolean isBombMode(World world) { return getGameMode(world) == TDMGameMode.BOMB; }
     public static boolean isFfaMode(World world) { return getGameMode(world) == TDMGameMode.FFA; }
+
+    /** Returns the live TDM label consumed by Xenofactions' existing global-chat prefix pipeline. */
+    public static String getChatPrefix(EntityPlayer player) {
+        if (player == null || player.worldObj == null || !isEnabled(player.worldObj) || !isCompetitivePlayer(player)) return null;
+        if (isFfaMode(player.worldObj)) return EnumChatFormatting.GOLD + "[FFA]";
+        Team team = getPlayerTeam(player.worldObj, player.getCommandSenderName());
+        if (team == null) return null;
+        if (isBombMode(player.worldObj)) {
+            BombRole role = getBombRole(player.worldObj, team);
+            return role == BombRole.TERRORIST
+                    ? EnumChatFormatting.RED + "[T]"
+                    : EnumChatFormatting.BLUE + "[CT]";
+        }
+        return team == Team.BLUE
+                ? EnumChatFormatting.BLUE + "[BLUE]"
+                : EnumChatFormatting.RED + "[RED]";
+    }
 
     public static boolean configureMap(World world, String name, TDMGameMode mode, Team terrorists, Boolean hardcore) {
         TDMMap map=getMap(world,name); if(map==null)return false;

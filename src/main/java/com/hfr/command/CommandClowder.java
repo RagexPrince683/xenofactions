@@ -310,6 +310,8 @@ public class CommandClowder extends CommandBase {
 
 		sender.addChatMessage(new ChatComponentText(HELP + "/clowder [command] <args...> {optional args...}"));
 		sender.addChatMessage(new ChatComponentText(INFO + "Commands [" + p + "/" + pages + "]:"));
+		if(com.hfr.clowder.FactionMembershipGuard.isBlocked(sender.getEntityWorld()))
+			sender.addChatMessage(new ChatComponentText(ERROR + com.hfr.clowder.FactionMembershipGuard.TDM_DISABLED_MESSAGE + " Creation and joining commands are unavailable."));
 
 		if(p == 1) {
 			sender.addChatMessage(new ChatComponentText(TITLE + "Basics & faction info"));
@@ -418,6 +420,7 @@ public class CommandClowder extends CommandBase {
 private void cmdCreate(ICommandSender sender, String name) {
 
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		if(com.hfr.clowder.FactionMembershipGuard.rejectIfBlocked(sender)) return;
 		String factionName = Clowder.canonicalizeClowderName(name);
 
 		if(factionName.isEmpty()) { sender.addChatMessage(new ChatComponentText(ERROR + "Faction name cannot be empty.")); return; }
@@ -428,7 +431,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		if(Clowder.getClowderFromPlayer(player) == null) {
 
 			if(Clowder.getClowderFromName(factionName) == null) {
-				Clowder.createClowder(player, factionName);
+				if(!Clowder.createClowder(player, factionName)) { sender.addChatMessage(new ChatComponentText(ERROR + "Faction creation was rejected.")); return; }
 				sender.addChatMessage(new ChatComponentText(TITLE + "Created faction " + factionName + "!"));
 				sender.addChatMessage(new ChatComponentText(INFO + "Use /c claim to get started!"));
 				sender.addChatMessage(new ChatComponentText(INFO + "and use /c sethome to set a faction home!"));
@@ -993,6 +996,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 	private void cmdApply(ICommandSender sender, String name) {
 
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		if(com.hfr.clowder.FactionMembershipGuard.rejectIfBlocked(sender)) return;
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
 
 		if(clowder == null) {
@@ -1038,6 +1042,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 	private void cmdAccept(ICommandSender sender, String name) {
 
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		if(com.hfr.clowder.FactionMembershipGuard.rejectIfBlocked(sender)) return;
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
 
 		if(clowder != null) {

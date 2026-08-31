@@ -18,6 +18,7 @@ import com.hfr.command.*;
 import com.hfr.config.XFConfig;
 import com.hfr.compat.HbmCsgoChargeIntegration;
 import com.hfr.compat.OptionalHbmRadiationCompat;
+import com.hfr.tdm.TDMManager;
 import com.hfr.data.ClowderData;
 import com.hfr.handler.BobbyBreaker;
 import com.hfr.handler.ExplosionSound;
@@ -225,8 +226,11 @@ public void handleChatServer(ServerChatEvent event) {
 	event.setCanceled(true); // prevent vanilla broadcast
 
 	String factionLine = null;
+	String tdmLine = TDMManager.getChatPrefix(sender);
 
-	if (clowder != null) {
+	if (tdmLine != null) {
+		factionLine = tdmLine;
+	} else if (clowder != null) {
 
 		FactionRole role = clowder.getRole(sender);
 		String clowderName = clowder.getDecoratedName();

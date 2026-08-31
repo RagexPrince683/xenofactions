@@ -255,6 +255,7 @@ public class CommandClowderAdmin extends CommandBase {
 
 	
 	private void cmdForcejoin(ICommandSender sender, String name) {
+		if(com.hfr.clowder.FactionMembershipGuard.rejectIfBlocked(sender)) return;
 
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
