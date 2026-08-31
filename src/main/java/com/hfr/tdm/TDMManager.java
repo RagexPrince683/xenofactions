@@ -901,23 +901,27 @@ public class TDMManager {
             data.skipVoteInitiator = player.getCommandSenderName();
             data.skipVotes.clear();
             broadcastTDM(world, player.getCommandSenderName() + " started a vote to skip the current map.");
+            broadcastTDM(world, "Vote with /tdm skip yes or /tdm skip no.");
+            broadcastTDM(world, "Votes needed to pass: " + requiredSkipVotes(countEligibleSkipVoters(data)) + ".");
         }
         if (data.skipVotes.containsKey(key)) return "You have already voted in this skip vote.";
         data.skipVotes.put(key, Boolean.valueOf(yes));
         data.markDirty();
-        String status = getSkipVoteStatus(world);
-        broadcastTDM(world, player.getCommandSenderName() + " voted " + (yes ? "yes" : "no") + ". " + status);
+        int required = requiredSkipVotes(countEligibleSkipVoters(data));
+        int yesVotes = countSkipYesVotes(data);
+        broadcastTDM(world, player.getCommandSenderName() + " voted " + (yes ? "YES" : "NO")
+                + ". [" + yesVotes + "/" + required + " YES votes required]");
         evaluateSkipVote(world);
-        return status;
+        return null;
     }
 
     public static String getSkipVoteStatus(World world) {
         TDMData data = TDMData.get(world);
         if (!data.skipVoteActive) return "No skip-map vote is active.";
         int eligible = countEligibleSkipVoters(data);
-        int yes = 0, no = 0;
-        for (Boolean vote : data.skipVotes.values()) if (vote.booleanValue()) yes++; else no++;
-        return "Skip vote by " + data.skipVoteInitiator + ": yes " + yes + ", no " + no + ", " + requiredSkipVotes(eligible) + " yes required.";
+        int yes = countSkipYesVotes(data);
+        return "The vote to skip the current map has " + yes + " YES " + (yes == 1 ? "vote" : "votes")
+                + "; " + requiredSkipVotes(eligible) + " YES votes are required to pass.";
     }
 
     public static void onPlayerDisconnected(World world, EntityPlayer player) {
@@ -930,7 +934,7 @@ public class TDMManager {
     private static void tickSkipVote(World world) {
         TDMData data = TDMData.get(world);
         if (world.getTotalWorldTime() >= data.skipVoteEndTick) {
-            broadcastTDM(world, "The vote to skip the current map failed (expired). " + getSkipVoteStatus(world));
+            broadcastTDM(world, "The vote to skip the current map expired.");
             clearSkipVote(data);
             data.markDirty();
             return;
@@ -947,12 +951,12 @@ public class TDMManager {
         int required = requiredSkipVotes(eligible.size()), yes = 0;
         for (Boolean vote : data.skipVotes.values()) if (vote.booleanValue()) yes++;
         if (yes >= required && required > 0) {
-            broadcastTDM(world, "The vote to skip the current map passed (" + yes + "/" + required + ").");
+            broadcastTDM(world, "The vote passed. Skipping the current map...");
             clearSkipVote(data);
             data.markDirty();
             startMapVote(world); // Owns objective, combat, freeze, kit, buy-phase, and transition cleanup; awards no result.
         } else if (yes + (eligible.size() - data.skipVotes.size()) < required) {
-            broadcastTDM(world, "The vote to skip the current map failed. " + getSkipVoteStatus(world));
+            broadcastTDM(world, "The vote to skip the current map failed.");
             clearSkipVote(data);
             data.markDirty();
         }
@@ -969,6 +973,12 @@ public class TDMManager {
     }
 
     private static int requiredSkipVotes(int eligible) { return eligible / 2 + 1; }
+
+    private static int countSkipYesVotes(TDMData data) {
+        int yes = 0;
+        for (Boolean vote : data.skipVotes.values()) if (vote.booleanValue()) yes++;
+        return yes;
+    }
 
     private static void clearSkipVote(TDMData data) {
         data.skipVoteActive = false; data.skipVoteEndTick = 0; data.skipVoteInitiator = ""; data.skipVotes.clear();
@@ -1473,7 +1483,8 @@ public class TDMManager {
                 || TDMSpectatorManager.isObserving(player)) return false;
         TDMMap map = getSelectedMapData(player.worldObj);
         if (map == null) return false;
-        for (SpawnPoint spawn : map.spawns) if (spawn.dim == player.dimension) return true;
+        List<SpawnPoint> source = map.spawns.isEmpty() ? TDMData.get(player.worldObj).spawns : map.spawns;
+        for (SpawnPoint spawn : source) if (spawn.dim == player.dimension) return true;
         return false;
     }
 
@@ -1486,11 +1497,13 @@ public class TDMManager {
         String key = getPlayerKey(player);
         respawnLockProtectionActive.remove(key);
         buyProtectionActive.add(key);
-        freezeAnchors.put(key, new FreezeAnchor(player));
+        if (!freezeAnchors.containsKey(key)) {
+            freezeAnchors.put(key, new FreezeAnchor(player));
+            if (XFConfig.tdmBombLifecycleDebug && MainRegistry.logger != null)
+                MainRegistry.logger.info("TDM BUY: {} freeze anchor=({}, {}, {})", player.getCommandSenderName(), player.posX, player.posY, player.posZ);
+        }
         applyOwnedProtectionEffects(player);
         enforceFreeze(player, freezeAnchors.get(key));
-        if (XFConfig.tdmBombLifecycleDebug && MainRegistry.logger != null)
-            MainRegistry.logger.info("TDM BUY: {} freeze anchor=({}, {}, {})", player.getCommandSenderName(), player.posX, player.posY, player.posZ);
     }
 
     /** Per-player RESPawn lock protection; global buy protection has separate ownership. */

@@ -183,6 +183,8 @@ Player commands are `/tdm menu`, `/tdm maps`, `/tdm vote <map>`, `/tdm skip [yes
 
 Deathmatch and FFA are continuous modes: login and respawn place a player immediately at a mode-appropriate spawn and open a protected respawn-loadout selector. That selector ignores kit prices, buy score, survivor kits, and BOMB buy timing. FFA loadouts may be selected from either configured RED or BLUE kit pool, but FFA does not assign a team. Competitive BOMB alone owns economy and survivor-kit state; active hardcore BOMB late joiners retain the established round-waiting behavior.
 
+`/tdm skip [yes|no|status]` starts or participates in a vote to skip the current map. Player messages identify the purpose of the vote, show the YES threshold, and announce whether the map will be skipped, the vote failed, or it expired.
+
 Map-specific spawns are authoritative, including their configured dimensions. Legacy global spawns are used only when the selected map has no map-specific spawn data. A match with missing required spawns is refused and logged rather than falling through to vanilla worldspawn. Mode changes stop the old lifecycle and clear pending kit, protection, waiting, elimination, objective, and survivor state before starting the new mode.
 
 ## Registered-but-not-currently-registered commands

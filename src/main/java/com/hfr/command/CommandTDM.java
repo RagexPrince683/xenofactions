@@ -80,7 +80,8 @@ public class CommandTDM extends CommandBase {
                 sender.addChatMessage(new ChatComponentText("Usage: /tdm skip [yes|no|status]"));
                 return;
             }
-            sender.addChatMessage(new ChatComponentText(TDMManager.castSkipVote(world, player, yes)));
+            String result = TDMManager.castSkipVote(world, player, yes);
+            if (result != null) sender.addChatMessage(new ChatComponentText(result));
             return;
         }
 
