@@ -207,10 +207,11 @@ public class TDMHandler {
             TDMManager.Team attackerTeam = TDMManager.getOrAssignPlayerTeam(attacker);
             boolean valid=TDMManager.isCompetitivePlayer(victim)&&TDMManager.isCompetitivePlayer(attacker)&&(TDMManager.isFfaMode(victim.worldObj)||(attackerTeam!=null&&attackerTeam!=victimTeam));
             if (valid) {
-                if(!TDMManager.isFfaMode(victim.worldObj))TDMManager.addKillScore(victim.worldObj, attackerTeam);
                 TDMManager.recordKill(victim.worldObj, attacker.getCommandSenderName());
                 TDMManager.recordDeath(victim.worldObj, victim.getCommandSenderName());
                 TDMManager.awardKillBuyScore(attacker);
+                TDMManager.awardValidKillResources(attacker);
+                if(!TDMManager.isFfaMode(victim.worldObj))TDMManager.addTeamPointScore(victim.worldObj, attackerTeam);
             }
         }
         if (TDMManager.isBombMode(victim.worldObj)) {

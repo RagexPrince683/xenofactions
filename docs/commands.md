@@ -233,3 +233,21 @@ Reward amounts must be non-negative; zero disables that reward. FFA competitors 
 # TDM sound diagnostics
 
 `/tdm testsound <ctwin|twin|ctstart|tstart|bombplant>` is operator-only. It selects from the live configured variants and uses the same explicit per-player packet dispatcher as gameplay. Round-start tests play only for the executing operator; victory and bomb-plant tests target the eligible TDM players in the operator's current world.
+
+## TDM score and purchase commands
+
+TDM keeps three unrelated score domains: BOMB **buy score** is money, optional **kill score** buys killstreak rewards, and non-spendable **point score** decides DEATHMATCH/FFA victory. Normal DEATHMATCH/FFA kits remain economy-free.
+
+Player commands:
+- `/tdm menu` opens the mode-aware scoreboard/loadout menu. BOMB buy time exposes Utility; configured DEATHMATCH/FFA maps expose Killstreaks and the player's kill-score balance.
+- `/tdm utility list` and `/tdm utility buy <number>` list or buy BOMB utility with buy score.
+- `/tdm killstreak list` and `/tdm killstreak buy <number>` list or queue a respawn reward using kill score.
+
+Administrator commands:
+- `/tdm utility <list|add|remove> [map|global] [cost|number]` captures additive utility definitions from the administrator's inventory.
+- `/tdm killstreak <list|add|remove> [map|global] [cost|number]` captures queued killstreak definitions from the administrator's inventory.
+- `/tdm map pointlimit <map> <points|default>` sets the non-BOMB victory threshold (`scorelimit` remains an alias).
+- `/tdm map killstreaks <map> <true|false>` explicitly enables killstreaks on DEATHMATCH/FFA maps.
+- `/tdm map killscorereward <map> <amount>` sets spendable kill score awarded per valid kill.
+
+`/tdm help` is task-oriented and permission-aware. Player pages cover Match & Voting, Teams, Kits & Loadouts, and Maps. Operators additionally see administration pages, including `[Admin] /tdm teamless`, Kits, Utility & Killstreaks, and Map Configuration.

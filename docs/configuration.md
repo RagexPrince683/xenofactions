@@ -341,3 +341,9 @@ Configure them with `/tdm map lossscore <map> <amount>`, `/tdm map killscore <ma
 
 Bundled sound event IDs are `hfr:tdm.ct_win1`, `hfr:tdm.t_win1`, `hfr:tdm.ct_round_start1`, `hfr:tdm.t_round_start1`, and `hfr:tdm.bomb_plant1`. Each configured event accepts a variant list; blank entries are ignored and an empty list disables playback.
 The values name sound **events**, not `.ogg` files or paths. An ID without a namespace uses `hfr`; an explicit namespace (for example `othermod:custom.roundwin`) is preserved. The server selects one variant and sends an explicit playback packet to each eligible player in the same world/dimension. Operators can exercise that same path with `/tdm testsound <ctwin|twin|ctstart|tstart|bombplant>`; start tests target only the operator, while win and plant tests use normal global TDM recipients. If an event is disabled, the command reports the event type, property name, raw values, and normalized effective values. Enable legacy `enableDebugLogging` to log the trigger, configured variants, normalized event ID, recipient count, dispatch route, and client playback.
+
+## TDM map scoring and purchases
+
+Non-BOMB maps can override their point-score victory threshold with `/tdm map pointlimit`; the existing timer remains an independent ending condition. DEATHMATCH stores team point scores and FFA stores per-player point scores. Both reset at a new match/map and are never spendable.
+
+Killstreak support is opt-in per DEATHMATCH/FFA map (`killstreaks`, default `false`), with one kill-score unit awarded for each server-validated enemy kill by default. Unspent kill score persists through deaths but resets at a new match/map. Purchased rewards are queued and assembled after the next kit so kit reconstruction cannot erase them. Utility and killstreak definitions persist in the world save's `tdm_purchasables.txt`; utility costs use BOMB buy score, while killstreak costs use only kill score.

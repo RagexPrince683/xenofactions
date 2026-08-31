@@ -868,6 +868,8 @@ public class MainRegistry
 		MuteManager.init();
 		if(XFConfig.enableTDM)
 			TDMKitManager.init();
+		if(XFConfig.enableTDM)
+			com.hfr.tdm.TDMPurchasableManager.init();
 		IgnoreManager.init();
 		event.registerServerCommand(new CommandMute());
 		event.registerServerCommand(new CommandUnmute());
