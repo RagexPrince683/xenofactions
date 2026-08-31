@@ -731,3 +731,9 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Added immediate point-threshold and timer round completion through a guarded non-BOMB round-end path, plus the `pointlimit` map-setting name while retaining `scorelimit` compatibility.
 - Added persisted, inventory-defined Utility and Killstreak purchases with server-authoritative mode, buy-time, selection-context, and balance validation. Utility consumes only BOMB buy score; queued killstreak rewards consume only kill score and are applied after respawn kit reconstruction.
 - Added opt-in per-map killstreak support/reward settings, mode-aware menu buttons and kill-score display, administration commands, player list/buy commands, permission-aware completion, and task-oriented help/documentation. Source inspection and static consistency checks were completed; dedicated-server and multiplayer runtime validation remains required.
+
+2026-08-31 00:00 — Integrate TDM chat identity and faction membership restrictions
+
+- Routed live Blue, Red, Terrorist, Counter-Terrorist, and FFA labels through the existing Xenofactions global-chat prefix formatter; teamless and observer players retain neutral/faction behavior, and disabling TDM immediately restores faction prefixes without persisted chat state.
+- Added a shared TDM membership guard at the authoritative faction creation/member-add operations and their create, apply, accept, and administrative force-join entry paths, with clear command and help feedback while leaving existing memberships untouched.
+- Source-level call-site and lifecycle inspection was completed; dedicated-server chat, team/map/mode transition, and faction-command runtime validation remains required.
