@@ -717,3 +717,10 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Introduced an explicit economy-free Deathmatch/FFA loadout-selection lifecycle separate from competitive BOMB buy and survivor-kit state; the shared kit GUI now labels respawn loadouts without displaying prices.
 - Made Deathmatch and FFA login/respawn paths enter continuous gameplay immediately rather than inheriting competitive round-waiting/elimination policy, while retaining active hardcore BOMB late-join waiting.
 - Restricted buy-score awards, economy configuration, and hardcore round-elimination configuration to BOMB maps, and retained mode-transition cleanup of incompatible transient state. Source/call-site inspection and static checks were completed; multiplayer runtime validation remains required.
+
+2026-08-31 00:00 — Restore competitive BOMB initialization and skip-vote feedback
+
+- Routed a persisted enabled BOMB server through full match initialization before its first round so first-round buy score is zero while later authoritative economy rewards remain unchanged.
+- Kept each hardcore BOMB buy-time freeze anchor stable across enforcement ticks instead of replacing it with the player's already-moved position, retained map-specific and legacy spawn support without touching the separate Deathmatch/FFA loadout path, and explicitly clears TDM-owned freeze and protection state on logout.
+- Replaced implementation-oriented skip-vote tallies with player-facing start instructions, YES progress, pass, failure, and expiry announcements.
+- Source-level lifecycle and call-site inspection was completed; multiplayer and dedicated-server runtime validation remains required.

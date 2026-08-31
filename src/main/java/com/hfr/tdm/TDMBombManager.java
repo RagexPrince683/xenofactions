@@ -102,7 +102,9 @@ public final class TDMBombManager {
         long now=world.getTotalWorldTime();
         if(pendingPlant!=null&&now>pendingPlant.tick){PendingPlant p=pendingPlant;pendingPlant=null;if(p.player.worldObj==world&&HbmCsgoChargeIntegration.isCsgoCharge(world.getBlock(p.x,p.y,p.z)))acceptPlant(p.player,p.x,p.y,p.z);}
         if(state==BombRoundState.BOMB_PLANTED)watchForMissingTrackedBomb(world,now);
-        if(state==BombRoundState.DISABLED){if(hasEnoughPlayersForBombRound(world))beginNextBombRound(world);else waitForTeams(world);}
+        // DISABLED has no live match ownership.  Re-enter through the full match
+        // initialization path so persisted scores cannot become first-round funds.
+        if(state==BombRoundState.DISABLED){startMatch(world);}
         else if(state==BombRoundState.WAITING_FOR_TEAMS&&hasEnoughPlayersForBombRound(world))beginNextBombRound(world);
         if(state==BombRoundState.PRE_ROUND&&now>=stateEndTick) startRound(world);
         else if(state==BombRoundState.LIVE&&now>=stateEndTick) completeRound(world,TDMManager.getCounterTerroristTeam(world),BombRoundWinReason.TIME_EXPIRED);
