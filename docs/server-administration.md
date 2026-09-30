@@ -8,7 +8,7 @@
 4. Decide whether war starts enabled with `warEnabledDefault` or is controlled manually by `/xc warenable` and `/xc wardisable`.
 5. Review prestige generation, upkeep, and bankruptcy values before opening a public world.
 6. If using Dynmap, install Dynmap separately and keep `enableDynmapIntegration=true`.
-7. JourneyMap is never required on the server. Clients may optionally use legacy JourneyMap 5.2.x for Minecraft 1.7.10; Xenofactions synchronizes bounded, current-dimension claim snapshots and a reflection incompatibility disables only that client's overlay.
+7. JourneyMap is never required on the server. Clients may optionally use JourneyMap 6.0.x (API 2.0.0) or the retained 5.2.x hook. Xenofactions synchronizes permission-scoped, current-dimension map data and claim snapshots; incompatible clients use the standalone TDM map.
 7. If allowing custom flags, review `allowedImageHosts`, image dimensions, file size, redirects, timeout, and rate limits.
 8. If using TDM, keep `enableTDM=true`; otherwise disable it to avoid registering `/tdm`.
 
@@ -34,6 +34,8 @@
 /invsee <player>
 /xmute <player> <seconds|perm> [reason]
 ```
+
+The shared area editor also supports `/xc editor select <safezone|warzone|wilderness|border_exempt>`, then `/xc editor point a`, `/xc editor point b`, and `/xc editor commit` (or `cancel`). The active type is shown in `/xc editor status`. Starting any area type gives the shared Admin Selection Wand when possible: left-click a block for A and right-click one for B. TDM administrators can open the draggable panel with `/tdm editor gui` or the configurable F10 key. Its nearby safe/war chunk preview and map bounds remain separate data; bounds never become Clowder claims. `/tdm map border <map> <on|off>` optionally enforces the selected map bounds' horizontal footprint for active match players.
 
 `/xc factiontimeoutcreationreset <playername>` is admin-only and resets only the specified player's faction creation cooldown. It does not alter faction membership or any other cooldown, and it supports stored offline players.
 
@@ -66,7 +68,7 @@ Xenofactions extends its existing rectangular Earth boundary; it does not use th
 
 - `/xc worldborder on` and `/xc worldborder off` immediately enable or disable enforcement.
 - `/xc worldborder status` shows the effective state, configured center, X/Z radii, safety margin, and exemption count.
-- `/xc worldborder wand` gives an in-game administrator a **World Border Exemption Wand**. Left-click a block for position 1 and right-click a block for position 2; both clicks suppress the normal block action. Coordinate selection is still recorded when faction or TDM protection has already canceled the interaction, without reopening the protected block action.
+- `/xc worldborder wand` starts an exemption selection when idle and gives an in-game administrator the shared **Admin Selection Wand** if needed. Left-click a block for point A and right-click a block for point B; both clicks suppress the normal block action. Coordinate selection is still recorded when faction or TDM protection has already canceled the interaction, without reopening the protected block action.
 - After running `/xc worldborder wand`, left-click position 1, right-click position 2, then run `/xc worldborder exempt` to save the selected rectangle without supplying a name.
 - `/xc worldborder clearexemptions` removes every saved exemption without changing enforcement state or configured geometry.
 

@@ -155,6 +155,100 @@ public class TDMKitManager {
         return true;
     }
 
+    /** Direct definitions only: editing a map must never mutate its global fallback. */
+    public static String getDirectKitName(String mapName, TDMManager.Team team, int index) {
+        List<KitEntry> list = getDirectTeamKits(mapName, team);
+        return index >= 0 && index < list.size() ? list.get(index).name : null;
+    }
+
+    public static int getDirectKitCost(String mapName, TDMManager.Team team, int index) {
+        List<KitEntry> list = getDirectTeamKits(mapName, team);
+        return index >= 0 && index < list.size() ? list.get(index).cost : -1;
+    }
+
+    public static String getDirectKitRevision(String mapName, TDMManager.Team team, int index) {
+        List<KitEntry> list = getDirectTeamKits(mapName, team);
+        return index >= 0 && index < list.size() ? GSON.toJson(list.get(index)) : null;
+    }
+
+    public static Object getDirectKitIdentity(String mapName, TDMManager.Team team, int index) {
+        List<KitEntry> list = getDirectTeamKits(mapName, team);
+        return index >= 0 && index < list.size() ? list.get(index) : null;
+    }
+
+    public static ItemStack[] getDirectKitPreview(String mapName, TDMManager.Team team, int index) {
+        List<KitEntry> list = getDirectTeamKits(mapName, team);
+        if (index < 0 || index >= list.size()) return null;
+        ItemStack[] preview = new ItemStack[MAIN_INVENTORY_SIZE + ARMOR_INVENTORY_SIZE];
+        if (list.get(index).items == null) return preview;
+        for (ItemEntry item : list.get(index).items) {
+            if (item == null || item.slot < 0 || item.slot >= preview.length) continue;
+            try { preview[item.slot] = item.toPreviewItemStack(); } catch (RuntimeException ignored) { }
+        }
+        return preview;
+    }
+
+    public static boolean canEditDirectKit(String mapName, TDMManager.Team team, int index) {
+        List<KitEntry> list = getDirectTeamKits(mapName, team);
+        if (index < 0 || index >= list.size() || list.get(index).items == null) return false;
+        boolean[] used = new boolean[MAIN_INVENTORY_SIZE + ARMOR_INVENTORY_SIZE];
+        for (ItemEntry item : list.get(index).items) {
+            if (item == null || item.slot < 0 || item.slot >= used.length || used[item.slot]) return false;
+            used[item.slot] = true;
+            try { if (item.toPreviewItemStack() == null) return false; } catch (RuntimeException e) { return false; }
+        }
+        return true;
+    }
+
+    public static boolean replaceKit(String mapName, TDMManager.Team team, int index, Object identity, String revision, EntityPlayer player) {
+        List<KitEntry> list = getDirectTeamKits(mapName, team);
+        if (revision == null || index < 0 || index >= list.size() || list.get(index) != identity || !revision.equals(GSON.toJson(list.get(index)))) return false;
+        KitEntry kit = list.get(index);
+        kit.items = captureItems(player);
+        save();
+        return true;
+    }
+
+    public static boolean renameKit(String mapName, TDMManager.Team team, int index, String name) {
+        List<KitEntry> list = getDirectTeamKits(mapName, team);
+        if (index < 0 || index >= list.size() || name == null || name.trim().length() == 0 || name.length() > 64) return false;
+        list.get(index).name = name.trim();
+        save();
+        return true;
+    }
+
+    public static boolean setKitCost(String mapName, TDMManager.Team team, int index, int cost) {
+        List<KitEntry> list = getDirectTeamKits(mapName, team);
+        if (index < 0 || index >= list.size() || cost < 0) return false;
+        list.get(index).cost = cost;
+        save();
+        return true;
+    }
+
+    public static boolean duplicateKit(String mapName, TDMManager.Team team, int index) {
+        List<KitEntry> list = getDirectTeamKits(mapName, team);
+        if (index < 0 || index >= list.size()) return false;
+        KitEntry source = list.get(index);
+        KitEntry copy = GSON.fromJson(GSON.toJson(source), KitEntry.class);
+        copy.name = source.name + " Copy";
+        list.add(copy);
+        save();
+        return true;
+    }
+
+    private static List<ItemEntry> captureItems(EntityPlayer player) {
+        List<ItemEntry> items = new ArrayList<ItemEntry>();
+        for (int i = 0; i < MAIN_INVENTORY_SIZE; i++) {
+            ItemStack stack = player.inventory.mainInventory[i];
+            if (stack != null) items.add(new ItemEntry(i, stack));
+        }
+        for (int i = 0; i < ARMOR_INVENTORY_SIZE; i++) {
+            ItemStack stack = player.inventory.armorInventory[i];
+            if (stack != null) items.add(new ItemEntry(MAIN_INVENTORY_SIZE + i, stack));
+        }
+        return items;
+    }
+
     public static boolean applyKit(TDMManager.Team team, int kitIndex, EntityPlayer player) {
         return applyKit(GLOBAL_MAP, team, kitIndex, player);
     }

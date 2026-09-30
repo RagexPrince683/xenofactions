@@ -197,6 +197,8 @@ public final class XFConfig {
 	public static boolean dynmapShowCityCenterMarkers = true;
 	public static boolean dynmapShowClaimDetails = true;
 	public static boolean dynmapShowPrestigeDetails = true;
+	/** Dynmap is a public web map; exact match spawn coordinates require explicit opt-in. */
+	public static boolean dynmapShowTdmSpawns = false;
 	public static String[] dynmapDimensionWorldMap = new String[] { "0=world", "-1=world_nether", "1=world_the_end" };
 	public static final String TDM_CT_WIN_SOUNDS_PROPERTY = "ctWinSounds";
 	public static final String TDM_T_WIN_SOUNDS_PROPERTY = "terroristWinSounds";
@@ -252,7 +254,7 @@ public final class XFConfig {
 		earthBoundarySafetyMargin = integer(config, CAT_EARTH_WORLD, "earthBoundarySafetyMargin", 1, 0, 15, "Blocks kept inward from profile edges by the existing border handler.");
 
 		enableDynmapIntegration = bool(config, CAT_MODULES, "enableDynmapIntegration", enableDynmapIntegration, "Enables optional Dynmap markers. Safe no-op when Dynmap is absent.");
-		enableJourneyMapIntegration = bool(config, CAT_MODULES, "enableJourneyMapIntegration", enableJourneyMapIntegration, "Enables optional legacy JourneyMap 5.2.x client claim overlays. Safe no-op when JourneyMap is absent or incompatible.");
+		enableJourneyMapIntegration = bool(config, CAT_MODULES, "enableJourneyMapIntegration", enableJourneyMapIntegration, "Enables optional JourneyMap 6.0.x client overlays (with a 5.2.x compatibility hook). Safe no-op when JourneyMap is absent.");
 		enableTDM = bool(config, CAT_MODULES, "enableTDM", enableTDM, "Enables Xenofactions TDM commands and event hooks.");
 		enableCustomFactionFlags = bool(config, CAT_MODULES, "enableCustomFactionFlags", enableCustomFactionFlags, "Enables imported custom faction flags via /c flag seturl.");
 		enableNewPlayerProtection = bool(config, CAT_MODULES, "enableNewPlayerProtection", enableNewPlayerProtection, "Enables starter PvP/keep-inventory protection for first-time players.");
@@ -367,10 +369,11 @@ public final class XFConfig {
 		dynmapShowCityCenterMarkers = bool(config, CAT_DYNMAP, "showCityCenterMarkers", dynmapShowCityCenterMarkers, "Shows a marker at each City Center.");
 		dynmapShowClaimDetails = bool(config, CAT_DYNMAP, "showClaimDetailsInLabels", dynmapShowClaimDetails, "Includes city/claim chunk details in Dynmap labels.");
 		dynmapShowPrestigeDetails = bool(config, CAT_DYNMAP, "showPrestigeDetailsInLabels", dynmapShowPrestigeDetails, "Includes prestige/upkeep details in Dynmap labels.");
+		dynmapShowTdmSpawns = bool(config, CAT_DYNMAP, "showTdmSpawns", dynmapShowTdmSpawns, "Publish exact active-map spawn locations on the public Dynmap web map. Off by default.");
 		dynmapDimensionWorldMap = stringList(config, CAT_DYNMAP, "dynmapDimensionWorldMap", dynmapDimensionWorldMap, "Minecraft dimension to Dynmap world map, entries like 0=world.");
 
-		journeyMapShowMinimapClaims = bool(config, CAT_JOURNEYMAP, "showMinimapClaims", journeyMapShowMinimapClaims, "Shows faction city claims on legacy JourneyMap minimaps.");
-		journeyMapShowFullscreenClaims = bool(config, CAT_JOURNEYMAP, "showFullscreenClaims", journeyMapShowFullscreenClaims, "Shows faction city claims on the legacy JourneyMap fullscreen map.");
+		journeyMapShowMinimapClaims = bool(config, CAT_JOURNEYMAP, "showMinimapClaims", journeyMapShowMinimapClaims, "Shows faction city claims on JourneyMap minimaps.");
+		journeyMapShowFullscreenClaims = bool(config, CAT_JOURNEYMAP, "showFullscreenClaims", journeyMapShowFullscreenClaims, "Shows faction city claims on the JourneyMap fullscreen map.");
 		journeyMapShowTerritoryLabels = bool(config, CAT_JOURNEYMAP, "journeyMapShowTerritoryLabels", journeyMapShowTerritoryLabels, "Shows one readable city-name label for each JourneyMap city territory when that map's claim overlay is enabled.");
 		journeyMapClaimFillOpacity = dbl(config, CAT_JOURNEYMAP, "claimFillOpacity", journeyMapClaimFillOpacity, 0D, 1D, "Faction-color claim fill opacity.");
 		journeyMapClaimBorderOpacity = dbl(config, CAT_JOURNEYMAP, "claimBorderOpacity", journeyMapClaimBorderOpacity, 0D, 1D, "Faction-color exposed-border opacity.");
@@ -394,7 +397,7 @@ public final class XFConfig {
 		config.addCustomCategoryComment(CAT_CUSTOM_FLAGS, "08 - Custom faction flag import safety limits and cache/reload behaviour.");
 		config.addCustomCategoryComment(CAT_WALL_ART, "08B - Wall Art source security, limits, and retry behaviour.");
 		config.addCustomCategoryComment(CAT_DYNMAP, "09 - Optional Dynmap marker styling, labels, and refresh timing.");
-		config.addCustomCategoryComment(CAT_JOURNEYMAP, "09B - Optional JourneyMap 5.2.x client claim overlay styling and city territory labels.");
+		config.addCustomCategoryComment(CAT_JOURNEYMAP, "09B - Optional JourneyMap client claim overlay styling and city territory labels.");
 		config.addCustomCategoryComment(CAT_PLAYER_IDENTITY, "09C - Server player identity policy. NAME is only for development/offline compatibility; UUID is secure production behavior.");
 		config.addCustomCategoryComment(CAT_LEGACY_MACHINES, "10 - Legacy machine and power settings moved under the Xenofactions category flow.");
 		config.addCustomCategoryComment(CAT_LEGACY_DEFENSE, "11 - Legacy radar and forcefield settings.");

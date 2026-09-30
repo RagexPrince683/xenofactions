@@ -24,7 +24,7 @@ Category: `XENOFACTIONS_01_MODULES`
 | --- | ---: | --- |
 | `enableSurvivalRecipes` | `true` | Register the audited survival recipes for faction, prestige, production, and support infrastructure. Set `false` to preserve command/shop-only distribution; registrations and unrelated recipes are unchanged. |
 | `enableDynmapIntegration` | `true` | Try to publish faction city/claim markers through Dynmap when Dynmap is installed. |
-| `enableJourneyMapIntegration` | `true` | Enable optional client claim overlays for legacy JourneyMap 5.2.x on Minecraft 1.7.10. |
+| `enableJourneyMapIntegration` | `true` | Enable optional client overlays for JourneyMap 6.0.x on Minecraft 1.7.10; the 5.2.x hook remains available. |
 | `enableTDM` | `true` | Register and initialize the optional team-deathmatch module. |
 | `enableCustomFactionFlags` | `true` | Allow `/c flag seturl`, `clear`, and `reload` custom flag workflows. |
 | `enableNewPlayerProtection` | `false` | Enable starter protection systems. |
@@ -204,10 +204,14 @@ Category: `XENOFACTIONS_09_DYNMAP`
 | `showCityCenterMarkers` | `true` | Show a point marker at each city center. |
 | `showClaimDetailsInLabels` | `true` | Include claim details in Dynmap labels. |
 | `showPrestigeDetailsInLabels` | `true` | Include prestige/upkeep details in labels. |
+| `showTdmSpawns` | `false` | Publish exact active TDM map spawn positions to the public Dynmap web map. |
+| `dynmapDimensionWorldMap` | `0=world`, `-1=world_nether`, `1=world_the_end` | Map Minecraft dimension IDs to Dynmap world names. |
+
+Dynmap publishes city claims in the configured city set, other faction claims in `xenofactions_claims`, SAFEZONE/WARZONE territories in `xenofactions_zones`, and the enabled active TDM map's bounds and BOMB sites in `xenofactions_tdm`. Other maps and world-border exemptions are not published to the public web map. Each published dimension needs a valid `dynmapDimensionWorldMap` entry. These are separate Xenofactions-owned marker sets; third-party markers are not modified. Marker updates are bounded by `updateIntervalTicks` (default 30 seconds). Territory geometry uses Clowder's saved coordinate bounds, including its legacy negative-coordinate behavior.
 
 ## JourneyMap client overlay
 
-JourneyMap is optional. Xenofactions targets the legacy JourneyMap 5.2.x implementation for Minecraft 1.7.10 (especially 5.2.8) through reflection; it does not use the modern JourneyMap API and has no JourneyMap dependency. Missing or changed JourneyMap internals disable only this overlay for the client session.
+JourneyMap is optional. JourneyMap 6.0.x uses its client API 2.0.0 plugin to show faction claims, zones, map bounds, BOMB sites, and permitted spawn markers on the minimap and fullscreen map. The API is compile-only and is not bundled into Xenofactions or required on the server. The 5.2.x reflection hook remains for older clients. If the client cannot show the overlays, the player-toggleable TDM overlay uses the standalone HUD map. BOMB sites remain visible to active BOMB players when their TDM overlay is on. F9 toggles local border visuals (claim/zone boundaries and the in-world map border) without changing server-side map enforcement, zone data, or spawn/BOMB-site visibility.
 
 Category: `XENOFACTIONS_09B_JOURNEYMAP_CLIENT`
 

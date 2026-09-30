@@ -7,6 +7,7 @@ import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.DamageSource;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -39,13 +40,22 @@ public class TDMHandler {
         }
     }
     private static final Map<String, PendingRespawn> pendingRespawns = new HashMap<String, PendingRespawn>();
+    private static final class BorderAnchor {
+        final TDMManager.TDMMap map;
+        final int dimension;
+        final double x, y, z;
+        BorderAnchor(TDMManager.TDMMap map, EntityPlayer player) {
+            this.map = map; this.dimension = player.dimension;
+            this.x = player.posX; this.y = player.posY; this.z = player.posZ;
+        }
+    }
+    private static final Map<String, BorderAnchor> borderAnchors = new HashMap<String, BorderAnchor>();
     private final Random random = new Random();
 
     @SubscribeEvent
     public void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.START) {
             HbmCsgoChargeIntegration.pollBombResults();
-            TDMServerTaskQueue.runScheduledTasks();
         }
     }
 
@@ -58,12 +68,14 @@ public class TDMHandler {
                 && event.world.provider.dimensionId == 0) {
             TDMServerTaskQueue.clear();
             pendingRespawns.clear();
+            borderAnchors.clear();
         }
     }
 
     @SubscribeEvent
     public void onClone(PlayerEvent.Clone event) {
         if (!event.wasDeath) return;
+        borderAnchors.remove(getKey(event.original));
 
         TDMManager.cancelKitSelection(event.entityPlayer);
 
@@ -75,6 +87,7 @@ public class TDMHandler {
 
     @SubscribeEvent
     public void onRespawn(cpw.mods.fml.common.gameevent.PlayerEvent.PlayerRespawnEvent event) {
+        borderAnchors.remove(getKey(event.player));
         TDMManager.cancelKitSelection(event.player);
         if (!TDMManager.isEnabled(event.player.worldObj)) {
             return;
@@ -150,6 +163,7 @@ public class TDMHandler {
     public void onLogout(cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent event) {
         TDMManager.onPlayerDisconnected(event.player.worldObj, event.player);
         pendingRespawns.remove(getKey(event.player));
+        borderAnchors.remove(getKey(event.player));
         TDMManager.resetTDMTransientPlayerState(event.player);
         TDMSpectatorManager.forget(event.player);
     }
@@ -158,15 +172,17 @@ public class TDMHandler {
     public void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         if (event.player.worldObj.isRemote) return;
-
         TDMManager.tickKitSelection(event.player);
         TDMManager.tickRoundWaiting(event.player);
 
         if (!TDMManager.isEnabled(event.player.worldObj)) {
             pendingRespawns.remove(getKey(event.player));
+            borderAnchors.remove(getKey(event.player));
             TDMSpectatorManager.restore(event.player);
             return;
         }
+
+        enforceMapBorder(event.player);
 
         runRoundTimer(event.player);
         sendTeamChangeReminder(event.player);
@@ -260,7 +276,10 @@ public class TDMHandler {
     @SubscribeEvent(priority=EventPriority.HIGHEST)
     public void restrictBreak(BlockEvent.BreakEvent event) {
         EntityPlayer player = event.getPlayer();
-        if (isWorldBorderAdminWand(player)) return;
+        if (player != null && player.getHeldItem() != null && player.getHeldItem().getItem() == ModItems.world_border_wand) {
+            event.setCanceled(true);
+            return;
+        }
         if (TDMManager.isRoundWaiting(player)||TDMManager.hasKitSelectionProtection(player)||TDMSpectatorManager.isObserving(player)
                 || TDMBombManager.shouldRestrictWorldInteraction(event.world)) {
             event.setCanceled(true);
@@ -275,7 +294,7 @@ public class TDMHandler {
             event.setCanceled(true);
             return;
         }
-        if (isWorldBorderAdminWand(player)) return;
+        if (isAdminSelectionWand(player)) return;
         if (TDMBombManager.shouldRestrictWorldInteraction(player.worldObj)) {
             event.setCanceled(true);
         }
@@ -283,11 +302,39 @@ public class TDMHandler {
     @SubscribeEvent(priority=EventPriority.HIGHEST)
     public void restrictPickup(EntityItemPickupEvent event){if(TDMManager.isRoundWaiting(event.entityPlayer)||TDMManager.isGlobalBombBuyPeriod(event.entityPlayer)||TDMManager.hasKitSelectionProtection(event.entityPlayer)){event.setCanceled(true);return;}if(TDMBombManager.isBombStack(event.item.getEntityItem())&&(!TDMManager.isTerrorist(event.entityPlayer)||TDMBombManager.getState()!=TDMBombManager.BombRoundState.LIVE)){event.setCanceled(true);if(TDMBombManager.getState()!=TDMBombManager.BombRoundState.LIVE)event.item.setDead();return;}if(TDMSpectatorManager.isObserving(event.entityPlayer))event.setCanceled(true);}
 
-    private boolean isWorldBorderAdminWand(EntityPlayer player) {
+    private boolean isAdminSelectionWand(EntityPlayer player) {
         return player != null
                 && player.getHeldItem() != null
                 && player.getHeldItem().getItem() == ModItems.world_border_wand
-                && player.canCommandSenderUseCommand(3, "xclowder");
+                && AdminSelectionManager.canUse(player);
+    }
+
+    private void enforceMapBorder(EntityPlayer player) {
+        String key = getKey(player);
+        TDMManager.TDMMap map = TDMManager.getSelectedMapData(player.worldObj);
+        if (!(player instanceof EntityPlayerMP) || map == null || !map.mapBorderEnabled || !map.bounds.isComplete()
+                || player.dimension != map.bounds.dimension || !TDMManager.isCompetitivePlayer(player)
+                || (player.capabilities.isCreativeMode && player.canCommandSenderUseCommand(4, "tdm"))) {
+            borderAnchors.remove(key);
+            return;
+        }
+        TDMManager.Bombsite bounds = map.bounds;
+        double half = player.width / 2D;
+        double minX = Math.min(bounds.x1, bounds.x2) + half, maxX = Math.max(bounds.x1, bounds.x2) + 1D - half;
+        double minZ = Math.min(bounds.z1, bounds.z2) + half, maxZ = Math.max(bounds.z1, bounds.z2) + 1D - half;
+        if (player.posX >= minX && player.posX <= maxX && player.posZ >= minZ && player.posZ <= maxZ) {
+            borderAnchors.put(key, new BorderAnchor(map, player));
+            return;
+        }
+        BorderAnchor anchor = borderAnchors.get(key);
+        if (anchor == null || anchor.map != map || anchor.dimension != player.dimension
+                || anchor.x < minX || anchor.x > maxX || anchor.z < minZ || anchor.z > maxZ) {
+            borderAnchors.remove(key);
+            return;
+        }
+        player.motionX = player.motionZ = 0D;
+        player.fallDistance = 0F;
+        ((EntityPlayerMP)player).playerNetServerHandler.setPlayerLocation(anchor.x, anchor.y, anchor.z, player.rotationYaw, player.rotationPitch);
     }
 
 

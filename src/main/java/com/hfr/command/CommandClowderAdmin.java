@@ -16,6 +16,8 @@ import com.hfr.guide.XFGuideBook;
 import com.hfr.data.ClowderData;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.effect.ClowderFlagPacket;
+import com.hfr.tdm.AdminSelectionManager;
+import com.hfr.tdm.AdminSelectionManager.Type;
 
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
@@ -70,6 +72,7 @@ public class CommandClowderAdmin extends CommandBase {
 		}
 
 		String cmd = args[0].toLowerCase();
+		if(cmd.equals("editor")) { cmdEditor(sender, args); return; }
 		if(cmd.equals("factiontimeoutcreationreset")) { FactionCreationTimeoutResetHandler.execute(sender, Arrays.copyOfRange(args, 1, args.length)); return; }
 		if(cmd.equals("earth")) { EarthCommandHandler.execute(sender, Arrays.copyOfRange(args, 1, args.length)); return; }
 		if(cmd.equals("worldborder")) { WorldBorderCommandHandler.execute(sender, Arrays.copyOfRange(args, 1, args.length)); return; }
@@ -165,6 +168,31 @@ public class CommandClowderAdmin extends CommandBase {
 		sender.addChatMessage(new ChatComponentText(ERROR + "Unknown command. Usage: " + getCommandUsage(sender)));
 	}
 
+	private void cmdEditor(ICommandSender sender, String[] args) {
+		EntityPlayer player = getCommandSenderAsPlayer(sender);
+		String result;
+		if(args.length < 2 || args[1].equalsIgnoreCase("status")) result = AdminSelectionManager.status(player);
+		else if(args[1].equalsIgnoreCase("select")) {
+			if(args.length < 3) { sender.addChatMessage(new ChatComponentText("Usage: /xc editor select <safezone|warzone|wilderness|border_exempt>")); return; }
+			Type type;
+			try { type = Type.valueOf(args[2].toUpperCase()); } catch(IllegalArgumentException e) { type = null; }
+			if(type != Type.SAFEZONE && type != Type.WARZONE && type != Type.WILDERNESS && type != Type.BORDER_EXEMPT) result = "Unknown Clowder area type.";
+			else result = AdminSelectionManager.begin(player, type, "");
+		} else if(args[1].equalsIgnoreCase("point")) {
+			if(args.length < 3 || (!args[2].equalsIgnoreCase("a") && !args[2].equalsIgnoreCase("b"))) { sender.addChatMessage(new ChatComponentText("Usage: /xc editor point <a|b>")); return; }
+			AdminSelectionManager.Selection selection = AdminSelectionManager.get(player);
+			result = selection == null || (args.length >= 4 && !selection.type.name().equalsIgnoreCase(args[3]))
+					? "Selection type mismatch or no active selection." : AdminSelectionManager.pointHere(player, args[2].equalsIgnoreCase("a"));
+		} else if(args[1].equalsIgnoreCase("commit")) {
+			AdminSelectionManager.Selection selection = AdminSelectionManager.get(player);
+			result = selection == null || selection.type == Type.MAP || selection.type == Type.BOMB_A || selection.type == Type.BOMB_B
+					|| (args.length >= 3 && !selection.type.name().equalsIgnoreCase(args[2]))
+					? "No active Clowder area selection." : AdminSelectionManager.commit(player, selection.type);
+		} else if(args[1].equalsIgnoreCase("cancel")) { AdminSelectionManager.clear(player); result = "Admin area selection cancelled."; }
+		else result = "Usage: /xc editor <status|select|point|commit|cancel>";
+		sender.addChatMessage(new ChatComponentText(result));
+	}
+
 	private boolean requireArgs(ICommandSender sender, String cmd, String[] args, int minArgs) {
 		if(args.length >= minArgs)
 			return true;
@@ -184,6 +212,7 @@ public class CommandClowderAdmin extends CommandBase {
 		if(cmd.equals("factiontimeoutcreationreset")) return "/xc factiontimeoutcreationreset <player>";
 		if(cmd.equals("earth")) return EarthCommandHandler.USAGE;
 		if(cmd.equals("worldborder")) return WorldBorderCommandHandler.USAGE;
+		if(cmd.equals("editor")) return "/xc editor <status|select <safezone|warzone|wilderness|border_exempt>|point <a|b>|commit|cancel>";
 		if(cmd.equals("clearcreationcooldown") || cmd.equals("resetcreationcooldown")) return "/xc clearcreationcooldown <player-or-uuid>";
 		if(cmd.equals("forcejoin") || cmd.equals("fj")) return "/xc forcejoin <faction>";
 		if(cmd.equals("forcekick") || cmd.equals("fk")) return "/xc forcekick <player>";
@@ -231,6 +260,8 @@ public class CommandClowderAdmin extends CommandBase {
 		if(p == 2) {
 			sender.addChatMessage(new ChatComponentText(TITLE + "Claims, prestige & protection"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-setclaim <wild/safe/war> <s/c> <radius>" + TITLE + " - Claims chunks in a radius"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-editor select <safezone|warzone|wilderness|border_exempt>" + TITLE + " - Start a typed area selection"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-editor <point a|point b|commit|cancel|status>" + TITLE + " - Manage the selection"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-addprestige <faction> <amount>" + TITLE + " - Adds prestige (negative values subtract)"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-newplayerprotection" + TITLE + " - Toggles starter protection"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_ADMIN + "-resetnewplayerprotection" + TITLE + " - Resets starter protection timers"));
@@ -618,6 +649,12 @@ public class CommandClowderAdmin extends CommandBase {
 			return getListOfStringsMatchingLastWord(args, new String[] { "status", "packs", "verify", "check" });
 		if(cmd.equals("worldborder") && args.length == 2)
 			return getListOfStringsMatchingLastWord(args, new String[] { "on", "off", "status", "wand", "exempt", "clearexemptions" });
+		if(cmd.equals("editor") && args.length == 2)
+			return getListOfStringsMatchingLastWord(args, new String[] { "status", "select", "point", "commit", "cancel" });
+		if(cmd.equals("editor") && args.length == 3 && args[1].equalsIgnoreCase("select"))
+			return getListOfStringsMatchingLastWord(args, new String[] { "safezone", "warzone", "wilderness", "border_exempt" });
+		if(cmd.equals("editor") && args.length == 3 && args[1].equalsIgnoreCase("point"))
+			return getListOfStringsMatchingLastWord(args, new String[] { "a", "b" });
 		if(cmd.equals("earth") && args.length == 3 && args[1].equalsIgnoreCase("verify"))
 			return getListOfStringsMatchingLastWord(args, EarthCommandHandler.getPackIds());
 		if(cmd.equals("forcekick") || cmd.equals("fk") || cmd.equals("factiontimeoutcreationreset") || cmd.equals("clearcreationcooldown") || cmd.equals("resetcreationcooldown"))
@@ -630,7 +667,7 @@ public class CommandClowderAdmin extends CommandBase {
     }
 
 	private String[] getAdminCommandNames() {
-		return new String[] { "help", "factiontimeoutcreationreset", "earth", "worldborder", "clearcreationcooldown", "resetcreationcooldown", "forcejoin", "fj", "forcekick", "fk", "forcedisband", "fd", "forcerename", "fr",
+		return new String[] { "help", "factiontimeoutcreationreset", "earth", "worldborder", "editor", "clearcreationcooldown", "resetcreationcooldown", "forcejoin", "fj", "forcekick", "fk", "forcedisband", "fd", "forcerename", "fr",
 				"hijack", "hi", "deletedata", "deldat", "setclaim", "sc", "addprestige", "ap", "disband", "rename",
 				"warenable", "wardisable", "newplayerprotection", "resetnewplayerprotection", "endnewplayerprotection",
 				"skipwarcooldowns", "ignorewarcooldowncheck", "ignorewaronlinecheck", "ignorewarstatecheck",

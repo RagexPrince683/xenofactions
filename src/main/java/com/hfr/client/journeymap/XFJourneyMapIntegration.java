@@ -4,6 +4,7 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import com.hfr.main.MainRegistry;
+import com.hfr.config.XFConfig;
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.ModContainer;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -13,14 +14,22 @@ import net.minecraftforge.event.world.WorldEvent;
 
 /** Optional, reflection-only bridge for legacy JourneyMap 5.2.x. */
 public final class XFJourneyMapIntegration {
+	private static XFJourneyMapIntegration active;
+	private static boolean api6Ready;
 	private JourneyMapReflection reflection; private Object miniProxy, fullscreenProxy, miniState, fullscreenState;
-	private boolean incompatible, logged, renderLogged;
+	private boolean incompatible, logged, renderLogged, renderUnavailable;
 	public static void register() {
 		if(!Loader.isModLoaded("journeymap")) return;
+		ModContainer mod = Loader.instance().getIndexedModList().get("journeymap");
+		if(mod != null && (mod.getVersion().startsWith("6.") || mod.getVersion().contains("-6."))) return; // v6 discovers JourneyMap6Plugin itself.
 		XFJourneyMapIntegration value = new XFJourneyMapIntegration();
+		active = value;
 		cpw.mods.fml.common.FMLCommonHandler.instance().bus().register(value);
 		net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(value);
 	}
+	/** True only after the verified 5.2.x DrawStep hook is attached. */
+	public static boolean isUsable() { return XFConfig.enableJourneyMapIntegration && (api6Ready || active != null && !active.incompatible && !active.renderUnavailable && active.miniState != null && active.fullscreenState != null); }
+	public static void setApi6Ready(boolean ready) { api6Ready = ready; }
 	@SubscribeEvent public void tick(TickEvent.ClientTickEvent event) {
 		if(event.phase != TickEvent.Phase.END || incompatible) return;
 		try {
@@ -42,6 +51,7 @@ public final class XFJourneyMapIntegration {
 		ClientClaimOverlayCache.clear();
 		try { detach(miniState, miniProxy); detach(fullscreenState, fullscreenProxy); } catch(Throwable ignored) { }
 		miniState = fullscreenState = miniProxy = fullscreenProxy = null; reflection = null;
+		renderUnavailable = false;
 	}
 	@SuppressWarnings({ "rawtypes", "unchecked" }) private void detach(Object state, Object overlay) throws Exception {
 		if(reflection == null || state == null || overlay == null) return;
@@ -53,7 +63,8 @@ public final class XFJourneyMapIntegration {
 		if(!logged && MainRegistry.logger != null) { logged = true; MainRegistry.logger.warn("JourneyMap claim overlays disabled for this session (" + version() + "): " + reason + ": " + failure, failure); }
 	}
 	void renderFail(String reason, Throwable failure) {
-		if(!renderLogged && MainRegistry.logger != null) { renderLogged = true; MainRegistry.logger.warn("JourneyMap claim overlay render failed; overlays will retry next frame (" + version() + "): " + reason + ": " + failure, failure); }
+		renderUnavailable = true;
+		if(!renderLogged && MainRegistry.logger != null) { renderLogged = true; MainRegistry.logger.warn("JourneyMap overlay render failed; using the standalone map for this world (" + version() + "): " + reason + ": " + failure, failure); }
 	}
 	private String version() { ModContainer mod = Loader.instance().getIndexedModList().get("journeymap"); return mod == null ? "unknown JourneyMap version" : "JourneyMap " + mod.getVersion(); }
 }

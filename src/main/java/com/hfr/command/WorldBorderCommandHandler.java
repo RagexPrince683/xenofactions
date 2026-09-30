@@ -5,16 +5,14 @@ import java.util.List;
 
 import com.hfr.config.XFConfig;
 import com.hfr.items.ItemWorldBorderWand;
-import com.hfr.items.ItemWorldBorderWand.Selection;
-import com.hfr.items.ModItems;
+import com.hfr.tdm.AdminSelectionManager;
+import com.hfr.tdm.AdminSelectionManager.Type;
 import com.hfr.main.CommonEventHandler;
 import com.hfr.saveddata.EarthBoundarySavedData;
-import com.hfr.saveddata.EarthBoundarySavedData.Region;
 import com.hfr.world.border.EarthBoundaryManager;
 
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
@@ -45,9 +43,8 @@ public final class WorldBorderCommandHandler {
         if (args.length == 1 && "wand".equalsIgnoreCase(args[0])) {
             if (!(sender instanceof EntityPlayerMP)) { error(sender, "The world border exemption wand can only be given to an in-game player."); return; }
             EntityPlayerMP player = (EntityPlayerMP)sender;
-            ItemStack wand = new ItemStack(ModItems.world_border_wand);
-            if (!player.inventory.addItemStackToInventory(wand)) player.dropPlayerItemWithRandomChoice(wand, false);
-            msg(sender, "Given one World Border Exemption Wand. Left-click sets position 1; right-click sets position 2.");
+			if (AdminSelectionManager.get(player) == null) msg(sender, AdminSelectionManager.begin(player, Type.BORDER_EXEMPT, ""));
+			else ItemWorldBorderWand.giveIfNeeded(player);
             return;
         }
         if (args.length == 1 && "exempt".equalsIgnoreCase(args[0])) {
@@ -62,14 +59,14 @@ public final class WorldBorderCommandHandler {
     }
 
     private static void exempt(ICommandSender sender, World world) {
-        EarthBoundarySavedData data = EarthBoundarySavedData.get(world);
         if (!(sender instanceof EntityPlayerMP)) { error(sender, "Creating an exemption requires an in-game administrator with a wand selection."); return; }
         EntityPlayerMP player = (EntityPlayerMP)sender;
-        Selection selection = ItemWorldBorderWand.get(player);
-        if (selection == null || !selection.hasPos1 || !selection.hasPos2) { error(sender, "Set both wand positions before creating an exemption."); return; }
-        Region region = data.addRegion(selection.dimension, selection.x1, selection.z1, selection.x2, selection.z2);
-        ItemWorldBorderWand.clear(player);
-        msg(sender, "Created world border exemption: dimension=" + region.dimension + ", X=" + region.minX + ".." + region.maxX + ", Z=" + region.minZ + ".." + region.maxZ + ".");
+        AdminSelectionManager.Selection selection = AdminSelectionManager.get(player);
+        String result = AdminSelectionManager.commit(player, Type.BORDER_EXEMPT);
+        if (!result.startsWith("Committed ")) { error(sender, result); return; }
+        msg(sender, "Created world border exemption: dimension=" + selection.dimension
+                + ", X=" + Math.min(selection.ax, selection.bx) + ".." + Math.max(selection.ax, selection.bx)
+                + ", Z=" + Math.min(selection.az, selection.bz) + ".." + Math.max(selection.az, selection.bz) + ".");
     }
 
     private static void clearExemptions(ICommandSender sender, World world) {

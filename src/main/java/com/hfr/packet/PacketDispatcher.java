@@ -116,6 +116,11 @@ public class PacketDispatcher {
 		wrapper.registerMessage(TDMSurvivorChoiceGuiPacket.Handler.class, TDMSurvivorChoiceGuiPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(TDMSurvivorChoicePacket.Handler.class, TDMSurvivorChoicePacket.class, i++, Side.SERVER);
 		wrapper.registerMessage(TDMSoundPacket.Handler.class, TDMSoundPacket.class, i++, Side.CLIENT);
+		wrapper.registerMessage(AdminEditorSnapshotPacket.Handler.class, AdminEditorSnapshotPacket.class, i++, Side.CLIENT);
+		wrapper.registerMessage(AdminEditorActionPacket.Handler.class, AdminEditorActionPacket.class, i++, Side.SERVER);
+		wrapper.registerMessage(AdminEditorClosePacket.Handler.class, AdminEditorClosePacket.class, i++, Side.CLIENT);
+		wrapper.registerMessage(AdminSelectionSyncPacket.Handler.class, AdminSelectionSyncPacket.class, i++, Side.CLIENT);
+		wrapper.registerMessage(TDMMapOverlayPacket.Handler.class, TDMMapOverlayPacket.class, i++, Side.CLIENT);
 
 	}
 	

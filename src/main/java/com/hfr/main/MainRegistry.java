@@ -443,6 +443,9 @@ public class MainRegistry
 		FluidHandler.init();
 		HFRPotion.init();
 		MainRegistry.loadCustomDrops();
+		com.hfr.tdm.AdminEditorLifecycle adminEditorLifecycle = new com.hfr.tdm.AdminEditorLifecycle();
+		MinecraftForge.EVENT_BUS.register(adminEditorLifecycle);
+		FMLCommonHandler.instance().bus().register(adminEditorLifecycle);
 		if(XFConfig.enableTDM) {
 			TDMManager.init();
 			TDMHandler tdmHandler = new TDMHandler();

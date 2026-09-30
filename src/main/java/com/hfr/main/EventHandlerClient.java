@@ -20,6 +20,7 @@ import com.hfr.inventory.gui.GUIXenofactionsTutorial;
 import com.hfr.inventory.gui.GUITDMMenu;
 import com.hfr.inventory.gui.GUITDMKitSelect;
 import com.hfr.inventory.gui.GUITDMMapVote;
+import com.hfr.inventory.gui.GUIAdminEditor;
 import com.hfr.render.hud.RenderFlagOverlay;
 import com.hfr.render.hud.RenderRVIOverlay;
 import com.hfr.render.hud.RenderRadarScreen;
@@ -305,6 +306,8 @@ public class EventHandlerClient {
 		
 		if(event.type == ElementType.TEXT) {
 			drawTDMHud();
+			GUIAdminEditor.drawSelectionPreview();
+			com.hfr.client.journeymap.ClientTDMMapOverlay.drawHud(event);
 		}
 
 		if(event.type == ElementType.CROSSHAIRS)
@@ -589,6 +592,8 @@ public class EventHandlerClient {
 	@SubscribeEvent
 	public void onClientDisconnect(ClientDisconnectionFromServerEvent event) {
 		resetTDMClientState();
+		GUIAdminEditor.clearSelectionPreview();
+		com.hfr.client.journeymap.ClientTDMMapOverlay.clear();
 		lookup.clear();
 		com.hfr.client.wallart.WallArtTextureCache.clear();
 		com.hfr.stonedrops.StoneDropDisplaySnapshot.clearClientSnapshot();
@@ -597,7 +602,7 @@ public class EventHandlerClient {
 
 	@SubscribeEvent
 	public void onClientWorldUnload(WorldEvent.Unload event) {
-		if(event.world!=null&&event.world.isRemote)resetTDMClientState();
+		if(event.world!=null&&event.world.isRemote) { resetTDMClientState(); GUIAdminEditor.clearSelectionPreview(); com.hfr.client.journeymap.ClientTDMMapOverlay.clear(); }
 	}
 
 	private void renderTag(EntityPlayer player, double x, double y, double z, RendererLivingEntity renderer, String name) {
@@ -711,13 +716,16 @@ public class EventHandlerClient {
 	@SubscribeEvent
 	public void xenofactionsClientTick(ClientTickEvent event) {
 		if(event.phase==TickEvent.Phase.END)enforceMandatoryKitGui();
+		if(event.phase==TickEvent.Phase.END)com.hfr.client.journeymap.ClientTDMMapOverlay.emitWorldBorder();
 		Minecraft xfMc = Minecraft.getMinecraft();
 		boolean xfHasWorld = xfMc.theWorld != null;
-		if(xfHadWorld&&!xfHasWorld)resetTDMClientState();
+		if(xfHadWorld&&!xfHasWorld) { resetTDMClientState(); GUIAdminEditor.clearSelectionPreview(); com.hfr.client.journeymap.ClientTDMMapOverlay.clear(); }
 		if(!xfHadWorld && xfHasWorld) xfTutorialQueued = true;
 		if(!xfHasWorld) xfTutorialQueued = false;
 		xfHadWorld = xfHasWorld;
 		if(xfHasWorld && xfMc.thePlayer != null && xfMc.currentScreen == null) {
+			while(ClientProxy.borderVisuals.isPressed()) com.hfr.client.journeymap.ClientBorderVisuals.toggle();
+			while(ClientProxy.adminEditor.isPressed()) xfMc.thePlayer.sendChatMessage("/tdm editor gui");
 			while(ClientProxy.xenofactionsMenu.isPressed()) GUIXenofactionsMenu.requestAndOpen();
 			if(xfTutorialQueued && !GUIXenofactionsTutorial.getFlagFile().exists()) {
 				xfTutorialQueued = false;

@@ -29,7 +29,6 @@ import com.hfr.data.StockData.Stock;
 //import com.hfr.dim.WorldProviderMoon;
 import com.hfr.handler.SLBMHandler;
 import com.hfr.items.ModItems;
-import com.hfr.items.ItemWorldBorderWand;
 import com.hfr.world.border.EarthBoundaryManager;
 import com.hfr.main.MainRegistry.ControlEntry;
 import com.hfr.main.MainRegistry.ImmunityEntry;
@@ -678,7 +677,7 @@ public class CommonEventHandler {
 	int timer = 0;
 	private final Map<String, Integer> outOfBoundsTimers = new HashMap<String, Integer>();
 	
-	//handles the anti-mob wand
+	// The saved world_border_wand item is the generic admin selection input.
 
 	@SubscribeEvent(
 			priority = EventPriority.HIGHEST,
@@ -687,16 +686,16 @@ public class CommonEventHandler {
 	public void onWorldBorderWandInteract(PlayerInteractEvent event) {
 		EntityPlayer player = event.entityPlayer;
 		if (player == null || player.worldObj.isRemote || player.getHeldItem() == null || player.getHeldItem().getItem() != ModItems.world_border_wand) return;
-		if (!player.canCommandSenderUseCommand(3, "xclowder")) {
-			player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "You do not have permission to use the world border exemption wand."));
-			event.setCanceled(true);
+		if (com.hfr.tdm.AdminSelectionManager.get(player) == null) {
+			if (event.action == PlayerInteractEvent.Action.LEFT_CLICK_BLOCK || event.action == PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK)
+				event.setCanceled(true);
 			return;
 		}
 		if (event.action == PlayerInteractEvent.Action.LEFT_CLICK_BLOCK) {
-			ItemWorldBorderWand.select(player, true, event.x, event.z);
+			player.addChatMessage(new ChatComponentText(com.hfr.tdm.AdminSelectionManager.point(player, true, event.x, event.y, event.z)));
 			event.setCanceled(true);
 		} else if (event.action == PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) {
-			ItemWorldBorderWand.select(player, false, event.x, event.z);
+			player.addChatMessage(new ChatComponentText(com.hfr.tdm.AdminSelectionManager.point(player, false, event.x, event.y, event.z)));
 			event.setCanceled(true);
 		}
 	}
@@ -704,7 +703,6 @@ public class CommonEventHandler {
 	@SubscribeEvent
 	public void onWorldBorderWandLogout(PlayerLoggedOutEvent event) {
 		if (event.player != null) {
-			ItemWorldBorderWand.clear(event.player);
 			PLAYERS_PREVIOUSLY_EXEMPT.remove(event.player.getUniqueID());
 		}
 	}

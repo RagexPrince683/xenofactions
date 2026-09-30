@@ -84,6 +84,8 @@ public class ClientProxy extends ServerProxy
 	public static KeyBinding tdmMenu = new KeyBinding("key.hfr.tdmmenu", Keyboard.KEY_L, "key.categories.hfr.xenofactions");
 	public static KeyBinding tdmBuyMenu = new KeyBinding("key.hfr.tdmbuy", Keyboard.KEY_B, "key.categories.hfr.xenofactions");
 	public static KeyBinding xenofactionsMenu = new KeyBinding("key.hfr.xfmenu", Keyboard.KEY_K, "key.categories.hfr.xenofactions");
+	public static KeyBinding adminEditor = new KeyBinding("key.hfr.admineditor", Keyboard.KEY_F10, "key.categories.hfr.xenofactions");
+	public static KeyBinding borderVisuals = new KeyBinding("key.hfr.bordervisuals", Keyboard.KEY_F9, "key.categories.hfr.xenofactions");
 	
 	@Override
 	public void registerRenderInfo()
@@ -118,6 +120,8 @@ public class ClientProxy extends ServerProxy
 		ClientRegistry.registerKeyBinding(tdmMenu);
 		ClientRegistry.registerKeyBinding(tdmBuyMenu);
 		ClientRegistry.registerKeyBinding(xenofactionsMenu);
+		ClientRegistry.registerKeyBinding(adminEditor);
+		ClientRegistry.registerKeyBinding(borderVisuals);
 		
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityMachineRadar.class, new RenderRadar());
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityForceField.class, new RenderMachineForceField());
@@ -304,6 +308,7 @@ public class ClientProxy extends ServerProxy
 			
 		/// CLOWDER BORDER ///
 		case SFX_BORDER:
+			if(!com.hfr.client.journeymap.ClientBorderVisuals.enabled()) return;
 			if(!(payload instanceof int[]))
 				return;
 			

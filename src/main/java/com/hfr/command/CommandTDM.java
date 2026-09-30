@@ -2,9 +2,14 @@ package com.hfr.command;
 
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.effect.TDMMenuDataPacket;
+import com.hfr.packet.effect.AdminEditorSnapshotPacket;
 import com.hfr.tdm.TDMKitManager;
+import com.hfr.tdm.TDMAdminKitEdit;
+import com.hfr.tdm.AdminSelectionManager;
+import com.hfr.tdm.AdminSelectionManager.Type;
 import com.hfr.tdm.TDMBombManager;
 import com.hfr.tdm.TDMManager;
+import com.hfr.tdm.TDMMapOverlaySync;
 import com.hfr.tdm.TDMPurchasableManager;
 import com.hfr.config.XFConfig;
 import net.minecraft.command.CommandBase;
@@ -46,6 +51,29 @@ public class CommandTDM extends CommandBase {
         }
 
         World world = sender.getEntityWorld();
+
+        if (args[0].equalsIgnoreCase("overlay") || args[0].equalsIgnoreCase("boundaryview")) {
+            EntityPlayerMP player = (EntityPlayerMP)getCommandSenderAsPlayer(sender);
+            boolean boundaryView = args[0].equalsIgnoreCase("boundaryview");
+            if (boundaryView && !isAdmin(sender)) {
+                sender.addChatMessage(new ChatComponentText("In-world map boundary view is admin-only.")); return;
+            }
+            if (args.length < 2 || parseToggle(args[1]) == null) {
+                sender.addChatMessage(new ChatComponentText("Usage: /tdm " + (boundaryView ? "boundaryview" : "overlay") + " <on|off>" + (boundaryView ? "" : " [map (admin only)]")));
+                return;
+            }
+            boolean enabled = parseToggle(args[1]).booleanValue();
+            if (boundaryView) TDMMapOverlaySync.setBoundary(player, enabled);
+            else {
+                String map = args.length > 2 && isAdmin(sender) ? TDMManager.normalizeMapName(args[2]) : "";
+                if (map.length() > 0 && !TDMManager.hasMap(world, map)) {
+                    sender.addChatMessage(new ChatComponentText("Unknown map: " + map)); return;
+                }
+                TDMMapOverlaySync.setOverlay(player, enabled, map);
+            }
+            sender.addChatMessage(new ChatComponentText((boundaryView ? "In-world map boundary" : "Persistent map overlay") + (enabled ? " enabled." : " disabled.")));
+            return;
+        }
 
         if (args[0].equalsIgnoreCase("maps") || args[0].equalsIgnoreCase("listmaps")) {
             sendMapList(sender, world);
@@ -125,6 +153,10 @@ public class CommandTDM extends CommandBase {
 
         if (args[0].equalsIgnoreCase("kit")) {
             processKitCommand(sender, args);
+            return;
+        }
+        if (args[0].equalsIgnoreCase("editor")) {
+            processEditorCommand(sender, args);
             return;
         }
         if (args[0].equalsIgnoreCase("utility") || args[0].equalsIgnoreCase("killstreak")) {
@@ -310,6 +342,7 @@ public class CommandTDM extends CommandBase {
         if (category.equals("general")) {
             helpLine(sender, false, "menu", "Open the mode scoreboard/actions menu.");
             helpLine(sender, false, "maps", "List maps, modes, settings, and active votes.");
+            helpLine(sender, false, "overlay <on|off>", "Show the active map, your spawns, and BOMB sites on the map.");
             helpLine(sender, false, "help [category]", "Example: /tdm help teams");
         } else if (category.equals("match")) {
             helpLine(sender, false, "vote <map>", "Vote for an enumerated map during a map vote.");
@@ -323,18 +356,28 @@ public class CommandTDM extends CommandBase {
             helpLine(sender,false,"help match","Learn about voting and match flow.");
         } else if (category.equals("kits")) {
             sender.addChatMessage(new ChatComponentText(INFO+"Kits, Utility & Killstreaks"));
+            helpLine(sender, true, "editor gui", "Open the draggable map, kit, spawn, and area editor.");
             helpLine(sender, true, "kit list [map|global]", "List configured loadouts and BOMB costs.");
             helpLine(sender, true, "kit add <red|blue> [map|global] [cost]", "Save inventory; example: /tdm kit add red arena 3");
+            helpLine(sender, true, "kit edit <red|blue> <number> [map|global]", "Load a direct kit into creative inventory; commit or cancel afterward.");
+            helpLine(sender, true, "kit <commit|cancel|status>", "Finish or inspect an active kit inventory edit.");
+            helpLine(sender, true, "kit <clone|rename|cost> ...", "Duplicate or change a direct kit definition.");
             helpLine(sender, true, "kit remove <red|blue> <number> [map|global]", "Remove a numbered kit from kit list.");
             helpLine(sender,true,"utility <list|add|remove>","Manage BOMB buy-score utility definitions.");
             helpLine(sender,true,"killstreak <list|add|remove>","Manage kill-score reward definitions.");
         } else if (category.equals("maps")) {
             helpLine(sender, false, "maps", "List maps, modes, timers, point limits, and active votes.");
+            helpLine(sender, false, "overlay <on|off>", "Toggle your persistent map overlay.");
             if(isAdmin(sender)){helpLine(sender, true, "map <create|delete|select> <map>", "Manage maps.");
+            helpLine(sender, true, "boundaryview <on|off>", "Toggle your in-world map boundary view.");
+            helpLine(sender, true, "overlay on [map]", "Preview the active or a named map as admin.");
             helpLine(sender, true, "map addspawn <map> <red|blue|ffa>", "Add your current position.");
             helpLine(sender, true, "map <pointlimit|timer> <map> <value|default>", "Set DM/FFA point-score victory limit or timer (scorelimit is an alias).");
             helpLine(sender, true, "map mode <map> <deathmatch|bomb|ffa>", "Set isolated lifecycle policy.");
             helpLine(sender, true, "map bombsite <map> <a|b> <pos1|pos2|clear>", "Configure BOMB objective bounds.");
+            helpLine(sender, true, "map border <map> <on|off>", "Enforce the selected map's horizontal border for match players.");
+            helpLine(sender, true, "editor select <map|bomb_a|bomb_b> [map]", "Start a typed area selection; use editor point/commit/cancel.");
+            helpLine(sender, true, "map <updatespawn|removespawn|tpspawn> <map> <number>", "Edit an individual map spawn.");
             helpLine(sender, true, "map terroristteam <map> <red|blue>", "Assign the BOMB Terrorist role.");
             helpLine(sender, true, "map <hardcorerespawns|economy> <map> <true|false>", "Configure BOMB-only policy.");}
         } else {
@@ -418,12 +461,83 @@ public class CommandTDM extends CommandBase {
         TDMManager.changePlayerTeamWithCooldown(getCommandSenderAsPlayer(sender));
     }
 
+    private void processEditorCommand(ICommandSender sender, String[] args) {
+        EntityPlayer player = getCommandSenderAsPlayer(sender);
+        if (args.length >= 2 && args[1].equalsIgnoreCase("gui")) {
+            String map = args.length >= 3 ? args[2] : TDMManager.getSelectedMap(player.worldObj);
+            TDMManager.Team team = args.length >= 4 ? TDMManager.Team.fromName(args[3]) : TDMManager.Team.RED;
+            int index = 0;
+            if (args.length >= 5) try { index = Math.max(0, Integer.parseInt(args[4]) - 1); } catch (NumberFormatException ignored) { }
+            PacketDispatcher.wrapper.sendTo(new AdminEditorSnapshotPacket((EntityPlayerMP)player, map, team, index), (EntityPlayerMP)player);
+            return;
+        }
+        if (args.length < 2 || args[1].equalsIgnoreCase("status")) {
+            sender.addChatMessage(new ChatComponentText(AdminSelectionManager.status(player)));
+            sender.addChatMessage(new ChatComponentText(TDMAdminKitEdit.status(player)));
+            return;
+        }
+        String result;
+        if (args[1].equalsIgnoreCase("select")) {
+            if (args.length < 3) { sender.addChatMessage(new ChatComponentText("Usage: /tdm editor select <map|bomb_a|bomb_b> [map]")); return; }
+            Type type;
+            try { type = Type.valueOf(args[2].toUpperCase()); } catch (IllegalArgumentException e) { type = null; }
+            if (type != Type.MAP && type != Type.BOMB_A && type != Type.BOMB_B) { sender.addChatMessage(new ChatComponentText("Use map, bomb_a, or bomb_b for /tdm editor.")); return; }
+            String map = args.length >= 4 ? args[3] : TDMManager.getSelectedMap(player.worldObj);
+            result = AdminSelectionManager.begin(player, type, map);
+        } else if (args[1].equalsIgnoreCase("point")) {
+            if (args.length < 3 || (!args[2].equalsIgnoreCase("a") && !args[2].equalsIgnoreCase("b"))) { sender.addChatMessage(new ChatComponentText("Usage: /tdm editor point <a|b>")); return; }
+            AdminSelectionManager.Selection selection = AdminSelectionManager.get(player);
+            result = selection == null || (args.length >= 4 && !selection.type.name().equalsIgnoreCase(args[3]))
+                    ? "Selection type mismatch or no active selection." : AdminSelectionManager.pointHere(player, args[2].equalsIgnoreCase("a"));
+        } else if (args[1].equalsIgnoreCase("commit")) {
+            AdminSelectionManager.Selection selection = AdminSelectionManager.get(player);
+            result = selection == null || (selection.type != Type.MAP && selection.type != Type.BOMB_A && selection.type != Type.BOMB_B)
+                    || (args.length >= 3 && !selection.type.name().equalsIgnoreCase(args[2]))
+                    ? "No active TDM area selection." : AdminSelectionManager.commit(player, selection.type);
+        } else if (args[1].equalsIgnoreCase("cancel")) {
+            AdminSelectionManager.clear(player); result = "Admin area selection cancelled.";
+        } else { result = "Usage: /tdm editor <status|select|point|commit|cancel>"; }
+        sender.addChatMessage(new ChatComponentText(result));
+    }
+
     private void processKitCommand(ICommandSender sender, String[] args) {
         if (args.length < 2 || args[1].equalsIgnoreCase("help")) {
-            sender.addChatMessage(new ChatComponentText("Usage: /tdm kit <list|add|remove> ..."));
+            sender.addChatMessage(new ChatComponentText("Usage: /tdm kit <list|add|edit|commit|cancel|clone|rename|remove> ..."));
             sender.addChatMessage(new ChatComponentText("  /tdm kit list [map|global]"));
             sender.addChatMessage(new ChatComponentText("  /tdm kit add <red|blue> [map|global]"));
             sender.addChatMessage(new ChatComponentText("  /tdm kit remove <red|blue> <number> [map|global]"));
+            return;
+        }
+
+        if (args[1].equalsIgnoreCase("commit") || args[1].equalsIgnoreCase("cancel") || args[1].equalsIgnoreCase("status")) {
+            EntityPlayer player = getCommandSenderAsPlayer(sender);
+            String result = args[1].equalsIgnoreCase("commit") ? TDMAdminKitEdit.commit(player)
+                    : args[1].equalsIgnoreCase("cancel") ? TDMAdminKitEdit.cancel(player) : TDMAdminKitEdit.status(player);
+            sender.addChatMessage(new ChatComponentText(result));
+            return;
+        }
+
+        if (args[1].equalsIgnoreCase("edit") || args[1].equalsIgnoreCase("clone") || args[1].equalsIgnoreCase("rename") || args[1].equalsIgnoreCase("cost")) {
+            if (args.length < 4) { sender.addChatMessage(new ChatComponentText("Usage: /tdm kit " + args[1] + " <red|blue> <number> [map|global] [new name for rename]")); return; }
+            TDMManager.Team team = TDMManager.Team.fromName(args[2]);
+            int number;
+            try { number = Integer.parseInt(args[3]); } catch (NumberFormatException e) { number = 0; }
+            if (team == null || number <= 0) { sender.addChatMessage(new ChatComponentText("Choose red/blue and a kit number from /tdm kit list.")); return; }
+            String mapName = args.length >= 5 ? normalizeKitMap(args[4]) : TDMManager.getSelectedMap(sender.getEntityWorld());
+            if (args[1].equalsIgnoreCase("edit")) {
+                sender.addChatMessage(new ChatComponentText(TDMAdminKitEdit.begin(getCommandSenderAsPlayer(sender), mapName, team, number - 1)));
+            } else if (args[1].equalsIgnoreCase("clone")) {
+                sender.addChatMessage(new ChatComponentText(TDMKitManager.duplicateKit(mapName, team, number - 1) ? "Duplicated kit." : "No direct kit at that number."));
+            } else if (args[1].equalsIgnoreCase("cost")) {
+                int cost;
+                try { cost = Integer.parseInt(args.length >= 6 ? args[5] : "-1"); } catch (NumberFormatException e) { cost = -1; }
+                sender.addChatMessage(new ChatComponentText(TDMKitManager.setKitCost(mapName, team, number - 1, cost) ? "Updated kit BOMB cost." : "Cost must be non-negative and the direct kit must exist."));
+            } else {
+                if (args.length < 6) { sender.addChatMessage(new ChatComponentText("Usage: /tdm kit rename <red|blue> <number> <map|global> <new name>")); return; }
+                StringBuilder name = new StringBuilder();
+                for (int i = 5; i < args.length; i++) { if (name.length() > 0) name.append(' '); name.append(args[i]); }
+                sender.addChatMessage(new ChatComponentText(TDMKitManager.renameKit(mapName, team, number - 1, name.toString()) ? "Renamed kit." : "Could not rename that direct kit."));
+            }
             return;
         }
 
@@ -434,6 +548,7 @@ public class CommandTDM extends CommandBase {
         }
 
         if (args[1].equalsIgnoreCase("add") || args[1].equalsIgnoreCase("save")) {
+            if (sender instanceof EntityPlayer && TDMAdminKitEdit.isEditing((EntityPlayer)sender)) { sender.addChatMessage(new ChatComponentText("Finish or cancel the loaded kit edit first; use /tdm kit commit to save it.")); return; }
             if (args.length < 3) {
                 sender.addChatMessage(new ChatComponentText("Usage: /tdm kit add <blue|red> [map|global] [cost]"));
                 return;
@@ -535,6 +650,7 @@ public class CommandTDM extends CommandBase {
     }
 
     private String normalizeKitMap(String mapName) {
+        if ("@map:global".equalsIgnoreCase(mapName)) return "global";
         String normalized = TDMManager.normalizeMapName(mapName);
         return normalized.equals("global") ? "" : normalized;
     }
@@ -555,7 +671,7 @@ public class CommandTDM extends CommandBase {
             return;
         }
 
-        if (!action.equals("create") && !action.equals("delete") && !action.equals("select") && !action.equals("addspawn") && !action.equals("clearspawns") && !action.equals("scorelimit") && !action.equals("pointlimit") && !action.equals("timer") && !action.equals("mode") && !action.equals("terroristteam") && !action.equals("hardcorerespawns") && !action.equals("bombsite") && !action.equals("economy") && !action.equals("killstreaks") && !action.equals("killscorereward") && !action.equals("killscore") && !action.equals("defusescore") && !action.equals("lossscore") && !action.equals("plantscore") && !action.equals("roundwinscore")) {
+        if (!action.equals("create") && !action.equals("delete") && !action.equals("select") && !action.equals("addspawn") && !action.equals("updatespawn") && !action.equals("removespawn") && !action.equals("tpspawn") && !action.equals("clearbounds") && !action.equals("border") && !action.equals("clearspawns") && !action.equals("scorelimit") && !action.equals("pointlimit") && !action.equals("timer") && !action.equals("mode") && !action.equals("terroristteam") && !action.equals("hardcorerespawns") && !action.equals("bombsite") && !action.equals("economy") && !action.equals("killstreaks") && !action.equals("killscorereward") && !action.equals("killscore") && !action.equals("defusescore") && !action.equals("lossscore") && !action.equals("plantscore") && !action.equals("roundwinscore")) {
             sender.addChatMessage(new ChatComponentText("Unknown TDM map command: " + args[1]));
             sendMapUsage(sender);
             return;
@@ -593,6 +709,36 @@ public class CommandTDM extends CommandBase {
         }
 
         if(!TDMManager.hasMap(world,mapName)){sender.addChatMessage(new ChatComponentText("Unknown TDM map: "+mapName));return;}
+        if (action.equals("clearbounds")) { TDMManager.clearMapBounds(world, mapName); sender.addChatMessage(new ChatComponentText("Cleared map bounds and disabled its border for " + mapName)); return; }
+        if (action.equals("border")) {
+            if (args.length < 4 || (!args[3].equalsIgnoreCase("on") && !args[3].equalsIgnoreCase("off"))) {
+                sender.addChatMessage(new ChatComponentText("Usage: /tdm map border <map> <on|off>")); return;
+            }
+            boolean enabled = args[3].equalsIgnoreCase("on");
+            if (!TDMManager.setMapBorderEnabled(world, mapName, enabled)) {
+                sender.addChatMessage(new ChatComponentText("Set both map bounds corners before enabling its border.")); return;
+            }
+            sender.addChatMessage(new ChatComponentText("Map border for " + mapName + " is " + (enabled ? "on" : "off") + ".")); return;
+        }
+        if (action.equals("updatespawn") || action.equals("removespawn") || action.equals("tpspawn")) {
+            if (args.length < 4) { sender.addChatMessage(new ChatComponentText("Usage: /tdm map " + action + " <map> <number>")); return; }
+            int index; try { index = Integer.parseInt(args[3]) - 1; } catch (NumberFormatException e) { index = -1; }
+            TDMManager.TDMMap map = TDMManager.getMap(world, mapName);
+            if (index < 0 || index >= map.spawns.size()) { sender.addChatMessage(new ChatComponentText("No spawn at that number.")); return; }
+            TDMManager.SpawnPoint old = map.spawns.get(index);
+            if (action.equals("removespawn")) { TDMManager.removeMapSpawn(world, mapName, index); sender.addChatMessage(new ChatComponentText("Removed spawn #" + (index + 1))); return; }
+            EntityPlayerMP player = (EntityPlayerMP)getCommandSenderAsPlayer(sender);
+            if (action.equals("updatespawn")) {
+                TDMManager.updateMapSpawn(world, mapName, index, new TDMManager.SpawnPoint(old.team, player.dimension, (int)Math.floor(player.posX), (int)Math.floor(player.posY), (int)Math.floor(player.posZ), true, player.rotationYaw, player.rotationPitch));
+                sender.addChatMessage(new ChatComponentText("Updated spawn #" + (index + 1) + " from your position and facing."));
+            } else {
+                if (!net.minecraftforge.common.DimensionManager.isDimensionRegistered(old.dim)) { sender.addChatMessage(new ChatComponentText("Spawn dimension is unavailable.")); return; }
+                if (player.dimension != old.dim) player.travelToDimension(old.dim);
+                player.playerNetServerHandler.setPlayerLocation(old.x + .5D, old.y, old.z + .5D, old.hasRotation ? old.yaw : player.rotationYaw, old.hasRotation ? old.pitch : player.rotationPitch);
+                sender.addChatMessage(new ChatComponentText("Teleported to spawn #" + (index + 1)));
+            }
+            return;
+        }
         if(action.equals("economy")){if(args.length<4){sender.addChatMessage(new ChatComponentText("Usage: /tdm map economy <map> <true|false>"));return;}Boolean value=parseToggle(args[3]);if(value==null){sender.addChatMessage(new ChatComponentText("Economy must be true/false or on/off."));return;}TDMManager.TDMMap m=TDMManager.getMap(world,mapName);if(m.mode!=TDMManager.TDMGameMode.BOMB){sender.addChatMessage(new ChatComponentText("Economy is available only on BOMB maps."));return;}m.buyScoreEnabled=value.booleanValue();com.hfr.tdm.TDMData.get(world).markDirty();sender.addChatMessage(new ChatComponentText("Map "+mapName+" economy: "+value));return;}
         if(action.equals("killstreaks")){if(args.length<4){sender.addChatMessage(new ChatComponentText("Usage: /tdm map killstreaks <map> <true|false>"));return;}Boolean value=parseToggle(args[3]);TDMManager.TDMMap m=TDMManager.getMap(world,mapName);if(value==null||m.mode==TDMManager.TDMGameMode.BOMB){sender.addChatMessage(new ChatComponentText("Killstreaks require true/false on a DEATHMATCH or FFA map."));return;}m.killstreaksEnabled=value.booleanValue();com.hfr.tdm.TDMData.get(world).markDirty();sender.addChatMessage(new ChatComponentText("Map "+mapName+" killstreaks: "+value));return;}
         if(action.equals("killscorereward")){if(args.length<4){sender.addChatMessage(new ChatComponentText("Usage: /tdm map killscorereward <map> <amount>"));return;}int amount;try{amount=Integer.parseInt(args[3]);}catch(NumberFormatException e){sender.addChatMessage(new ChatComponentText("Amount must be a non-negative integer."));return;}if(amount<0){sender.addChatMessage(new ChatComponentText("Amount must be a non-negative integer."));return;}TDMManager.TDMMap m=TDMManager.getMap(world,mapName);if(m.mode==TDMManager.TDMGameMode.BOMB){sender.addChatMessage(new ChatComponentText("Kill score is available only in configured respawn modes."));return;}m.killScoreReward=amount;com.hfr.tdm.TDMData.get(world).markDirty();sender.addChatMessage(new ChatComponentText("Map "+mapName+" kill-score reward: "+amount));return;}
@@ -617,7 +763,27 @@ public class CommandTDM extends CommandBase {
                     + " hardcore respawns: " + args[3].toLowerCase()));
             return;
         }
-        if(action.equals("bombsite")){if(args.length<5){sender.addChatMessage(new ChatComponentText("Usage: /tdm map bombsite <map> <a|b> <pos1|pos2|clear>"));return;}boolean a=args[3].equalsIgnoreCase("a");if(!a&&!args[3].equalsIgnoreCase("b")){sender.addChatMessage(new ChatComponentText("Bombsite must be A or B."));return;}if(args[4].equalsIgnoreCase("clear")){TDMManager.clearBombsite(world,mapName,a);sender.addChatMessage(new ChatComponentText("Cleared bombsite "+(a?"A":"B")+"."));return;}int corner=args[4].equalsIgnoreCase("pos1")?1:args[4].equalsIgnoreCase("pos2")?2:0;if(corner==0){sender.addChatMessage(new ChatComponentText("Use pos1, pos2, or clear."));return;}EntityPlayer p=getCommandSenderAsPlayer(sender);if(!TDMManager.setBombsite(world,mapName,a,corner,p.dimension,(int)Math.floor(p.posX),(int)Math.floor(p.posY),(int)Math.floor(p.posZ))){sender.addChatMessage(new ChatComponentText("Both bombsite corners must be in the same dimension."));return;}sender.addChatMessage(new ChatComponentText("Set bombsite "+(a?"A":"B")+" pos"+corner+"."));return;}
+        if (action.equals("bombsite")) {
+            if (args.length < 5) { sender.addChatMessage(new ChatComponentText("Usage: /tdm map bombsite <map> <a|b> <pos1|pos2|clear>")); return; }
+            boolean a = args[3].equalsIgnoreCase("a");
+            if (!a && !args[3].equalsIgnoreCase("b")) { sender.addChatMessage(new ChatComponentText("Bombsite must be A or B.")); return; }
+            if (args[4].equalsIgnoreCase("clear")) {
+                TDMManager.clearBombsite(world, mapName, a);
+                sender.addChatMessage(new ChatComponentText("Cleared bombsite " + (a ? "A" : "B") + "."));
+                return;
+            }
+            int corner = args[4].equalsIgnoreCase("pos1") ? 1 : args[4].equalsIgnoreCase("pos2") ? 2 : 0;
+            if (corner == 0) { sender.addChatMessage(new ChatComponentText("Use pos1, pos2, or clear.")); return; }
+            EntityPlayer player = getCommandSenderAsPlayer(sender);
+            Type type = a ? Type.BOMB_A : Type.BOMB_B;
+            AdminSelectionManager.Selection selection = AdminSelectionManager.get(player);
+            if (selection == null || selection.type != type || !mapName.equals(selection.map)) AdminSelectionManager.begin(player, type, mapName);
+            sender.addChatMessage(new ChatComponentText(AdminSelectionManager.pointHere(player, corner == 1)));
+            selection = AdminSelectionManager.get(player);
+            if (selection != null && selection.type == type && selection.hasA && selection.hasB)
+                sender.addChatMessage(new ChatComponentText(AdminSelectionManager.commit(player, type)));
+            return;
+        }
 
         if (action.equals("delete")) {
             if (!TDMManager.deleteMap(world, mapName)) {
@@ -659,7 +825,9 @@ public class CommandTDM extends CommandBase {
             }
 
             EntityPlayer player = getCommandSenderAsPlayer(sender);
-            TDMManager.addMapSpawn(world, mapName, team, player.dimension, (int) player.posX, (int) player.posY, (int) player.posZ);
+            TDMManager.addMapSpawn(world, mapName, new TDMManager.SpawnPoint(team, player.dimension,
+                    (int)Math.floor(player.posX), (int)Math.floor(player.posY), (int)Math.floor(player.posZ),
+                    true, player.rotationYaw, player.rotationPitch));
             sender.addChatMessage(new ChatComponentText(
                     "Spawn added for " + (team==null?"ffa":team.name) + " on map " + mapName + ". Total: " + TDMManager.getMapSpawnCount(world, mapName)
                             + " (red: " + TDMManager.getMapSpawnCount(world, mapName, TDMManager.Team.RED)
@@ -715,7 +883,7 @@ public class CommandTDM extends CommandBase {
     }
 
     private void sendMapUsage(ICommandSender sender) {
-        sender.addChatMessage(new ChatComponentText("Usage: /tdm map <create|delete|select|addspawn|clearspawns|mode|terroristteam|hardcorerespawns|bombsite|economy|lossscore|killscore|roundwinscore|plantscore|defusescore|scorelimit|timer|list>"));
+        sender.addChatMessage(new ChatComponentText("Usage: /tdm map <create|delete|select|addspawn|updatespawn|removespawn|tpspawn|clearspawns|clearbounds|border|mode|terroristteam|hardcorerespawns|bombsite|economy|lossscore|killscore|roundwinscore|plantscore|defusescore|scorelimit|timer|list>"));
         sender.addChatMessage(new ChatComponentText("  /tdm map scorelimit <map> <value|default> (DEATHMATCH: score points, 100 per kill; BOMB: round wins, default 13)"));
         sender.addChatMessage(new ChatComponentText("  /tdm map timer <map> <seconds|default>"));
         sender.addChatMessage(new ChatComponentText("  /tdm map bombsite <map> <a|b> <pos1|pos2|clear>"));
@@ -792,18 +960,25 @@ public class CommandTDM extends CommandBase {
     public List addTabCompletionOptions(ICommandSender sender, String[] args) {
         if (args.length == 1) {
             List<String> commands = new ArrayList<String>(Arrays.asList("help", "maps", "vote", "skip", "menu", "teamchange", "utility", "killstreak"));
-            if (isAdmin(sender)) commands.addAll(Arrays.asList("kits", "kit", "toggle", "bombtest", "testsound", "forceroundend", "forcemapvote", "friendlyfire", "autobalance", "map", "addspawn", "setteam", "teamless", "clear"));
+            commands.add("overlay");
+            if (isAdmin(sender)) commands.addAll(Arrays.asList("boundaryview", "editor", "kits", "kit", "toggle", "bombtest", "testsound", "forceroundend", "forcemapvote", "friendlyfire", "autobalance", "map", "addspawn", "setteam", "teamless", "clear"));
             return getListOfStringsMatchingLastWord(args, commands.toArray(new String[0]));
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("help")) return getListOfStringsMatchingLastWord(args, isAdmin(sender) ? new String[] {"general", "match", "teams", "loadouts", "kits", "maps", "admin"} : new String[] {"general", "match", "teams", "loadouts"});
         if (args.length == 2 && args[0].equalsIgnoreCase("skip")) return getListOfStringsMatchingLastWord(args, "yes", "no", "status");
         if (args.length == 2 && args[0].equalsIgnoreCase("vote")) return getListOfStringsMatchingLastWord(args, TDMManager.getMapNames(sender.getEntityWorld()).toArray(new String[0]));
         if(args.length==2&&(args[0].equalsIgnoreCase("utility")||args[0].equalsIgnoreCase("killstreak")))return getListOfStringsMatchingLastWord(args,isAdmin(sender)?new String[]{"list","buy","add","remove"}:new String[]{"list","buy"});
+        if (args.length == 2 && args[0].equalsIgnoreCase("overlay")) return getListOfStringsMatchingLastWord(args, "on", "off");
         if (!isAdmin(sender)) return null;
-        if (args.length == 2 && args[0].equalsIgnoreCase("kit")) return getListOfStringsMatchingLastWord(args, "list", "add", "remove");
+        if (args.length == 2 && args[0].equalsIgnoreCase("boundaryview")) return getListOfStringsMatchingLastWord(args, "on", "off");
+        if (args.length == 3 && args[0].equalsIgnoreCase("overlay") && args[1].equalsIgnoreCase("on")) return completeMaps(args, sender, false);
+        if (args.length == 2 && args[0].equalsIgnoreCase("kit")) return getListOfStringsMatchingLastWord(args, "list", "add", "edit", "commit", "cancel", "status", "clone", "rename", "cost", "remove");
+        if (args.length == 2 && args[0].equalsIgnoreCase("editor")) return getListOfStringsMatchingLastWord(args, "gui", "status", "select", "point", "commit", "cancel");
+        if (args.length == 3 && args[0].equalsIgnoreCase("editor") && args[1].equalsIgnoreCase("select")) return getListOfStringsMatchingLastWord(args, "map", "bomb_a", "bomb_b");
+        if (args.length == 3 && args[0].equalsIgnoreCase("editor") && args[1].equalsIgnoreCase("point")) return getListOfStringsMatchingLastWord(args, "a", "b");
         if (args.length == 3 && args[0].equalsIgnoreCase("kit") && (args[1].equalsIgnoreCase("add") || args[1].equalsIgnoreCase("remove"))) return getListOfStringsMatchingLastWord(args, "red", "blue");
         if (args[0].equalsIgnoreCase("kit") && ((args.length == 3 && args[1].equalsIgnoreCase("list")) || (args.length == 4 && args[1].equalsIgnoreCase("add")) || (args.length == 5 && args[1].equalsIgnoreCase("remove")))) return completeMaps(args, sender, true);
-        if (args.length == 2 && args[0].equalsIgnoreCase("map")) return getListOfStringsMatchingLastWord(args, "list", "create", "delete", "select", "addspawn", "clearspawns", "pointlimit", "scorelimit", "timer", "mode", "terroristteam", "hardcorerespawns", "bombsite", "economy", "killstreaks", "killscorereward", "killscore", "lossscore", "roundwinscore", "plantscore", "defusescore");
+        if (args.length == 2 && args[0].equalsIgnoreCase("map")) return getListOfStringsMatchingLastWord(args, "list", "create", "delete", "select", "addspawn", "removespawn", "tpspawn", "clearspawns", "clearbounds", "border", "pointlimit", "scorelimit", "timer", "mode", "terroristteam", "hardcorerespawns", "bombsite", "economy", "killstreaks", "killscorereward", "killscore", "lossscore", "roundwinscore", "plantscore", "defusescore");
         if (args.length == 3 && args[0].equalsIgnoreCase("map") && !args[1].equalsIgnoreCase("create") && !args[1].equalsIgnoreCase("list")) return completeMaps(args, sender, false);
         if (args.length == 4 && args[0].equalsIgnoreCase("map")) {
             if (args[1].equalsIgnoreCase("mode")) return getListOfStringsMatchingLastWord(args, "deathmatch", "bomb", "ffa");

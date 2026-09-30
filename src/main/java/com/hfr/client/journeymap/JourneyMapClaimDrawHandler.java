@@ -17,6 +17,8 @@ import com.hfr.config.XFConfig;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 
 final class JourneyMapClaimDrawHandler implements InvocationHandler {
 	private final boolean minimap; private final JourneyMapReflection reflection; private final XFJourneyMapIntegration integration;
@@ -36,9 +38,12 @@ final class JourneyMapClaimDrawHandler implements InvocationHandler {
 	}
 	private void draw(double xOffset, double yOffset, Object grid) throws Exception {
 		Minecraft mc = Minecraft.getMinecraft();
-		if(!XFConfig.enableJourneyMapIntegration || (minimap ? !XFConfig.journeyMapShowMinimapClaims : !XFConfig.journeyMapShowFullscreenClaims)
-				|| mc == null || mc.theWorld == null || mc.thePlayer == null) return;
-		Snapshot snapshot = ClientClaimOverlayCache.get(mc.thePlayer.dimension); if(snapshot == null || snapshot.claims.isEmpty()) return;
+		if(!XFJourneyMapIntegration.isUsable() || mc == null || mc.theWorld == null || mc.thePlayer == null) return;
+		boolean claimsEnabled = ClientBorderVisuals.enabled() && (minimap ? XFConfig.journeyMapShowMinimapClaims : XFConfig.journeyMapShowFullscreenClaims);
+		Snapshot snapshot = claimsEnabled ? ClientClaimOverlayCache.get(mc.thePlayer.dimension) : null;
+		NBTTagCompound map = ClientTDMMapOverlay.snapshot();
+		boolean mapEnabled = ClientTDMMapOverlay.visible() && map.getBoolean("overlay") && map.hasKey("map");
+		if((snapshot == null || snapshot.claims.isEmpty()) && !mapEnabled) return;
 		int width = ((Integer)reflection.getWidth.invoke(grid)).intValue(), height = ((Integer)reflection.getHeight.invoke(grid)).intValue();
 		boolean texture = GL11.glIsEnabled(GL11.GL_TEXTURE_2D), blend = GL11.glIsEnabled(GL11.GL_BLEND), alpha = GL11.glIsEnabled(GL11.GL_ALPHA_TEST);
 		int blendSrc = GL11.glGetInteger(GL11.GL_BLEND_SRC), blendDst = GL11.glGetInteger(GL11.GL_BLEND_DST); float oldWidth = GL11.glGetFloat(GL11.GL_LINE_WIDTH);
@@ -47,8 +52,9 @@ final class JourneyMapClaimDrawHandler implements InvocationHandler {
 		// JourneyMap owns the active depth state: its depth buffer clips minimap DrawStep rendering to the minimap mask.
 		GL11.glDisable(GL11.GL_TEXTURE_2D); GL11.glEnable(GL11.GL_BLEND); GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA); GL11.glDisable(GL11.GL_ALPHA_TEST);
 		try {
-			for(Claim claim : snapshot.claims) renderClaim(grid, claim, snapshot, xOffset, yOffset, width, height);
-			if(XFConfig.journeyMapShowTerritoryLabels) {
+			if(snapshot != null) for(Claim claim : snapshot.claims) renderClaim(grid, claim, snapshot, xOffset, yOffset, width, height);
+			if(mapEnabled) renderMap(grid, map, xOffset, yOffset, width, height, snapshot == null);
+			if(snapshot != null && XFConfig.journeyMapShowTerritoryLabels) {
 				GL11.glEnable(GL11.GL_TEXTURE_2D);
 				GL11.glColor4f(1F, 1F, 1F, 1F);
 				for(TerritoryGroup group : snapshot.groups) renderLabel(grid, group, xOffset, yOffset, width, height);
@@ -59,6 +65,75 @@ final class JourneyMapClaimDrawHandler implements InvocationHandler {
 			if(alpha) GL11.glEnable(GL11.GL_ALPHA_TEST); else GL11.glDisable(GL11.GL_ALPHA_TEST);
 			GL11.glLineWidth(oldWidth); GL11.glColor4f(color.get(0), color.get(1), color.get(2), color.get(3));
 		}
+	}
+	private void renderMap(Object grid, NBTTagCompound map, double xo, double yo, int width, int height, boolean drawZones) throws Exception {
+		NBTTagList zones = map.getTagList("zones", 10);
+		for(int i = 0; ClientBorderVisuals.enabled() && drawZones && i < zones.tagCount(); i++) {
+			NBTTagCompound zone = zones.getCompoundTagAt(i);
+			Bounds x = TerritoryCoordinateBounds.forCoordinate(map.getInteger("zoneCX") + zone.getByte("x"));
+			Bounds z = TerritoryCoordinateBounds.forCoordinate(map.getInteger("zoneCZ") + zone.getByte("z"));
+			rectangle(grid, x.minInclusive, z.minInclusive, x.maxExclusive, z.maxExclusive,
+					zone.getInteger("color"), 0.14F, xo, yo, width, height);
+		}
+		if(ClientBorderVisuals.enabled()) mapArea(grid, map.getCompoundTag("bounds"), 0x6BC8FF, 0F, xo, yo, width, height);
+		mapArea(grid, map.getCompoundTag("bombA"), 0xFFD262, 0.2F, xo, yo, width, height);
+		mapArea(grid, map.getCompoundTag("bombB"), 0xFF965E, 0.2F, xo, yo, width, height);
+		NBTTagList exemptions = map.getTagList("exemptions", 10);
+		for(int i = 0; ClientBorderVisuals.enabled() && i < exemptions.tagCount(); i++) {
+			NBTTagCompound a = exemptions.getCompoundTagAt(i);
+			rectangle(grid, a.getInteger("x1"), a.getInteger("z1"), a.getInteger("x2") + 1D,
+					a.getInteger("z2") + 1D, 0xBF9BFF, 0F, xo, yo, width, height);
+		}
+		NBTTagList spawns = map.getTagList("spawns", 10);
+		for(int i = 0; i < spawns.tagCount(); i++) {
+			NBTTagCompound spawn = spawns.getCompoundTagAt(i);
+			String team = spawn.getString("team");
+			int color = "red".equals(team) ? 0xFF6565 : "blue".equals(team) ? 0x6BA9FF : 0xFFFFFF;
+			rectangle(grid, spawn.getInteger("x") - 2D, spawn.getInteger("z") - 2D,
+					spawn.getInteger("x") + 3D, spawn.getInteger("z") + 3D, color, 0.75F, xo, yo, width, height);
+		}
+		GL11.glEnable(GL11.GL_TEXTURE_2D);
+		try {
+			labelArea(grid, map.getCompoundTag("bombA"), "A", 0xFFD262, xo, yo, width, height);
+			labelArea(grid, map.getCompoundTag("bombB"), "B", 0xFF965E, xo, yo, width, height);
+			for(int i = 0; i < spawns.tagCount(); i++) {
+				NBTTagCompound spawn = spawns.getCompoundTagAt(i);
+				String team = spawn.getString("team");
+				label(grid, spawn.getInteger("x") + 3D, spawn.getInteger("z"), "red".equals(team) ? "R" : "blue".equals(team) ? "B" : "F",
+						"red".equals(team) ? 0xFF6565 : "blue".equals(team) ? 0x6BA9FF : 0xFFFFFF, xo, yo, width, height);
+			}
+		} finally { GL11.glDisable(GL11.GL_TEXTURE_2D); }
+	}
+	private void labelArea(Object grid, NBTTagCompound area, String text, int color, double xo, double yo, int width, int height) throws Exception {
+		if(!ClientTDMMapOverlay.areaVisible(area)) return;
+		label(grid, ((long)area.getInteger("x1") + area.getInteger("x2")) / 2D,
+				((long)area.getInteger("z1") + area.getInteger("z2")) / 2D, text, color, xo, yo, width, height);
+	}
+	private void label(Object grid, double x, double z, String text, int color, double xo, double yo, int width, int height) throws Exception {
+		Point2D p = point(grid, x, z);
+		int px = (int)Math.round(p.getX() + xo), py = (int)Math.round(p.getY() + yo);
+		if(px < 0 || py < 0 || px >= width || py >= height) return;
+		Minecraft.getMinecraft().fontRenderer.drawStringWithShadow(text, px, py, color);
+	}
+	private void mapArea(Object grid, NBTTagCompound area, int color, float fill, double xo, double yo, int width, int height) throws Exception {
+		if(!ClientTDMMapOverlay.areaVisible(area)) return;
+		rectangle(grid, Math.min(area.getInteger("x1"), area.getInteger("x2")), Math.min(area.getInteger("z1"), area.getInteger("z2")),
+				Math.max(area.getInteger("x1"), area.getInteger("x2")) + 1D, Math.max(area.getInteger("z1"), area.getInteger("z2")) + 1D,
+				color, fill, xo, yo, width, height);
+	}
+	private void rectangle(Object grid, double x1, double z1, double x2, double z2, int color, float fill,
+			double xo, double yo, int width, int height) throws Exception {
+		Point2D p0 = point(grid, x1, z1), p1 = point(grid, x2, z1), p2 = point(grid, x2, z2), p3 = point(grid, x1, z2);
+		double minX = Math.min(Math.min(p0.getX(), p1.getX()), Math.min(p2.getX(), p3.getX())) + xo;
+		double maxX = Math.max(Math.max(p0.getX(), p1.getX()), Math.max(p2.getX(), p3.getX())) + xo;
+		double minY = Math.min(Math.min(p0.getY(), p1.getY()), Math.min(p2.getY(), p3.getY())) + yo;
+		double maxY = Math.max(Math.max(p0.getY(), p1.getY()), Math.max(p2.getY(), p3.getY())) + yo;
+		if(maxX < 0 || maxY < 0 || minX > width || minY > height) return;
+		float r = ((color >> 16) & 255) / 255F, g = ((color >> 8) & 255) / 255F, b = (color & 255) / 255F;
+		Tessellator t = Tessellator.instance;
+		if(fill > 0F) { GL11.glColor4f(r,g,b,fill); t.startDrawingQuads(); vertex(t,p0,xo,yo); vertex(t,p1,xo,yo); vertex(t,p2,xo,yo); vertex(t,p3,xo,yo); t.draw(); }
+		GL11.glColor4f(r,g,b,0.9F); GL11.glLineWidth(2F); t.startDrawing(GL11.GL_LINES);
+		edge(t,p0,p1,xo,yo); edge(t,p1,p2,xo,yo); edge(t,p2,p3,xo,yo); edge(t,p3,p0,xo,yo); t.draw();
 	}
 	private void renderClaim(Object grid, Claim claim, Snapshot snapshot, double xo, double yo, int width, int height) throws Exception {
 		Bounds xBounds = TerritoryCoordinateBounds.forCoordinate(claim.chunkX), zBounds = TerritoryCoordinateBounds.forCoordinate(claim.chunkZ);

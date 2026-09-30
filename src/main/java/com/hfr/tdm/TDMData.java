@@ -136,7 +136,8 @@ public class TDMData extends WorldSavedData {
             map.roundWinBuyScoreReward=mapTag.hasKey("roundWinBuyScoreReward")?Math.max(0,mapTag.getInteger("roundWinBuyScoreReward")):3;
             map.bombDefuseBuyScoreReward=mapTag.hasKey("bombDefuseBuyScoreReward")?Math.max(0,mapTag.getInteger("bombDefuseBuyScoreReward")):0;
             map.bombPlantBuyScoreReward=mapTag.hasKey("bombPlantBuyScoreReward")?Math.max(0,mapTag.getInteger("bombPlantBuyScoreReward")):1;
-            readBombsite(mapTag,"bombsiteA",map.bombsiteA);readBombsite(mapTag,"bombsiteB",map.bombsiteB);
+            readBombsite(mapTag,"bombsiteA",map.bombsiteA);readBombsite(mapTag,"bombsiteB",map.bombsiteB);readBombsite(mapTag,"bounds",map.bounds);
+            map.mapBorderEnabled=map.bounds.isComplete()&&mapTag.getBoolean("mapBorderEnabled");
             int mapSpawnCount = mapTag.getInteger("spawnCount");
             for (int j = 0; j < mapSpawnCount; j++) {
                 TDMManager.SpawnPoint spawn = readSpawn(mapTag.getCompoundTag("spawn" + j));
@@ -217,7 +218,8 @@ public class TDMData extends WorldSavedData {
             if(map.bombScoreLimitOverride>0)mapTag.setInteger("bombScoreLimit",map.bombScoreLimitOverride);if(map.bombRoundTicksOverride>0)mapTag.setInteger("bombRoundTicks",map.bombRoundTicksOverride);
             mapTag.setBoolean("buyScoreEnabled",map.buyScoreEnabled);mapTag.setInteger("roundLossBuyScoreReward",Math.max(0,map.roundLossBuyScoreReward));mapTag.setInteger("killBuyScoreReward",Math.max(0,map.killBuyScoreReward));mapTag.setInteger("roundWinBuyScoreReward",Math.max(0,map.roundWinBuyScoreReward));mapTag.setInteger("bombPlantBuyScoreReward",Math.max(0,map.bombPlantBuyScoreReward));if(map.bombDefuseBuyScoreReward>0)mapTag.setInteger("bombDefuseBuyScoreReward",map.bombDefuseBuyScoreReward);
             mapTag.setBoolean("killstreaksEnabled",map.killstreaksEnabled);mapTag.setInteger("killScoreReward",Math.max(0,map.killScoreReward));
-            writeBombsite(mapTag,"bombsiteA",map.bombsiteA);writeBombsite(mapTag,"bombsiteB",map.bombsiteB);
+            writeBombsite(mapTag,"bombsiteA",map.bombsiteA);writeBombsite(mapTag,"bombsiteB",map.bombsiteB);writeBombsite(mapTag,"bounds",map.bounds);
+            mapTag.setBoolean("mapBorderEnabled",map.mapBorderEnabled);
             mapTag.setInteger("spawnCount", map.spawns.size());
             for (int i = 0; i < map.spawns.size(); i++) {
                 mapTag.setTag("spawn" + i, writeSpawn(map.spawns.get(i)));
@@ -272,7 +274,8 @@ public class TDMData extends WorldSavedData {
                 spawnTag.getInteger("dim"),
                 spawnTag.getInteger("x"),
                 spawnTag.getInteger("y"),
-                spawnTag.getInteger("z")
+                spawnTag.getInteger("z"),
+                spawnTag.getBoolean("hasRotation"), spawnTag.getFloat("yaw"), spawnTag.getFloat("pitch")
         );
     }
 
@@ -284,6 +287,7 @@ public class TDMData extends WorldSavedData {
         spawnTag.setInteger("x", spawn.x);
         spawnTag.setInteger("y", spawn.y);
         spawnTag.setInteger("z", spawn.z);
+        if (spawn.hasRotation) { spawnTag.setBoolean("hasRotation", true); spawnTag.setFloat("yaw", spawn.yaw); spawnTag.setFloat("pitch", spawn.pitch); }
         return spawnTag;
     }
 

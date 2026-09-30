@@ -737,3 +737,28 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Routed live Blue, Red, Terrorist, Counter-Terrorist, and FFA labels through the existing Xenofactions global-chat prefix formatter; teamless and observer players retain neutral/faction behavior, and disabling TDM immediately restores faction prefixes without persisted chat state.
 - Added a shared TDM membership guard at the authoritative faction creation/member-add operations and their create, apply, accept, and administrative force-join entry paths, with clear command and help feedback while leaving existing memberships untouched.
 - Source-level call-site and lifecycle inspection was completed; dedicated-server chat, team/map/mode transition, and faction-command runtime validation remains required.
+
+2026-09-30 00:40 — Add unified admin kit, map, spawn, and area editor
+
+- Added a draggable `/tdm editor gui` with visual kit inventories, map settings, individual RED/BLUE/FFA spawn management, and a compact nearby safezone/warzone and map-area preview.
+- Added creative-inventory kit editing with explicit save/cancel, plus kit cloning, renaming, and BOMB cost edits. The admin's original inventory is restored when editing ends.
+- Added typed map-boundary, BOMB-site, Clowder zone, and world-border-exemption selections with visible A/B state and command fallbacks. Map boundaries remain separate from claims and do not change gameplay containment.
+- New map spawns record facing; existing saved spawns retain their previous facing behavior. Existing kit, map, and zone storage remains compatible.
+
+2026-09-30 01:23 — Add admin selection wand, editor key, and optional map border
+
+- Added one Admin Selection Wand for every area type. Left-clicking a block sets A, right-clicking sets B, and the selection preview updates as points are chosen. Starting a selection gives the wand when inventory space is available.
+- Added a configurable F10 key to toggle the admin editor while keeping `/tdm editor gui` available.
+- Added an optional per-map border toggle. When enabled, active match players cannot leave the map bounds' horizontal area; existing maps keep the border off until an admin enables it.
+
+2026-09-30 02:50 — Add persistent map overlays and separate boundary view
+
+- Added a per-player persistent TDM map overlay with map bounds, nearby Clowder zoning, team or FFA spawn markers, and BOMB sites A and B for active-match players. Administrators can preview a named map with all spawn types.
+- Added a separate administrator toggle for a nearby in-world map-boundary view. The existing optional map-border enforcement remains independent.
+- Drew the map overlay, faction claims, safezones, and warzones in compatible legacy JourneyMap minimaps and fullscreen maps, with a standalone in-game map when JourneyMap is unavailable. Added Dynmap layers for other faction claims, safezones, warzones, and the active map's bounds and BOMB sites; exact web-map spawns require an explicit server setting.
+
+2026-09-30 05:10 — Support JourneyMap 6 and unify border visuals
+
+- Added an optional JourneyMap 6.0.x API 2.0.0 client plugin for claims, zones, map bounds, BOMB sites, and permitted spawns while retaining the older 5.2.x adapter.
+- Changed the in-world map boundary to the existing ground-following Clowder border particle style, visible to active players when a map border is enforced and to administrators using boundary view.
+- Added a client-only F9 toggle for border effects and overlays; it does not change map containment or any server-side state.

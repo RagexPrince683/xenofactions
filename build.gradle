@@ -20,7 +20,12 @@ configurations.create('remappedDevMods') {
     visible = false
 }
 
+repositories {
+    maven { url = 'https://maven.blamejared.com' }
+}
+
 dependencies {
+    compileOnly 'info.journeymap:journeymap-api-forge:1.7.10-2.0.0'
     // RFG remaps ordinary production (SRG-named) mods into this MCP workspace.
     // Keep explicitly supplied development jars out of that transform.
     remappedDevMods(rfg.deobf(productionDevMods))

@@ -422,6 +422,7 @@ guide.xenofactions.page.troubleshooting=If a command fails, check your rank, fac
 guide.xenofactions.page.quick_reference=Common examples: /c help, /c create New_Faction, /c claim Capital, /c sethome, /c balance, /c enemy Enemy_Faction, /c unenemy Enemy_Faction, /c war Enemy_Faction, /c peace Enemy_Faction, /xc help.
 
 key.hfr.xfmenu=Open Xenofactions Menu
+key.hfr.admineditor=Toggle Admin Editor
 key.categories.hfr.xenofactions=Xenofactions
 xf.menu.title=Xenofactions Command Menu
 xf.menu.search=Search commands
@@ -939,4 +940,5 @@ gui.builder.distance=Distance from Depot: %s blocks
 gui.builder.distance.warning=Warning: schematic origin is extremely far from the Depot.
 gui.builder.preview.moved=Preview moved.
 
-item.world_border_wand.name=World Border Exemption Wand
+item.world_border_wand.name=Admin Selection Wand
+key.hfr.bordervisuals=Toggle Border Visuals

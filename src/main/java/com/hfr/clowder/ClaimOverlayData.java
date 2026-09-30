@@ -20,8 +20,7 @@ public final class ClaimOverlayData {
 		for(Map.Entry<CoordPair, TerritoryMeta> entry : ClowderTerritory.territories.entrySet()) {
 			CoordPair coord = entry.getKey();
 			TerritoryMeta meta = entry.getValue();
-			if(coord == null || coord.dimensionId != dimensionId || meta == null || meta.owner == null
-					|| meta.owner.zone != Zone.FACTION || meta.owner.owner == null || !meta.isCityClaim())
+			if(coord == null || coord.dimensionId != dimensionId || !visible(meta))
 				continue;
 			String groupId = groupId(dimensionId, meta);
 			Bounds bound = bounds.get(groupId);
@@ -31,20 +30,27 @@ public final class ClaimOverlayData {
 		for(Map.Entry<CoordPair, TerritoryMeta> entry : ClowderTerritory.territories.entrySet()) {
 			CoordPair coord = entry.getKey();
 			TerritoryMeta meta = entry.getValue();
-			if(coord == null || coord.dimensionId != dimensionId || meta == null || meta.owner == null
-					|| meta.owner.zone != Zone.FACTION || meta.owner.owner == null || !meta.isCityClaim())
+			if(coord == null || coord.dimensionId != dimensionId || !visible(meta))
 				continue;
-			Clowder faction = meta.owner.owner;
 			String groupId = groupId(dimensionId, meta);
 			Bounds bound = bounds.get(groupId);
 			int labelX = bound == null ? coordinateCenter(coord.x) : bound.labelX();
 			int labelZ = bound == null ? coordinateCenter(coord.z) : bound.labelZ();
-			claims.add(new Claim(dimensionId, coord.x, coord.z, groupId, faction.color & 0xFFFFFF, cleanLabel(meta.cityName), labelX, labelZ));
+			int color = meta.owner.zone == Zone.FACTION ? meta.owner.owner.color & 0xFFFFFF
+					: meta.owner.zone == Zone.SAFEZONE ? ClowderTerritory.SAFEZONE_COLOR : ClowderTerritory.WARZONE_COLOR;
+			claims.add(new Claim(dimensionId, coord.x, coord.z, groupId, color,
+					meta.owner.zone == Zone.FACTION ? cleanLabel(meta.cityName) : "", labelX, labelZ));
 		}
 		return Collections.unmodifiableList(claims);
 	}
 
+	private static boolean visible(TerritoryMeta meta) {
+		return meta != null && meta.owner != null && (meta.owner.zone == Zone.SAFEZONE
+				|| meta.owner.zone == Zone.WARZONE || (meta.owner.zone == Zone.FACTION && meta.owner.owner != null));
+	}
+
 	private static String groupId(int dimensionId, TerritoryMeta meta) {
+		if(meta.owner.zone != Zone.FACTION) return dimensionId + ":zone:" + meta.owner.zone.name();
 		return meta.cityId == null || meta.cityId.length() == 0 ? dimensionId + ":" + meta.flagX + ":" + meta.flagY + ":" + meta.flagZ : meta.cityId;
 	}
 

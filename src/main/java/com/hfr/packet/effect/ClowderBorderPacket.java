@@ -54,9 +54,12 @@ public class ClowderBorderPacket implements IMessage {
 		
 		@Override
 		@SideOnly(Side.CLIENT)
-		public IMessage onMessage(ClowderBorderPacket m, MessageContext ctx) {
-			
-			MainRegistry.proxy.spawnSFX(Minecraft.getMinecraft().theWorld, 0, 0, 0, MainRegistry.proxy.SFX_BORDER, new int[] { m.x1, m.z1, m.x2, m.z2, m.color });
+		public IMessage onMessage(final ClowderBorderPacket m, MessageContext ctx) {
+			Minecraft.getMinecraft().func_152344_a(new Runnable() { @Override public void run() {
+				if (Minecraft.getMinecraft().theWorld != null)
+					MainRegistry.proxy.spawnSFX(Minecraft.getMinecraft().theWorld, 0, 0, 0,
+							MainRegistry.proxy.SFX_BORDER, new int[] { m.x1, m.z1, m.x2, m.z2, m.color });
+			} });
 			
 			return null;
 		}

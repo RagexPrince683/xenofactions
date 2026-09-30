@@ -191,6 +191,10 @@ public class TDMManager {
         public int bombPlantBuyScoreReward = 1;
         public final Bombsite bombsiteA = new Bombsite();
         public final Bombsite bombsiteB = new Bombsite();
+        /** Optional map-owned boundary; independent of Clowder claims. */
+        public final Bombsite bounds = new Bombsite();
+        /** Opt-in horizontal player border using the bounds footprint. */
+        public boolean mapBorderEnabled;
 
         public TDMMap(String name) {
             this.name = normalizeMapName(name);
@@ -325,13 +329,22 @@ public class TDMManager {
         public final Team team;
         public final int dim;
         public final int x, y, z;
+        public final boolean hasRotation;
+        public final float yaw, pitch;
 
         public SpawnPoint(Team team, int dim, int x, int y, int z) {
+            this(team, dim, x, y, z, false, 0, 0);
+        }
+
+        public SpawnPoint(Team team, int dim, int x, int y, int z, boolean hasRotation, float yaw, float pitch) {
             this.team = team;
             this.dim = dim;
             this.x = x;
             this.y = y;
             this.z = z;
+            this.hasRotation = hasRotation;
+            this.yaw = yaw;
+            this.pitch = pitch;
         }
     }
 
@@ -530,6 +543,10 @@ public class TDMManager {
     }
 
     public static void addMapSpawn(World world, String mapName, Team team, int dim, int x, int y, int z) {
+        addMapSpawn(world, mapName, new SpawnPoint(team, dim, x, y, z));
+    }
+
+    public static void addMapSpawn(World world, String mapName, SpawnPoint spawn) {
         TDMData data = TDMData.get(world);
         String normalized = normalizeMapName(mapName);
         TDMMap map = data.maps.get(normalized);
@@ -538,11 +555,54 @@ public class TDMManager {
             data.maps.put(normalized, map);
         }
 
-        map.spawns.add(new SpawnPoint(team, dim, x, y, z));
+        map.spawns.add(spawn);
         if (data.selectedMap.length() == 0) {
             data.selectedMap = normalized;
         }
         data.markDirty();
+    }
+
+    public static boolean updateMapSpawn(World world, String mapName, int index, SpawnPoint spawn) {
+        TDMMap map = getMap(world, mapName);
+        if (map == null || index < 0 || index >= map.spawns.size() || spawn == null) return false;
+        map.spawns.set(index, spawn);
+        TDMData.get(world).markDirty();
+        return true;
+    }
+
+    public static boolean removeMapSpawn(World world, String mapName, int index) {
+        TDMMap map = getMap(world, mapName);
+        if (map == null || index < 0 || index >= map.spawns.size()) return false;
+        map.spawns.remove(index);
+        TDMData.get(world).markDirty();
+        return true;
+    }
+
+    public static boolean setMapBounds(World world, String name, int dim, int x1, int y1, int z1, int x2, int y2, int z2) {
+        TDMMap map = getMap(world, name);
+        if (map == null) return false;
+        Bombsite b = map.bounds;
+        b.dimension = dim; b.x1 = x1; b.y1 = y1; b.z1 = z1;
+        b.x2 = x2; b.y2 = y2; b.z2 = z2; b.hasPos1 = b.hasPos2 = true;
+        TDMData.get(world).markDirty();
+        return true;
+    }
+
+    public static boolean clearMapBounds(World world, String name) {
+        TDMMap map = getMap(world, name);
+        if (map == null) return false;
+        map.bounds.clear();
+        map.mapBorderEnabled = false;
+        TDMData.get(world).markDirty();
+        return true;
+    }
+
+    public static boolean setMapBorderEnabled(World world, String name, boolean enabled) {
+        TDMMap map = getMap(world, name);
+        if (map == null || (enabled && !map.bounds.isComplete())) return false;
+        map.mapBorderEnabled = enabled;
+        TDMData.get(world).markDirty();
+        return true;
     }
 
     public static boolean clearMapSpawns(World world, String mapName) {
@@ -1930,8 +1990,8 @@ public class TDMManager {
                     spawn.x + 0.5D,
                     spawn.y,
                     spawn.z + 0.5D,
-                    playerMP.rotationYaw,
-                    playerMP.rotationPitch
+                    spawn.hasRotation ? spawn.yaw : playerMP.rotationYaw,
+                    spawn.hasRotation ? spawn.pitch : playerMP.rotationPitch
             );
         } else if (player.dimension == spawn.dim) {
             player.setPositionAndUpdate(spawn.x + 0.5D, spawn.y, spawn.z + 0.5D);

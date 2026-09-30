@@ -179,7 +179,13 @@ Usage: `/cc <message>`; permission level: 0.
 
 Registered only when `enableTDM=true`. `/tdm help [category]` provides paged, permission-aware help. Player pages are `general`, `match`, and `teams`; operators additionally see `kits`, `maps`, and `admin`. Tab completion is server-authoritative for online players and configured maps, and covers command names, subcommands, teams, modes, map settings, and other fixed values.
 
-Player commands are `/tdm menu`, `/tdm maps`, `/tdm vote <map>`, `/tdm skip [yes|no|status]`, and `/tdm teamchange`. Setup and match-control commands remain operator-only and are not suggested to ordinary players. Use the categorized help pages for exact required/optional arguments and examples.
+Player commands are `/tdm menu`, `/tdm maps`, `/tdm overlay <on|off>`, `/tdm vote <map>`, `/tdm skip [yes|no|status]`, and `/tdm teamchange`. Setup and match-control commands remain operator-only and are not suggested to ordinary players. Use the categorized help pages for exact required/optional arguments and examples.
+
+Administrators can open `/tdm editor gui` or press F10 (configurable in Controls) for the draggable map, kit, spawn, area, and settings panel. The Kits page previews the selected direct kit, can create from the current inventory, clone, rename, set BOMB cost, or load it into creative inventory for natural slot editing. After loading, use `/tdm kit commit` or `/tdm kit cancel` (also available in the panel). The original inventory is restored in both cases. Use the Map/Global control to inspect global fallback kits; a map kit edit never silently changes its fallback. Existing `/tdm kit add`, `list`, and `remove` commands still work.
+
+The Areas page starts a typed selection and gives an Admin Selection Wand when there is inventory room. Close the panel with `Use wand`, left-click a block for A, right-click a block for B, then reopen with F10 to inspect or commit. Air clicks do not set a point. `/tdm editor select <map|bomb_a|bomb_b> [map]`, `/tdm editor point <a|b>`, `/tdm editor commit`, and `/tdm editor cancel` are chat equivalents. Map bounds do not create a claim. `/tdm map border <map> <on|off>` optionally keeps active match players inside their horizontal footprint; it is off by default. `/xc editor select <safezone|warzone|wilderness|border_exempt>` uses the same point/commit/cancel flow for Clowder zones and border exemptions. The preview shows nearby safe and war chunks separately from map bounds and BOMB sites. `/xc setclaim` remains available for the radius workflow.
+
+New map spawn commands are `/tdm map updatespawn <map> <number>`, `/tdm map tpspawn <map> <number>`, and `/tdm map removespawn <map> <number>`. Adding or updating a map spawn records the administrator's position and facing; older spawns keep their previous facing behavior. `/tdm map clearbounds <map>` removes optional map preview bounds.
 
 Deathmatch and FFA are continuous modes: login and respawn place a player immediately at a mode-appropriate spawn and open a protected respawn-loadout selector. That selector ignores kit prices, buy score, survivor kits, and BOMB buy timing. FFA loadouts may be selected from either configured RED or BLUE kit pool, but FFA does not assign a team. Competitive BOMB alone owns economy and survivor-kit state; active hardcore BOMB late joiners retain the established round-waiting behavior.
 
@@ -194,7 +200,7 @@ The source contains `CommandOrewand`, `CommandXCum`, and `CommandXCustomImage`, 
 
 TDM always stores players on the **RED** or **BLUE** team. A bomb map adds objective roles without changing membership: `/tdm map terroristteam <map> <red|blue>` chooses which stored team is Terrorist and the other team is Counter-Terrorist. Sides do not swap automatically.
 
-Use `/tdm map mode <map> <deathmatch|bomb|ffa>` to select the mode. `/tdm map hardcorerespawns <map> <true|false>` is BOMB-only: `true` uses competitive elimination and the timed buy phase, while `false` permits BOMB respawns and opens protected competitive kit selection after each respawn without a buy timer. Deathmatch and FFA reject this setting because both are continuous. Configure A or B as normalized cuboids with `/tdm map bombsite <map> <a|b> pos1`, `pos2`, or `clear`; positions use the executing player's floored block coordinate and both corners must share a dimension.
+Use `/tdm map mode <map> <deathmatch|bomb|ffa>` to select the mode. `/tdm map hardcorerespawns <map> <true|false>` is BOMB-only: `true` uses competitive elimination and the timed buy phase, while `false` permits BOMB respawns and opens protected competitive kit selection after each respawn without a buy timer. Deathmatch and FFA reject this setting because both are continuous. Configure A or B as normalized cuboids with `/tdm map bombsite <map> <a|b> pos1`, `pos2`, or `clear`; positions use the executing player's floored block coordinate and both corners must share a dimension. The two corner commands use the shared typed selection and save together when both are set; an existing site remains active until then.
 
 `/tdm map lossscore <map> <amount>` configures the end-of-round losing-side bonus, while `/tdm map plantscore <map> <amount>` configures the individual successful-plant reward; both default to **1** and accept zero to disable the reward. Map listings show loss, kill, win, plant, and defuse economy values.
 
@@ -209,7 +215,7 @@ HBM remains optional for Xenofactions and ordinary deathmatch. Playing a BOMB ma
 | `/xc worldborder on` | Persistently enable the existing Earth boundary. |
 | `/xc worldborder off` | Persistently disable the existing Earth boundary. |
 | `/xc worldborder status` | Show effective state, geometry, safety margin, and exemption count. |
-| `/xc worldborder wand` | Give an in-game admin the selection wand (left-click position 1; right-click position 2). |
+| `/xc worldborder wand` | Start an exemption selection when idle and give the shared Admin Selection Wand if needed (left-click A; right-click B). |
 | `/xc worldborder exempt` | Persist the selected inclusive, all-Y rectangle. |
 | `/xc worldborder clearexemptions` | Remove every saved exemption without changing border state or geometry. |
 
