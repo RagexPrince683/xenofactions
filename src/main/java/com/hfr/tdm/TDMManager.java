@@ -180,6 +180,8 @@ public class TDMManager {
         /** Preserved legacy entries whose category did not match the map's former mode. */
         public final List<SpawnPoint> legacyUnassignedSpawns = new ArrayList<SpawnPoint>();
         public final java.util.EnumSet<TDMGameMode> supportedModes = java.util.EnumSet.of(TDMGameMode.DEATHMATCH);
+        /** Map-wide ballot visibility, independent of supported modes and admin selection. */
+        public boolean votingEnabled = true;
         /** Explicit sharing only; an empty mode-specific set never borrows another mode implicitly. */
         public final java.util.EnumMap<TDMGameMode, TDMGameMode> spawnFallbacks = new java.util.EnumMap<TDMGameMode, TDMGameMode>(TDMGameMode.class);
         /** Old global spawns are eligible only for the map's original saved mode. */
@@ -243,13 +245,14 @@ public class TDMManager {
     }
     private static boolean availablePair(TDMData data, String id) {
         TDMMap map = data.maps.get(pairMap(id)); TDMGameMode mode = pairMode(data, id);
-        return map != null && mode != null && map.supportedModes.contains(mode);
+        return map != null && map.votingEnabled && mode != null && map.supportedModes.contains(mode);
     }
     public static List<String> getVoteOptions(World world) { return getVoteOptions(TDMData.get(world)); }
     private static List<String> getVoteOptions(TDMData data) {
         List<String> options = new ArrayList<String>();
-        for (TDMMap map : data.maps.values()) for (TDMGameMode mode : TDMGameMode.values())
-            if (map.supportedModes.contains(mode)) options.add(pairId(map.name, mode));
+        for (TDMMap map : data.maps.values()) if (map.votingEnabled)
+            for (TDMGameMode mode : TDMGameMode.values())
+                if (map.supportedModes.contains(mode)) options.add(pairId(map.name, mode));
         return options;
     }
     public static String voteLabel(String id) {
@@ -481,7 +484,9 @@ public class TDMManager {
             return false;
         }
 
-        data.maps.put(normalized, new TDMMap(normalized));
+        TDMMap map = new TDMMap(normalized);
+        map.votingEnabled = false;
+        data.maps.put(normalized, map);
         if (data.selectedMap.length() == 0) {
             data.selectedMap = normalized;
             data.selectedMode = TDMGameMode.DEATHMATCH;
@@ -550,6 +555,21 @@ public class TDMManager {
         if (enabled) map.supportedModes.add(mode); else map.supportedModes.remove(mode);
         if (!map.supportedModes.contains(map.mode)) map.mode = map.supportedModes.iterator().next();
         data.markDirty();
+        if (data.mapVoteActive) refreshMapVoteGui(world);
+        return true;
+    }
+
+    public static boolean setMapVotingEnabled(World world, String mapName, boolean enabled) {
+        TDMData data = TDMData.get(world);
+        TDMMap map = data.maps.get(normalizeMapName(mapName));
+        if (map == null) return false;
+        map.votingEnabled = enabled;
+        if (!enabled) {
+            java.util.Iterator<Map.Entry<String, String>> votes = data.mapVotes.entrySet().iterator();
+            while (votes.hasNext()) if (pairMap(votes.next().getValue()).equals(map.name)) votes.remove();
+        }
+        data.markDirty();
+        if (data.mapVoteActive) refreshMapVoteGui(world);
         return true;
     }
 
@@ -640,6 +660,7 @@ public class TDMManager {
         TDMMap map = data.maps.get(normalized);
         if (map == null) {
             map = new TDMMap(normalized);
+            map.votingEnabled = false;
             data.maps.put(normalized, map);
         }
 
@@ -1121,6 +1142,14 @@ public class TDMManager {
         for (EntityPlayerMP player : getOnlinePlayers()) {
             PacketDispatcher.wrapper.sendTo(new TDMMapVoteGuiPacket(maps, MAP_VOTE_TICKS / 20, pairId(getSelectedMap(world), getGameMode(world))), player);
         }
+    }
+
+    private static void refreshMapVoteGui(World world) {
+        List<String> options = getVoteOptions(world);
+        String[] pairs = options.toArray(new String[options.size()]);
+        String current = pairId(getSelectedMap(world), getGameMode(world));
+        for (EntityPlayerMP player : getOnlinePlayers())
+            PacketDispatcher.wrapper.sendTo(new TDMMapVoteGuiPacket(pairs, getRemainingVoteSeconds(world), current, true), player);
     }
 
     private static List<String> getAlternativeMapNames(TDMData data) {

@@ -13,19 +13,21 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.client.AdminEditorActionPacket;
+import com.hfr.packet.client.AdminEditorNavigatePacket;
 import com.hfr.main.ClientProxy;
 import com.hfr.clowder.TerritoryCoordinateBounds;
 import com.hfr.tdm.BlockAreaEdges;
 
 /** Draggable, session-positioned admin panel. Buttons call the existing server-authoritative commands. */
 public final class GUIAdminEditor extends GuiScreen {
-    private static int panelX = -1, panelY = -1, page = 0, spawnIndex = 0, spawnType = 0, rewardIndex = 0, spawnMode = -1;
+    private static int panelX = -1, panelY = -1;
+    private int page, spawnIndex, spawnType, rewardIndex, spawnMode;
     private static final String[] MODE_IDS = { "DEATHMATCH", "BOMB", "FFA" };
     private static final String[] MODE_LABELS = { "TDM", "Search and Destroy", "FFA" };
     private static final String[] REWARD_KEYS = { "killscorereward", "killscore", "lossscore", "roundwinscore", "plantscore", "defusescore" };
     private static boolean visualize = true;
     private static NBTTagCompound liveSelection = new NBTTagCompound();
-    private static String confirmation = "";
+    private String confirmation = "";
     private final NBTTagCompound data;
     private final RenderItem itemRenderer = new RenderItem();
     private GuiTextField input;
@@ -35,10 +37,11 @@ public final class GUIAdminEditor extends GuiScreen {
 
     public GUIAdminEditor(NBTTagCompound data) {
         this.data = data == null ? new NBTTagCompound() : data;
-        if (spawnMode < 0) {
-            String initial = this.data.getString("activeMode");
-            spawnMode = "BOMB".equals(initial) ? 1 : "FFA".equals(initial) ? 2 : 0;
-        }
+        page = this.data.getInteger("page");
+        spawnMode = this.data.getInteger("editorMode");
+        spawnIndex = this.data.getInteger("spawnIndex");
+        spawnType = this.data.getInteger("spawnType");
+        rewardIndex = this.data.getInteger("rewardIndex");
         updateSelection(this.data.getCompoundTag("selection"));
     }
     public static void updateSelection(NBTTagCompound selection) {
@@ -124,6 +127,7 @@ public final class GUIAdminEditor extends GuiScreen {
             add(18,"Killstreaks",4,0); add(19,"Set score",4,1); add(52,"Set timer",5,0);
             add(58,"Enforce border",5,1);
             add(68,"Vote: TDM",6,0); add(69,"Vote: S&D",6,1); add(70,"Vote: FFA",7,0); add(74,"View next mode",7,1);
+            add(75,"Map voting",8,0);
         } else if (page == 1) {
             add(20,"Red / Blue",0,0); add(53,"Map / Global",0,1); add(21,"Prev kit",1,0); add(22,"Next kit",1,1);
             add(23,"Load to inv",2,0); add(24,"Create from inv",2,1); add(25,"Clone kit",3,0); add(26,"Delete kit",3,1);
@@ -152,15 +156,22 @@ public final class GUIAdminEditor extends GuiScreen {
         GuiButton button = new GuiButton(id, panelX + 7 + col * 106, panelY + 48 + row * 22, 103, 20, label);
         if (map().length() == 0 && ((id >= 13 && id <= 19) || id == 52 || (id >= 30 && id <= 36)
                 || (id >= 40 && id <= 42) || id == 50 || id == 58 || (id >= 60 && id <= 65)
-                || (id >= 68 && id <= 70))) button.enabled = false;
+                || (id >= 68 && id <= 70) || id == 75)) button.enabled = false;
         if (kitIndex() >= kits().tagCount() && (id == 23 || id == 25 || id == 26 || id == 27 || id == 54 || id == 21 || id == 22
                 || (id >= 71 && id <= 73))) button.enabled = false;
         if (spawnList().tagCount() == 0 && (id == 30 || id == 31 || id == 34 || id == 35 || id == 36)) button.enabled = false;
         buttonList.add(button);
     }
     private void command(String text, boolean refresh) {
-        if (text.startsWith("/tdm editor gui ")) mc.thePlayer.sendChatMessage(text);
-        else PacketDispatcher.wrapper.sendToServer(new AdminEditorActionPacket(data.getString("token"), map(), team(), kitIndex(), text, refresh));
+        PacketDispatcher.wrapper.sendToServer(new AdminEditorActionPacket(data.getString("token"), map(), team(), kitIndex(), text, refresh));
+    }
+    private void navigate(String targetMap, String targetTeam, int targetKit) {
+        PacketDispatcher.wrapper.sendToServer(new AdminEditorNavigatePacket(data.getString("token"), targetMap, targetTeam,
+                targetKit, page, spawnMode, spawnIndex, spawnType, rewardIndex, true));
+    }
+    private void syncContext() {
+        PacketDispatcher.wrapper.sendToServer(new AdminEditorNavigatePacket(data.getString("token"), requestMapArg(), team(),
+                kitIndex(), page, spawnMode, spawnIndex, spawnType, rewardIndex, false));
     }
     private void execute(String text) { confirmation = ""; command(text, true); }
     private boolean confirm(String what) {
@@ -170,7 +181,7 @@ public final class GUIAdminEditor extends GuiScreen {
 
     @Override protected void actionPerformed(GuiButton button) {
         int id = button.id;
-        if ((id >= 0 && id <= 3) || id == 5) { page = id == 5 ? 4 : id; confirmation = ""; initGui(); return; }
+        if ((id >= 0 && id <= 3) || id == 5) { page = id == 5 ? 4 : id; confirmation = ""; initGui(); syncContext(); return; }
         if (id == 4) { mc.displayGuiScreen(null); return; }
         String map = mapArg(), team = team();
         if (id == 10 || id == 11) {
@@ -178,7 +189,7 @@ public final class GUIAdminEditor extends GuiScreen {
             int current = -1; for (int i = 0; i < maps.tagCount(); i++) if (maps.getCompoundTagAt(i).getString("name").equals(map())) current = i;
             int next = current < 0 ? (id == 11 ? 0 : maps.tagCount() - 1)
                     : (current + (id == 11 ? 1 : maps.tagCount() - 1)) % maps.tagCount();
-            command("/tdm editor gui " + maps.getCompoundTagAt(next).getString("name") + " " + team + " 1", false); return;
+            navigate(maps.getCompoundTagAt(next).getString("name"), team, 0); return;
         }
         if (id == 12) { if (input.getText().matches("[A-Za-z0-9_-]{1,32}")) execute("/tdm map create " + input.getText()); return; }
         if (id == 13) { if (map().length() > 0 && confirm("map:" + map)) execute("/tdm map delete " + map); return; }
@@ -190,14 +201,15 @@ public final class GUIAdminEditor extends GuiScreen {
         if (id == 19 || id == 52) { if (input.getText().matches("default|[0-9]{1,8}")) execute("/tdm map " + (id == 19 ? "scorelimit" : "timer") + " " + map + " " + input.getText() + " " + MODE_IDS[spawnMode].toLowerCase()); return; }
         if (id == 58) { execute("/tdm map border " + map + " " + (data.getBoolean("mapBorder") ? "off" : "on")); return; }
         if (id >= 68 && id <= 70) { String modeId = MODE_IDS[id - 68]; execute("/tdm map voteable " + map + " " + modeId.toLowerCase() + " " + !data.getBoolean("enabled_" + modeId)); return; }
-        if (id == 74) { spawnMode = (spawnMode + 1) % 3; spawnIndex = 0; spawnType = spawnMode == 2 ? 2 : 0; initGui(); return; }
+        if (id == 75) { execute("/tdm map voteable " + map + " " + !data.getBoolean("votingEnabled")); return; }
+        if (id == 74) { spawnMode = (spawnMode + 1) % 3; spawnIndex = 0; spawnType = spawnMode == 2 ? 2 : 0; initGui(); syncContext(); return; }
         if (id == 67) { execute("/tdm boundaryview " + (data.getBoolean("boundaryViewOn") ? "off" : "on")); return; }
-        if (id == 20) { command("/tdm editor gui " + requestMapArg() + " " + ("red".equals(team) ? "blue" : "red") + " 1", false); return; }
-        if (id == 53) { command("/tdm editor gui " + (map().length() == 0 ? selectedOrFirstMap() : "@global") + " " + team + " 1", false); return; }
+        if (id == 20) { navigate(requestMapArg(), "red".equals(team) ? "blue" : "red", 0); return; }
+        if (id == 53) { navigate(map().length() == 0 ? selectedOrFirstMap() : "@global", team, 0); return; }
         if (id == 21 || id == 22) {
             int count = kits().tagCount(); if (count == 0) return;
             int next = (kitIndex() + (id == 22 ? 1 : count - 1)) % count;
-            command("/tdm editor gui " + requestMapArg() + " " + team + " " + (next + 1), false); return;
+            navigate(requestMapArg(), team, next); return;
         }
         if (id == 23) { command("/tdm kit edit " + team + " " + (kitIndex() + 1) + " " + kitMapArg(), false); mc.displayGuiScreen(null); return; }
         if (id == 24) { execute("/tdm kit add " + team + " " + kitMapArg()); return; }
@@ -214,9 +226,9 @@ public final class GUIAdminEditor extends GuiScreen {
             return;
         }
         NBTTagList spawns = spawnList();
-        if (id == 37) { spawnMode = (spawnMode + 1) % 3; spawnIndex = 0; spawnType = spawnMode == 2 ? 2 : 0; initGui(); return; }
-        if (id == 30 || id == 31) { if (spawns.tagCount() > 0) spawnIndex = (spawnIndex + (id == 31 ? 1 : spawns.tagCount() - 1)) % spawns.tagCount(); return; }
-        if (id == 32) { spawnType = spawnMode == 2 ? 2 : (spawnType == 0 ? 1 : 0); return; }
+        if (id == 37) { spawnMode = (spawnMode + 1) % 3; spawnIndex = 0; spawnType = spawnMode == 2 ? 2 : 0; initGui(); syncContext(); return; }
+        if (id == 30 || id == 31) { if (spawns.tagCount() > 0) spawnIndex = (spawnIndex + (id == 31 ? 1 : spawns.tagCount() - 1)) % spawns.tagCount(); syncContext(); return; }
+        if (id == 32) { spawnType = spawnMode == 2 ? 2 : (spawnType == 0 ? 1 : 0); syncContext(); return; }
         if (id == 33) { execute("/tdm map addspawn " + map + " " + (spawnMode == 2 ? "ffa" : spawnType == 0 ? "red" : "blue") + " " + MODE_IDS[spawnMode].toLowerCase()); return; }
         if (id >= 34 && id <= 36) {
             if (spawnIndex >= spawns.tagCount()) return;
@@ -234,10 +246,10 @@ public final class GUIAdminEditor extends GuiScreen {
         if (id == 49) { execute(prefix + "cancel"); return; }
         if (id == 50) { if (confirm("bounds:" + map)) execute("/tdm map clearbounds " + map); return; }
         if (id == 51) { visualize = !visualize; return; }
-        if (id == 55) { command("/tdm editor gui " + requestMapArg() + " " + team + " " + (kitIndex() + 1), false); return; }
+        if (id == 55) { navigate(requestMapArg(), team, kitIndex()); return; }
         if (id == 56) { execute("/xc editor select border_exempt"); return; }
         if (id == 57) { mc.displayGuiScreen(null); return; }
-        if (id == 60) { rewardIndex = (rewardIndex + 1) % REWARD_KEYS.length; return; }
+        if (id == 60) { rewardIndex = (rewardIndex + 1) % REWARD_KEYS.length; syncContext(); return; }
         if (id == 61) { if (input.getText().matches("[0-9]{1,8}")) execute("/tdm map " + REWARD_KEYS[rewardIndex] + " " + map + " " + input.getText()); return; }
         if (id == 62) { execute("/tdm map terroristteam " + map + " " + ("red".equals(data.getString("terroristTeam")) ? "blue" : "red")); return; }
         if (id == 63) { if (confirm("spawns-all:" + map + spawnMode)) execute("/tdm map clearspawns " + map + " " + MODE_IDS[spawnMode].toLowerCase()); return; }
@@ -270,6 +282,7 @@ public final class GUIAdminEditor extends GuiScreen {
             line("Voting: TDM " + (data.getBoolean("enabled_DEATHMATCH") ? "ON" : "OFF")
                     + "  S&D " + (data.getBoolean("enabled_BOMB") ? "ON" : "OFF")
                     + "  FFA " + (data.getBoolean("enabled_FFA") ? "ON" : "OFF"), rx, y + 135, 0xAABBC8);
+            line("Map voting: " + (data.getBoolean("votingEnabled") ? "ON" : "OFF"), rx, y + 147, 0xAABBC8);
         } else if (page == 1) {
             NBTTagList kits = kits();
             line((map().length() == 0 ? "Global" : map()) + " / " + team().toUpperCase(), rx, y, 0xFFFFFF);

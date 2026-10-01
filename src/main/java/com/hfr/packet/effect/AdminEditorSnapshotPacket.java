@@ -5,6 +5,7 @@ import com.hfr.clowder.ClowderTerritory.Ownership;
 import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.inventory.gui.GUIAdminEditor;
 import com.hfr.tdm.AdminSelectionManager;
+import com.hfr.tdm.AdminEditorSession;
 import com.hfr.tdm.TDMAdminKitEdit;
 import com.hfr.tdm.TDMKitManager;
 import com.hfr.tdm.TDMManager;
@@ -28,15 +29,17 @@ public class AdminEditorSnapshotPacket implements IMessage {
     private NBTTagCompound data = new NBTTagCompound();
     public AdminEditorSnapshotPacket() { }
     public AdminEditorSnapshotPacket(EntityPlayerMP player, String requestedMap, TDMManager.Team team, int kitIndex) {
-        String mapName = "@global".equalsIgnoreCase(requestedMap) ? "" : TDMManager.normalizeMapName(requestedMap);
-        if (mapName.length() > 0 && !TDMManager.hasMap(player.worldObj, mapName)) mapName = TDMManager.getSelectedMap(player.worldObj);
-        if (team == null) team = TDMManager.Team.RED;
-        int directKitCount = TDMKitManager.getDirectKitNames(mapName, team).length;
-        kitIndex = Math.max(0, Math.min(kitIndex, Math.max(0, directKitCount - 1)));
-        data.setString("token", com.hfr.tdm.AdminEditorSession.open(player, mapName, team, kitIndex));
+        AdminEditorSession.Context context = AdminEditorSession.openContext(player, requestedMap, team, kitIndex);
+        String mapName = context.map;
+        team = context.team;
+        kitIndex = context.kitIndex;
+        data.setString("token", AdminEditorSession.open(player, mapName, team, kitIndex));
         data.setString("map", mapName);
-        data.setString("team", team == null ? "red" : team.name);
+        data.setString("team", team.name);
         data.setInteger("kitIndex", kitIndex);
+        data.setInteger("page", context.page); data.setInteger("editorMode", context.mode);
+        data.setInteger("spawnIndex", context.spawnIndex); data.setInteger("spawnType", context.spawnType);
+        data.setInteger("rewardIndex", context.rewardIndex);
         data.setString("kitEdit", TDMAdminKitEdit.status(player));
         data.setString("selectedMap", TDMManager.getSelectedMap(player.worldObj));
         data.setString("activeMode", TDMManager.getGameMode(player.worldObj).name());
@@ -52,6 +55,7 @@ public class AdminEditorSnapshotPacket implements IMessage {
         TDMManager.TDMMap map = TDMManager.getMap(player.worldObj, mapName);
         if (map != null) {
             data.setString("mode", map.mode.name());
+            data.setBoolean("votingEnabled", map.votingEnabled);
             for (TDMManager.TDMGameMode gameMode : TDMManager.TDMGameMode.values())
                 data.setBoolean("enabled_" + gameMode.name(), map.supportedModes.contains(gameMode));
             data.setString("terroristTeam", map.terroristTeam.name);

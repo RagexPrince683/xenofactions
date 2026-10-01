@@ -779,3 +779,13 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 
 - Publish the selected map's enabled border to every player in its dimension even before a match starts, so JourneyMap no longer requires an administrator to enable a map preview.
 - Remove the Map overlay button from the editor. Right Alt now also shows or hides the standalone fallback map alongside in-world border effects, while JourneyMap borders stay visible.
+
+2026-09-30 23:01 — Restore each administrator's TDM editing workspace
+
+- Save the selected editing map, team, direct kit, page, gamemode view, spawn controls, and reward category per administrator and restore them when the editor reopens. Keep the editing target independent of the active match.
+- Validate saved maps and kits before displaying the panel. Missing targets fall back locally while preserving the remaining valid context; editor navigation remains permission checked and server owned.
+
+2026-09-30 23:28 — Let administrators hide draft maps from TDM voting
+
+- Add a saved map-wide voting switch to the editor and `/tdm map voteable <map> <on|off>`. New maps start excluded; existing maps remain eligible by default.
+- Filter hidden maps from ballot options, vote acceptance, results, and skip alternatives. Disabling a map removes its existing votes and refreshes open vote menus without changing the running match or explicit admin selection.

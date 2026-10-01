@@ -47,6 +47,7 @@ public final class AdminEditorLifecycle {
     }
     @SubscribeEvent public void onClone(net.minecraftforge.event.entity.player.PlayerEvent.Clone event) {
         TDMMapOverlaySync.copySettings(event.original, event.entityPlayer);
+        AdminEditorSession.copyContext(event.original, event.entityPlayer);
         TDMMapOverlaySync.clear(event.original);
     }
     @SubscribeEvent(priority = EventPriority.HIGHEST) public void onDeath(LivingDeathEvent event) {

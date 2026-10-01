@@ -210,7 +210,8 @@ public class CommandTDM extends CommandBase {
             }
 
             TDMManager.startMapVote(world);
-            sender.addChatMessage(new ChatComponentText("Forced a 30 second TDM map vote."));
+            sender.addChatMessage(new ChatComponentText(TDMManager.isMapVoteActive(world)
+                    ? "Forced a 30 second TDM map vote." : "No vote started: no voteable alternative is available."));
             return;
         }
 
@@ -375,6 +376,7 @@ public class CommandTDM extends CommandBase {
             helpLine(sender, true, "map addspawn <map> <type> [mode]", "Add your position to one mode's spawn set.");
             helpLine(sender, true, "map <pointlimit|timer> <map> <value|default>", "Set DM/FFA point-score victory limit or timer (scorelimit is an alias).");
             helpLine(sender, true, "map mode <map> <tdm|sd|ffa>", "Set the default and selected mode.");
+            helpLine(sender, true, "map voteable <map> <on|off>", "Include or exclude every mode of a map from votes.");
             helpLine(sender, true, "map voteable <map> <mode> <on|off>", "Offer a map and gamemode pairing in votes.");
             helpLine(sender, true, "map bombsite <map> <a|b> <pos1|pos2|clear>", "Configure Search and Destroy objective bounds.");
             helpLine(sender, true, "map border <map> <on|off>", "Enforce the selected map's horizontal border for match players.");
@@ -466,7 +468,7 @@ public class CommandTDM extends CommandBase {
     private void processEditorCommand(ICommandSender sender, String[] args) {
         EntityPlayer player = getCommandSenderAsPlayer(sender);
         if (args.length >= 2 && args[1].equalsIgnoreCase("gui")) {
-            String map = args.length >= 3 ? args[2] : TDMManager.getSelectedMap(player.worldObj);
+            String map = args.length >= 3 ? args[2] : null;
             TDMManager.Team team = args.length >= 4 ? TDMManager.Team.fromName(args[3]) : TDMManager.Team.RED;
             int index = 0;
             if (args.length >= 5) try { index = Math.max(0, Integer.parseInt(args[4]) - 1); } catch (NumberFormatException ignored) { }
@@ -708,7 +710,7 @@ public class CommandTDM extends CommandBase {
                 sender.addChatMessage(new ChatComponentText("TDM map already exists or has an invalid name: " + mapName));
                 return;
             }
-            sender.addChatMessage(new ChatComponentText("Created TDM map: " + mapName));
+            sender.addChatMessage(new ChatComponentText("Created TDM map: " + mapName + " (voting off until enabled)."));
             return;
         }
 
@@ -729,10 +731,19 @@ public class CommandTDM extends CommandBase {
             return;
         }
         if (action.equals("voteable")) {
+            if (args.length == 4) {
+                Boolean mapEnabled = parseToggle(args[3]);
+                if (mapEnabled != null) {
+                    TDMManager.setMapVotingEnabled(world, mapName, mapEnabled.booleanValue());
+                    sender.addChatMessage(new ChatComponentText("Map " + mapName + " voting "
+                            + (mapEnabled ? "enabled" : "disabled") + " for all modes."));
+                    return;
+                }
+            }
             TDMManager.TDMGameMode mode = args.length > 3 ? TDMManager.parseMode(args[3]) : null;
             Boolean enabled = args.length > 4 ? parseToggle(args[4]) : null;
             if (mode == null || enabled == null || !TDMManager.setSupportedMode(world, mapName, mode, enabled.booleanValue())) {
-                sender.addChatMessage(new ChatComponentText("Usage: /tdm map voteable <map> <tdm|sd|ffa> <on|off>. The active or final mode cannot be removed.")); return;
+                sender.addChatMessage(new ChatComponentText("Usage: /tdm map voteable <map> <on|off> OR <map> <tdm|sd|ffa> <on|off>. The active or final mode cannot be removed.")); return;
             }
             sender.addChatMessage(new ChatComponentText(TDMManager.pairLabel(mapName, mode) + " voting " + (enabled ? "enabled" : "disabled") + ".")); return;
         }
@@ -941,6 +952,7 @@ public class CommandTDM extends CommandBase {
 
     private void sendMapUsage(ICommandSender sender) {
         sender.addChatMessage(new ChatComponentText("Usage: /tdm map <create|delete|select|voteable|addspawn|updatespawn|removespawn|tpspawn|clearspawns|spawnfallback|legacyspawns|assignlegacyspawn|clearbounds|border|mode|terroristteam|hardcorerespawns|bombsite|economy|lossscore|killscore|roundwinscore|plantscore|defusescore|scorelimit|timer|list>"));
+        sender.addChatMessage(new ChatComponentText("  /tdm map voteable <map> <on|off> (all modes) or <map> <tdm|sd|ffa> <on|off>"));
         sender.addChatMessage(new ChatComponentText("  /tdm map scorelimit <map> <value|default> (TDM: score points, 100 per kill; Search and Destroy: round wins, default 13)"));
         sender.addChatMessage(new ChatComponentText("  /tdm map timer <map> <seconds|default>"));
         sender.addChatMessage(new ChatComponentText("  /tdm map bombsite <map> <a|b> <pos1|pos2|clear>"));
@@ -957,6 +969,7 @@ public class CommandTDM extends CommandBase {
         sender.addChatMessage(new ChatComponentText("Match pairings (selected: " + (selected.length() == 0 ? "none" : TDMManager.pairLabel(selected, TDMManager.getGameMode(world))) + "):"));
         for (String map : maps) {
             TDMManager.TDMMap details=TDMManager.getMap(world,map);
+            sender.addChatMessage(new ChatComponentText("- " + map + " voting: " + (details.votingEnabled ? "ON" : "OFF")));
             for (TDMManager.TDMGameMode mode : TDMManager.TDMGameMode.values()) {
                 if (!details.supportedModes.contains(mode)) continue;
                 String label = TDMManager.pairLabel(map, mode);
@@ -1041,6 +1054,7 @@ public class CommandTDM extends CommandBase {
         if (args.length == 2 && args[0].equalsIgnoreCase("map")) return getListOfStringsMatchingLastWord(args, "list", "create", "delete", "select", "voteable", "addspawn", "updatespawn", "removespawn", "tpspawn", "clearspawns", "spawnfallback", "legacyspawns", "assignlegacyspawn", "clearbounds", "border", "pointlimit", "scorelimit", "timer", "mode", "terroristteam", "hardcorerespawns", "bombsite", "economy", "killstreaks", "killscorereward", "killscore", "lossscore", "roundwinscore", "plantscore", "defusescore");
         if (args.length == 3 && args[0].equalsIgnoreCase("map") && !args[1].equalsIgnoreCase("create") && !args[1].equalsIgnoreCase("list")) return completeMaps(args, sender, false);
         if (args.length == 4 && args[0].equalsIgnoreCase("map")) {
+            if (args[1].equalsIgnoreCase("voteable")) return getListOfStringsMatchingLastWord(args, "on", "off", "tdm", "sd", "ffa");
             if (args[1].equalsIgnoreCase("mode")) return getListOfStringsMatchingLastWord(args, "deathmatch", "bomb", "ffa");
             if (args[1].equalsIgnoreCase("addspawn")) return getListOfStringsMatchingLastWord(args, "red", "blue", "ffa");
             if (args[1].equalsIgnoreCase("terroristteam")) return getListOfStringsMatchingLastWord(args, "red", "blue");
@@ -1048,6 +1062,7 @@ public class CommandTDM extends CommandBase {
             if (args[1].equalsIgnoreCase("scorelimit") || args[1].equalsIgnoreCase("pointlimit") || args[1].equalsIgnoreCase("timer")) return getListOfStringsMatchingLastWord(args, "default");
             if (args[1].equalsIgnoreCase("bombsite")) return getListOfStringsMatchingLastWord(args, "a", "b");
         }
+        if (args.length == 5 && args[0].equalsIgnoreCase("map") && args[1].equalsIgnoreCase("voteable")) return getListOfStringsMatchingLastWord(args, "on", "off");
         if (args.length == 5 && args[0].equalsIgnoreCase("map") && args[1].equalsIgnoreCase("bombsite")) return getListOfStringsMatchingLastWord(args, "pos1", "pos2", "clear");
         if (args.length == 2 && (args[0].equalsIgnoreCase("friendlyfire") || args[0].equalsIgnoreCase("bombtest"))) return getListOfStringsMatchingLastWord(args, "on", "off", "status");
         if (args.length == 2 && args[0].equalsIgnoreCase("autobalance")) return getListOfStringsMatchingLastWord(args, "on", "off", "now");

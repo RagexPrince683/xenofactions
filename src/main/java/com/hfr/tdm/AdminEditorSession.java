@@ -5,11 +5,110 @@ import java.util.Map;
 import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.nbt.NBTTagCompound;
 
-/** GUI action lease: a stale panel cannot mutate a replacement map, kit, or spawn list. */
+/** Per-player editor context and GUI action lease; stale panels cannot mutate replaced targets. */
 public final class AdminEditorSession {
     private static final Map<UUID, Session> ACTIVE = new HashMap<UUID, Session>();
+    private static final String CONTEXT = "xfAdminEditorContext";
     private AdminEditorSession() { }
+    public static final class Context {
+        public String map, kitName;
+        public TDMManager.Team team;
+        public int kitIndex, page, mode, spawnIndex, spawnType, rewardIndex;
+        private Context() { }
+    }
+    private static NBTTagCompound saved(EntityPlayer player) {
+        return player.getEntityData().getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG).getCompoundTag(CONTEXT);
+    }
+    private static void save(EntityPlayer player, Context context) {
+        NBTTagCompound tag = new NBTTagCompound();
+        tag.setString("map", context.map); tag.setString("team", context.team.name);
+        tag.setInteger("kitIndex", context.kitIndex); tag.setString("kitName", context.kitName);
+        tag.setInteger("page", context.page); tag.setInteger("mode", context.mode);
+        tag.setInteger("spawnIndex", context.spawnIndex); tag.setInteger("spawnType", context.spawnType);
+        tag.setInteger("rewardIndex", context.rewardIndex);
+        NBTTagCompound persisted = player.getEntityData().getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
+        persisted.setTag(CONTEXT, tag);
+        player.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, persisted);
+    }
+    public static void copyContext(EntityPlayer source, EntityPlayer target) {
+        NBTTagCompound context = saved(source);
+        if (!context.hasKey("team")) return;
+        NBTTagCompound persisted = target.getEntityData().getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
+        persisted.setTag(CONTEXT, context.copy());
+        target.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, persisted);
+    }
+    private static int clamp(int value, int max) { return Math.max(0, Math.min(value, max)); }
+    public static Context openContext(EntityPlayerMP player, String requestedMap, TDMManager.Team requestedTeam, int requestedKit) {
+        NBTTagCompound tag = saved(player);
+        boolean previous = tag.hasKey("team");
+        Context context = new Context();
+        context.map = previous ? tag.getString("map") : TDMManager.getSelectedMap(player.worldObj);
+        context.team = previous ? TDMManager.Team.fromName(tag.getString("team")) : TDMManager.Team.RED;
+        context.kitIndex = previous ? tag.getInteger("kitIndex") : 0;
+        context.kitName = previous ? tag.getString("kitName") : "";
+        context.page = previous ? clamp(tag.getInteger("page"), 4) : 0;
+        context.mode = previous ? clamp(tag.getInteger("mode"), 2) : -1;
+        context.spawnIndex = previous ? Math.max(0, tag.getInteger("spawnIndex")) : 0;
+        context.spawnType = previous ? clamp(tag.getInteger("spawnType"), 2) : 0;
+        context.rewardIndex = previous ? clamp(tag.getInteger("rewardIndex"), 5) : 0;
+        if (requestedMap != null) {
+            context.map = "@global".equalsIgnoreCase(requestedMap) ? "" : TDMManager.normalizeMapName(requestedMap);
+            context.team = requestedTeam;
+            context.kitIndex = requestedKit;
+            context.kitName = "";
+        }
+        if (context.team == null) context.team = TDMManager.Team.RED;
+        if (context.map.length() > 0 && !TDMManager.hasMap(player.worldObj, context.map)) {
+            String previousMap = tag.getString("map");
+            if (previousMap.length() > 0 && TDMManager.hasMap(player.worldObj, previousMap)) {
+                context.map = previousMap;
+                context.team = TDMManager.Team.fromName(tag.getString("team"));
+                if (context.team == null) context.team = TDMManager.Team.RED;
+                context.kitIndex = tag.getInteger("kitIndex"); context.kitName = tag.getString("kitName");
+            } else context.map = TDMManager.getSelectedMap(player.worldObj);
+            if (context.map.length() > 0 && !TDMManager.hasMap(player.worldObj, context.map)) context.map = "";
+            if (context.map.length() == 0) {
+                java.util.List<String> names = TDMManager.getMapNames(player.worldObj);
+                if (!names.isEmpty()) context.map = names.get(0);
+            }
+            if (!context.map.equals(previousMap)) { context.kitIndex = 0; context.kitName = ""; context.spawnIndex = 0; }
+        }
+        String[] names = TDMKitManager.getDirectKitNames(context.map, context.team);
+        if (context.kitName.length() > 0) {
+            int found = context.kitIndex >= 0 && context.kitIndex < names.length
+                    && context.kitName.equals(names[context.kitIndex]) ? context.kitIndex : -1;
+            if (found < 0) for (int i = 0; i < names.length; i++)
+                if (context.kitName.equals(names[i])) { found = i; break; }
+            context.kitIndex = found < 0 ? 0 : found;
+        }
+        context.kitIndex = clamp(context.kitIndex, Math.max(0, names.length - 1));
+        context.kitName = names.length == 0 ? "" : names[context.kitIndex];
+        TDMManager.TDMMap map = TDMManager.getMap(player.worldObj, context.map);
+        if (context.mode < 0) context.mode = TDMManager.getGameMode(player.worldObj).ordinal();
+        if (map == null) context.spawnIndex = 0;
+        else context.spawnIndex = clamp(context.spawnIndex, Math.max(0, map.spawns(TDMManager.TDMGameMode.values()[context.mode]).size() - 1));
+        if (context.mode == 2) context.spawnType = 2;
+        else if (context.spawnType == 2) context.spawnType = 0;
+        save(player, context);
+        return context;
+    }
+    public static boolean updateContext(EntityPlayerMP player, String token, int page, int mode, int spawnIndex, int spawnType, int rewardIndex) {
+        Session session = ACTIVE.get(player.getUniqueID());
+        if (session == null || !session.token.toString().equals(token) || player.dimension != session.dimension
+                || System.currentTimeMillis() - session.created > 300000L || !player.canCommandSenderUseCommand(4, "tdm")
+                || page < 0 || page > 4 || mode < 0 || mode > 2 || spawnIndex < 0 || spawnType < 0 || spawnType > 2
+                || rewardIndex < 0 || rewardIndex > 5) return false;
+        NBTTagCompound tag = saved(player);
+        if (!session.map.equals(tag.getString("map")) || !session.team.name.equals(tag.getString("team"))) return false;
+        tag.setInteger("page", page); tag.setInteger("mode", mode); tag.setInteger("spawnIndex", spawnIndex);
+        tag.setInteger("spawnType", spawnType); tag.setInteger("rewardIndex", rewardIndex);
+        NBTTagCompound persisted = player.getEntityData().getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
+        persisted.setTag(CONTEXT, tag); player.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, persisted);
+        return true;
+    }
     private static final class Session {
         final UUID token = UUID.randomUUID();
         final int dimension;
@@ -52,7 +151,7 @@ public final class AdminEditorSession {
     private static String revision(TDMManager.TDMMap map) {
         if (map == null) return "";
         StringBuilder s = new StringBuilder();
-        s.append(map.mode).append('|').append(map.terroristTeam).append('|').append(map.hardcoreRespawns).append('|')
+        s.append(map.mode).append('|').append(map.votingEnabled).append('|').append(map.terroristTeam).append('|').append(map.hardcoreRespawns).append('|')
                 .append(map.buyScoreEnabled).append('|').append(map.killstreaksEnabled).append('|')
                 .append(map.scoreLimitOverride).append('|').append(map.roundTicksOverride).append('|')
                 .append(map.bombScoreLimitOverride).append('|').append(map.bombRoundTicksOverride).append('|')

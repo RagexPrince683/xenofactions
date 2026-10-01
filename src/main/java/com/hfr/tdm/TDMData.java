@@ -114,6 +114,7 @@ public class TDMData extends WorldSavedData {
             }
 
             TDMManager.TDMMap map = new TDMManager.TDMMap(mapName);
+            map.votingEnabled = !mapTag.hasKey("votingEnabled") || mapTag.getBoolean("votingEnabled");
             map.scoreLimitOverride = mapTag.hasKey("scoreLimit") ? Math.max(0, mapTag.getInteger("scoreLimit")) : 0;
             map.roundTicksOverride = mapTag.hasKey("roundTicks") ? Math.max(0, mapTag.getInteger("roundTicks")) : 0;
             try { map.mode=TDMManager.TDMGameMode.valueOf(mapTag.hasKey("mode")?mapTag.getString("mode"):"DEATHMATCH"); } catch(IllegalArgumentException e){map.mode=TDMManager.TDMGameMode.DEATHMATCH;}
@@ -255,6 +256,7 @@ public class TDMData extends WorldSavedData {
             if (map.scoreLimitOverride > 0) mapTag.setInteger("scoreLimit", map.scoreLimitOverride);
             if (map.roundTicksOverride > 0) mapTag.setInteger("roundTicks", map.roundTicksOverride);
             mapTag.setString("mode",map.mode.name());mapTag.setString("terroristTeam",map.terroristTeam.name);mapTag.setBoolean("hardcoreRespawns", map.hardcoreRespawns);
+            mapTag.setBoolean("votingEnabled", map.votingEnabled);
             int supportedMask = 0;
             for (TDMManager.TDMGameMode value : map.supportedModes) supportedMask |= 1 << value.ordinal();
             mapTag.setInteger("supportedModes", supportedMask);

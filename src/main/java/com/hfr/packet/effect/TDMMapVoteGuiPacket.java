@@ -15,13 +15,19 @@ public class TDMMapVoteGuiPacket implements IMessage {
     private String[] mapNames;
     private int voteSeconds;
     private String currentMap;
+    private boolean refreshOnly;
 
     public TDMMapVoteGuiPacket() { }
 
     public TDMMapVoteGuiPacket(String[] mapNames, int voteSeconds, String currentMap) {
+        this(mapNames, voteSeconds, currentMap, false);
+    }
+
+    public TDMMapVoteGuiPacket(String[] mapNames, int voteSeconds, String currentMap, boolean refreshOnly) {
         this.mapNames = mapNames;
         this.voteSeconds = voteSeconds;
         this.currentMap = currentMap;
+        this.refreshOnly = refreshOnly;
     }
 
     @Override
@@ -33,6 +39,7 @@ public class TDMMapVoteGuiPacket implements IMessage {
         for (int i = 0; i < count; i++) {
             mapNames[i] = ByteBufUtils.readUTF8String(buf);
         }
+        refreshOnly = buf.readBoolean();
     }
 
     @Override
@@ -43,6 +50,7 @@ public class TDMMapVoteGuiPacket implements IMessage {
         for (int i = 0; i < mapNames.length; i++) {
             ByteBufUtils.writeUTF8String(buf, mapNames[i]);
         }
+        buf.writeBoolean(refreshOnly);
     }
 
     public static class Handler implements IMessageHandler<TDMMapVoteGuiPacket, IMessage> {
@@ -54,9 +62,10 @@ public class TDMMapVoteGuiPacket implements IMessage {
             Minecraft.getMinecraft().func_152344_a(new Runnable() {
                 @Override
                 public void run() {
-                    Minecraft.getMinecraft().displayGuiScreen(
-                            new GUITDMMapVote(message.mapNames, message.voteSeconds, message.currentMap)
-                    );
+                    Minecraft mc = Minecraft.getMinecraft();
+                    if (message.refreshOnly && !(mc.currentScreen instanceof GUITDMMapVote)) return;
+                    mc.displayGuiScreen(message.mapNames.length == 0 ? null
+                            : new GUITDMMapVote(message.mapNames, message.voteSeconds, message.currentMap));
                 }
             });
             return null;
