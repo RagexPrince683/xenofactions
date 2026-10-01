@@ -50,7 +50,7 @@ public final class TDMPurchasableManager {
         TDMManager.TDMMap map=TDMManager.getSelectedMapData(player.worldObj);if(map==null)return false;
         List<Definition> list=getEffective(map.name,type);if(index<0||index>=list.size())return false;Definition selected=list.get(index);int cost=Math.max(0,selected.cost);
         if(type==Type.UTILITY){
-            if(map.mode!=TDMManager.TDMGameMode.BOMB||!map.buyScoreEnabled||!TDMManager.isGlobalBombBuyPeriod(player)||TDMManager.getBuyScore(player)<cost)return false;
+            if(!TDMManager.isBombMode(player.worldObj)||!map.buyScoreEnabled||!TDMManager.isGlobalBombBuyPeriod(player)||TDMManager.getBuyScore(player)<cost)return false;
             if(!TDMManager.spendBuyScore(player,cost))return false;
             grant(player,selected.items);
         }else{

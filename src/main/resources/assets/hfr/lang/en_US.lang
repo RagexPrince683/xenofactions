@@ -941,4 +941,4 @@ gui.builder.distance.warning=Warning: schematic origin is extremely far from the
 gui.builder.preview.moved=Preview moved.
 
 item.world_border_wand.name=Admin Selection Wand
-key.hfr.bordervisuals=Toggle Border Visuals
+key.hfr.bordervisuals=Toggle In-World Border Effects

@@ -14,6 +14,7 @@ import com.hfr.clowder.ClaimOverlayData.Claim;
 import com.hfr.clowder.TerritoryCoordinateBounds;
 import com.hfr.clowder.TerritoryCoordinateBounds.Bounds;
 import com.hfr.config.XFConfig;
+import com.hfr.tdm.BlockAreaEdges;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tessellator;
@@ -39,10 +40,13 @@ final class JourneyMapClaimDrawHandler implements InvocationHandler {
 	private void draw(double xOffset, double yOffset, Object grid) throws Exception {
 		Minecraft mc = Minecraft.getMinecraft();
 		if(!XFJourneyMapIntegration.isUsable() || mc == null || mc.theWorld == null || mc.thePlayer == null) return;
-		boolean claimsEnabled = ClientBorderVisuals.enabled() && (minimap ? XFConfig.journeyMapShowMinimapClaims : XFConfig.journeyMapShowFullscreenClaims);
+		boolean claimsEnabled = minimap ? XFConfig.journeyMapShowMinimapClaims : XFConfig.journeyMapShowFullscreenClaims;
 		Snapshot snapshot = claimsEnabled ? ClientClaimOverlayCache.get(mc.thePlayer.dimension) : null;
 		NBTTagCompound map = ClientTDMMapOverlay.snapshot();
-		boolean mapEnabled = ClientTDMMapOverlay.visible() && map.getBoolean("overlay") && map.hasKey("map");
+		NBTTagCompound publicMap = map.getCompoundTag("public"), preview = map.getCompoundTag("preview");
+		boolean mapEnabled = ClientTDMMapOverlay.visible()
+				&& (publicMap.hasKey("bounds") || publicMap.hasKey("bombA") || publicMap.hasKey("bombB")
+						|| preview.getBoolean("overlay") && preview.hasKey("map"));
 		if((snapshot == null || snapshot.claims.isEmpty()) && !mapEnabled) return;
 		int width = ((Integer)reflection.getWidth.invoke(grid)).intValue(), height = ((Integer)reflection.getHeight.invoke(grid)).intValue();
 		boolean texture = GL11.glIsEnabled(GL11.GL_TEXTURE_2D), blend = GL11.glIsEnabled(GL11.GL_BLEND), alpha = GL11.glIsEnabled(GL11.GL_ALPHA_TEST);
@@ -53,7 +57,11 @@ final class JourneyMapClaimDrawHandler implements InvocationHandler {
 		GL11.glDisable(GL11.GL_TEXTURE_2D); GL11.glEnable(GL11.GL_BLEND); GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA); GL11.glDisable(GL11.GL_ALPHA_TEST);
 		try {
 			if(snapshot != null) for(Claim claim : snapshot.claims) renderClaim(grid, claim, snapshot, xOffset, yOffset, width, height);
-			if(mapEnabled) renderMap(grid, map, xOffset, yOffset, width, height, snapshot == null);
+			if(mapEnabled) {
+				if(publicMap.hasKey("map")) renderMap(grid, publicMap, xOffset, yOffset, width, height, false, false, publicMap);
+				if(preview.getBoolean("overlay") && preview.hasKey("map"))
+					renderMap(grid, preview, xOffset, yOffset, width, height, snapshot == null, true, publicMap);
+			}
 			if(snapshot != null && XFConfig.journeyMapShowTerritoryLabels) {
 				GL11.glEnable(GL11.GL_TEXTURE_2D);
 				GL11.glColor4f(1F, 1F, 1F, 1F);
@@ -66,26 +74,28 @@ final class JourneyMapClaimDrawHandler implements InvocationHandler {
 			GL11.glLineWidth(oldWidth); GL11.glColor4f(color.get(0), color.get(1), color.get(2), color.get(3));
 		}
 	}
-	private void renderMap(Object grid, NBTTagCompound map, double xo, double yo, int width, int height, boolean drawZones) throws Exception {
+	private void renderMap(Object grid, NBTTagCompound map, double xo, double yo, int width, int height,
+			boolean drawZones, boolean preview, NBTTagCompound publicMap) throws Exception {
 		NBTTagList zones = map.getTagList("zones", 10);
-		for(int i = 0; ClientBorderVisuals.enabled() && drawZones && i < zones.tagCount(); i++) {
+		for(int i = 0; drawZones && i < zones.tagCount(); i++) {
 			NBTTagCompound zone = zones.getCompoundTagAt(i);
 			Bounds x = TerritoryCoordinateBounds.forCoordinate(map.getInteger("zoneCX") + zone.getByte("x"));
 			Bounds z = TerritoryCoordinateBounds.forCoordinate(map.getInteger("zoneCZ") + zone.getByte("z"));
 			rectangle(grid, x.minInclusive, z.minInclusive, x.maxExclusive, z.maxExclusive,
 					zone.getInteger("color"), 0.14F, xo, yo, width, height);
 		}
-		if(ClientBorderVisuals.enabled()) mapArea(grid, map.getCompoundTag("bounds"), 0x6BC8FF, 0F, xo, yo, width, height);
-		mapArea(grid, map.getCompoundTag("bombA"), 0xFFD262, 0.2F, xo, yo, width, height);
-		mapArea(grid, map.getCompoundTag("bombB"), 0xFF965E, 0.2F, xo, yo, width, height);
+		boolean sameMap = preview && map.getString("map").equals(publicMap.getString("map"));
+		if(!sameMap || !publicMap.hasKey("bounds")) mapArea(grid, map.getCompoundTag("bounds"), 0x6BC8FF, 0F, xo, yo, width, height);
+		if(!sameMap || !publicMap.hasKey("bombA")) mapArea(grid, map.getCompoundTag("bombA"), 0xFFD262, 0.2F, xo, yo, width, height);
+		if(!sameMap || !publicMap.hasKey("bombB")) mapArea(grid, map.getCompoundTag("bombB"), 0xFF965E, 0.2F, xo, yo, width, height);
 		NBTTagList exemptions = map.getTagList("exemptions", 10);
-		for(int i = 0; ClientBorderVisuals.enabled() && i < exemptions.tagCount(); i++) {
+		for(int i = 0; preview && i < exemptions.tagCount(); i++) {
 			NBTTagCompound a = exemptions.getCompoundTagAt(i);
 			rectangle(grid, a.getInteger("x1"), a.getInteger("z1"), a.getInteger("x2") + 1D,
 					a.getInteger("z2") + 1D, 0xBF9BFF, 0F, xo, yo, width, height);
 		}
 		NBTTagList spawns = map.getTagList("spawns", 10);
-		for(int i = 0; i < spawns.tagCount(); i++) {
+		for(int i = 0; preview && i < spawns.tagCount(); i++) {
 			NBTTagCompound spawn = spawns.getCompoundTagAt(i);
 			String team = spawn.getString("team");
 			int color = "red".equals(team) ? 0xFF6565 : "blue".equals(team) ? 0x6BA9FF : 0xFFFFFF;
@@ -94,9 +104,9 @@ final class JourneyMapClaimDrawHandler implements InvocationHandler {
 		}
 		GL11.glEnable(GL11.GL_TEXTURE_2D);
 		try {
-			labelArea(grid, map.getCompoundTag("bombA"), "A", 0xFFD262, xo, yo, width, height);
-			labelArea(grid, map.getCompoundTag("bombB"), "B", 0xFF965E, xo, yo, width, height);
-			for(int i = 0; i < spawns.tagCount(); i++) {
+			if(!sameMap || !publicMap.hasKey("bombA")) labelArea(grid, map.getCompoundTag("bombA"), "A", 0xFFD262, xo, yo, width, height);
+			if(!sameMap || !publicMap.hasKey("bombB")) labelArea(grid, map.getCompoundTag("bombB"), "B", 0xFF965E, xo, yo, width, height);
+			for(int i = 0; preview && i < spawns.tagCount(); i++) {
 				NBTTagCompound spawn = spawns.getCompoundTagAt(i);
 				String team = spawn.getString("team");
 				label(grid, spawn.getInteger("x") + 3D, spawn.getInteger("z"), "red".equals(team) ? "R" : "blue".equals(team) ? "B" : "F",
@@ -117,8 +127,9 @@ final class JourneyMapClaimDrawHandler implements InvocationHandler {
 	}
 	private void mapArea(Object grid, NBTTagCompound area, int color, float fill, double xo, double yo, int width, int height) throws Exception {
 		if(!ClientTDMMapOverlay.areaVisible(area)) return;
-		rectangle(grid, Math.min(area.getInteger("x1"), area.getInteger("x2")), Math.min(area.getInteger("z1"), area.getInteger("z2")),
-				Math.max(area.getInteger("x1"), area.getInteger("x2")) + 1D, Math.max(area.getInteger("z1"), area.getInteger("z2")) + 1D,
+		BlockAreaEdges edges = BlockAreaEdges.of(area.getInteger("x1"), area.getInteger("z1"),
+				area.getInteger("x2"), area.getInteger("z2"));
+		rectangle(grid, edges.minX, edges.minZ, edges.maxXExclusive, edges.maxZExclusive,
 				color, fill, xo, yo, width, height);
 	}
 	private void rectangle(Object grid, double x1, double z1, double x2, double z2, int color, float fill,

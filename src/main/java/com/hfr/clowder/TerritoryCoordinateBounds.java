@@ -3,6 +3,17 @@ package com.hfr.clowder;
 /** Converts Xenofactions' stored territory coordinates back to world-space block bounds. */
 public final class TerritoryCoordinateBounds {
 	private TerritoryCoordinateBounds() { }
+	static {
+		check(-1, -32L, -16L);
+		check(0, -16L, 15L);
+		check(1, 15L, 31L);
+	}
+
+	private static void check(int coordinate, long min, long max) {
+		Bounds actual = forCoordinate(coordinate);
+		if(actual.minInclusive != min || actual.maxExclusive != max)
+			throw new AssertionError("Territory block edge conversion changed");
+	}
 
 	/**
 	 * Returns the half-open world interval containing every integer block coordinate

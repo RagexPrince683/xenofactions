@@ -238,7 +238,8 @@ public class EventHandlerClient {
 		} else {
 			timer = "Round: " + formatSeconds(tdmRoundSeconds);
 		}
-		String map = tdmMapName.length() > 0 ? " Map: " + tdmMapName : "";
+		String modeLabel = bombMode ? "Search and Destroy" : "FFA".equals(tdmMode) ? "FFA" : "TDM";
+		String map = tdmMapName.length() > 0 ? " Map: " + tdmMapName + " \u2014 " + modeLabel : "";
 		boolean waitingForTeams = bombMode && "WAITING_FOR_TEAMS".equals(tdmBombState);
 		String redRole = "red".equals(tdmTerroristTeam) ? "T" : "CT";
 		String blueRole = "blue".equals(tdmTerroristTeam) ? "T" : "CT";

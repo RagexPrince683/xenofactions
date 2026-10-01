@@ -8,6 +8,7 @@ import com.hfr.blocks.BlockDummyable;
 import com.hfr.blocks.ModBlocks;
 import com.hfr.clowder.Clowder.ScheduledTeleport;
 import com.hfr.clowder.ClowderTerritory.Ownership;
+import com.hfr.clowder.ClowderTerritory.CoordPair;
 import com.hfr.clowder.ClowderTerritory.TerritoryMeta;
 import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.command.CommandClowder;
@@ -62,7 +63,6 @@ import net.minecraft.util.*;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
-import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
@@ -901,27 +901,23 @@ public void handleChatServer(ServerChatEvent event) {
 		data.setDouble(BUILD_GRACE_STUCK_Z, 0D);
 	}
 	
-	/**
-	 * Mk.2 of the particle border, now optimized to work server-side!
-	 * @param world
-	 * @param player
-	 */
+	/** Sends the exposed edges of nearby stored territory cells in exact block coordinates. */
 	private static void particleBorder2(World world, EntityPlayer player) {
 		
 		if(world.rand.nextInt(3) != 0) //let's reduce that a little
 			return;
 
-		int ox = ((int)player.posX / 16) * 16;
-		int oz = ((int)player.posZ / 16) * 16;
+		CoordPair around = ClowderTerritory.getCoordPair(world,
+				(int)Math.floor(player.posX), (int)Math.floor(player.posZ));
 		
 		int range = 4;
 
 		for(int x = -range; x < range; x++) {
 			for(int z = -range; z < range; z++) {
-
-				Ownership center = ClowderTerritory.getOwnerFromInts(world, ox + x * 16 + 1, oz + z * 16);
-				Ownership north = ClowderTerritory.getOwnerFromInts(world, ox + (x + ForgeDirection.NORTH.offsetX) * 16 + 1, oz + (z + ForgeDirection.NORTH.offsetZ) * 16);
-				Ownership west = ClowderTerritory.getOwnerFromInts(world, ox + (x + ForgeDirection.WEST.offsetX) * 16 + 1, oz + (z + ForgeDirection.WEST.offsetZ) * 16);
+				int tx = around.x + x, tz = around.z + z;
+				Ownership center = ClowderTerritory.getOwner(player.dimension, tx, tz);
+				Ownership north = ClowderTerritory.getOwner(player.dimension, tx, tz - 1);
+				Ownership west = ClowderTerritory.getOwner(player.dimension, tx - 1, tz);
 
 				Ownership none = ClowderTerritory.WILDERNESS;
 				boolean n = isTerritoryDifferent(north, center);
@@ -930,10 +926,15 @@ public void handleChatServer(ServerChatEvent event) {
 				int nc = ((center != none ? center.getColor() : (north != none ? north.getColor() : 0x000000)) + (north != none ? north.getColor() : (center != none ? center.getColor() : 0x000000))) / 2;
 				int wc = ((center != none ? center.getColor() : (west != none ? west.getColor() : 0x000000)) + (west != none ? west.getColor() : (center != none ? center.getColor() : 0x000000))) / 2;
 				
-				if(n)
-					PacketDispatcher.wrapper.sendTo(new ClowderBorderPacket(ox + x * 16, oz + z * 16, ox + (x - ForgeDirection.WEST.offsetX) * 16, oz + (z - ForgeDirection.WEST.offsetZ) * 16, nc), (EntityPlayerMP) player);
-				if(w)
-					PacketDispatcher.wrapper.sendTo(new ClowderBorderPacket(ox + x * 16, oz + z * 16, ox + (x - ForgeDirection.NORTH.offsetX) * 16, oz + (z - ForgeDirection.NORTH.offsetZ) * 16, wc), (EntityPlayerMP) player); 
+				if(!n && !w) continue;
+				TerritoryCoordinateBounds.Bounds bx = TerritoryCoordinateBounds.forCoordinate(tx);
+				TerritoryCoordinateBounds.Bounds bz = TerritoryCoordinateBounds.forCoordinate(tz);
+				if(bx.minInclusive < Integer.MIN_VALUE || bx.maxExclusive > Integer.MAX_VALUE
+						|| bz.minInclusive < Integer.MIN_VALUE || bz.maxExclusive > Integer.MAX_VALUE) continue;
+				if(n) PacketDispatcher.wrapper.sendTo(new ClowderBorderPacket((int)bx.minInclusive, (int)bz.minInclusive,
+						(int)bx.maxExclusive, (int)bz.minInclusive, nc), (EntityPlayerMP)player);
+				if(w) PacketDispatcher.wrapper.sendTo(new ClowderBorderPacket((int)bx.minInclusive, (int)bz.minInclusive,
+						(int)bx.minInclusive, (int)bz.maxExclusive, wc), (EntityPlayerMP)player);
 			}
 		}
 	}

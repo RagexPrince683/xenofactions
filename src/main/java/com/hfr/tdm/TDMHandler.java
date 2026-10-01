@@ -319,10 +319,11 @@ public class TDMHandler {
             return;
         }
         TDMManager.Bombsite bounds = map.bounds;
+        BlockAreaEdges edges = BlockAreaEdges.of(bounds.x1, bounds.z1, bounds.x2, bounds.z2);
         double half = player.width / 2D;
-        double minX = Math.min(bounds.x1, bounds.x2) + half, maxX = Math.max(bounds.x1, bounds.x2) + 1D - half;
-        double minZ = Math.min(bounds.z1, bounds.z2) + half, maxZ = Math.max(bounds.z1, bounds.z2) + 1D - half;
-        if (player.posX >= minX && player.posX <= maxX && player.posZ >= minZ && player.posZ <= maxZ) {
+        double minX = edges.minX + half, maxX = edges.maxXExclusive - half;
+        double minZ = edges.minZ + half, maxZ = edges.maxZExclusive - half;
+        if (edges.containsPlayer(player.posX, player.posZ, half)) {
             borderAnchors.put(key, new BorderAnchor(map, player));
             return;
         }

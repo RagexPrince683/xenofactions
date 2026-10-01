@@ -14,6 +14,7 @@ public final class AdminEditorSession {
         final UUID token = UUID.randomUUID();
         final int dimension;
         final String map, mapRevision, kitRevision, selectedMap;
+        final TDMManager.TDMGameMode selectedMode;
         final TDMManager.Team team;
         final int kitIndex;
         final Object mapIdentity, kitIdentity;
@@ -21,6 +22,7 @@ public final class AdminEditorSession {
         Session(EntityPlayerMP player, String map, TDMManager.Team team, int kitIndex) {
             this.dimension = player.dimension; this.map = map; this.team = team; this.kitIndex = kitIndex;
             this.selectedMap = TDMManager.getSelectedMap(player.worldObj);
+            this.selectedMode = TDMManager.getGameMode(player.worldObj);
             this.mapIdentity = map.length() == 0 ? null : TDMManager.getMap(player.worldObj, map);
             this.mapRevision = revision((TDMManager.TDMMap)mapIdentity);
             this.kitIdentity = TDMKitManager.getDirectKitIdentity(map, team, kitIndex);
@@ -40,6 +42,7 @@ public final class AdminEditorSession {
         if (session == null || !session.token.toString().equals(token) || System.currentTimeMillis() - session.created > 300000L
                 || player.dimension != session.dimension || !session.map.equals(map) || session.team != team || session.kitIndex != kitIndex
                 || !session.selectedMap.equals(TDMManager.getSelectedMap(player.worldObj))
+                || session.selectedMode != TDMManager.getGameMode(player.worldObj)
                 || session.mapIdentity != (map.length() == 0 ? null : TDMManager.getMap(player.worldObj, map))
                 || !session.mapRevision.equals(revision((TDMManager.TDMMap)session.mapIdentity))) return false;
         return !kitAction || session.kitIdentity == TDMKitManager.getDirectKitIdentity(map, team, kitIndex)
@@ -58,7 +61,10 @@ public final class AdminEditorSession {
                 .append(map.bombPlantBuyScoreReward).append('|').append(map.bombDefuseBuyScoreReward).append('|');
         area(s, map.bounds); area(s, map.bombsiteA); area(s, map.bombsiteB);
         s.append(map.mapBorderEnabled).append('|');
-        for (TDMManager.SpawnPoint p : map.spawns) s.append(p.team).append(':').append(p.dim).append(':').append(p.x).append(':').append(p.y).append(':').append(p.z).append(':').append(p.hasRotation).append(':').append(p.yaw).append(':').append(p.pitch).append(';');
+        for (TDMManager.TDMGameMode mode : TDMManager.TDMGameMode.values()) {
+            s.append(mode).append(':').append(map.supportedModes.contains(mode)).append(':').append(map.spawnFallbacks.get(mode)).append('|');
+            for (TDMManager.SpawnPoint p : map.spawns(mode)) s.append(p.team).append(':').append(p.dim).append(':').append(p.x).append(':').append(p.y).append(':').append(p.z).append(':').append(p.hasRotation).append(':').append(p.yaw).append(':').append(p.pitch).append(';');
+        }
         return s.toString();
     }
     private static void area(StringBuilder s, TDMManager.Bombsite a) {

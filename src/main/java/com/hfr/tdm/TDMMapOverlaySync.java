@@ -86,31 +86,49 @@ public final class TDMMapOverlaySync {
         boolean admin = player.canCommandSenderUseCommand(4, "tdm");
         boolean match = TDMManager.isEnabled(player.worldObj) && TDMManager.isCompetitivePlayer(player);
         boolean overlay = overlay(player) && (admin || match);
-        boolean boundary = boundary(player) && admin;
-        data.setBoolean("overlay", overlay);
         data.setInteger("dim", player.dimension);
-        if (!overlay && !boundary && !match) { data.setBoolean("boundary", false); return data; }
+        TDMManager.TDMMap active = TDMManager.getSelectedMapData(player.worldObj);
+        NBTTagCompound publicMap = new NBTTagCompound();
+        if (active != null) {
+            publicMap.setString("map", active.name);
+            publicMap.setString("mode", TDMManager.getGameMode(player.worldObj).name());
+            boolean publicBoundary = active.mapBorderEnabled && active.bounds.isComplete()
+                    && active.bounds.dimension == player.dimension;
+            publicMap.setBoolean("boundary", publicBoundary);
+            if (publicBoundary) putArea(publicMap, "bounds", active.bounds);
+            if (TDMManager.isEnabled(player.worldObj) && TDMManager.isBombMode(player.worldObj)) {
+                if (active.bombsiteA.dimension == player.dimension) putArea(publicMap, "bombA", active.bombsiteA);
+                if (active.bombsiteB.dimension == player.dimension) putArea(publicMap, "bombB", active.bombsiteB);
+            }
+        }
+        data.setTag("public", publicMap);
 
+        boolean boundaryView = boundary(player) && admin;
+        if (!overlay && !boundaryView) return data;
         String name = admin ? requestedMap(player) : "";
         if (name.length() == 0 || !TDMManager.hasMap(player.worldObj, name)) name = TDMManager.getSelectedMap(player.worldObj);
         TDMManager.TDMMap map = TDMManager.getMap(player.worldObj, name);
-        if (map == null) { data.setBoolean("boundary", false); return data; }
-        if (match && map.name.equals(TDMManager.getSelectedMap(player.worldObj))
-                && map.mapBorderEnabled && map.bounds.isComplete()
-                && map.bounds.dimension == player.dimension) boundary = true;
-        data.setBoolean("boundary", boundary);
-        if (!overlay && !boundary) return data;
-        data.setString("map", map.name);
-        data.setString("mode", map.mode.name());
-        if (admin || map.bounds.dimension == player.dimension) putArea(data, "bounds", map.bounds);
-        if (!overlay) return data;
-        if (admin || map.mode == TDMManager.TDMGameMode.BOMB) {
-            if (admin || map.bombsiteA.dimension == player.dimension) putArea(data, "bombA", map.bombsiteA);
-            if (admin || map.bombsiteB.dimension == player.dimension) putArea(data, "bombB", map.bombsiteB);
+        if (map == null) return data;
+        NBTTagCompound preview = new NBTTagCompound();
+        preview.setBoolean("overlay", overlay);
+        preview.setString("map", map.name);
+        TDMManager.TDMGameMode previewMode = name.equals(TDMManager.getSelectedMap(player.worldObj))
+                ? TDMManager.getGameMode(player.worldObj) : map.mode;
+        preview.setString("mode", previewMode.name());
+        preview.setBoolean("boundary", boundaryView && map.bounds.isComplete() && map.bounds.dimension == player.dimension);
+        if (map.bounds.dimension == player.dimension && (admin || map.mapBorderEnabled)) putArea(preview, "bounds", map.bounds);
+        boolean activePair = TDMManager.isEnabled(player.worldObj) && name.equals(TDMManager.getSelectedMap(player.worldObj));
+        if (admin && activePair && previewMode == TDMManager.TDMGameMode.BOMB) {
+            if (map.bombsiteA.dimension == player.dimension) putArea(preview, "bombA", map.bombsiteA);
+            if (map.bombsiteB.dimension == player.dimension) putArea(preview, "bombB", map.bombsiteB);
         }
+        data.setTag("preview", preview);
+        if (!overlay) return data;
         NBTTagList spawns = new NBTTagList();
-        TDMManager.Team team = admin ? null : TDMManager.getPlayerTeam(player.worldObj, player.getCommandSenderName());
-        for (TDMManager.SpawnPoint spawn : map.spawns) {
+        TDMManager.Team team = admin || previewMode == TDMManager.TDMGameMode.FFA ? null
+                : TDMManager.getPlayerTeam(player.worldObj, player.getCommandSenderName());
+        for (TDMManager.SpawnPoint spawn : activePair ? map.resolvedSpawns(previewMode)
+                : java.util.Collections.<TDMManager.SpawnPoint>emptyList()) {
             if (spawns.tagCount() >= 256) break;
             if (spawn.dim != player.dimension || (!admin && spawn.team != team)) continue;
             NBTTagCompound tag = new NBTTagCompound();
@@ -118,13 +136,13 @@ public final class TDMMapOverlaySync {
             tag.setInteger("x", spawn.x); tag.setInteger("y", spawn.y); tag.setInteger("z", spawn.z);
             spawns.appendTag(tag);
         }
-        data.setTag("spawns", spawns);
+        preview.setTag("spawns", spawns);
         // Nearby public zoning uses chunk coordinates, independent of map bounds.
         NBTTagList zones = new NBTTagList();
         ClowderTerritory.CoordPair center = ClowderTerritory.getCoordPair(player.dimension,
                 (int)Math.floor(player.posX), (int)Math.floor(player.posZ));
         int cx = center.x, cz = center.z;
-        data.setInteger("zoneCX", cx); data.setInteger("zoneCZ", cz);
+        preview.setInteger("zoneCX", cx); preview.setInteger("zoneCZ", cz);
         for (int dx = -8; dx <= 8; dx++) for (int dz = -8; dz <= 8; dz++) {
             Ownership owner = ClowderTerritory.getOwner(player.dimension, cx + dx, cz + dz);
             if (owner == null || owner.zone == Zone.WILDERNESS) continue;
@@ -135,7 +153,7 @@ public final class TDMMapOverlaySync {
             if (owner.zone == Zone.FACTION && owner.owner != null) tag.setString("owner", owner.owner.name);
             zones.appendTag(tag);
         }
-        data.setTag("zones", zones);
+        preview.setTag("zones", zones);
         if (admin) {
             NBTTagList exemptions = new NBTTagList();
             for (EarthBoundarySavedData.Region region : EarthBoundarySavedData.get(player.worldObj).getRegions()) {
@@ -148,7 +166,7 @@ public final class TDMMapOverlaySync {
                 tag.setInteger("z1", region.minZ); tag.setInteger("z2", region.maxZ);
                 exemptions.appendTag(tag);
             }
-            data.setTag("exemptions", exemptions);
+            preview.setTag("exemptions", exemptions);
         }
         return data;
     }

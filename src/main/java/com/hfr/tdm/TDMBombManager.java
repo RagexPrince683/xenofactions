@@ -94,7 +94,7 @@ public final class TDMBombManager {
             TDMManager.placeAllPlayersAtSelectedMap(world, TDMManager.KitSelectionContext.NONE);
         }
         if (!HbmCsgoChargeIntegration.isAvailable()) {
-            broadcast("Bomb mode requires HBM's hbm:tile.charge_c4csgo block.");
+            broadcast("Search and Destroy requires HBM's hbm:tile.charge_c4csgo block.");
         }
     }
     public static void tick(World world){
@@ -164,7 +164,7 @@ public final class TDMBombManager {
     public static void startRound(World world) {
         if (world.isRemote || state != BombRoundState.PRE_ROUND || TDMManager.isMapVoteActive(world)) return;
         TDMManager.TDMMap map = TDMManager.getSelectedMapData(world);
-        if (map == null || map.mode != TDMManager.TDMGameMode.BOMB) return;
+        if (map == null || !TDMManager.isBombMode(world)) return;
         if (!hasEnoughPlayersForBombRound(world)) {
             waitForTeams(world);
             return;
@@ -209,7 +209,7 @@ public final class TDMBombManager {
 
     private static void selectFallbackKit(EntityPlayerMP player, TDMManager.TDMMap map) {
         TDMManager.Team team = TDMManager.getOrAssignPlayerTeam(player);
-        int[] costs = TDMKitManager.getKitCosts(map.name, team);
+        int[] costs = TDMKitManager.getKitCosts(map.name, team, TDMManager.TDMGameMode.BOMB);
         for (int index = 0; index < costs.length; index++) {
             if (!map.buyScoreEnabled || costs[index] == 0) {
                 TDMManager.selectKit(player, index);

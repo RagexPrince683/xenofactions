@@ -127,9 +127,9 @@ public class XFDynmapIntegration {
 		out.append(TDMManager.isEnabled(world)).append('|').append(TDMManager.getSelectedMap(world));
 		TDMManager.TDMMap map = TDMManager.getSelectedMapData(world);
 		if(map == null) return out.toString();
-		out.append('|').append(map.mode).append('|').append(XFConfig.dynmapShowTdmSpawns);
+		out.append('|').append(TDMManager.getGameMode(world)).append('|').append(XFConfig.dynmapShowTdmSpawns);
 		appendArea(out, map.bounds); appendArea(out, map.bombsiteA); appendArea(out, map.bombsiteB);
-		if(XFConfig.dynmapShowTdmSpawns) for(TDMManager.SpawnPoint spawn : map.spawns)
+		if(XFConfig.dynmapShowTdmSpawns) for(TDMManager.SpawnPoint spawn : map.resolvedSpawns(TDMManager.getGameMode(world)))
 			out.append('|').append(spawn.dim).append(':').append(spawn.x).append(':').append(spawn.y).append(':').append(spawn.z).append(':').append(spawn.team);
 		return out.toString();
 	}
@@ -311,16 +311,17 @@ public class XFDynmapIntegration {
 		TDMManager.TDMMap map = TDMManager.getSelectedMapData(world);
 		if(map == null) return;
 		String id = sanitizeId(map.name);
-		mapArea("xf_map_" + id, "TDM map: " + escapeHtml(map.name), map.bounds, 0x6BC8FF, 0.04D);
-		if(map.mode == TDMManager.TDMGameMode.BOMB) {
-			mapArea("xf_bomb_a_" + id, "BOMB site A: " + escapeHtml(map.name), map.bombsiteA, 0xFFD262, 0.23D);
-			mapArea("xf_bomb_b_" + id, "BOMB site B: " + escapeHtml(map.name), map.bombsiteB, 0xFF965E, 0.23D);
+		if(map.mapBorderEnabled) mapArea("xf_map_" + id, "TDM map: " + escapeHtml(map.name), map.bounds, 0x6BC8FF, 0.04D);
+		if(TDMManager.isBombMode(world)) {
+			mapArea("xf_bomb_a_" + id, "Search and Destroy site A: " + escapeHtml(map.name), map.bombsiteA, 0xFFD262, 0.23D);
+			mapArea("xf_bomb_b_" + id, "Search and Destroy site B: " + escapeHtml(map.name), map.bombsiteB, 0xFF965E, 0.23D);
 		}
 		if(!XFConfig.dynmapShowTdmSpawns) return;
 		Object icon = getMarkerIcon(markerApi, "default");
 		if(icon == null) return;
-		for(int i = 0; i < map.spawns.size(); i++) {
-			TDMManager.SpawnPoint spawn = map.spawns.get(i);
+		java.util.List<TDMManager.SpawnPoint> spawns = map.resolvedSpawns(TDMManager.getGameMode(world));
+		for(int i = 0; i < spawns.size(); i++) {
+			TDMManager.SpawnPoint spawn = spawns.get(i);
 			String worldName = XFConfig.dynmapWorldNameForDimension(spawn.dim);
 			if(worldName == null || worldName.isEmpty()) continue;
 			String type = spawn.team == null ? "FFA" : spawn.team.name.toUpperCase();
@@ -333,8 +334,8 @@ public class XFDynmapIntegration {
 		if(!bounds.isComplete()) return;
 		String worldName = XFConfig.dynmapWorldNameForDimension(bounds.dimension);
 		if(worldName == null || worldName.isEmpty()) return;
-		area(id, label, worldName, Math.min(bounds.x1, bounds.x2), Math.min(bounds.z1, bounds.z2),
-				Math.max(bounds.x1, bounds.x2) + 1D, Math.max(bounds.z1, bounds.z2) + 1D,
+		com.hfr.tdm.BlockAreaEdges edges = com.hfr.tdm.BlockAreaEdges.of(bounds.x1, bounds.z1, bounds.x2, bounds.z2);
+		area(id, label, worldName, edges.minX, edges.minZ, edges.maxXExclusive, edges.maxZExclusive,
 				color, opacity, Math.min(bounds.y1, bounds.y2), Math.max(bounds.y1, bounds.y2) + 1D);
 	}
 

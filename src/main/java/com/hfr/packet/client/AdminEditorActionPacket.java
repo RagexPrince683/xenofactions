@@ -51,7 +51,7 @@ public class AdminEditorActionPacket implements IMessage {
                         || message.command.startsWith("/tdm editor commit") || message.command.startsWith("/tdm editor cancel"))) return;
                 boolean kitAction = message.command.startsWith("/tdm kit edit ") || message.command.startsWith("/tdm kit clone ")
                         || message.command.startsWith("/tdm kit rename ") || message.command.startsWith("/tdm kit remove ")
-                        || message.command.startsWith("/tdm kit cost ");
+                        || message.command.startsWith("/tdm kit cost ") || message.command.startsWith("/tdm kit mode ");
                 if (!AdminEditorSession.consume(player, message.token, message.map, pool, message.kitIndex, kitAction)) {
                     player.addChatMessage(new ChatComponentText("Editor view was stale; no change was made. The panel has been refreshed."));
                     if (player.canCommandSenderUseCommand(4,"tdm"))

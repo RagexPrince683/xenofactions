@@ -39,9 +39,8 @@ public class AdminEditorSnapshotPacket implements IMessage {
         data.setInteger("kitIndex", kitIndex);
         data.setString("kitEdit", TDMAdminKitEdit.status(player));
         data.setString("selectedMap", TDMManager.getSelectedMap(player.worldObj));
-        data.setBoolean("overlayOn", TDMMapOverlaySync.overlay(player));
+        data.setString("activeMode", TDMManager.getGameMode(player.worldObj).name());
         data.setBoolean("boundaryViewOn", TDMMapOverlaySync.boundary(player));
-        data.setString("overlayMap", TDMMapOverlaySync.requestedMap(player));
         data.setInteger("legacySpawns", TDMManager.getSpawnCount(player.worldObj));
         data.setInteger("playerX", (int)Math.floor(player.posX)); data.setInteger("playerZ", (int)Math.floor(player.posZ)); data.setInteger("playerDim", player.dimension);
         NBTTagList maps = new NBTTagList();
@@ -53,6 +52,8 @@ public class AdminEditorSnapshotPacket implements IMessage {
         TDMManager.TDMMap map = TDMManager.getMap(player.worldObj, mapName);
         if (map != null) {
             data.setString("mode", map.mode.name());
+            for (TDMManager.TDMGameMode gameMode : TDMManager.TDMGameMode.values())
+                data.setBoolean("enabled_" + gameMode.name(), map.supportedModes.contains(gameMode));
             data.setString("terroristTeam", map.terroristTeam.name);
             data.setBoolean("hardcore", map.hardcoreRespawns);
             data.setBoolean("mapBorder", map.mapBorderEnabled);
@@ -60,6 +61,12 @@ public class AdminEditorSnapshotPacket implements IMessage {
             data.setBoolean("killstreaks", map.killstreaksEnabled);
             data.setInteger("scoreLimit", map.mode == TDMManager.TDMGameMode.BOMB ? map.bombScoreLimitOverride : map.scoreLimitOverride);
             data.setInteger("roundSeconds", (map.mode == TDMManager.TDMGameMode.BOMB ? map.bombRoundTicksOverride : map.roundTicksOverride) / 20);
+            for (TDMManager.TDMGameMode gameMode : TDMManager.TDMGameMode.values()) {
+                data.setInteger("score_" + gameMode.name(), gameMode == TDMManager.TDMGameMode.BOMB
+                        ? map.bombScoreLimitOverride : map.scoreLimitOverride);
+                data.setInteger("seconds_" + gameMode.name(), (gameMode == TDMManager.TDMGameMode.BOMB
+                        ? map.bombRoundTicksOverride : map.roundTicksOverride) / 20);
+            }
             data.setInteger("killscorereward", map.killScoreReward);
             data.setInteger("killscore", map.killBuyScoreReward);
             data.setInteger("lossscore", map.roundLossBuyScoreReward);
@@ -69,23 +76,31 @@ public class AdminEditorSnapshotPacket implements IMessage {
             area(data, "bounds", map.bounds);
             area(data, "bombA", map.bombsiteA);
             area(data, "bombB", map.bombsiteB);
-            NBTTagList spawns = new NBTTagList();
-            for (TDMManager.SpawnPoint spawn : map.spawns) {
-                if (spawns.tagCount() >= 256) break;
-                NBTTagCompound tag = new NBTTagCompound();
-                tag.setString("team", spawn.team == null ? "ffa" : spawn.team.name);
-                tag.setInteger("dim", spawn.dim); tag.setInteger("x", spawn.x); tag.setInteger("y", spawn.y); tag.setInteger("z", spawn.z);
-                tag.setBoolean("rot", spawn.hasRotation); tag.setFloat("yaw", spawn.yaw); tag.setFloat("pitch", spawn.pitch);
-                spawns.appendTag(tag);
+            for (TDMManager.TDMGameMode gameMode : TDMManager.TDMGameMode.values()) {
+                NBTTagList spawns = new NBTTagList();
+                for (TDMManager.SpawnPoint spawn : map.spawns(gameMode)) {
+                    if (spawns.tagCount() >= 256) break;
+                    NBTTagCompound tag = new NBTTagCompound();
+                    tag.setString("team", spawn.team == null ? "ffa" : spawn.team.name);
+                    tag.setInteger("dim", spawn.dim); tag.setInteger("x", spawn.x); tag.setInteger("y", spawn.y); tag.setInteger("z", spawn.z);
+                    tag.setBoolean("rot", spawn.hasRotation); tag.setFloat("yaw", spawn.yaw); tag.setFloat("pitch", spawn.pitch);
+                    spawns.appendTag(tag);
+                }
+                data.setTag("spawns_" + gameMode.name(), spawns);
+                TDMManager.TDMGameMode fallback = map.spawnFallbacks.get(gameMode);
+                if (fallback != null) data.setString("fallback_" + gameMode.name(), fallback.name());
             }
-            data.setTag("spawns", spawns);
+            data.setInteger("unassignedSpawns", map.legacyUnassignedSpawns.size());
         }
         for (TDMManager.Team pool : TDMManager.Team.values()) {
             NBTTagList kits = new NBTTagList();
             String[] names = TDMKitManager.getDirectKitNames(mapName, pool);
             for (int i = 0; i < names.length && i < 128; i++) {
                 NBTTagCompound tag = new NBTTagCompound(); tag.setString("name", names[i]);
-                tag.setInteger("cost", TDMKitManager.getDirectKitCost(mapName, pool, i)); kits.appendTag(tag);
+                tag.setInteger("cost", TDMKitManager.getDirectKitCost(mapName, pool, i));
+                for (TDMManager.TDMGameMode mode : TDMManager.TDMGameMode.values())
+                    tag.setBoolean("disabled_" + mode.name(), TDMKitManager.isDirectKitDisabled(mapName, pool, i, mode));
+                kits.appendTag(tag);
             }
             data.setTag(pool.name + "Kits", kits);
         }
@@ -109,7 +124,10 @@ public class AdminEditorSnapshotPacket implements IMessage {
         }
         // Compact local zoning preview. This reads Clowder chunk ownership; maps remain separate.
         NBTTagList zones = new NBTTagList();
-        int centerX = (int)Math.floor(player.posX) >> 4, centerZ = (int)Math.floor(player.posZ) >> 4;
+        ClowderTerritory.CoordPair center = ClowderTerritory.getCoordPair(player.dimension,
+                (int)Math.floor(player.posX), (int)Math.floor(player.posZ));
+        int centerX = center.x, centerZ = center.z;
+        data.setInteger("zoneCX", centerX); data.setInteger("zoneCZ", centerZ);
         for (int dx = -8; dx <= 8; dx++) for (int dz = -8; dz <= 8; dz++) {
             Ownership owner = ClowderTerritory.getOwner(player.dimension, centerX + dx, centerZ + dz);
             if (owner == null || (owner.zone != Zone.SAFEZONE && owner.zone != Zone.WARZONE)) continue;

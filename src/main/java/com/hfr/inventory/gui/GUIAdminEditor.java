@@ -14,10 +14,14 @@ import net.minecraft.nbt.NBTTagList;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.client.AdminEditorActionPacket;
 import com.hfr.main.ClientProxy;
+import com.hfr.clowder.TerritoryCoordinateBounds;
+import com.hfr.tdm.BlockAreaEdges;
 
 /** Draggable, session-positioned admin panel. Buttons call the existing server-authoritative commands. */
 public final class GUIAdminEditor extends GuiScreen {
-    private static int panelX = -1, panelY = -1, page = 0, spawnIndex = 0, spawnType = 0, rewardIndex = 0;
+    private static int panelX = -1, panelY = -1, page = 0, spawnIndex = 0, spawnType = 0, rewardIndex = 0, spawnMode = -1;
+    private static final String[] MODE_IDS = { "DEATHMATCH", "BOMB", "FFA" };
+    private static final String[] MODE_LABELS = { "TDM", "Search and Destroy", "FFA" };
     private static final String[] REWARD_KEYS = { "killscorereward", "killscore", "lossscore", "roundwinscore", "plantscore", "defusescore" };
     private static boolean visualize = true;
     private static NBTTagCompound liveSelection = new NBTTagCompound();
@@ -31,6 +35,10 @@ public final class GUIAdminEditor extends GuiScreen {
 
     public GUIAdminEditor(NBTTagCompound data) {
         this.data = data == null ? new NBTTagCompound() : data;
+        if (spawnMode < 0) {
+            String initial = this.data.getString("activeMode");
+            spawnMode = "BOMB".equals(initial) ? 1 : "FFA".equals(initial) ? 2 : 0;
+        }
         updateSelection(this.data.getCompoundTag("selection"));
     }
     public static void updateSelection(NBTTagCompound selection) {
@@ -54,15 +62,17 @@ public final class GUIAdminEditor extends GuiScreen {
         Gui.drawRect(x, y, x + side, y + side, 0xFF293540);
         int cx = (int)Math.floor(mc.thePlayer.posX) >> 4, cz = (int)Math.floor(mc.thePlayer.posZ) >> 4;
         if (s.getBoolean("hasA") && s.getBoolean("hasB")) {
-            int x1 = Math.max(0, Math.min(17, (Math.min(s.getInteger("ax"), s.getInteger("bx")) >> 4) - cx + 8));
-            int x2 = Math.max(0, Math.min(17, (Math.max(s.getInteger("ax"), s.getInteger("bx")) >> 4) - cx + 9));
-            int z1 = Math.max(0, Math.min(17, (Math.min(s.getInteger("az"), s.getInteger("bz")) >> 4) - cz + 8));
-            int z2 = Math.max(0, Math.min(17, (Math.max(s.getInteger("az"), s.getInteger("bz")) >> 4) - cz + 9));
-            if (x1 < x2 && z1 < z2) {
-                Gui.drawRect(x + x1 * cell, y + z1 * cell, x + x2 * cell, y + z1 * cell + 1, 0xFFFFFFFF);
-                Gui.drawRect(x + x1 * cell, y + z2 * cell - 1, x + x2 * cell, y + z2 * cell, 0xFFFFFFFF);
-                Gui.drawRect(x + x1 * cell, y + z1 * cell, x + x1 * cell + 1, y + z2 * cell, 0xFFFFFFFF);
-                Gui.drawRect(x + x2 * cell - 1, y + z1 * cell, x + x2 * cell, y + z2 * cell, 0xFFFFFFFF);
+            BlockAreaEdges edges = BlockAreaEdges.of(s.getInteger("ax"), s.getInteger("az"), s.getInteger("bx"), s.getInteger("bz"));
+            long originX = ((long)cx - 8L) * 16L, originZ = ((long)cz - 8L) * 16L;
+            if (edges.maxXExclusive > originX && edges.minX < originX + 272L
+                    && edges.maxZExclusive > originZ && edges.minZ < originZ + 272L) {
+                int x1 = previewPixel(edges.minX, originX, x, cell), x2 = previewPixel(edges.maxXExclusive, originX, x, cell);
+                int z1 = previewPixel(edges.minZ, originZ, y, cell), z2 = previewPixel(edges.maxZExclusive, originZ, y, cell);
+                x2 = Math.max(x1 + 1, x2); z2 = Math.max(z1 + 1, z2);
+                Gui.drawRect(x1, z1, x2, z1 + 1, 0xFFFFFFFF);
+                Gui.drawRect(x1, z2 - 1, x2, z2, 0xFFFFFFFF);
+                Gui.drawRect(x1, z1, x1 + 1, z2, 0xFFFFFFFF);
+                Gui.drawRect(x2 - 1, z1, x2, z2, 0xFFFFFFFF);
             }
         }
         if (s.getBoolean("hasA")) hudPoint(x, y, cell, cx, cz, s.getInteger("ax"), s.getInteger("az"), 0xFFFFFF66);
@@ -72,9 +82,11 @@ public final class GUIAdminEditor extends GuiScreen {
         mc.fontRenderer.drawString("B: " + (s.getBoolean("hasB") ? s.getInteger("bx") + "," + s.getInteger("by") + "," + s.getInteger("bz") : "unset"), x, y + side + 14, 0xFFFF66FF);
     }
     private static void hudPoint(int x, int y, int cell, int cx, int cz, int px, int pz, int color) {
-        int dx = (px >> 4) - cx + 8, dz = (pz >> 4) - cz + 8;
-        if (dx >= 0 && dx < 17 && dz >= 0 && dz < 17)
-            Gui.drawRect(x + dx * cell, y + dz * cell, x + (dx + 1) * cell, y + (dz + 1) * cell, color);
+        long originX = ((long)cx - 8L) * 16L, originZ = ((long)cz - 8L) * 16L;
+        if (px >= originX && px < originX + 272L && pz >= originZ && pz < originZ + 272L) {
+            int sx = previewPixel(px, originX, x, cell), sz = previewPixel(pz, originZ, y, cell);
+            Gui.drawRect(sx, sz, sx + 2, sz + 2, color);
+        }
     }
     private String map() { return data.getString("map"); }
     private String mapArg() { return map().length() == 0 ? "global" : map(); }
@@ -83,6 +95,8 @@ public final class GUIAdminEditor extends GuiScreen {
     private String team() { return data.getString("team").length() == 0 ? "red" : data.getString("team"); }
     private int kitIndex() { return data.getInteger("kitIndex"); }
     private NBTTagList list(String key) { return data.getTagList(key, 10); }
+    private NBTTagList spawnList() { return list("spawns_" + MODE_IDS[spawnMode]); }
+    private static String modeLabel(String id) { return "BOMB".equals(id) ? "Search and Destroy" : "FFA".equals(id) ? "FFA" : "TDM"; }
     private NBTTagList kits() { return list(team() + "Kits"); }
     private String selectedOrFirstMap() {
         String selected = data.getString("selectedMap");
@@ -92,7 +106,7 @@ public final class GUIAdminEditor extends GuiScreen {
     @Override public void initGui() {
         String previousInput = input == null ? "" : input.getText();
         boolean inputFocused = input != null && input.isFocused();
-        spawnIndex = Math.max(0, Math.min(spawnIndex, Math.max(0, list("spawns").tagCount() - 1)));
+        spawnIndex = Math.max(0, Math.min(spawnIndex, Math.max(0, spawnList().tagCount() - 1)));
         panelWidth = Math.min(438, width - 8); panelHeight = Math.min(290, height - 8);
         if (panelX < 0) panelX = (width - panelWidth) / 2;
         if (panelY < 0) panelY = (height - panelHeight) / 2;
@@ -109,13 +123,15 @@ public final class GUIAdminEditor extends GuiScreen {
             add(14,"Select map",2,0); add(15,"Cycle mode",2,1); add(16,"Hardcore",3,0); add(17,"Economy",3,1);
             add(18,"Killstreaks",4,0); add(19,"Set score",4,1); add(52,"Set timer",5,0);
             add(58,"Enforce border",5,1);
+            add(68,"Vote: TDM",6,0); add(69,"Vote: S&D",6,1); add(70,"Vote: FFA",7,0); add(74,"View next mode",7,1);
         } else if (page == 1) {
             add(20,"Red / Blue",0,0); add(53,"Map / Global",0,1); add(21,"Prev kit",1,0); add(22,"Next kit",1,1);
             add(23,"Load to inv",2,0); add(24,"Create from inv",2,1); add(25,"Clone kit",3,0); add(26,"Delete kit",3,1);
-            add(27,"Rename kit",4,0); add(28,"Save edit",4,1); add(29,"Cancel edit",5,0); add(54,"Set BOMB cost",5,1);
+            add(27,"Rename kit",4,0); add(28,"Save edit",4,1); add(29,"Cancel edit",5,0); add(54,"Set S&D cost",5,1);
+            add(71,"Kit: TDM",6,0); add(72,"Kit: S&D",6,1); add(73,"Kit: FFA",7,0);
         } else if (page == 2) {
             add(30,"Prev spawn",0,0); add(31,"Next spawn",0,1); add(32,"Spawn type",1,0); add(33,"Add here",1,1);
-            add(34,"Update here",2,0); add(35,"Teleport",2,1); add(36,"Remove",3,0);
+            add(34,"Update here",2,0); add(35,"Teleport",2,1); add(36,"Remove",3,0); add(37,"Next mode",3,1);
         } else if (page == 3) {
             add(40,"Map bounds",0,0); add(41,"Bombsite A",0,1); add(42,"Bombsite B",1,0); add(43,"Safezone",1,1);
             add(44,"Warzone",2,0); add(45,"Wilderness",2,1); add(46,"Point A here",3,0); add(47,"Point B here",3,1);
@@ -125,7 +141,7 @@ public final class GUIAdminEditor extends GuiScreen {
         } else {
             add(60,"Next reward",0,0); add(61,"Set amount",0,1); add(62,"Terrorist team",1,0);
             add(63,"Clear spawns",1,1); add(64,"Clear site A",2,0); add(65,"Clear site B",2,1);
-            add(66,"Map overlay",3,0); add(67,"World boundary",3,1);
+            add(67,"World boundary",3,0);
         }
         input = new GuiTextField(fontRendererObj, panelX + 7, panelY + panelHeight - 24, 207, 18);
         input.setMaxStringLength(64);
@@ -135,9 +151,11 @@ public final class GUIAdminEditor extends GuiScreen {
     private void add(int id, String label, int row, int col) {
         GuiButton button = new GuiButton(id, panelX + 7 + col * 106, panelY + 48 + row * 22, 103, 20, label);
         if (map().length() == 0 && ((id >= 13 && id <= 19) || id == 52 || (id >= 30 && id <= 36)
-                || (id >= 40 && id <= 42) || id == 50 || id == 58 || (id >= 60 && id <= 65))) button.enabled = false;
-        if (kitIndex() >= kits().tagCount() && (id == 23 || id == 25 || id == 26 || id == 27 || id == 54 || id == 21 || id == 22)) button.enabled = false;
-        if (list("spawns").tagCount() == 0 && (id == 30 || id == 31 || id == 34 || id == 35 || id == 36)) button.enabled = false;
+                || (id >= 40 && id <= 42) || id == 50 || id == 58 || (id >= 60 && id <= 65)
+                || (id >= 68 && id <= 70))) button.enabled = false;
+        if (kitIndex() >= kits().tagCount() && (id == 23 || id == 25 || id == 26 || id == 27 || id == 54 || id == 21 || id == 22
+                || (id >= 71 && id <= 73))) button.enabled = false;
+        if (spawnList().tagCount() == 0 && (id == 30 || id == 31 || id == 34 || id == 35 || id == 36)) button.enabled = false;
         buttonList.add(button);
     }
     private void command(String text, boolean refresh) {
@@ -164,14 +182,15 @@ public final class GUIAdminEditor extends GuiScreen {
         }
         if (id == 12) { if (input.getText().matches("[A-Za-z0-9_-]{1,32}")) execute("/tdm map create " + input.getText()); return; }
         if (id == 13) { if (map().length() > 0 && confirm("map:" + map)) execute("/tdm map delete " + map); return; }
-        if (id == 14) { if (map().length() > 0) execute("/tdm map select " + map); return; }
+        if (id == 14) { if (map().length() > 0) execute("/tdm map select " + map + " " + MODE_IDS[spawnMode].toLowerCase()); return; }
         if (id == 15) { String mode = data.getString("mode"); execute("/tdm map mode " + map + " " + ("DEATHMATCH".equals(mode) ? "bomb" : "BOMB".equals(mode) ? "ffa" : "deathmatch")); return; }
         if (id == 16) { execute("/tdm map hardcorerespawns " + map + " " + !data.getBoolean("hardcore")); return; }
         if (id == 17) { execute("/tdm map economy " + map + " " + !data.getBoolean("economy")); return; }
         if (id == 18) { execute("/tdm map killstreaks " + map + " " + !data.getBoolean("killstreaks")); return; }
-        if (id == 19 || id == 52) { if (input.getText().matches("default|[0-9]{1,8}")) execute("/tdm map " + (id == 19 ? "scorelimit" : "timer") + " " + map + " " + input.getText()); return; }
+        if (id == 19 || id == 52) { if (input.getText().matches("default|[0-9]{1,8}")) execute("/tdm map " + (id == 19 ? "scorelimit" : "timer") + " " + map + " " + input.getText() + " " + MODE_IDS[spawnMode].toLowerCase()); return; }
         if (id == 58) { execute("/tdm map border " + map + " " + (data.getBoolean("mapBorder") ? "off" : "on")); return; }
-        if (id == 66) { execute("/tdm overlay " + (data.getBoolean("overlayOn") ? "off" : "on " + map)); return; }
+        if (id >= 68 && id <= 70) { String modeId = MODE_IDS[id - 68]; execute("/tdm map voteable " + map + " " + modeId.toLowerCase() + " " + !data.getBoolean("enabled_" + modeId)); return; }
+        if (id == 74) { spawnMode = (spawnMode + 1) % 3; spawnIndex = 0; spawnType = spawnMode == 2 ? 2 : 0; initGui(); return; }
         if (id == 67) { execute("/tdm boundaryview " + (data.getBoolean("boundaryViewOn") ? "off" : "on")); return; }
         if (id == 20) { command("/tdm editor gui " + requestMapArg() + " " + ("red".equals(team) ? "blue" : "red") + " 1", false); return; }
         if (id == 53) { command("/tdm editor gui " + (map().length() == 0 ? selectedOrFirstMap() : "@global") + " " + team + " 1", false); return; }
@@ -188,14 +207,21 @@ public final class GUIAdminEditor extends GuiScreen {
         if (id == 28) { execute("/tdm kit commit"); return; }
         if (id == 29) { execute("/tdm kit cancel"); return; }
         if (id == 54) { if (input.getText().matches("[0-9]{1,8}")) execute("/tdm kit cost " + team + " " + (kitIndex() + 1) + " " + kitMapArg() + " " + input.getText()); return; }
-        NBTTagList spawns = list("spawns");
+        if (id >= 71 && id <= 73 && kitIndex() < kits().tagCount()) {
+            String modeId = MODE_IDS[id - 71];
+            boolean enable = kits().getCompoundTagAt(kitIndex()).getBoolean("disabled_" + modeId);
+            execute("/tdm kit mode " + team + " " + (kitIndex() + 1) + " " + kitMapArg() + " " + modeId.toLowerCase() + " " + enable);
+            return;
+        }
+        NBTTagList spawns = spawnList();
+        if (id == 37) { spawnMode = (spawnMode + 1) % 3; spawnIndex = 0; spawnType = spawnMode == 2 ? 2 : 0; initGui(); return; }
         if (id == 30 || id == 31) { if (spawns.tagCount() > 0) spawnIndex = (spawnIndex + (id == 31 ? 1 : spawns.tagCount() - 1)) % spawns.tagCount(); return; }
-        if (id == 32) { spawnType = (spawnType + 1) % 3; return; }
-        if (id == 33) { execute("/tdm map addspawn " + map + " " + (spawnType == 0 ? "red" : spawnType == 1 ? "blue" : "ffa")); return; }
+        if (id == 32) { spawnType = spawnMode == 2 ? 2 : (spawnType == 0 ? 1 : 0); return; }
+        if (id == 33) { execute("/tdm map addspawn " + map + " " + (spawnMode == 2 ? "ffa" : spawnType == 0 ? "red" : "blue") + " " + MODE_IDS[spawnMode].toLowerCase()); return; }
         if (id >= 34 && id <= 36) {
             if (spawnIndex >= spawns.tagCount()) return;
             if (id == 36 && !confirm("spawn:" + map + spawnIndex)) return;
-            execute("/tdm map " + (id == 34 ? "updatespawn" : id == 35 ? "tpspawn" : "removespawn") + " " + map + " " + (spawnIndex + 1)); return;
+            execute("/tdm map " + (id == 34 ? "updatespawn" : id == 35 ? "tpspawn" : "removespawn") + " " + map + " " + (spawnIndex + 1) + " " + MODE_IDS[spawnMode].toLowerCase()); return;
         }
         String type = data.getCompoundTag("selection").getString("type");
         if (id >= 40 && id <= 45) {
@@ -214,7 +240,7 @@ public final class GUIAdminEditor extends GuiScreen {
         if (id == 60) { rewardIndex = (rewardIndex + 1) % REWARD_KEYS.length; return; }
         if (id == 61) { if (input.getText().matches("[0-9]{1,8}")) execute("/tdm map " + REWARD_KEYS[rewardIndex] + " " + map + " " + input.getText()); return; }
         if (id == 62) { execute("/tdm map terroristteam " + map + " " + ("red".equals(data.getString("terroristTeam")) ? "blue" : "red")); return; }
-        if (id == 63) { if (confirm("spawns-all:" + map)) execute("/tdm map clearspawns " + map); return; }
+        if (id == 63) { if (confirm("spawns-all:" + map + spawnMode)) execute("/tdm map clearspawns " + map + " " + MODE_IDS[spawnMode].toLowerCase()); return; }
         if (id == 64 || id == 65) { if (confirm("site:" + map + id)) execute("/tdm map bombsite " + map + " " + (id == 64 ? "a" : "b") + " clear"); return; }
     }
 
@@ -231,17 +257,19 @@ public final class GUIAdminEditor extends GuiScreen {
         int rx = panelX + 226, y = panelY + 47;
         if (page == 0) {
             line("Map: " + (map().length() == 0 ? "none" : map()), rx, y, 0xFFFFFF);
-            line("Selected: " + data.getString("selectedMap"), rx, y + 12, 0xBFDFFF);
-            line("Mode: " + data.getString("mode"), rx, y + 24, 0xDDDDDD);
-            line("Score limit: " + data.getInteger("scoreLimit") + " (0=default)", rx, y + 36, 0xDDDDDD);
-            line("Timer: " + data.getInteger("roundSeconds") + "s (0=default)", rx, y + 48, 0xDDDDDD);
-            line("Spawns: " + list("spawns").tagCount(), rx, y + 60, 0xDDDDDD);
+            line("Selected: " + data.getString("selectedMap") + " \u2014 " + modeLabel(data.getString("activeMode")), rx, y + 12, 0xBFDFFF);
+            line("Editing: " + MODE_LABELS[spawnMode] + " (default " + modeLabel(data.getString("mode")) + ")", rx, y + 24, 0xDDDDDD);
+            line("Score limit: " + data.getInteger("score_" + MODE_IDS[spawnMode]) + " (0=default)", rx, y + 36, 0xDDDDDD);
+            line("Timer: " + data.getInteger("seconds_" + MODE_IDS[spawnMode]) + "s (0=default)", rx, y + 48, 0xDDDDDD);
+            line("Spawns (" + MODE_LABELS[spawnMode] + "): " + spawnList().tagCount(), rx, y + 60, 0xDDDDDD);
             line("Bounds: " + areaText("bounds"), rx, y + 72, 0x74C5FF);
             line("Enforced map border: " + (data.getBoolean("mapBorder") ? "ON" : "OFF"), rx, y + 84, 0x74C5FF);
-            line("Bomb A: " + areaText("bombA"), rx, y + 96, 0xFFDA67);
-            line("Bomb B: " + areaText("bombB"), rx, y + 108, 0xFFDA67);
-            line("Legacy fallback spawns: " + data.getInteger("legacySpawns"), rx, y + 120, 0xAABBC8);
-            line("Safe/war zones are separate Clowder data.", rx, y + 135, 0xAABBC8);
+            line("Search and Destroy A: " + areaText("bombA"), rx, y + 96, 0xFFDA67);
+            line("Search and Destroy B: " + areaText("bombB"), rx, y + 108, 0xFFDA67);
+            line("Legacy / unassigned: " + data.getInteger("legacySpawns") + " / " + data.getInteger("unassignedSpawns"), rx, y + 120, 0xAABBC8);
+            line("Voting: TDM " + (data.getBoolean("enabled_DEATHMATCH") ? "ON" : "OFF")
+                    + "  S&D " + (data.getBoolean("enabled_BOMB") ? "ON" : "OFF")
+                    + "  FFA " + (data.getBoolean("enabled_FFA") ? "ON" : "OFF"), rx, y + 135, 0xAABBC8);
         } else if (page == 1) {
             NBTTagList kits = kits();
             line((map().length() == 0 ? "Global" : map()) + " / " + team().toUpperCase(), rx, y, 0xFFFFFF);
@@ -249,14 +277,18 @@ public final class GUIAdminEditor extends GuiScreen {
             if (kitIndex() < kits.tagCount()) {
                 NBTTagCompound kit = kits.getCompoundTagAt(kitIndex());
                 line("#" + (kitIndex() + 1) + " " + kit.getString("name"), rx, y + 25, 0xFFE7A0);
-                line("BOMB cost: " + kit.getInteger("cost"), rx, y + 37, 0xDDDDDD);
+                line("Search and Destroy buy score: " + kit.getInteger("cost"), rx, y + 37, 0xDDDDDD);
+                line("Modes: " + (kit.getBoolean("disabled_DEATHMATCH") ? "" : "TDM ")
+                        + (kit.getBoolean("disabled_BOMB") ? "" : "S&D ")
+                        + (kit.getBoolean("disabled_FFA") ? "" : "FFA"), rx, y + 49, 0xA7D8FF);
             }
             drawInventory(rx, y + 56);
             line(shorten(data.getString("kitEdit"), 38), rx, panelY + panelHeight - 41, 0xA7F0B4);
         } else if (page == 2) {
-            NBTTagList spawns = list("spawns");
-            line("Map spawns: " + spawns.tagCount(), rx, y, 0xFFFFFF);
-            line("New type: " + (spawnType == 0 ? "RED" : spawnType == 1 ? "BLUE" : "FFA"), rx, y + 13, 0xA7D8FF);
+            NBTTagList spawns = spawnList();
+            line("Map: " + map(), rx, y, 0xFFFFFF);
+            line("Gamemode: " + MODE_LABELS[spawnMode] + "  Spawns: " + spawns.tagCount(), rx, y + 12, 0xFFFFFF);
+            line("New type: " + (spawnMode == 2 ? "FFA" : spawnType == 0 ? "RED" : "BLUE"), rx, y + 25, 0xA7D8FF);
             if (spawnIndex < spawns.tagCount()) {
                 NBTTagCompound spawn = spawns.getCompoundTagAt(spawnIndex);
                 line("#" + (spawnIndex + 1) + " " + spawn.getString("team").toUpperCase(), rx, y + 34, 0xFFE7A0);
@@ -283,8 +315,7 @@ public final class GUIAdminEditor extends GuiScreen {
             line("Reward: " + REWARD_KEYS[rewardIndex], rx, y + 73, 0xFFE7A0);
             line("Amount: " + data.getInteger(REWARD_KEYS[rewardIndex]), rx, y + 86, 0xDDDDDD);
             line("World: per-spawn; bounds are separate.", rx, y + 107, 0xAABBC8);
-            line("Persistent overlay: " + (data.getBoolean("overlayOn") ? "ON" : "OFF"), rx, y + 120, 0x74C5FF);
-            line("In-world boundary: " + (data.getBoolean("boundaryViewOn") ? "ON" : "OFF"), rx, y + 133, 0x74C5FF);
+            line("In-world boundary: " + (data.getBoolean("boundaryViewOn") ? "ON" : "OFF"), rx, y + 120, 0x74C5FF);
         }
         if (confirmation.length() > 0) line("Click again to confirm: " + confirmation, panelX + 7, panelY + panelHeight - 37, 0xFF7979);
         if (confirmation.length() == 0 && (page == 0 || page == 1 || page == 4)) line("Input: name or value", panelX + 7, panelY + panelHeight - 37, 0xAABBC8);
@@ -325,8 +356,10 @@ public final class GUIAdminEditor extends GuiScreen {
         NBTTagList zones = list("zones");
         for (int i = 0; i < zones.tagCount(); i++) {
             NBTTagCompound zone = zones.getCompoundTagAt(i);
-            int zx = x + (zone.getByte("x") + 8) * cell, zz = y + (zone.getByte("z") + 8) * cell;
-            drawRect(zx, zz, zx + cell - 1, zz + cell - 1, zone.getByte("type") == 1 ? 0xBB4DAE72 : 0xBBD65A55);
+            TerritoryCoordinateBounds.Bounds bx = TerritoryCoordinateBounds.forCoordinate(data.getInteger("zoneCX") + zone.getByte("x"));
+            TerritoryCoordinateBounds.Bounds bz = TerritoryCoordinateBounds.forCoordinate(data.getInteger("zoneCZ") + zone.getByte("z"));
+            previewRect(x, y, cell, bx.minInclusive, bz.minInclusive, bx.maxExclusive, bz.maxExclusive,
+                    zone.getByte("type") == 1 ? 0xBB4DAE72 : 0xBBD65A55, false);
         }
         outline(data.getCompoundTag("bounds"), x, y, cell, 0xFF66BBFF);
         outline(data.getCompoundTag("bombA"), x, y, cell, 0xFFFFCC55);
@@ -344,22 +377,33 @@ public final class GUIAdminEditor extends GuiScreen {
     }
     private void outline(NBTTagCompound a, int x, int y, int cell, int color) {
         if (!a.getBoolean("a") || !a.getBoolean("b") || a.getInteger("dim") != data.getInteger("playerDim")) return;
-        int cx = data.getInteger("playerX") >> 4, cz = data.getInteger("playerZ") >> 4;
-        int x1 = Math.max(0, Math.min(17, (Math.min(a.getInteger("x1"),a.getInteger("x2")) >> 4) - cx + 8));
-        int x2 = Math.max(0, Math.min(17, (Math.max(a.getInteger("x1"),a.getInteger("x2")) >> 4) - cx + 9));
-        int z1 = Math.max(0, Math.min(17, (Math.min(a.getInteger("z1"),a.getInteger("z2")) >> 4) - cz + 8));
-        int z2 = Math.max(0, Math.min(17, (Math.max(a.getInteger("z1"),a.getInteger("z2")) >> 4) - cz + 9));
-        if (x1 >= x2 || z1 >= z2) return;
-        drawRect(x+x1*cell,y+z1*cell,x+x2*cell,y+z1*cell+1,color);
-        drawRect(x+x1*cell,y+z2*cell-1,x+x2*cell,y+z2*cell,color);
-        drawRect(x+x1*cell,y+z1*cell,x+x1*cell+1,y+z2*cell,color);
-        drawRect(x+x2*cell-1,y+z1*cell,x+x2*cell,y+z2*cell,color);
+        BlockAreaEdges edges = BlockAreaEdges.of(a.getInteger("x1"), a.getInteger("z1"),
+                a.getInteger("x2"), a.getInteger("z2"));
+        previewRect(x, y, cell, edges.minX, edges.minZ, edges.maxXExclusive, edges.maxZExclusive, color, true);
     }
     private void markPoint(int px, int pz, int x, int y, int cell, int color) {
-        int dx = (px >> 4) - (data.getInteger("playerX") >> 4) + 8;
-        int dz = (pz >> 4) - (data.getInteger("playerZ") >> 4) + 8;
-        if (dx < 0 || dx >= 17 || dz < 0 || dz >= 17) return;
-        drawRect(x + dx * cell + 2, y + dz * cell + 2, x + dx * cell + 6, y + dz * cell + 6, color);
+        long worldX = previewOrigin(data.getInteger("playerX")), worldZ = previewOrigin(data.getInteger("playerZ"));
+        if (px < worldX || px >= worldX + 272 || pz < worldZ || pz >= worldZ + 272) return;
+        int sx = previewPixel(px, worldX, x, cell), sz = previewPixel(pz, worldZ, y, cell);
+        drawRect(Math.max(x, sx - 1), Math.max(y, sz - 1), Math.min(x + 17 * cell, sx + 2),
+                Math.min(y + 17 * cell, sz + 2), color);
+    }
+    private static long previewOrigin(int playerBlock) { return ((long)(playerBlock >> 4) - 8L) * 16L; }
+    private static int previewPixel(long blockEdge, long origin, int pixelOrigin, int cell) {
+        long offset = Math.max(0L, Math.min(272L, blockEdge - origin));
+        return pixelOrigin + (int)(offset * cell / 16L);
+    }
+    private void previewRect(int x, int y, int cell, long minX, long minZ, long maxX, long maxZ, int color, boolean outline) {
+        long worldX = previewOrigin(data.getInteger("playerX")), worldZ = previewOrigin(data.getInteger("playerZ"));
+        if (maxX <= worldX || minX >= worldX + 272L || maxZ <= worldZ || minZ >= worldZ + 272L) return;
+        int x1 = previewPixel(minX, worldX, x, cell), x2 = previewPixel(maxX, worldX, x, cell);
+        int z1 = previewPixel(minZ, worldZ, y, cell), z2 = previewPixel(maxZ, worldZ, y, cell);
+        if (x2 <= x1) x2 = Math.min(x + 17 * cell, x1 + 1);
+        if (z2 <= z1) z2 = Math.min(y + 17 * cell, z1 + 1);
+        if (x1 >= x2 || z1 >= z2) return;
+        if (!outline) { drawRect(x1, z1, x2, z2, color); return; }
+        drawRect(x1, z1, x2, z1 + 1, color); drawRect(x1, z2 - 1, x2, z2, color);
+        drawRect(x1, z1, x1 + 1, z2, color); drawRect(x2 - 1, z1, x2, z2, color);
     }
     @Override protected void mouseClicked(int x, int y, int button) {
         if (button == 0 && x >= panelX && x < panelX + panelWidth && y >= panelY && y < panelY + 17) {

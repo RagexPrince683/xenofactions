@@ -207,11 +207,11 @@ Category: `XENOFACTIONS_09_DYNMAP`
 | `showTdmSpawns` | `false` | Publish exact active TDM map spawn positions to the public Dynmap web map. |
 | `dynmapDimensionWorldMap` | `0=world`, `-1=world_nether`, `1=world_the_end` | Map Minecraft dimension IDs to Dynmap world names. |
 
-Dynmap publishes city claims in the configured city set, other faction claims in `xenofactions_claims`, SAFEZONE/WARZONE territories in `xenofactions_zones`, and the enabled active TDM map's bounds and BOMB sites in `xenofactions_tdm`. Other maps and world-border exemptions are not published to the public web map. Each published dimension needs a valid `dynmapDimensionWorldMap` entry. These are separate Xenofactions-owned marker sets; third-party markers are not modified. Marker updates are bounded by `updateIntervalTicks` (default 30 seconds). Territory geometry uses Clowder's saved coordinate bounds, including its legacy negative-coordinate behavior.
+Dynmap publishes city claims in the configured city set, other faction claims in `xenofactions_claims`, SAFEZONE/WARZONE territories in `xenofactions_zones`, and the enabled active TDM map's bounds and Search and Destroy sites in `xenofactions_tdm`. Sites appear only when the selected pairing is Search and Destroy; optional spawn markers come only from the active mode's spawn set. Other maps and world-border exemptions are not published to the public web map. Each published dimension needs a valid `dynmapDimensionWorldMap` entry. These are separate Xenofactions-owned marker sets; third-party markers are not modified. Marker updates are bounded by `updateIntervalTicks` (default 30 seconds). Territory geometry uses Clowder's saved coordinate bounds, including its legacy negative-coordinate behavior.
 
 ## JourneyMap client overlay
 
-JourneyMap is optional. JourneyMap 6.0.x uses its client API 2.0.0 plugin to show faction claims, zones, map bounds, BOMB sites, and permitted spawn markers on the minimap and fullscreen map. The API is compile-only and is not bundled into Xenofactions or required on the server. The 5.2.x reflection hook remains for older clients. If the client cannot show the overlays, the player-toggleable TDM overlay uses the standalone HUD map. BOMB sites remain visible to active BOMB players when their TDM overlay is on. F9 toggles local border visuals (claim/zone boundaries and the in-world map border) without changing server-side map enforcement, zone data, or spawn/BOMB-site visibility.
+JourneyMap is optional. JourneyMap 6.0.x uses its client API 2.0.0 plugin to show faction claims and zones, plus the selected map boundary when enforcement is enabled and both sites during a running Search and Destroy pairing. The enabled selected-map boundary is visible to all players in its dimension even before a match starts and without `/tdm overlay on`, including administrators. The optional overlay preference adds only the active gamemode's applicable spawn markers and nearby zone details. The API is compile-only and is not bundled into Xenofactions or required on the server. The 5.2.x reflection hook remains for older clients. When JourneyMap is unavailable or cannot accept polygons, the same public shapes appear on the standalone HUD map. Right Alt, configurable in Controls, toggles in-world border effects and the standalone HUD map and defaults on; it never hides JourneyMap shapes or changes server-side enforcement.
 
 Category: `XENOFACTIONS_09B_JOURNEYMAP_CLIENT`
 
@@ -332,7 +332,7 @@ later loads and reloads preserve the empty list.
 
 ## TDM FFA and economy
 
-`/tdm map mode <map> ffa` selects round-elimination Free-For-All. Add neutral spawn locations with `/tdm map addspawn <map> ffa`; these are stored independently from RED/BLUE spawns. Existing map saves remain valid and maps without FFA spawn records retain their team-mode behavior.
+`/tdm map mode <map> ffa` sets the legacy default to round-elimination Free-For-All; `/tdm map voteable <map> ffa on` can add it as another pairing while keeping the same physical map. Add neutral spawn locations with `/tdm map addspawn <map> ffa ffa`; these are stored in the FFA set, independently from the TDM and Search and Destroy team sets. Existing map saves are migrated to the former default mode. An empty FFA set never borrows team spawns unless an explicit spawn fallback is configured.
 
 TDM maps persist non-negative economy rewards. Missing fields use these defaults:
 
@@ -348,6 +348,6 @@ The values name sound **events**, not `.ogg` files or paths. An ID without a nam
 
 ## TDM map scoring and purchases
 
-Non-BOMB maps can override their point-score victory threshold with `/tdm map pointlimit`; the existing timer remains an independent ending condition. DEATHMATCH stores team point scores and FFA stores per-player point scores. Both reset at a new match/map and are never spendable.
+Non-Search-and-Destroy maps can override their point-score victory threshold with `/tdm map pointlimit`; the existing timer remains an independent ending condition. DEATHMATCH stores team point scores and FFA stores per-player point scores. Both reset at a new match/map and are never spendable.
 
-Killstreak support is opt-in per DEATHMATCH/FFA map (`killstreaks`, default `false`), with one kill-score unit awarded for each server-validated enemy kill by default. Unspent kill score persists through deaths but resets at a new match/map. Purchased rewards are queued and assembled after the next kit so kit reconstruction cannot erase them. Utility and killstreak definitions persist in the world save's `tdm_purchasables.txt`; utility costs use BOMB buy score, while killstreak costs use only kill score.
+Killstreak support is opt-in per DEATHMATCH/FFA map (`killstreaks`, default `false`), with one kill-score unit awarded for each server-validated enemy kill by default. Unspent kill score persists through deaths but resets at a new match/map. Purchased rewards are queued and assembled after the next kit so kit reconstruction cannot erase them. Utility and killstreak definitions persist in the world save's `tdm_purchasables.txt`; utility costs use Search and Destroy buy score, while killstreak costs use only kill score.

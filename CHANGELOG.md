@@ -762,3 +762,20 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Added an optional JourneyMap 6.0.x API 2.0.0 client plugin for claims, zones, map bounds, BOMB sites, and permitted spawns while retaining the older 5.2.x adapter.
 - Changed the in-world map boundary to the existing ground-following Clowder border particle style, visible to active players when a map border is enforced and to administrators using boundary view.
 - Added a client-only F9 toggle for border effects and overlays; it does not change map containment or any server-side state.
+
+2026-09-30 14:37 — Show public map boundaries and Search and Destroy sites consistently
+
+- Show an enabled active map border and active Search and Destroy sites to all players in the map dimension on JourneyMap or the standalone map, without requiring the optional overlay preference. Keep inactive map previews limited to administrators.
+- Make Right Alt the configurable default for in-world border effects only. JourneyMap and standalone map shapes remain visible when those effects are hidden.
+- Align map previews, JourneyMap polygons, containment, and ground-following sparks to inclusive selected blocks. Clowder territory sparks now follow the exact stored territory edges, including negative coordinates.
+
+2026-09-30 15:02 — Reuse maps across gamemodes with separate spawns
+
+- Let one physical map offer distinct TDM, FFA, and Search and Destroy vote options, with independent spawn sets and a selected gamemode that changes with the winning vote.
+- Keep old maps, spawns, and kits usable. Preserve ambiguous old spawns for administrator assignment, support explicit spawn sharing, and let kits be disabled per mode without copying their loadouts.
+- Apply kit buy-score costs only in Search and Destroy. Show that mode's sites and spawn markers only when its map pairing is active, while shared map bounds remain the same.
+
+2026-09-30 19:43 — Show selected map borders without editor overlay
+
+- Publish the selected map's enabled border to every player in its dimension even before a match starts, so JourneyMap no longer requires an administrator to enable a map preview.
+- Remove the Map overlay button from the editor. Right Alt now also shows or hides the standalone fallback map alongside in-world border effects, while JourneyMap borders stay visible.

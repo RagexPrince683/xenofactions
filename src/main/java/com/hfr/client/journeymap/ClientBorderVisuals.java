@@ -14,6 +14,6 @@ public final class ClientBorderVisuals {
     public static void toggle() {
         enabled = !enabled;
         if (Minecraft.getMinecraft().thePlayer != null)
-            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("Border visuals " + (enabled ? "shown" : "hidden") + "."));
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("In-world border effects and standalone map " + (enabled ? "shown" : "hidden") + "."));
     }
 }

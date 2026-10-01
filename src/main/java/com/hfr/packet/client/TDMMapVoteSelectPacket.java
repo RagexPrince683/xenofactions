@@ -1,6 +1,7 @@
 package com.hfr.packet.client;
 
 import com.hfr.tdm.TDMManager;
+import com.hfr.tdm.TDMServerTaskQueue;
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -32,13 +33,15 @@ public class TDMMapVoteSelectPacket implements IMessage {
     public static class Handler implements IMessageHandler<TDMMapVoteSelectPacket, IMessage> {
 
         @Override
-        public IMessage onMessage(TDMMapVoteSelectPacket message, MessageContext ctx) {
-            EntityPlayer player = ctx.getServerHandler().playerEntity;
-            if (!TDMManager.isMapVoteActive(player.worldObj) || TDMManager.voteForMap(player.worldObj, player.getCommandSenderName(), message.mapName) == null) {
-                player.addChatMessage(new ChatComponentText("Unable to vote for that TDM map; the current map and unknown maps are unavailable."));
-            } else {
-                player.addChatMessage(new ChatComponentText("Voted for TDM map " + TDMManager.normalizeMapName(message.mapName) + "."));
-            }
+        public IMessage onMessage(final TDMMapVoteSelectPacket message, MessageContext ctx) {
+            final EntityPlayer player = ctx.getServerHandler().playerEntity;
+            TDMServerTaskQueue.schedule(new Runnable() { public void run() {
+                if (player == null || player.worldObj == null || !player.worldObj.playerEntities.contains(player)) return;
+                String label = message.mapName == null || message.mapName.length() > 96 ? null
+                        : TDMManager.voteForMap(player.worldObj, player.getCommandSenderName(), message.mapName);
+                player.addChatMessage(new ChatComponentText(label == null
+                        ? "Unable to vote for that map and gamemode pairing." : "Voted for " + label + "."));
+            }});
             return null;
         }
     }

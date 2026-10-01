@@ -33,8 +33,8 @@ public class TDMMenuDataPacket implements IMessage {
         this.canOpenBuyMenu=TDMManager.isBombMode(player.worldObj)&&com.hfr.tdm.TDMBombManager.getState()==com.hfr.tdm.TDMBombManager.BombRoundState.PRE_ROUND;
         this.ffa=TDMManager.isFfaMode(player.worldObj);
         TDMManager.TDMMap map=TDMManager.getSelectedMapData(player.worldObj);
-        this.showUtility=map!=null&&map.mode==TDMManager.TDMGameMode.BOMB&&canOpenBuyMenu&&map.buyScoreEnabled;
-        this.showKillstreaks=map!=null&&map.killstreaksEnabled&&(map.mode==TDMManager.TDMGameMode.DEATHMATCH||map.mode==TDMManager.TDMGameMode.FFA);
+        this.showUtility=map!=null&&TDMManager.isBombMode(player.worldObj)&&canOpenBuyMenu&&map.buyScoreEnabled;
+        this.showKillstreaks=map!=null&&map.killstreaksEnabled&&!TDMManager.isBombMode(player.worldObj);
         this.killScore=TDMManager.getPlayerKillScore(player);
         if(ffa)this.currentTeam=TDMManager.isCompetitivePlayer(player)?"ffa":"observer";
         List<String> friend = new ArrayList<String>();

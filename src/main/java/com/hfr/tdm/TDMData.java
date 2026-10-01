@@ -20,6 +20,7 @@ public class TDMData extends WorldSavedData {
     public boolean friendlyFireEnabled = true;
     public boolean autoBalanceEnabled = true;
     public String selectedMap = "";
+    public TDMManager.TDMGameMode selectedMode = TDMManager.TDMGameMode.DEATHMATCH;
     /** Non-spendable DEATHMATCH victory points. Legacy NBT keys are retained for save compatibility. */
     public int redPointScore = 0;
     public int bluePointScore = 0;
@@ -116,6 +117,13 @@ public class TDMData extends WorldSavedData {
             map.scoreLimitOverride = mapTag.hasKey("scoreLimit") ? Math.max(0, mapTag.getInteger("scoreLimit")) : 0;
             map.roundTicksOverride = mapTag.hasKey("roundTicks") ? Math.max(0, mapTag.getInteger("roundTicks")) : 0;
             try { map.mode=TDMManager.TDMGameMode.valueOf(mapTag.hasKey("mode")?mapTag.getString("mode"):"DEATHMATCH"); } catch(IllegalArgumentException e){map.mode=TDMManager.TDMGameMode.DEATHMATCH;}
+            map.supportedModes.clear();
+            if (mapTag.hasKey("supportedModes")) {
+                int mask = mapTag.getInteger("supportedModes");
+                for (TDMManager.TDMGameMode value : TDMManager.TDMGameMode.values())
+                    if ((mask & (1 << value.ordinal())) != 0) map.supportedModes.add(value);
+            }
+            if (map.supportedModes.isEmpty()) map.supportedModes.add(map.mode);
             TDMManager.Team terrorist=TDMManager.Team.fromName(mapTag.hasKey("terroristTeam")?mapTag.getString("terroristTeam"):"red");map.terroristTeam=terrorist==null?TDMManager.Team.RED:terrorist;
             map.hardcoreRespawns = mapTag.hasKey("hardcoreRespawns")
                     ? mapTag.getBoolean("hardcoreRespawns")
@@ -138,11 +146,33 @@ public class TDMData extends WorldSavedData {
             map.bombPlantBuyScoreReward=mapTag.hasKey("bombPlantBuyScoreReward")?Math.max(0,mapTag.getInteger("bombPlantBuyScoreReward")):1;
             readBombsite(mapTag,"bombsiteA",map.bombsiteA);readBombsite(mapTag,"bombsiteB",map.bombsiteB);readBombsite(mapTag,"bounds",map.bounds);
             map.mapBorderEnabled=map.bounds.isComplete()&&mapTag.getBoolean("mapBorderEnabled");
-            int mapSpawnCount = mapTag.getInteger("spawnCount");
-            for (int j = 0; j < mapSpawnCount; j++) {
-                TDMManager.SpawnPoint spawn = readSpawn(mapTag.getCompoundTag("spawn" + j));
-                if (spawn != null) {
-                    map.spawns.add(spawn);
+            if (mapTag.hasKey("spawnSetsVersion")) {
+                if (mapTag.hasKey("legacyGlobalSpawnMode"))
+                    map.legacyGlobalSpawnMode = TDMManager.parseMode(mapTag.getString("legacyGlobalSpawnMode"));
+                for (TDMManager.TDMGameMode value : TDMManager.TDMGameMode.values()) {
+                    NBTTagCompound set = mapTag.getCompoundTag("spawns_" + value.name());
+                    for (int j = 0; j < set.getInteger("count"); j++) {
+                        TDMManager.SpawnPoint spawn = readSpawn(set.getCompoundTag("spawn" + j));
+                        if (spawn != null) map.spawns(value).add(spawn);
+                    }
+                    if (set.hasKey("fallback")) {
+                        try { map.spawnFallbacks.put(value, TDMManager.TDMGameMode.valueOf(set.getString("fallback"))); }
+                        catch (IllegalArgumentException ignored) { }
+                    }
+                }
+                NBTTagCompound unassigned = mapTag.getCompoundTag("legacyUnassignedSpawns");
+                for (int j = 0; j < unassigned.getInteger("count"); j++) {
+                    TDMManager.SpawnPoint spawn = readSpawn(unassigned.getCompoundTag("spawn" + j));
+                    if (spawn != null) map.legacyUnassignedSpawns.add(spawn);
+                }
+            } else {
+                map.legacyGlobalSpawnMode = map.mode;
+                for (int j = 0; j < mapTag.getInteger("spawnCount"); j++) {
+                    TDMManager.SpawnPoint spawn = readSpawn(mapTag.getCompoundTag("spawn" + j));
+                    if (spawn == null) continue;
+                    if (spawn.team == null) map.spawns(TDMManager.TDMGameMode.FFA).add(spawn);
+                    else if (map.mode != TDMManager.TDMGameMode.FFA) map.spawns(map.mode).add(spawn);
+                    else map.legacyUnassignedSpawns.add(spawn);
                 }
             }
             maps.put(map.name, map);
@@ -155,6 +185,13 @@ public class TDMData extends WorldSavedData {
         if (selectedMap.length() > 0 && !maps.containsKey(selectedMap)) {
             selectedMap = "";
         }
+        try { selectedMode = nbt.hasKey("selectedMode")
+                ? TDMManager.TDMGameMode.valueOf(nbt.getString("selectedMode"))
+                : maps.containsKey(selectedMap) ? maps.get(selectedMap).mode : TDMManager.TDMGameMode.DEATHMATCH;
+        } catch (IllegalArgumentException exception) { selectedMode = TDMManager.TDMGameMode.DEATHMATCH; }
+        if (maps.containsKey(selectedMap) && !maps.get(selectedMap).supportedModes.contains(selectedMode))
+            selectedMode = maps.get(selectedMap).mode;
+        if (selectedMap.length() == 0) selectedMode = TDMManager.TDMGameMode.DEATHMATCH;
 
         int playerCount = nbt.getInteger("playerCount");
         for (int i = 0; i < playerCount; i++) {
@@ -184,8 +221,10 @@ public class TDMData extends WorldSavedData {
         for (int i = 0; i < voteCount; i++) {
             String player = nbt.getString("votePlayer" + i).toLowerCase();
             String map = nbt.getString("voteMap" + i).toLowerCase();
+            String pair = nbt.hasKey("voteMode" + i) ? map + "|" + nbt.getString("voteMode" + i)
+                    : maps.containsKey(map) ? TDMManager.pairId(map, maps.get(map).mode) : "";
             if (player.length() > 0 && maps.containsKey(map)) {
-                mapVotes.put(player, map);
+                mapVotes.put(player, pair);
             }
         }
     }
@@ -196,6 +235,7 @@ public class TDMData extends WorldSavedData {
         nbt.setBoolean("friendlyFireEnabled", friendlyFireEnabled);
         nbt.setBoolean("autoBalanceEnabled", autoBalanceEnabled);
         nbt.setString("selectedMap", selectedMap);
+        nbt.setString("selectedMode", selectedMode.name());
         nbt.setInteger("redScore", redPointScore);
         nbt.setInteger("blueScore", bluePointScore);
         nbt.setInteger("redBombWins",redBombWins);nbt.setInteger("blueBombWins",blueBombWins);nbt.setInteger("redBombLosses",redBombLosses);nbt.setInteger("blueBombLosses",blueBombLosses);
@@ -215,15 +255,29 @@ public class TDMData extends WorldSavedData {
             if (map.scoreLimitOverride > 0) mapTag.setInteger("scoreLimit", map.scoreLimitOverride);
             if (map.roundTicksOverride > 0) mapTag.setInteger("roundTicks", map.roundTicksOverride);
             mapTag.setString("mode",map.mode.name());mapTag.setString("terroristTeam",map.terroristTeam.name);mapTag.setBoolean("hardcoreRespawns", map.hardcoreRespawns);
+            int supportedMask = 0;
+            for (TDMManager.TDMGameMode value : map.supportedModes) supportedMask |= 1 << value.ordinal();
+            mapTag.setInteger("supportedModes", supportedMask);
             if(map.bombScoreLimitOverride>0)mapTag.setInteger("bombScoreLimit",map.bombScoreLimitOverride);if(map.bombRoundTicksOverride>0)mapTag.setInteger("bombRoundTicks",map.bombRoundTicksOverride);
             mapTag.setBoolean("buyScoreEnabled",map.buyScoreEnabled);mapTag.setInteger("roundLossBuyScoreReward",Math.max(0,map.roundLossBuyScoreReward));mapTag.setInteger("killBuyScoreReward",Math.max(0,map.killBuyScoreReward));mapTag.setInteger("roundWinBuyScoreReward",Math.max(0,map.roundWinBuyScoreReward));mapTag.setInteger("bombPlantBuyScoreReward",Math.max(0,map.bombPlantBuyScoreReward));if(map.bombDefuseBuyScoreReward>0)mapTag.setInteger("bombDefuseBuyScoreReward",map.bombDefuseBuyScoreReward);
             mapTag.setBoolean("killstreaksEnabled",map.killstreaksEnabled);mapTag.setInteger("killScoreReward",Math.max(0,map.killScoreReward));
             writeBombsite(mapTag,"bombsiteA",map.bombsiteA);writeBombsite(mapTag,"bombsiteB",map.bombsiteB);writeBombsite(mapTag,"bounds",map.bounds);
             mapTag.setBoolean("mapBorderEnabled",map.mapBorderEnabled);
-            mapTag.setInteger("spawnCount", map.spawns.size());
-            for (int i = 0; i < map.spawns.size(); i++) {
-                mapTag.setTag("spawn" + i, writeSpawn(map.spawns.get(i)));
+            mapTag.setInteger("spawnSetsVersion", 1);
+            if (map.legacyGlobalSpawnMode != null) mapTag.setString("legacyGlobalSpawnMode", map.legacyGlobalSpawnMode.name());
+            for (TDMManager.TDMGameMode value : TDMManager.TDMGameMode.values()) {
+                NBTTagCompound set = new NBTTagCompound();
+                List<TDMManager.SpawnPoint> points = map.spawns(value);
+                set.setInteger("count", points.size());
+                for (int i = 0; i < points.size(); i++) set.setTag("spawn" + i, writeSpawn(points.get(i)));
+                if (map.spawnFallbacks.containsKey(value)) set.setString("fallback", map.spawnFallbacks.get(value).name());
+                mapTag.setTag("spawns_" + value.name(), set);
             }
+            NBTTagCompound unassigned = new NBTTagCompound();
+            unassigned.setInteger("count", map.legacyUnassignedSpawns.size());
+            for (int i = 0; i < map.legacyUnassignedSpawns.size(); i++)
+                unassigned.setTag("spawn" + i, writeSpawn(map.legacyUnassignedSpawns.get(i)));
+            mapTag.setTag("legacyUnassignedSpawns", unassigned);
             nbt.setTag("map" + mapIndex, mapTag);
             mapIndex++;
         }
@@ -257,6 +311,11 @@ public class TDMData extends WorldSavedData {
         for (Map.Entry<String, String> entry : mapVotes.entrySet()) {
             nbt.setString("votePlayer" + voteIndex, entry.getKey());
             nbt.setString("voteMap" + voteIndex, entry.getValue());
+            int split = entry.getValue().lastIndexOf('|');
+            if (split >= 0) {
+                nbt.setString("voteMap" + voteIndex, entry.getValue().substring(0, split));
+                nbt.setString("voteMode" + voteIndex, entry.getValue().substring(split + 1));
+            }
             voteIndex++;
         }
         nbt.setInteger("voteCount", voteIndex);
