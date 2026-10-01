@@ -789,3 +789,8 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 
 - Add a saved map-wide voting switch to the editor and `/tdm map voteable <map> <on|off>`. New maps start excluded; existing maps remain eligible by default.
 - Filter hidden maps from ballot options, vote acceptance, results, and skip alternatives. Disabling a map removes its existing votes and refreshes open vote menus without changing the running match or explicit admin selection.
+
+2026-09-30 23:47 — Keep FFA placement and participation teamless
+
+- Stop team balancing and team-change placement from re-placing FFA players. Resolve FFA spawns as neutral even if a caller supplies a remembered team.
+- Hide dormant RED/BLUE assignments during FFA and reject new team assignments there, while retaining prior assignments for a later team match. Keep mode-wide sound delivery available to FFA competitors.

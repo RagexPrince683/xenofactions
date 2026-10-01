@@ -350,6 +350,7 @@ public class TDMHandler {
     }
 
     private void sendTeamChangeReminder(EntityPlayer player) {
+        if (TDMManager.isFfaMode(player.worldObj)) return;
         long worldTime = player.worldObj.getTotalWorldTime();
         if (worldTime > 0 && worldTime % TEAM_CHANGE_REMINDER_INTERVAL_TICKS == 0) {
             player.addChatMessage(new net.minecraft.util.ChatComponentText("Open the TDM menu from the HUD button to change teams."));
@@ -357,7 +358,7 @@ public class TDMHandler {
     }
 
     private void runAutoBalance(EntityPlayer player) {
-        if (!TDMManager.isAutoBalanceEnabled(player.worldObj)) {
+        if (TDMManager.isFfaMode(player.worldObj) || !TDMManager.isAutoBalanceEnabled(player.worldObj)) {
             return;
         }
 

@@ -302,7 +302,10 @@ public class CommandTDM extends CommandBase {
                 return;
             }
 
-            TDMManager.setPlayerTeam(world, args[1], team);
+            if (!TDMManager.setPlayerTeam(world, args[1], team)) {
+                sender.addChatMessage(new ChatComponentText("FFA has no Red or Blue teams."));
+                return;
+            }
             sender.addChatMessage(new ChatComponentText(args[1] + " assigned to " + team.name));
             return;
         }

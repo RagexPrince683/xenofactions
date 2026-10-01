@@ -232,6 +232,8 @@ observer to play.
 
 ### FFA and economy map settings
 
+FFA uses only neutral spawns from the selected map's FFA spawn set. It has no active RED or BLUE teams: automatic and manual team balancing do nothing, `/tdm setteam` is unavailable, and team lookups return no team while FFA is selected. Prior team assignments remain saved for a later team mode.
+
 - `/tdm map mode <map> <deathmatch|bomb|ffa>`
 - `/tdm map addspawn <map> <red|blue|ffa>`
 - `/tdm map lossscore <map> <amount>`

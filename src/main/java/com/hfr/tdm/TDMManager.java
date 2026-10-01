@@ -94,7 +94,11 @@ public class TDMManager {
             if (onlyPlayer != null && player != onlyPlayer) continue;
             if (player.worldObj != world || (onlyPlayer == null && TDMSpectatorManager.isObserving(player))) continue;
             Team team = getPlayerTeam(world, player.getCommandSenderName());
-            if (onlyPlayer == null && (team == null || (onlyTeam != null && team != onlyTeam))) continue;
+            if (onlyPlayer == null) {
+                if (isFfaMode(world)) {
+                    if (onlyTeam != null || !isCompetitivePlayer(player)) continue;
+                } else if (team == null || (onlyTeam != null && team != onlyTeam)) continue;
+            }
             PacketDispatcher.wrapper.sendTo(new TDMSoundPacket(sound), player);
             recipients++;
         }
@@ -1411,14 +1415,17 @@ public class TDMManager {
         return (int) ((ticksLeft + 19) / 20);
     }
 
-    public static void setPlayerTeam(World world, String playerName, Team team) {
+    public static boolean setPlayerTeam(World world, String playerName, Team team) {
+        if (isFfaMode(world)) return false;
         TDMData data = TDMData.get(world);
         teamlessPlayers.remove(playerName.toLowerCase());
         data.playerTeams.put(playerName.toLowerCase(), team);
         data.markDirty();
+        return true;
     }
 
     public static Team getPlayerTeam(World world, String playerName) {
+        if (isFfaMode(world)) return null;
         return TDMData.get(world).playerTeams.get(playerName.toLowerCase());
     }
 
@@ -1477,7 +1484,7 @@ public class TDMManager {
 
     public static int balanceTeams(World world) {
         TDMData data = TDMData.get(world);
-        if (!data.enabled) {
+        if (!data.enabled || data.selectedMode == TDMGameMode.FFA) {
             return 0;
         }
         if (TDMBombManager.isRoundActive()) return 0;
@@ -2114,7 +2121,7 @@ public class TDMManager {
 
     /** Re-resolves spatial state after a team mutation; no selected spawn or freeze anchor survives the old team. */
     public static void refreshPlayerPlacementAfterTeamChange(EntityPlayer player) {
-        if(player==null)return;
+        if(player==null||isFfaMode(player.worldObj))return;
         boolean waiting=isRoundWaiting(player);
         cancelKitSelection(player); selectedKits.remove(getPlayerKey(player)); survivorChoicePending.remove(getPlayerKey(player));
         releaseRoundWaiting(player); releaseGlobalBuyProtection(player); clearKitSelectionProtection(player);
@@ -2222,6 +2229,8 @@ public class TDMManager {
         List<SpawnPoint> valid = new ArrayList<SpawnPoint>();
         TDMMap selected = data.maps.get(data.selectedMap);
 
+        // A remembered RED/BLUE team never changes the spawn category of an FFA match.
+        if (data.selectedMode == TDMGameMode.FFA) team = null;
         if (selected != null) addValidSpawns(valid, resolvedSpawns(data, selected, data.selectedMode), team);
 
         if (valid.isEmpty()) {
