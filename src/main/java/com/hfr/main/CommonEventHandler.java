@@ -438,6 +438,7 @@ public class CommonEventHandler {
 		if (entity == null || entity.isDead) return;
 		if (entity instanceof EntityPlayer) return; // players are authoritative in handlePlayerBorder
 		if (!EarthBoundaryManager.isBoundaryEnabled(entity.worldObj)) return;
+		if (EarthBoundaryManager.isPositionExempt(entity.worldObj, entity.posX, entity.posZ)) return;
 
 		double posX = entity.posX;
 		double posZ = entity.posZ;

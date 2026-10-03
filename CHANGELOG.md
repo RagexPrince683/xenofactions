@@ -794,3 +794,8 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 
 - Stop team balancing and team-change placement from re-placing FFA players. Resolve FFA spawns as neutral even if a caller supplies a remembered team.
 - Hide dormant RED/BLUE assignments during FFA and reject new team assignments there, while retaining prior assignments for a later team match. Keep mode-wide sound delivery available to FFA competitors.
+
+2026-10-02 16:17 - Honor world-border exemptions for non-player entities
+
+- Skip Earth-boundary wrapping for dropped items, NPCs, vehicles, and other non-player entities while their current position is inside a configured exemption region.
+- Preserve existing non-player wrapping outside exemption regions and leave player border handling unchanged.
