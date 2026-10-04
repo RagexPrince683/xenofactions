@@ -21,6 +21,7 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.event.world.WorldEvent;
 
 /**
  * Optional Dynmap marker integration for Xenofactions.
@@ -49,10 +50,21 @@ public class XFDynmapIntegration {
 	private static Method setLineStyleMethod = null;
 	private static Method setFillStyleMethod = null;
 	private static Method setRangeYMethod = null;
+	private static final Map<Integer, String> worldNames = new HashMap<Integer, String>();
 
 	public static void markDirty() {
 		dirty = true;
 		com.hfr.journeymap.ClaimOverlaySync.markAllDirty();
+	}
+
+	@SubscribeEvent
+	public void onWorldLoad(WorldEvent.Load event) {
+		if(!event.world.isRemote) dirty = true;
+	}
+
+	@SubscribeEvent
+	public void onWorldUnload(WorldEvent.Unload event) {
+		if(!event.world.isRemote) dirty = true;
 	}
 
 	@SubscribeEvent
@@ -78,6 +90,7 @@ public class XFDynmapIntegration {
 			Object markerApi = getMarkerApi();
 			if(markerApi == null)
 				return;
+			worldNames.clear();
 
 			markerSet = getOrCreateMarkerSet(markerApi);
 			if(markerSet == null)
@@ -96,7 +109,7 @@ public class XFDynmapIntegration {
 				if(!renderedDims.add(Integer.valueOf(coord.dimensionId)))
 					continue;
 				World dimWorld = DimensionManager.getWorld(coord.dimensionId);
-				String worldName = XFConfig.dynmapWorldNameForDimension(coord.dimensionId);
+				String worldName = getWorldName(coord.dimensionId);
 				if(dimWorld != null && worldName != null && !worldName.isEmpty())
 					createCityMarkers(dimWorld, worldName);
 			}
@@ -276,7 +289,7 @@ public class XFDynmapIntegration {
 			if(coord == null || meta == null || meta.owner == null) continue;
 			Zone zone = meta.owner.zone;
 			if(zone != Zone.SAFEZONE && zone != Zone.WARZONE) continue;
-			String worldName = XFConfig.dynmapWorldNameForDimension(coord.dimensionId);
+			String worldName = getWorldName(coord.dimensionId);
 			if(worldName == null || worldName.isEmpty()) continue;
 			int color = zone == Zone.SAFEZONE ? ClowderTerritory.SAFEZONE_COLOR : ClowderTerritory.WARZONE_COLOR;
 			TerritoryCoordinateBounds.Bounds x = TerritoryCoordinateBounds.forCoordinate(coord.x);
@@ -293,7 +306,7 @@ public class XFDynmapIntegration {
 			CoordPair coord = entry.getKey(); TerritoryMeta meta = entry.getValue();
 			if(coord == null || meta == null || meta.owner == null || meta.owner.zone != Zone.FACTION
 					|| meta.owner.owner == null || meta.isCityClaim()) continue;
-			String worldName = XFConfig.dynmapWorldNameForDimension(coord.dimensionId);
+			String worldName = getWorldName(coord.dimensionId);
 			if(worldName == null || worldName.isEmpty()) continue;
 			TerritoryCoordinateBounds.Bounds x = TerritoryCoordinateBounds.forCoordinate(coord.x);
 			TerritoryCoordinateBounds.Bounds z = TerritoryCoordinateBounds.forCoordinate(coord.z);
@@ -322,7 +335,7 @@ public class XFDynmapIntegration {
 		java.util.List<TDMManager.SpawnPoint> spawns = map.resolvedSpawns(TDMManager.getGameMode(world));
 		for(int i = 0; i < spawns.size(); i++) {
 			TDMManager.SpawnPoint spawn = spawns.get(i);
-			String worldName = XFConfig.dynmapWorldNameForDimension(spawn.dim);
+			String worldName = getWorldName(spawn.dim);
 			if(worldName == null || worldName.isEmpty()) continue;
 			String type = spawn.team == null ? "FFA" : spawn.team.name.toUpperCase();
 			createMarkerMethod.invoke(markerSet, "xf_spawn_" + id + "_" + i, "TDM " + escapeHtml(map.name) + " " + type + " spawn " + (i + 1),
@@ -332,7 +345,7 @@ public class XFDynmapIntegration {
 
 	private static void mapArea(String id, String label, TDMManager.Bombsite bounds, int color, double opacity) throws Exception {
 		if(!bounds.isComplete()) return;
-		String worldName = XFConfig.dynmapWorldNameForDimension(bounds.dimension);
+		String worldName = getWorldName(bounds.dimension);
 		if(worldName == null || worldName.isEmpty()) return;
 		com.hfr.tdm.BlockAreaEdges edges = com.hfr.tdm.BlockAreaEdges.of(bounds.x1, bounds.z1, bounds.x2, bounds.z2);
 		area(id, label, worldName, edges.minX, edges.minZ, edges.maxXExclusive, edges.maxZExclusive,
@@ -392,18 +405,38 @@ public class XFDynmapIntegration {
 		createMarkerMethod.invoke(markerSet, markerId, label, Boolean.TRUE, worldName, meta.flagX + 0.5D, y, meta.flagZ + 0.5D, cityIcon, Boolean.FALSE);
 	}
 
-	private static String getWorldName(World world) {
-		try {
+	private static String getWorldName(int dimension) throws Exception {
+		Integer key = Integer.valueOf(dimension);
+		if(worldNames.containsKey(key)) return worldNames.get(key);
+		String name = resolveWorldName(dimension);
+		worldNames.put(key, name);
+		return name;
+	}
+
+	private static String resolveWorldName(int dimension) throws Exception {
+		String configured = XFConfig.dynmapWorldNameForDimension(dimension);
+		if(configured == null || configured.isEmpty()) return configured;
+
+		// Old generated configs used Bukkit-style names even on Forge saves with
+		// custom names. Resolve those stock entries too, without replacing overrides.
+		boolean stock = (dimension == 0 && "world".equals(configured))
+				|| (dimension == -1 && "world_nether".equals(configured))
+				|| (dimension == 1 && "world_the_end".equals(configured));
+		String name = configured;
+		if("auto".equals(configured) || stock) {
+			World world = DimensionManager.getWorld(dimension);
+			if(world == null) return null;
 			Class forgeWorldClass = Class.forName("org.dynmap.forge.ForgeWorld");
 			Method getWorldName = forgeWorldClass.getMethod("getWorldName", World.class);
-			Object name = getWorldName.invoke(null, world);
-			if(name instanceof String && !((String)name).isEmpty())
-				return (String)name;
-		} catch(Throwable ignored) { }
-
-		if(world.provider.dimensionId == 0)
-			return world.getWorldInfo().getWorldName();
-		return "DIM" + world.provider.dimensionId;
+			name = (String)getWorldName.invoke(null, world);
+		}
+		if(name == null || name.isEmpty()) return null;
+		// GTNH 0.3.47's JSON writer compares getWorld() to the normalized world
+		// filename. Newer versions compare getNormalizedWorld(). Supply the canonical
+		// name so both versions publish the same geometry, including names with /[].
+		Class dynmapWorldClass = Class.forName("org.dynmap.DynmapWorld");
+		Method normalize = dynmapWorldClass.getMethod("normalizeWorldName", String.class);
+		return (String)normalize.invoke(null, name);
 	}
 
 	private static String buildClaimLabel(TerritoryMeta meta, Clowder owner, CoordPair coords) {

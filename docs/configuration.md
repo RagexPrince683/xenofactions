@@ -205,9 +205,13 @@ Category: `XENOFACTIONS_09_DYNMAP`
 | `showClaimDetailsInLabels` | `true` | Include claim details in Dynmap labels. |
 | `showPrestigeDetailsInLabels` | `true` | Include prestige/upkeep details in labels. |
 | `showTdmSpawns` | `false` | Publish exact active TDM map spawn positions to the public Dynmap web map. |
-| `dynmapDimensionWorldMap` | `0=world`, `-1=world_nether`, `1=world_the_end` | Map Minecraft dimension IDs to Dynmap world names. |
+| `dynmapDimensionWorldMap` | `0=auto`, `-1=auto`, `1=auto` | Resolve GTNH/Dynmap's actual Forge world IDs, or supply explicit dimension-to-world overrides. |
 
 Dynmap publishes city claims in the configured city set, other faction claims in `xenofactions_claims`, SAFEZONE/WARZONE territories in `xenofactions_zones`, and the enabled active TDM map's bounds and Search and Destroy sites in `xenofactions_tdm`. Sites appear only when the selected pairing is Search and Destroy; optional spawn markers come only from the active mode's spawn set. Other maps and world-border exemptions are not published to the public web map. Each published dimension needs a valid `dynmapDimensionWorldMap` entry. These are separate Xenofactions-owned marker sets; third-party markers are not modified. Marker updates are bounded by `updateIntervalTicks` (default 30 seconds). Territory geometry uses Clowder's saved coordinate bounds, including its legacy negative-coordinate behavior.
+
+Use `0=auto` for the overworld. Automatic resolution calls the installed mod's `ForgeWorld.getWorldName(World)` and `DynmapWorld.normalizeWorldName(String)`, so it follows GTNH's configured naming mode rather than guessing a dimension, provider, or save-folder name. The old stock entries `0=world`, `-1=world_nether`, and `1=world_the_end` also resolve automatically in existing configs; other explicit IDs remain overrides. For the custom overworld `earth_1-4000_xenofactions_1.7.10_earth4000nopop`, an explicit entry is `0=earth_1-4000_xenofactions_1.7.10_earth4000nopop`. Use the world ID from the web configuration, not its display title. Missing or empty dimension entries still suppress publication. Automatic entries wait for that dimension to load; server world load/unload events trigger a rebuild at the next refresh.
+
+GTNH publishes set labels even when a world's marker geometry is empty. Visible layer names therefore do not prove the geometry belongs to the active world. Its browser loads `_markers_/marker_<world-id>.json` relative to the configured marker URL; inspect `sets.<set-id>.areas`, `.lines`, and `.markers` for geometry. GTNH 0.3.47 filters this JSON using the marker's raw world ID, while newer source uses its normalized ID. Xenofactions supplies the normalized ID to both, preserving publication for names containing `/`, `[` or `]`. Nonpersistent markers are still included in web JSON and updates; persistence only controls marker save/reload.
 
 ## JourneyMap client overlay
 

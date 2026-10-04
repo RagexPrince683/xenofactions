@@ -199,7 +199,7 @@ public final class XFConfig {
 	public static boolean dynmapShowPrestigeDetails = true;
 	/** Dynmap is a public web map; exact match spawn coordinates require explicit opt-in. */
 	public static boolean dynmapShowTdmSpawns = false;
-	public static String[] dynmapDimensionWorldMap = new String[] { "0=world", "-1=world_nether", "1=world_the_end" };
+	public static String[] dynmapDimensionWorldMap = new String[] { "0=auto", "-1=auto", "1=auto" };
 	public static final String TDM_CT_WIN_SOUNDS_PROPERTY = "ctWinSounds";
 	public static final String TDM_T_WIN_SOUNDS_PROPERTY = "terroristWinSounds";
 	public static final String TDM_CT_ROUND_START_SOUNDS_PROPERTY = "ctRoundStartSounds";
@@ -370,7 +370,7 @@ public final class XFConfig {
 		dynmapShowClaimDetails = bool(config, CAT_DYNMAP, "showClaimDetailsInLabels", dynmapShowClaimDetails, "Includes city/claim chunk details in Dynmap labels.");
 		dynmapShowPrestigeDetails = bool(config, CAT_DYNMAP, "showPrestigeDetailsInLabels", dynmapShowPrestigeDetails, "Includes prestige/upkeep details in Dynmap labels.");
 		dynmapShowTdmSpawns = bool(config, CAT_DYNMAP, "showTdmSpawns", dynmapShowTdmSpawns, "Publish exact active-map spawn locations on the public Dynmap web map. Off by default.");
-		dynmapDimensionWorldMap = stringList(config, CAT_DYNMAP, "dynmapDimensionWorldMap", dynmapDimensionWorldMap, "Minecraft dimension to Dynmap world map, entries like 0=world.");
+		dynmapDimensionWorldMap = stringList(config, CAT_DYNMAP, "dynmapDimensionWorldMap", dynmapDimensionWorldMap, "Minecraft dimension to Dynmap world ID. Use 0=auto to resolve GTNH/Dynmap's Forge world name, or an explicit ID. Old stock world/world_nether/world_the_end entries also resolve automatically. Missing or empty entries are not published.");
 
 		journeyMapShowMinimapClaims = bool(config, CAT_JOURNEYMAP, "showMinimapClaims", journeyMapShowMinimapClaims, "Shows faction city claims on JourneyMap minimaps.");
 		journeyMapShowFullscreenClaims = bool(config, CAT_JOURNEYMAP, "showFullscreenClaims", journeyMapShowFullscreenClaims, "Shows faction city claims on the JourneyMap fullscreen map.");

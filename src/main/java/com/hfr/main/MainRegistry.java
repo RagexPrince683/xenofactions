@@ -754,8 +754,10 @@ public class MainRegistry
 		FMLCommonHandler.instance().bus().register(claimOverlaySync);
 		FMLCommonHandler.instance().bus().register(new StoneDropSnapshotSync());
 		FMLCommonHandler.instance().bus().register(new MachineDisplaySnapshotSync());
-		if(XFConfig.enableDynmapIntegration)
+		if(XFConfig.enableDynmapIntegration) {
 			FMLCommonHandler.instance().bus().register(dynmap);
+			MinecraftForge.EVENT_BUS.register(dynmap);
+		}
 		//FMLCommonHandler.instance().bus().register(pon4);
 		MinecraftForge.EVENT_BUS.register(handler);
 		MinecraftForge.EVENT_BUS.register(clowder);

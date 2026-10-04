@@ -809,3 +809,8 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 
 - Skip Earth-boundary wrapping for dropped items, NPCs, vehicles, and other non-player entities while their current position is inside a configured exemption region.
 - Preserve existing non-player wrapping outside exemption regions and leave player border handling unchanged.
+
+2026-10-04 09:05 — Associate web-map markers with GTNH Forge world IDs
+
+- Resolve every city, claim, zone, TDM area, border line, and point marker through GTNH/Dynmap's own world naming and normalization APIs. Add automatic dimension mappings and resolve old stock world-name entries automatically while preserving custom overrides and missing/empty dimension suppression.
+- Rebuild markers after server world load/unload so automatic mappings pick up newly loaded dimensions. Preserve marker IDs, geometry, styles, public visibility rules, and nonpersistent publication; support both GTNH 0.3.47's raw-world JSON filter and newer normalized-world filtering.
