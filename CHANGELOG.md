@@ -804,3 +804,8 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 2026-10-04 06:12 — Craft Palisades and Berlin Walls
 
 - Add gated survival recipes for four Palisades from logs and sticks, and two reinforced Berlin Walls from stone and iron bars. Use OreDictionary logs for wood compatibility and retain placement-assigned multiblock metadata.
+
+2026-10-02 16:17 - Honor world-border exemptions for non-player entities
+
+- Skip Earth-boundary wrapping for dropped items, NPCs, vehicles, and other non-player entities while their current position is inside a configured exemption region.
+- Preserve existing non-player wrapping outside exemption regions and leave player border handling unchanged.
