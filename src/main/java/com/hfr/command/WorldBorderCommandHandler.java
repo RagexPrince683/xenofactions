@@ -76,7 +76,7 @@ public final class WorldBorderCommandHandler {
         for (Object object : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
             if (object instanceof EntityPlayerMP) {
                 EntityPlayerMP player = (EntityPlayerMP)object;
-                if (EarthBoundaryManager.isPositionExempt(player.worldObj, player.posX, player.posZ)) affected.add(player);
+                if (player.worldObj.provider.dimensionId == 0 && EarthBoundaryManager.isEntityExempt(player)) affected.add(player);
             }
         }
         int removed = data.clearRegions();

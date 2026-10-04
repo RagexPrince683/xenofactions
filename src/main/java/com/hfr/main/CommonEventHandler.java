@@ -435,9 +435,9 @@ public class CommonEventHandler {
 
 	// --- handleBorder: safe wrap for every non-player entity (and vehicles) ---
 	public void handleBorder(Entity entity) {
-		if (entity == null || entity.isDead) return;
+		if (!canHandleEarthBorder(entity) || isBorderPassenger(entity)) return;
 		if (entity instanceof EntityPlayer) return; // players are authoritative in handlePlayerBorder
-		if (!EarthBoundaryManager.isBoundaryEnabled(entity.worldObj)) return;
+		if (EarthBoundaryManager.isEntityExempt(entity)) return;
 
 		double posX = entity.posX;
 		double posZ = entity.posZ;
@@ -450,7 +450,7 @@ public class CommonEventHandler {
 
 			World world = entity.worldObj;
 			int checkX = MathHelper.floor_double(newX);
-			int checkY = MathHelper.floor_double(entity.posY);
+			int checkY = Double.isNaN(entity.posY) || Double.isInfinite(entity.posY) ? 64 : MathHelper.floor_double(entity.posY);
 			int checkZ = MathHelper.floor_double(newZ);
 
 			// Use findSafeY for a robust Y (fast topSolid fallback to scan)
@@ -496,23 +496,7 @@ public class CommonEventHandler {
 					}
 				}
 
-				// Try lightweight post-teleport hooks if present (best-effort)
-				try {
-					// onUpdate or updateRidden are common names in various mods; try calling them if present
-					try {
-						Method onUp = entity.getClass().getMethod("onUpdate");
-						onUp.setAccessible(true);
-						onUp.invoke(entity);
-					} catch (NoSuchMethodException ignored) {}
-
-					try {
-						Method upd = entity.getClass().getMethod("updateRidden");
-						upd.setAccessible(true);
-						upd.invoke(entity);
-					} catch (NoSuchMethodException ignored) {}
-				} catch (Throwable ignored) {
-					// don't spam
-				}
+				if (moved) finishBorderRelocation(entity);
 
 				// We're done for MCH-class entities
 				return;
@@ -520,6 +504,7 @@ public class CommonEventHandler {
 
 			// Non-MCH (normal entities) - default safe setPosition
 			entity.setPosition(newX, newY, newZ);
+			finishBorderRelocation(entity);
 		}
 	}
 
@@ -549,10 +534,9 @@ public class CommonEventHandler {
 	}
 
 	public void handlePlayerBorder(EntityPlayerMP player) {
-		if (player == null || player.isDead) return;
-		if (!EarthBoundaryManager.isBoundaryEnabled(player.worldObj)) return;
+		if (!canHandleEarthBorder(player) || isBorderPassenger(player)) return;
 		UUID playerId = player.getUniqueID();
-		boolean currentlyExempt = EarthBoundaryManager.isPositionExempt(player.worldObj, player.posX, player.posZ);
+		boolean currentlyExempt = EarthBoundaryManager.isEntityExempt(player);
 		boolean wasExempt = PLAYERS_PREVIOUSLY_EXEMPT.contains(playerId);
 		if (currentlyExempt) {
 			PLAYERS_PREVIOUSLY_EXEMPT.add(playerId);
@@ -626,6 +610,7 @@ public class CommonEventHandler {
 
 			// Teleport the player via server->client location update (keeps client in sync)
 			player.playerNetServerHandler.setPlayerLocation(newX, newY, newZ, player.rotationYaw, player.rotationPitch);
+			finishBorderRelocation(player);
 
 			// Notify player
 			player.addChatComponentMessage(
@@ -638,7 +623,9 @@ public class CommonEventHandler {
 	public static void returnClearedExemptionPlayers(List<EntityPlayerMP> players) {
 		for (EntityPlayerMP player : players) {
 			PLAYERS_PREVIOUSLY_EXEMPT.remove(player.getUniqueID());
-			if (!EarthBoundaryManager.isInsideBoundary(player.worldObj, player.posX, player.posZ)) teleportToEarthCenter(player);
+			EarthBoundaryManager.forget(player);
+			if (canHandleEarthBorder(player) && !isBorderPassenger(player)
+					&& !EarthBoundaryManager.isInsideBoundary(player.worldObj, player.posX, player.posZ)) teleportToEarthCenter(player);
 		}
 	}
 
@@ -652,26 +639,78 @@ public class CommonEventHandler {
 		if (targetY < 1.0D) targetY = 1.0D;
 		if (targetY > 254.0D) targetY = 254.0D;
 		player.playerNetServerHandler.setPlayerLocation(targetX, targetY, targetZ, player.rotationYaw, player.rotationPitch);
+		finishBorderRelocation(player);
 		player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "Your world border exemption ended outside the map; you were returned to the Earth map center."));
 	}
 
 
-	private double wrapX(double x) {
-		if (x < MainRegistry.borderNegX) {
-			return MainRegistry.borderPosX - (MainRegistry.borderNegX - x);
-		} else if (x > MainRegistry.borderPosX) {
-			return MainRegistry.borderNegX + (x - MainRegistry.borderPosX);
+	private double wrapX(double x) { return wrapCoordinate(x, MainRegistry.borderNegX, MainRegistry.borderPosX); }
+	private double wrapZ(double z) { return wrapCoordinate(z, MainRegistry.borderNegZ, MainRegistry.borderPosZ); }
+	private static double wrapCoordinate(double value, double min, double max) {
+		double width = max - min;
+		if (value < min) {
+			double distance = min - value;
+			if (distance <= width) return max - distance;
+			double remainder = distance % width;
+			return remainder == 0 ? min : max - remainder;
 		}
-		return x;
+		if (value > max) {
+			double distance = value - max;
+			if (distance <= width) return min + distance;
+			double remainder = distance % width;
+			return remainder == 0 ? max : min + remainder;
+		}
+		return value;
 	}
 
-	private double wrapZ(double z) {
-		if (z < MainRegistry.borderNegZ) {
-			return MainRegistry.borderPosZ - (MainRegistry.borderNegZ - z);
-		} else if (z > MainRegistry.borderPosZ) {
-			return MainRegistry.borderNegZ + (z - MainRegistry.borderPosZ);
+	private static boolean canHandleEarthBorder(Entity entity) {
+		if (entity == null) return false;
+		if (entity.isDead || entity.worldObj == null || entity.worldObj.isRemote
+				|| entity.worldObj.provider.dimensionId != 0 || !EarthBoundaryManager.isBoundaryEnabled(entity.worldObj)
+				|| Double.isNaN(entity.posX) || Double.isInfinite(entity.posX)
+				|| Double.isNaN(entity.posZ) || Double.isInfinite(entity.posZ)
+				|| MainRegistry.borderNegX >= MainRegistry.borderPosX || MainRegistry.borderNegZ >= MainRegistry.borderPosZ) {
+			EarthBoundaryManager.forget(entity);
+			if (entity instanceof EntityPlayer) PLAYERS_PREVIOUSLY_EXEMPT.remove(entity.getUniqueID());
+			return false;
 		}
-		return z;
+		return true;
+	}
+
+	private static final Map<Class<?>, Method> BORDER_SEAT_PARENTS = new HashMap<Class<?>, Method>();
+	private static boolean isBorderPassenger(Entity entity) {
+		if (entity.ridingEntity != null && !entity.ridingEntity.isDead && entity.ridingEntity.worldObj == entity.worldObj) return true;
+		// MC Heli seats are attached through getParent(), rather than vanilla ridingEntity.
+		if (entity.getClass().getName().equals("mcheli.aircraft.MCH_EntitySeat")) {
+			Class<?> type = entity.getClass();
+			if (!BORDER_SEAT_PARENTS.containsKey(type)) {
+				Method method = null;
+				try { method = type.getMethod("getParent"); } catch (NoSuchMethodException ignored) { }
+				BORDER_SEAT_PARENTS.put(type, method);
+			}
+			Method method = BORDER_SEAT_PARENTS.get(type);
+			if (method != null) try {
+				Object parent = method.invoke(entity);
+				if (parent instanceof Entity && !((Entity) parent).isDead && ((Entity) parent).worldObj == entity.worldObj) return true;
+			} catch (ReflectiveOperationException ignored) { }
+		}
+		return false;
+	}
+
+	private static void finishBorderRelocation(Entity entity) {
+		EarthBoundaryManager.rememberPosition(entity);
+		// Only the root wraps. Update each vanilla passenger once, without replaying any entity tick.
+		Entity mount = entity;
+		while (mount.riddenByEntity != null && !mount.riddenByEntity.isDead
+				&& mount.riddenByEntity.ridingEntity == mount && mount.riddenByEntity.worldObj == entity.worldObj) {
+			mount.updateRiderPosition();
+			Entity rider = mount.riddenByEntity;
+			if (rider instanceof EntityPlayerMP) ((EntityPlayerMP) rider).playerNetServerHandler.setPlayerLocation(
+					rider.posX, rider.posY, rider.posZ, rider.rotationYaw, rider.rotationPitch);
+			EarthBoundaryManager.rememberPosition(rider);
+			PLAYERS_PREVIOUSLY_EXEMPT.remove(rider.getUniqueID());
+			mount = rider;
+		}
 	}
 
 	int timer = 0;
@@ -704,6 +743,7 @@ public class CommonEventHandler {
 	public void onWorldBorderWandLogout(PlayerLoggedOutEvent event) {
 		if (event.player != null) {
 			PLAYERS_PREVIOUSLY_EXEMPT.remove(event.player.getUniqueID());
+			EarthBoundaryManager.forget(event.player);
 		}
 	}
 
@@ -736,6 +776,9 @@ public class CommonEventHandler {
 					handleBorder(entity);
 				}
 			}
+		} else if (world.provider.dimensionId == 0) {
+			EarthBoundaryManager.clearWorld(world);
+			PLAYERS_PREVIOUSLY_EXEMPT.clear();
 		}
 
 		
@@ -796,6 +839,7 @@ public class CommonEventHandler {
 
 	@SubscribeEvent
 	public void onWallArtRootUnload(WorldEvent.Unload event) {
+		if(event.world != null && !event.world.isRemote) EarthBoundaryManager.clearWorld(event.world);
 		if(event.world != null && !event.world.isRemote && event.world.provider.dimensionId == 0) {
 			WallArtService.shutdown();
 			PLAYERS_PREVIOUSLY_EXEMPT.clear();
@@ -899,6 +943,7 @@ public class CommonEventHandler {
 		
 		if(event.world.isRemote)
 			return;
+		if(event.world.provider.dimensionId == 0) EarthBoundaryManager.rememberPosition(event.entity);
 		
 		int chance = ControlEntry.getEntry(event.entity);
 		

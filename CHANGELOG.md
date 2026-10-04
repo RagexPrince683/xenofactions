@@ -794,3 +794,13 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 
 - Stop team balancing and team-change placement from re-placing FFA players. Resolve FFA spawns as neutral even if a caller supplies a remembered team.
 - Hide dormant RED/BLUE assignments during FFA and reject new team assignments there, while retaining prior assignments for a later team match. Keep mode-wide sound delivery available to FFA competitors.
+
+2026-10-04 05:47 — Craft fortifications and honor Earth boundary crossings
+
+- Add gated survival recipes for sandbags, HESCO Terrablocks, Stone Walls, Brick Walls, and the Great Wall masonry variant. Preserve legacy sandbag recipes and add no recipes for other content.
+- Honor complete selected block footprints and entity movement intersections before Earth wrap destination calculation. Keep exempt boundary sections open outward within their exact edge span, including fast crossings, and spatially index saved rectangles without changing their persistence format.
+- Let mounts own relocation and synchronize vanilla riders once; defer MC Heli child seats to their parent and stop replaying entity ticks during wrapping. Preserve player exemption-exit recovery and normal wrapping, and reduce very large non-exempt displacements to one in-bounds relocation.
+
+2026-10-04 06:12 — Craft Palisades and Berlin Walls
+
+- Add gated survival recipes for four Palisades from logs and sticks, and two reinforced Berlin Walls from stone and iron bars. Use OreDictionary logs for wood compatibility and retain placement-assigned multiblock metadata.

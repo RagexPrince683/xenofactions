@@ -22,7 +22,7 @@ Category: `XENOFACTIONS_01_MODULES`
 
 | Key | Default | Meaning |
 | --- | ---: | --- |
-| `enableSurvivalRecipes` | `true` | Register the audited survival recipes for faction, prestige, production, and support infrastructure. Set `false` to preserve command/shop-only distribution; registrations and unrelated recipes are unchanged. |
+| `enableSurvivalRecipes` | `true` | Register the audited survival recipes for faction, prestige, production, support infrastructure, and the fortifications listed in [survival recipes](survival-recipes.md). Set `false` to omit these optional recipes; registrations, legacy sandbag recipes, and unrelated recipes are unchanged. |
 | `enableDynmapIntegration` | `true` | Try to publish faction city/claim markers through Dynmap when Dynmap is installed. |
 | `enableJourneyMapIntegration` | `true` | Enable optional client overlays for JourneyMap 6.0.x on Minecraft 1.7.10; the 5.2.x hook remains available. |
 | `enableTDM` | `true` | Register and initialize the optional team-deathmatch module. |
