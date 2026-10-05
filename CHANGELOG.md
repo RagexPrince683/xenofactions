@@ -825,3 +825,9 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 2026-10-04 22:39 — Restore normal emerald blocks
 
 - Remove the unused override that made vanilla emerald blocks unbreakable and effectively explosion-proof. Emerald blocks retain their normal mining and blast behavior.
+
+2026-10-04 23:14 — Open XShops for trading before configuration
+
+- Open the trading screen when administrators right-click an XShop, with an explicit Configure button for block management. Keep configuration reachable for unlinked and disabled shops while refusing unavailable trades.
+- Move the trading screen's next-page button one pixel right. Rename the Market toggle to Faction: Shown/Hidden and explain that it controls visibility in faction terminals.
+- Clear TDM state on logout without sending a kit-menu packet through the disconnected player's channel.

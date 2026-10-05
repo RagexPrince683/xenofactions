@@ -46,9 +46,9 @@ public final class XShopService {
         boolean terminal = tile.getWorldObj().getBlock(tile.xCoord, tile.yCoord, tile.zCoord) == ModBlocks.faction_market;
         if (terminal && !FactionMarketRegistry.canUse(player, tile)) { say(player, "This terminal is not active for your faction's current capital."); return; }
         if (!terminal && tile.getWorldObj().getBlock(tile.xCoord, tile.yCoord, tile.zCoord) != ModBlocks.machine_market) return;
-        Session session = new Session(player, tile, terminal ? "browser" : isAdmin(player) ? "admin" : "trade");
+        Session session = new Session(player, tile, terminal ? "browser" : "trade");
         session.selected = terminal ? "" : tile.resolveShopId();
-        if (session.mode.equals("trade") && !accessible(player, MarketData.get(session.selected), false)) {
+        if (session.mode.equals("trade") && !isAdmin(player) && !accessible(player, MarketData.get(session.selected), false)) {
             say(player, "This shop is unlinked, missing, disabled, or restricted."); return;
         }
         SESSIONS.put(player, session); snapshot(player, session);
@@ -73,7 +73,7 @@ public final class XShopService {
         if (session.mode.equals("admin") || session.mode.equals("edit")) return !terminal && isAdmin(player);
         if (session.mode.equals("trade")) {
             if (!terminal && !session.selected.equals(session.anchor.resolveShopId())) return false;
-            return accessible(player, MarketData.get(session.selected), terminal);
+            return (!terminal && isAdmin(player)) || accessible(player, MarketData.get(session.selected), terminal);
         }
         return session.mode.equals("browser") && terminal;
     }
@@ -119,8 +119,6 @@ public final class XShopService {
                     session.selected = shop.id; session.mode = "edit"; session.page = 0;
                 } else if (action.equals("view") && session.anchor != null) {
                     session.selected = session.anchor.resolveShopId();
-                    if (!accessible(player, MarketData.get(session.selected), false))
-                        throw new IllegalArgumentException("The linked shop is unavailable.");
                     session.mode = "trade"; session.page = 0;
                 }
             } else if (session.mode.equals("edit") && isAdmin(player)) {
@@ -134,16 +132,23 @@ public final class XShopService {
                 else if (action.equals("remove") && request.value / PAGE_SIZE == session.page) MarketData.removeOffer(shop.id, request.value);
                 else if (action.equals("back")) { session.mode = "admin"; session.page = 0; }
             } else if (session.mode.equals("trade")) {
-                if (action.equals("buy") && request.value >= 0 && request.value / PAGE_SIZE == session.page) {
+                if (action.equals("configure") && isAdmin(player)
+                    && session.world.getBlock(session.anchor.xCoord, session.anchor.yCoord, session.anchor.zCoord) == ModBlocks.machine_market) {
+                    session.mode = "admin"; session.page = 0; session.filter = "";
+                } else if (action.equals("buy") && request.value >= 0 && request.value / PAGE_SIZE == session.page) {
+                    if (!accessible(player, MarketData.get(session.selected), isTerminal(session)))
+                        throw new IllegalArgumentException("The linked shop is unavailable for trading.");
                     if (now - session.lastTrade < 300) return;
                     session.lastTrade = now; trade(player, session.selected, request.value);
                 } else if (action.equals("back")) {
-                    session.mode = session.world.getBlock(session.anchor.xCoord, session.anchor.yCoord, session.anchor.zCoord) == ModBlocks.faction_market
-                        ? "browser" : isAdmin(player) ? "admin" : "trade"; session.page = 0;
+                    if (isTerminal(session)) { session.mode = "browser"; session.page = 0; }
                 }
             }
             snapshot(player, session);
         } catch (IllegalArgumentException | IllegalStateException e) { say(player, e.getMessage()); snapshot(player, session); }
+    }
+    private static boolean isTerminal(Session session) {
+        return session.anchor != null && session.world.getBlock(session.anchor.xCoord, session.anchor.yCoord, session.anchor.zCoord) == ModBlocks.faction_market;
     }
     private static void close(EntityPlayerMP player, Session session, String reason) {
         NBTTagCompound tag = new NBTTagCompound(); tag.setString("token", session.token); tag.setString("mode", "close"); tag.setString("reason", reason);
@@ -155,22 +160,28 @@ public final class XShopService {
         tag.setBoolean("opening", session.opening); session.opening = false;
         tag.setLong("revision", session.revision); tag.setString("mode", session.mode); tag.setString("selected", session.selected);
         tag.setBoolean("block", session.anchor != null);
+        tag.setBoolean("configure", session.anchor != null && !isTerminal(session) && isAdmin(player));
+        tag.setBoolean("back", isTerminal(session));
         Shop selected = MarketData.get(session.selected);
+        tag.setBoolean("canTrade", accessible(player, selected, isTerminal(session)));
         tag.setString("name", selected == null ? "Unlinked / deleted" : selected.displayName);
         if (session.anchor != null && session.world.getBlock(session.anchor.xCoord, session.anchor.yCoord, session.anchor.zCoord) == ModBlocks.machine_market) {
             Shop linked = MarketData.get(session.anchor.resolveShopId()); tag.setString("linked", linked == null ? "Unlinked / deleted" : linked.displayName);
         }
         int pages;
         if (session.mode.equals("trade") || session.mode.equals("edit")) {
-            if (selected == null) { SESSIONS.remove(player); close(player, session, "This shop no longer exists."); return; }
-            pages = Math.max(1, (selected.offerCount() + PAGE_SIZE - 1) / PAGE_SIZE);
+            if (selected == null && !session.mode.equals("trade")) { SESSIONS.remove(player); close(player, session, "This shop no longer exists."); return; }
+            int offerCount = selected == null ? 0 : selected.offerCount();
+            pages = Math.max(1, (offerCount + PAGE_SIZE - 1) / PAGE_SIZE);
             session.page = Math.min(session.page, pages - 1);
             List<ItemStack[]> offers = new ArrayList<ItemStack[]>();
-            for (int i = session.page * PAGE_SIZE; i < Math.min(selected.offerCount(), (session.page + 1) * PAGE_SIZE); i++) {
+            for (int i = session.page * PAGE_SIZE; i < Math.min(offerCount, (session.page + 1) * PAGE_SIZE); i++) {
                 ItemStack[] offer = MarketData.offer(selected.id, i); offers.add(offer == null ? new ItemStack[4] : offer);
             }
             tag.setTag("offers", MarketData.offersToNBT(offers).getTag("offers"));
-            tag.setBoolean("enabled", selected.enabled); tag.setBoolean("visible", selected.visibleInFactionTerminal); tag.setBoolean("restricted", selected.adminOnly);
+            if (selected != null) {
+                tag.setBoolean("enabled", selected.enabled); tag.setBoolean("visible", selected.visibleInFactionTerminal); tag.setBoolean("restricted", selected.adminOnly);
+            }
         } else {
             List<Shop> shops = new ArrayList<Shop>();
             for (Shop shop : MarketData.list()) if ((!session.mode.equals("browser") || shop.marketEligible())

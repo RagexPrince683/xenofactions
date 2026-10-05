@@ -24,21 +24,22 @@ public final class GUIMachineMarket extends GuiScreen {
     @Override public void initGui() {
         left = (width - 176) / 2; top = (height - 230) / 2 + 12; buttonList.clear();
         GuiButton previous = new GuiButton(1, left + 25, top + 7, 18, 18, "<"); previous.enabled = data.getInteger("page") > 0;
-        GuiButton next = new GuiButton(2, left + 131, top + 7, 18, 18, ">"); next.enabled = data.getInteger("page") + 1 < data.getInteger("pages");
+        GuiButton next = new GuiButton(2, left + 132, top + 7, 18, 18, ">"); next.enabled = data.getInteger("page") + 1 < data.getInteger("pages");
         buttonList.add(previous); buttonList.add(next);
         for (int i = 0; i < offers.size(); i++) {
             GuiButton buy = new GuiButton(10 + i, left + 133, top + 34 + i * 27, 18, 18, "+");
-            buy.enabled = offers.get(i)[0] != null; buttonList.add(buy);
+            buy.enabled = data.getBoolean("canTrade") && offers.get(i)[0] != null; buttonList.add(buy);
         }
-        buttonList.add(new GuiButton(3, left, top + 198, 85, 20, "Back"));
-        buttonList.add(new GuiButton(4, left + 91, top + 198, 85, 20, "Close"));
+        boolean navigation = data.getBoolean("configure") || data.getBoolean("back");
+        if (navigation) buttonList.add(new GuiButton(3, left, top + 198, 85, 20, data.getBoolean("configure") ? "Configure" : "Back"));
+        buttonList.add(new GuiButton(4, left + (navigation ? 91 : 0), top + 198, navigation ? 85 : 176, 20, "Close"));
     }
     private void send(String action, int value) {
         PacketDispatcher.wrapper.sendToServer(new XShopActionPacket(token(), data.getLong("revision"), action, "", "", value));
     }
     @Override protected void actionPerformed(GuiButton button) {
         if (button.id == 1 || button.id == 2) send("page", data.getInteger("page") + (button.id == 1 ? -1 : 1));
-        else if (button.id == 3) send("back", 0);
+        else if (button.id == 3) send(data.getBoolean("configure") ? "configure" : "back", 0);
         else if (button.id == 4) close();
         else if (button.id >= 10) send("buy", data.getInteger("page") * 6 + button.id - 10);
     }
@@ -49,7 +50,7 @@ public final class GUIMachineMarket extends GuiScreen {
     @Override public void drawScreen(int mouseX, int mouseY, float partial) {
         drawDefaultBackground(); GL11.glColor4f(1F, 1F, 1F, 1F);
         mc.getTextureManager().bindTexture(TEXTURE); drawTexturedModalRect(left, top, 0, 0, 176, 194);
-        String title = (data.getInteger("page") + 1) + "/" + data.getInteger("pages");
+        String title = data.getBoolean("canTrade") ? (data.getInteger("page") + 1) + "/" + data.getInteger("pages") : "Unavailable";
         drawCenteredString(fontRendererObj, title, left + 88, top + 10, 0xffffff);
         drawCenteredString(fontRendererObj, fontRendererObj.trimStringToWidth(data.getString("name"), 176), left + 88, top - 12, 0xffffff);
         ItemStack hovered = null;

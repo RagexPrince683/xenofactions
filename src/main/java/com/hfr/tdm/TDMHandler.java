@@ -164,7 +164,7 @@ public class TDMHandler {
         TDMManager.onPlayerDisconnected(event.player.worldObj, event.player);
         pendingRespawns.remove(getKey(event.player));
         borderAnchors.remove(getKey(event.player));
-        TDMManager.resetTDMTransientPlayerState(event.player);
+        TDMManager.resetTDMTransientPlayerState(event.player, false);
         TDMSpectatorManager.forget(event.player);
     }
 

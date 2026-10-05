@@ -3,6 +3,7 @@ package com.hfr.inventory.gui;
 import com.hfr.data.MarketData;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.shop.XShopActionPacket;
+import java.util.Arrays;
 import java.util.List;
 import net.minecraft.client.gui.*;
 import net.minecraft.item.ItemStack;
@@ -27,7 +28,7 @@ public final class GUIXShopManager extends GuiScreen {
         buttonList.add(new GuiButton(1, left + 235, text.yPosition - 1, 70, 20, editor() ? "Rename" : "Search"));
         if (editor()) {
             buttonList.add(new GuiButton(2, left + 5, top + 36, 98, 18, "Enabled: " + data.getBoolean("enabled")));
-            buttonList.add(new GuiButton(3, left + 107, top + 36, 98, 18, "Market: " + data.getBoolean("visible")));
+            buttonList.add(new GuiButton(3, left + 107, top + 36, 98, 18, "Faction: " + (data.getBoolean("visible") ? "Shown" : "Hidden")));
             buttonList.add(new GuiButton(4, left + 209, top + 36, 98, 18, "Admin: " + data.getBoolean("restricted")));
             for (int i = 0; i < offers.size(); i++) buttonList.add(new GuiButton(10 + i, left + 235, top + 86 + i * 20, 70, 18, "Remove"));
             buttonList.add(new GuiButton(5, left + 5, top + 204, 198, 18, "Add offer from hotbar slots 1-4"));
@@ -99,6 +100,8 @@ public final class GUIXShopManager extends GuiScreen {
         text.drawTextBox();
         drawCenteredString(fontRendererObj, (data.getInteger("page") + 1) + "/" + data.getInteger("pages"), left + 155, top + 228, 0xffffff);
         super.drawScreen(x, y, partial);
+        if (editor() && x >= left + 107 && x < left + 205 && y >= top + 36 && y < top + 54)
+            drawHoveringText(Arrays.asList("Show this shop in faction terminals.", "Requires Enabled and Admin: false.", "Does not change access at this block."), x, y, fontRendererObj);
     }
     @Override public boolean doesGuiPauseGame() { return false; }
 }

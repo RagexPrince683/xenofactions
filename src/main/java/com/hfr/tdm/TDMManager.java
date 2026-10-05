@@ -1835,18 +1835,27 @@ public class TDMManager {
     }
 
     public static void cancelKitSelection(EntityPlayer player) {
+        cancelKitSelection(player, true);
+    }
+
+    private static void cancelKitSelection(EntityPlayer player, boolean notifyClient) {
         if (player == null) return;
         pendingKitSelection.remove(getPlayerKey(player));
         kitSelectionContexts.remove(getPlayerKey(player));
         pendingKitMaps.remove(getPlayerKey(player));
         clearKitSelectionProtection(player);
         releaseGlobalBuyProtection(player);
-        closeKitGui(player);
+        if (notifyClient) closeKitGui(player);
     }
 
     /** Clears only transient state owned by TDM; spectator flags and kit potions remain independent. */
     public static void resetTDMTransientPlayerState(EntityPlayer player) {
-        cancelKitSelection(player);
+        resetTDMTransientPlayerState(player, true);
+    }
+
+    /** Logout still clears gameplay state, but must not send through the disconnected FML channel. */
+    public static void resetTDMTransientPlayerState(EntityPlayer player, boolean notifyClient) {
+        cancelKitSelection(player, notifyClient);
         TDMPurchasableManager.clearPending(player);
         releaseRoundWaiting(player);
         survivorChoicePending.remove(getPlayerKey(player));

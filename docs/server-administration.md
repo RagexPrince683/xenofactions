@@ -43,7 +43,7 @@ One physical TDM map can offer several voting pairings. New maps start excluded 
 
 ## XShops and faction market terminals
 
-XShop offers belong to one server catalog, not to placed blocks. All administration uses permission level 3. `/xshop edit <ID/name>` opens the offer/settings editor; interacting with an admin XShop opens its block configuration panel. Select a shop to link the block, use **Edit** for its settings and offers, or **Unlink block** to clear the reference. Normal players open the linked trading screen. A renamed nametag remains a convenient admin-only way to link an existing block to an existing shop name or ID; it does not create a separate shop.
+XShop offers belong to one server catalog, not to placed blocks. All administration uses permission level 3. Right-clicking an XShop opens its linked trading screen for players and administrators alike. Administrators can press **Configure** to open the block configuration panel, including when the shop is unlinked or disabled. Select a shop to link the block, use **Edit** for its settings and offers, or **Unlink block** to clear the reference. `/xshop edit <ID/name>` opens the offer/settings editor directly. A renamed nametag remains a convenient admin-only way to link an existing block to an existing shop name or ID; it does not create a separate shop.
 
 ```text
 /xshop create General Supplies
@@ -54,7 +54,7 @@ XShop offers belong to one server catalog, not to placed blocks. All administrat
 /xshop link <shop ID> <x> <y> <z>
 ```
 
-For **Add offer**, put the sold item and quantity in hotbar slot 1, and one to three currency stacks in slots 2-4. Items are copied into the definition, not consumed during editing. The editor can rename the shop, toggle enabled/market/admin-only settings, and remove zero-based offers. The original item-and-metadata currency matching is retained. Repeated costs for the same currency must be paid in full, and inventory overflow drops only the uninserted purchased items.
+For **Add offer**, put the sold item and quantity in hotbar slot 1, and one to three currency stacks in slots 2-4. Items are copied into the definition, not consumed during editing. The editor can rename the shop, toggle enabled/faction visibility/admin-only settings, and remove zero-based offers. **Faction: Shown/Hidden** controls whether the shop appears in faction Global Market Terminals; it does not change access through a directly linked XShop block. The shop must also be enabled and not admin-only to appear in faction terminals. The original item-and-metadata currency matching is retained. Repeated costs for the same currency must be paid in full, and inventory overflow drops only the uninserted purchased items.
 
 New and migrated shops are enabled but excluded from faction terminals until explicitly made visible. Disabled and admin-only shops never appear there. The original admin block remains non-craftable; the separate **Global Market Terminal** is craftable when survival recipes are enabled. Officers and leaders may place one in their own faction's designated capital. Every member of that faction can browse and trade there. Both catalogs and offers use six-row pages; catalog search filters by display name.
 
