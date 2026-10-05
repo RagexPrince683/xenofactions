@@ -1505,7 +1505,9 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event) {
 				Ownership owner = ClowderTerritory.getOwnerFromInts(tp.dimensionId, tp.posX, tp.posZ);
 				Clowder me = Clowder.getClowderFromPlayer(player);
 
-				if(!tp.rendezvous && (owner == null || owner.zone != Zone.FACTION || owner.owner != me)) {
+                if (tp.home && (me == null || !me.homeSet || !me.isInCapital(tp.dimensionId, tp.posX, tp.posZ))) {
+                    player.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "Home warp aborted because the capital or home changed."));
+                } else if(!tp.rendezvous && (owner == null || owner.zone != Zone.FACTION || owner.owner != me)) {
 
 					player.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "Warp destination appears to be outside of your territory."));
 					player.addChatMessage(new ChatComponentText(CommandClowder.ERROR + "Warp aborted."));

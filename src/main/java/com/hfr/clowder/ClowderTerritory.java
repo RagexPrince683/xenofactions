@@ -357,6 +357,10 @@ public class ClowderTerritory {
 		metadata.cityName = name;
 		metadata.dimensionId = getDimensionId(world);
 		metadata.cityId = stableCityId;
+        // Finish a legacy coordinate-to-UUID capital migration when its dimension/city is next loaded.
+        if (owner != null && oldOwner == owner && oldMeta.flagX == fX && oldMeta.flagY == fY && oldMeta.flagZ == fZ
+            && owner.capitalCityId.equals(oldMeta.cityId) && oldMeta.cityId.equals(cityId(getDimensionId(world), fX, fY, fZ)))
+            owner.capitalCityId = stableCityId;
 		//fuck this goddamn shithole of a mod
 		TileEntity flag = world.getTileEntity(fX, fY, fZ);
 		if(flag != null) {
@@ -897,7 +901,8 @@ public class ClowderTerritory {
 			
 			if(meta != null && meta.owner.zone != Zone.WILDERNESS) { //todo here
 				meta.dimensionId = code.dimensionId;
-				if(meta.cityId == null || meta.cityId.indexOf(":") < 0)
+                // UUID city identities must survive restart (capital and relocation references depend on them).
+				if(meta.cityId == null || meta.cityId.isEmpty())
 					meta.cityId = cityId(meta.dimensionId, meta.flagX, meta.flagY, meta.flagZ);
 				territories.put(code, meta);
 			}

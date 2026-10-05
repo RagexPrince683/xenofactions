@@ -34,6 +34,10 @@ Stand where you want the city center and run:
 
 City rules are configurable by the server. By default, city radii are tiered from 2 to 6 chunks, city centers must be spaced apart, and city upgrades cost prestige.
 
+Place the named City Center to found the city. Your first successful city becomes the faction's designated capital, separately from its upgrade level. Officers and leaders can run `/c sethome` only inside that capital. Inspect it with `/c capital`; leaders can change it with `/c capital set <owned city>`, with seven days between changes by default.
+
+When survival recipes are enabled, craft a Global Market Terminal using `IRI / ECE / IRI` (I iron ingot, R redstone, E emerald, C chest). An Officer or leader must place it in your capital. Each faction gets one active terminal, and all members can browse the server's approved shops there. If the capital changes, place a replacement there; the old terminal stays inactive. Breaking the active terminal lets your faction place another.
+
 Upgrade a city while standing in it:
 
 ```text

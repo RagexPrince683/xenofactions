@@ -1,295 +1,73 @@
 package com.hfr.inventory.gui;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.lwjgl.opengl.GL11;
-
-import com.hfr.blocks.machine.MachineMarket;
-import com.hfr.blocks.machine.MachineMarket.TileEntityMarket;
+import com.hfr.data.MarketData;
 import com.hfr.lib.RefStrings;
 import com.hfr.packet.PacketDispatcher;
-import com.hfr.packet.client.AuxButtonPacket;
-import com.hfr.tileentity.machine.TileEntityMachineEMP;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.audio.PositionedSoundRecord;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.OpenGlHelper;
+import com.hfr.packet.shop.XShopActionPacket;
+import java.util.List;
+import net.minecraft.client.gui.*;
 import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
+import org.lwjgl.opengl.GL11;
 
-import com.hfr.util.XFLog;
-public class GUIMachineMarket extends GuiScreen {
-
-	public static ResourceLocation texture = new ResourceLocation(RefStrings.MODID + ":textures/gui/gui_shop.png");
-	private final EntityPlayer player;
-	protected int guiLeft;
-	protected int guiTop;
-	protected int xSize = 176;
-	protected int ySize = 194;
-	public static List<ItemStack[]> offers = new ArrayList();
-	int page;
-	TileEntityMarket market;
-
-	// fields
-	private boolean requestSent = false;
-
-
-	// call to request server
-	private void sendRequestIfNeeded() {
-		if (market == null) {
-			XFLog.debug("[GUIMachineMarket] market is null when trying to request");
-			return;
-		}
-		if (requestSent) {
-			// already requested and waiting for reply
-			return;
-		}
-		requestSent = true;
-		PacketDispatcher.wrapper.sendToServer(new com.hfr.packet.tile.OfferPacket(market.xCoord, market.yCoord, market.zCoord, market.name));
-		XFLog.debug("[GUIMachineMarket] Sent request OfferPacket for market='" + market.name + "' coords=("
-				+ market.xCoord + "," + market.yCoord + "," + market.zCoord + ")");
-	}
-
-	// called by client handler when a reply arrives
-	public void onOffersReceived() {
-		requestSent = false;
-		refreshOffers();
-	}
-
-	public GUIMachineMarket(EntityPlayer player, TileEntityMarket market) {
-
-		this.market = market;
-		this.player = player;
-	}
-
-	/**
-	 * Keep GUI page bounds valid after offers change.
-	 * Call this after GUIMachineMarket.offers is replaced.
-	 */
-	public void refreshOffers() {
-		if (offers == null) offers = new ArrayList<ItemStack[]>();
-		// clamp page to available pages
-		int maxPage = Math.max(1, (offers.size() + 5) / 6);
-		if (page < 1) page = 1;
-		if (page > maxPage) page = maxPage;
-		// force a simple client redraw next tick by resetting the mouse-over cached value
-		this.last = null;
-	}
-
-
-	// OLD
-	//public void refreshOffers() {
-	//	// Called when offers data changes.
-	//	// Keep page within bounds and reinitialize whatever UI state depends on 'offers'.
-	//	if (offers == null) offers = new ArrayList<ItemStack[]>();
-	//	if (page < 1) page = 1;
-	//	int maxPage = Math.max(1, (int)Math.ceil((double)offers.size() / 6.0));
-	//	if (page > maxPage) page = maxPage;
-//
-	//	// If your GUI builds slot lists or widgets at init, call that here.
-	//	// The quick & dirty approach is to call initGui() which recalculates positions:
-	//	// (safe in 1.7.10 for small GUIs)
-	//	this.initGui();
-	//}
-
-	// modify initGui() to clear offers and request server if needed:
-	public void initGui() {
-		super.initGui();
-		this.guiLeft = (this.width - this.xSize) / 2;
-		this.guiTop = (this.height - this.ySize) / 2;
-		page = 1;
-
-		// keep client side offers empty until server replies
-		// DO NOT overwrite server-sent data if already filled
-		if (offers == null || offers.isEmpty()) {
-			offers = new ArrayList<ItemStack[]>();
-		}
-
-		// Try to request fresh data from server if we have a market tile reference
-		try {
-			if (market != null) {
-				try {
-					// send coords + (maybe-empty) name so server can fallback to coords
-					// inside initGui(), replace the PacketDispatcher.wrapper.sendToServer(...) block with:
-					sendRequestIfNeeded();
-
-					XFLog.debug("[GUIMachineMarket] Sent request OfferPacket for market='" + market.name + "' coords=("
-							+ market.xCoord + "," + market.yCoord + "," + market.zCoord + ")");
-				} catch (Exception e) {
-					System.err.println("[GUIMachineMarket] Exception while sending OfferPacket request:");
-					XFLog.error("Unexpected exception", e);
-				}
-			} else {
-				XFLog.debug("[GUIMachineMarket] market is null on client when initGui()");
-			}
-		} catch (Exception e) {
-			System.err.println("[GUIMachineMarket] Exception while sending OfferPacket request:");
-			XFLog.error("Unexpected exception", e);
-		}
-	}
-
-
-	private long lastClickTime = 0;
-
-	@Override
-	protected void mouseClicked(int x, int y, int i) {
-		long now = System.currentTimeMillis();
-		if (now - lastClickTime < 200) {
-			// Too soon since last click, ignore to prevent spam
-			return;
-		}
-		lastClickTime = now;
-
-		// Left arrow
-		if (guiLeft + 25 <= x && guiLeft + 25 + 18 > x && guiTop + 7 < y && guiTop + 7 + 18 >= y) {
-			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(
-					new ResourceLocation("gui.button.press"), 1.0F));
-			if (page > 1) {
-				page--;
-			}
-			return;
-		}
-
-		// Right arrow
-		if (guiLeft + 113 + 18 <= x && guiLeft + 113 + 36 > x && guiTop + 7 < y && guiTop + 7 + 18 >= y) {
-			if (page < pagecount()) {
-				mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(
-						new ResourceLocation("gui.button.press"), 1.0F));
-				page++;
-			}
-			return;
-		}
-
-		// Offer buttons
-		for (int j = 0; j < 6; j++) {
-			if (guiLeft + 133 <= x && guiLeft + 133 + 18 > x &&
-					guiTop + 34 + 27 * j < y && guiTop + 34 + 27 * j + 18 >= y) {
-
-				ItemStack[] offer = getOffer(j);
-				if (offer != null) {
-					PacketDispatcher.wrapper.sendToServer(
-							new AuxButtonPacket(market.xCoord, market.yCoord, market.zCoord,
-									(page - 1) * 6 + j, 999));
-				}
-				return;
-			}
-		}
-	}
-
-
-	public ItemStack[] getOffer(int index) {
-
-		int i = (page - 1) * 6 + index;
-
-		if(i < offers.size()) {
-
-			ItemStack[] offer = offers.get(i);
-
-			return offer;
-		}
-
-		return null;
-	}
-
-	public void drawScreen(int mouseX, int mouseY, float f)
-	{
-		this.drawDefaultBackground();
-		this.drawGuiContainerBackgroundLayer(f, mouseX, mouseY);
-		GL11.glDisable(GL11.GL_LIGHTING);
-		this.drawGuiContainerForegroundLayer(mouseX, mouseY);
-		GL11.glEnable(GL11.GL_LIGHTING);
-
-		if(market == null || market.isInvalid())
-			this.mc.thePlayer.closeScreen();
-	}
-
-	protected void drawGuiContainerForegroundLayer(int i, int j) {
-
-		String s = MachineMarket.name + " " + page + "/" + pagecount();
-		this.fontRendererObj.drawString(s, guiLeft + this.xSize / 2 - this.fontRendererObj.getStringWidth(s) / 2, guiTop + 10, 4210752);
-
-		for(int k = 0; k < 6; k++) {
-
-			ItemStack[] offer = getOffer(k);
-
-			if(offer != null) {
-				int index = offers.indexOf(offer);
-
-				this.fontRendererObj.drawString("#" + index, guiLeft + 6, guiTop + 40 + 27 * k, 4210752);
-			}
-		}
-
-		if(last != null)
-			this.renderToolTip(last, i, j);
-	}
-
-	ItemStack last = null;
-
-	protected void drawGuiContainerBackgroundLayer(float f, int x, int y) {
-		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-		Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
-		drawTexturedModalRect(guiLeft, guiTop, 0, 0, xSize, ySize);
-
-		last = null;
-
-		short short1 = 240;
-		short short2 = 240;
-		OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, (float)short1 / 1.0F, (float)short2 / 1.0F);
-		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-
-		for(int k = 0; k < 6; k++) {
-
-			ItemStack[] offer = getOffer(k);
-
-			if(offer != null) {
-
-				for(int l = 1; l < 4; l++) {
-
-					if(offer[l] != null) {
-
-						int posX = guiLeft + 8 + 18 * l;
-						int posY = guiTop + 35 + 27 * k;
-
-						if(posX < x && posX + 16 > x && posY < y && posY + 16 > y)
-							last = offer[l];
-
-						RenderHelper.disableStandardItemLighting();
-						itemRender.renderItemAndEffectIntoGUI(fontRendererObj, this.mc.getTextureManager(), offer[l], posX, posY);
-						itemRender.renderItemOverlayIntoGUI(fontRendererObj, this.mc.getTextureManager(), offer[l], posX, posY);
-					}
-				}
-
-				int posX = guiLeft + 98;
-				int posY = guiTop + 35 + 27 * k;
-
-				RenderHelper.disableStandardItemLighting();
-				itemRender.renderItemAndEffectIntoGUI(fontRendererObj, this.mc.getTextureManager(), offer[0], posX, posY);
-				itemRender.renderItemOverlayIntoGUI(fontRendererObj, this.mc.getTextureManager(), offer[0], posX, posY);
-
-				if(posX < x && posX + 16 > x && posY < y && posY + 16 > y)
-					last = offer[0];
-			}
-		}
-	}
-
-	public int pagecount() {
-		return (int)Math.ceil((double) offers.size() / 6D);
-	}
-
-	protected void keyTyped(char p_73869_1_, int p_73869_2_)
-	{
-		if (p_73869_2_ == 1 || p_73869_2_ == this.mc.gameSettings.keyBindInventory.getKeyCode())
-		{
-			this.mc.thePlayer.closeScreen();
-		}
-	}
-
-	public boolean doesGuiPauseGame()
-	{
-		return false;
-	}
+/** Existing XShop trading presentation, now fed exclusively by server pages and sessions. */
+public final class GUIMachineMarket extends GuiScreen {
+    private static final ResourceLocation TEXTURE = new ResourceLocation(RefStrings.MODID + ":textures/gui/gui_shop.png");
+    private NBTTagCompound data;
+    private List<ItemStack[]> offers;
+    private int left, top;
+    public GUIMachineMarket(NBTTagCompound data) { this.data = data; offers = MarketData.offersFromNBT(data); }
+    public String token() { return data.getString("token"); }
+    public void receive(NBTTagCompound data) { this.data = data; offers = MarketData.offersFromNBT(data); initGui(); }
+    @Override public void initGui() {
+        left = (width - 176) / 2; top = (height - 230) / 2 + 12; buttonList.clear();
+        GuiButton previous = new GuiButton(1, left + 25, top + 7, 18, 18, "<"); previous.enabled = data.getInteger("page") > 0;
+        GuiButton next = new GuiButton(2, left + 131, top + 7, 18, 18, ">"); next.enabled = data.getInteger("page") + 1 < data.getInteger("pages");
+        buttonList.add(previous); buttonList.add(next);
+        for (int i = 0; i < offers.size(); i++) {
+            GuiButton buy = new GuiButton(10 + i, left + 133, top + 34 + i * 27, 18, 18, "+");
+            buy.enabled = offers.get(i)[0] != null; buttonList.add(buy);
+        }
+        buttonList.add(new GuiButton(3, left, top + 198, 85, 20, "Back"));
+        buttonList.add(new GuiButton(4, left + 91, top + 198, 85, 20, "Close"));
+    }
+    private void send(String action, int value) {
+        PacketDispatcher.wrapper.sendToServer(new XShopActionPacket(token(), data.getLong("revision"), action, "", "", value));
+    }
+    @Override protected void actionPerformed(GuiButton button) {
+        if (button.id == 1 || button.id == 2) send("page", data.getInteger("page") + (button.id == 1 ? -1 : 1));
+        else if (button.id == 3) send("back", 0);
+        else if (button.id == 4) close();
+        else if (button.id >= 10) send("buy", data.getInteger("page") * 6 + button.id - 10);
+    }
+    private void close() { send("close", 0); mc.displayGuiScreen(null); }
+    @Override protected void keyTyped(char character, int key) {
+        if (key == 1 || key == mc.gameSettings.keyBindInventory.getKeyCode()) close();
+    }
+    @Override public void drawScreen(int mouseX, int mouseY, float partial) {
+        drawDefaultBackground(); GL11.glColor4f(1F, 1F, 1F, 1F);
+        mc.getTextureManager().bindTexture(TEXTURE); drawTexturedModalRect(left, top, 0, 0, 176, 194);
+        String title = (data.getInteger("page") + 1) + "/" + data.getInteger("pages");
+        drawCenteredString(fontRendererObj, title, left + 88, top + 10, 0xffffff);
+        drawCenteredString(fontRendererObj, fontRendererObj.trimStringToWidth(data.getString("name"), 176), left + 88, top - 12, 0xffffff);
+        ItemStack hovered = null;
+        RenderHelper.enableGUIStandardItemLighting();
+        for (int i = 0; i < offers.size(); i++) {
+            ItemStack[] row = offers.get(i); int y = top + 35 + i * 27;
+            if (row[0] == null) { fontRendererObj.drawString("Unavailable", left + 27, y + 5, 0x777777); continue; }
+            for (int j = 0; j < 4; j++) {
+                if (row[j] == null) continue;
+                int x = j == 0 ? left + 98 : left + 8 + 18 * j;
+                itemRender.renderItemAndEffectIntoGUI(fontRendererObj, mc.getTextureManager(), row[j], x, y);
+                itemRender.renderItemOverlayIntoGUI(fontRendererObj, mc.getTextureManager(), row[j], x, y);
+                if (mouseX >= x && mouseX < x + 16 && mouseY >= y && mouseY < y + 16) hovered = row[j];
+            }
+            fontRendererObj.drawString("#" + (data.getInteger("page") * 6 + i), left + 6, y + 5, 0x404040);
+        }
+        RenderHelper.disableStandardItemLighting(); super.drawScreen(mouseX, mouseY, partial);
+        if (hovered != null) renderToolTip(hovered, mouseX, mouseY);
+    }
+    @Override public boolean doesGuiPauseGame() { return false; }
 }

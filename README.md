@@ -14,6 +14,7 @@ The mod is opinionated toward competitive survival servers: factions create citi
 - **Diplomacy and war** - alliances, ally warps, declarations of war, ceasefires, peace offers, surrender terms, ally defense, cooldowns, and admin war controls.
 - **Custom faction flags** - set built-in flags or import HTTPS images from allow-listed hosts with size, redirect, and rate-limit protections.
 - **Server administration tools** - faction admin commands, inventory viewing, muting, ignoring, stock-market controls, custom stone drops, and claim map distribution.
+- **XShops and faction markets** - administrators create, rename, configure, and link shops with `/xshop` or the block configuration panel. Factions can craft one Global Market Terminal for their designated capital, with a searchable browser of server-approved shops.
 - **Optional Dynmap integration** - reflects into Dynmap when present to publish faction city/claim markers without making Dynmap a hard dependency.
 - **Optional TDM module** - map/team/kit voting commands for servers that enable the bundled team-deathmatch system. Players may use `/tdm skip [yes|no|status]` to start or join a majority vote among active competitors; a successful vote enters the normal map-vote lifecycle without awarding a round result. Normal map voting displays the current map as unavailable and rejects it server-side.
 - **Legacy warfare systems** - radar, forcefield, missile, EMP, nuke, oil/power, market, mob/world, and chat-filter settings from the inherited xRadar/HFR codebase.
@@ -65,6 +66,7 @@ A typical faction flow is:
 
 1. Create or join a faction with `/c create <name>` or `/c apply <faction>`.
 2. Claim a city with `/c claim <city name>`.
+   The first successfully founded city is the faction's designated capital. This is separate from its city level. `/c sethome` requires that capital's territory; leaders can change the designation with `/c capital set <owned city>`, subject to a configurable seven-day cooldown.
 3. Build prestige-producing structures and keep enough prestige for upkeep.
 4. Use `/c sethome`, `/c setwarp <name>`, and `/c allywarp <ally>` for travel.
 5. Manage members with `/c applicants`, `/c accept <player>`, `/c promote <player>`, and `/c kick <player>`.

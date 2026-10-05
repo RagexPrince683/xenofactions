@@ -65,7 +65,9 @@ Usage: `/clowder help`; aliases: `/clowder`, `/c`; permission level: 0.
 | `/c city cancelmove` | Leader-only: cancel the pending relocation without changing the City Center or its claims. |
 | `/c city recovermove` | Leader-only: issue a replacement token for the active server-authorized relocation. |
 | `/c nameclaim <name>` | Name the current claim. |
-| `/c sethome` | Set faction home. |
+| `/c capital` | Show the designated capital and remaining change cooldown; separate from city upgrade level. |
+| `/c capital set <owned city>` | Leader-only: change the designated capital. Default cooldown between changes is seven days. |
+| `/c sethome` | Officer or leader: set faction home inside the designated capital only. |
 | `/c home` | Teleport to faction home. |
 | `/c setallywarp` | Set ally warp point. |
 | `/c allywarp <faction>` | Warp to an allied faction's ally warp. |
@@ -168,12 +170,22 @@ Usage: `/cc <message>`; permission level: 0.
 | `/stonedrop list` | Admin/moderator default | Administrator command to list configured custom stone drops. |
 | `/stonedrop remove <index>` | Admin/moderator default | Administrator command to remove a custom stone drop. |
 | `/xshop add <shop>` | Level 3 | Add a shop offer using hotbar slots: slot 1 sold item, next three slots currency. |
-| `/xshop delete <shop/index>` | Level 3 | Delete a shop offer. |
+| `/xshop create <name>` | Level 3 | Create an empty shop with a permanent ID. |
+| `/xshop delete <shop>` | Level 3 | Delete the shop; linked blocks become inactive. |
+| `/xshop rename <ID/name> <new name>` | Level 3 | Change the display name without breaking block links. |
+| `/xshop list [page]` | Level 3 | List shop names, IDs, offers, and eligibility settings. |
+| `/xshop edit <shop>` | Level 3 | Open the settings and offer editor. |
+| `/xshop set <ID/name> <enabled\|visible\|adminOnly> <on\|off>` | Level 3 | Control shop access and faction-market availability. |
+| `/xshop link <ID/name> <x> <y> <z>` | Level 3 | Link a loaded admin shop block in your dimension. |
+| `/xshop unlink <x> <y> <z>` | Level 3 | Unlink a loaded admin shop block in your dimension. |
+| `/xshop removeoffer <ID/name> <index>` | Level 3 | Remove a zero-based offer. Legacy `/xshop delete <index> <shop>` also remains supported. |
 | `/xmarket setstock ...` | Level 3 | Admin stock market control. |
 | `/xmarket triggerstock ...` | Level 3 | Trigger stock movement/events. |
 | `/xmarket setshares ...` | Level 3 | Set player stock shares. |
 | `/xmarket getshares ...` | Level 3 | Inspect player stock shares. |
 | `/xplayer <cbt\|ramranch\|fps\|tilt\|shader\|vomit> <player>` | Level 3 | Toggle low-FPS, screen-tilt, or rapidly alternating shader effects for a player. |
+
+XShop commands also have the `/shop` alias. Use a stable ID from `/xshop list` for names containing spaces in commands with additional arguments. Creation, deletion, editing, and adding offers accept a complete name as their trailing argument. Tab completion offers configured IDs and single-word names, settings, boolean values, offer indices, list pages, and block coordinates. Catalog-management commands work from the console; GUI, hotbar, and block-link operations require a player.
 
 ## Optional TDM: `/tdm`
 

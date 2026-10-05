@@ -1,11 +1,8 @@
 package com.hfr.packet.client;
 
-import com.hfr.blocks.machine.MachineMarket.TileEntityMarket;
 import com.hfr.clowder.Clowder;
-import com.hfr.data.MarketData;
 import com.hfr.data.StockData;
 import com.hfr.main.MainRegistry;
-import com.hfr.util.XFLog;
 import com.hfr.packet.PacketDispatcher;
 import com.hfr.packet.effect.ParticleControlPacket;
 import com.hfr.packet.tile.AuxGaugePacket;
@@ -37,10 +34,6 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.Vec3;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 public class AuxButtonPacket implements IMessage {
 
@@ -50,7 +43,6 @@ public class AuxButtonPacket implements IMessage {
 	int value;
 	int id;
 
-	public static final Map<UUID, Long> lastClickMap = new HashMap<>();
 
 
 	public AuxButtonPacket()
@@ -89,6 +81,7 @@ public class AuxButtonPacket implements IMessage {
 
 		@Override
 		public IMessage onMessage(AuxButtonPacket m, MessageContext ctx) {
+            if (m.id == 999) return null; // Retired XShop trading action.
 			
 			EntityPlayer p = ctx.getServerHandler().playerEntity;
 
@@ -261,77 +254,7 @@ public class AuxButtonPacket implements IMessage {
 				}
 
 
-				if (te instanceof TileEntityMarket) {
-					// --- Rate limit check (per player) ---
-					final UUID id = p.getUniqueID();
-					final long now = System.currentTimeMillis();
-					Long last = lastClickMap.get(id);
-					if (last != null && now - last < 300) { // 300 ms cooldown (≈3 clicks/sec)
-						return null; // Ignore spam click
-					}
-					lastClickMap.put(id, now);
 
-					XFLog.debug("Market packet received");
-					TileEntityMarket market = (TileEntityMarket) te;
-
-					// Get the market's offers from JSON
-					List<ItemStack[]> offers = MarketData.getOffers(market.name);
-
-					if (offers.isEmpty()) {
-						XFLog.warn("There is no market with the name: " + market.name);
-						return null;
-					}
-
-					if (m.value < 0 || m.value >= offers.size()) {
-						XFLog.warn("The selected offer is out of bounds for market: " + market.name);
-						XFLog.debug("Offer index: " + m.value);
-						return null;
-					}
-
-					ItemStack[] offer = offers.get(m.value);
-
-					if (offer != null) {
-						XFLog.debug("Offer is not null for market");
-						ItemStack item = offer[0]; // First item is the one being purchased
-						boolean hasRequiredItems = true;
-
-						// Check if player has required currency items
-						for (int i = 1; i < 4; i++) {
-							if (offer[i] != null) {
-								int count = countItems(p, offer[i].getItem(), offer[i].getItemDamage());
-								if (count < offer[i].stackSize) {
-									hasRequiredItems = false;
-								}
-							}
-						}
-
-						if (hasRequiredItems) {
-							// Success: Process transaction
-							p.worldObj.playSoundAtEntity(p, "hfr:block.buttonYes", 1.0F, 1.0F);
-
-							// Remove currency items
-							for (int i = 1; i < 4; i++) {
-								if (offer[i] != null) {
-									removeItems(p, offer[i].getItem(), offer[i].getItemDamage(), offer[i].stackSize);
-								}
-							}
-
-							// Give purchased item
-							if (!p.inventory.addItemStackToInventory(item.copy())) {
-								p.dropPlayerItemWithRandomChoice(item.copy(), true);
-							}
-
-							p.inventoryContainer.detectAndSendChanges();
-						} else {
-							// Failure: Not enough currency
-							p.worldObj.playSoundAtEntity(p, "hfr:block.buttonNo", 1.0F, 1.0F);
-							p.addChatComponentMessage(new ChatComponentText(
-									EnumChatFormatting.RED + "You lack the required items."));
-						}
-					} else {
-						XFLog.warn("The selected offer is null for market: " + market.name);
-					}
-				}
 
 
 

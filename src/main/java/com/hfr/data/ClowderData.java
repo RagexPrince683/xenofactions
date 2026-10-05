@@ -21,6 +21,14 @@ import static com.hfr.clowder.Clowder.initializeDiplomacy;
 public class ClowderData extends WorldSavedData {
 
 	private final Set<UUID> claimedPlayers = new HashSet<UUID>();
+    private final java.util.Map<String, com.hfr.shop.FactionMarketRegistry.Registration> marketTerminals =
+        new java.util.HashMap<String, com.hfr.shop.FactionMarketRegistry.Registration>();
+
+    public com.hfr.shop.FactionMarketRegistry.Registration getMarketTerminal(String factionId) { return marketTerminals.get(factionId); }
+    public void setMarketTerminal(String factionId, com.hfr.shop.FactionMarketRegistry.Registration terminal) {
+        marketTerminals.put(factionId, terminal); markDirty();
+    }
+    public void clearMarketTerminal(String factionId) { if (marketTerminals.remove(factionId) != null) markDirty(); }
 
 	public ClowderData(String name) {
 		super(name);
@@ -31,6 +39,15 @@ public class ClowderData extends WorldSavedData {
 		
 		Clowder.readFromNBT(nbt);
 		ClowderTerritory.readFromNBT(nbt);
+        for (Clowder faction : Clowder.clowders) if (faction.migrateCapital()) markDirty();
+        marketTerminals.clear();
+        NBTTagList terminals = nbt.getTagList("FactionMarketTerminals", 10);
+        for (int i = 0; i < terminals.tagCount(); i++) {
+            NBTTagCompound tag = terminals.getCompoundTagAt(i);
+            com.hfr.shop.FactionMarketRegistry.Registration registration = com.hfr.shop.FactionMarketRegistry.Registration.read(tag);
+            if (registration != null && !marketTerminals.containsKey(tag.getString("factionId")))
+                marketTerminals.put(tag.getString("factionId"), registration);
+        }
 		for(Clowder clowder : Clowder.clowders) {
 			clowder.reconcileCitiesFounded(null);
 			if(clowder.buildGraceUntil > System.currentTimeMillis() && !clowder.hasValidBuildGraceHome())
@@ -51,6 +68,11 @@ public class ClowderData extends WorldSavedData {
 
 		Clowder.writeToNBT(nbt);
 		ClowderTerritory.writeToNBT(nbt);
+        NBTTagList terminals = new NBTTagList();
+        for (java.util.Map.Entry<String, com.hfr.shop.FactionMarketRegistry.Registration> entry : marketTerminals.entrySet()) {
+            NBTTagCompound tag = entry.getValue().write(); tag.setString("factionId", entry.getKey()); terminals.appendTag(tag);
+        }
+        nbt.setTag("FactionMarketTerminals", terminals);
 
 		// Save claimed players
 		NBTTagList claimedList = new NBTTagList();
@@ -93,6 +115,7 @@ public class ClowderData extends WorldSavedData {
 		com.hfr.clowder.FactionCreationCooldownData.resetWorldState();
 		com.hfr.journeymap.ClaimOverlaySync.resetWorldState();
 		com.hfr.dynmap.XFDynmapIntegration.markDirty();
+        com.hfr.shop.XShopService.clearSessions();
 	}
 
 	public static void release(World world) {

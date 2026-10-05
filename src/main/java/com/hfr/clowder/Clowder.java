@@ -1,6 +1,7 @@
 package com.hfr.clowder;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -63,6 +64,10 @@ public class Clowder {
 	public int homeZ;
 	public int homeDim;
 	public boolean homeSet = false;
+    /** Designated capital is independent of the city's upgrade level. */
+    public String capitalCityId = "";
+    public boolean capitalDesignated;
+    public long capitalChangeAfter;
 	public HashMap<String, int[]> warps = new HashMap();
 
 	//tracks how many times the clowder has bought from this market option
@@ -1177,10 +1182,12 @@ public class Clowder {
 
 
 	public void setHome(double x, double y, double z, EntityPlayer player) {
+        if (player == null || !isInCapital(player.worldObj, (int)Math.floor(x), (int)Math.floor(z)))
+            throw new IllegalArgumentException("Faction home must be inside the designated capital.");
 
-		this.homeX = (int) x;
-		this.homeY = (int) y;
-		this.homeZ = (int) z;
+        this.homeX = (int)Math.floor(x);
+        this.homeY = (int)Math.floor(y);
+        this.homeZ = (int)Math.floor(z);
 		this.homeDim = player != null ? ClowderTerritory.getDimensionId(player.worldObj) : 0;
 		this.homeSet = true;
 
@@ -1393,6 +1400,7 @@ public class Clowder {
 			return false;
 
 		clowders.remove(this);
+        ClowderData.getData(player.worldObj).clearMarketTerminal(uuid);
 		recalculateIMap();
 		this.leader = "";
 
@@ -1406,6 +1414,7 @@ public class Clowder {
 	public boolean disbandClowder(World world) {
 
 		clowders.remove(this);
+        ClowderData.getData(world).clearMarketTerminal(uuid);
 		recalculateIMap();
 		this.leader = "";
 		this.members.clear();
@@ -1598,6 +1607,72 @@ public class Clowder {
 		reconcileCitiesFounded(world);
 	}
 
+    public boolean isInCapital(World world, int x, int z) {
+        return world != null && isInCapital(world.provider.dimensionId, x, z);
+    }
+
+    public boolean isInCapital(int dimension, int x, int z) {
+        ClowderTerritory.TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords(dimension, x, z);
+        return capitalDesignated && meta != null && meta.isCityClaim() && meta.owner != null
+            && meta.owner.zone == ClowderTerritory.Zone.FACTION && meta.owner.owner == this
+            && capitalCityId.equals(meta.cityId);
+    }
+
+    /** One-time legacy migration: preserve an owned home city, otherwise choose deterministic coordinates. */
+    public boolean migrateCapital() {
+        if (capitalDesignated) return false;
+        List<ClowderTerritory.TerritoryMeta> cities = ClowderTerritory.getCityClaims(this);
+        if (cities.isEmpty()) return false;
+        ClowderTerritory.TerritoryMeta chosen = ClowderTerritory.getMetaFromIntCoords(homeDim, homeX, homeZ);
+        if (chosen == null || !chosen.isCityClaim() || chosen.owner == null || chosen.owner.owner != this) {
+            Collections.sort(cities, new java.util.Comparator<ClowderTerritory.TerritoryMeta>() {
+                public int compare(ClowderTerritory.TerritoryMeta a, ClowderTerritory.TerritoryMeta b) {
+                    int v = Integer.compare(a.dimensionId, b.dimensionId);
+                    if (v == 0) v = Integer.compare(a.flagX, b.flagX);
+                    if (v == 0) v = Integer.compare(a.flagY, b.flagY);
+                    return v == 0 ? Integer.compare(a.flagZ, b.flagZ) : v;
+                }
+            });
+            chosen = cities.get(0);
+        }
+        // Older claim loaders could rewrite UUIDs to coordinates while the City Center retained its UUID.
+        net.minecraft.world.World cityWorld = net.minecraftforge.common.DimensionManager.getWorld(chosen.dimensionId);
+        if (cityWorld != null) {
+            net.minecraft.tileentity.TileEntity source = cityWorld.getTileEntity(chosen.flagX, chosen.flagY, chosen.flagZ);
+            if (source instanceof TileEntityFlag) {
+                String stable = ((TileEntityFlag)source).getCityId();
+                if (!stable.equals(chosen.cityId)) {
+                    for (ClowderTerritory.TerritoryMeta meta : ClowderTerritory.territories.values())
+                        if (meta != null && meta.dimensionId == chosen.dimensionId && meta.flagX == chosen.flagX
+                            && meta.flagY == chosen.flagY && meta.flagZ == chosen.flagZ && meta.owner != null && meta.owner.owner == this)
+                            meta.cityId = stable;
+                    chosen.cityId = stable;
+                }
+            }
+        }
+        capitalCityId = chosen.cityId; capitalDesignated = true;
+        homeSet = isInCapital(homeDim, homeX, homeZ);
+        return true;
+    }
+
+    public void designateCapital(EntityPlayer player, ClowderTerritory.TerritoryMeta city) {
+        if (player == null || getPermLevel(player) < 3)
+            throw new IllegalArgumentException("Only the faction leader may change the capital.");
+        if (city == null || !city.isCityClaim() || city.owner == null || city.owner.owner != this
+            || city.owner.zone != ClowderTerritory.Zone.FACTION)
+            throw new IllegalArgumentException("Choose an owned city.");
+        if (capitalDesignated && capitalCityId.equals(city.cityId))
+            throw new IllegalArgumentException("That city is already the capital.");
+        long now = System.currentTimeMillis();
+        if (now < capitalChangeAfter)
+            throw new IllegalArgumentException("Capital change cooldown: " + ((capitalChangeAfter - now + 59999L) / 60000L) + " minutes remaining.");
+        capitalCityId = city.cityId; capitalDesignated = true;
+        capitalChangeAfter = now + com.hfr.config.XFConfig.capitalChangeCooldownHours * 3600000L;
+        if (!isInCapital(homeDim, homeX, homeZ)) homeSet = false;
+        com.hfr.data.ClowderData data = com.hfr.data.ClowderData.getData(player.worldObj);
+        data.clearMarketTerminal(uuid); data.markDirty();
+    }
+
 	public float getHourlyWarCost() {
 		float cost = 0F;
 		long now = System.currentTimeMillis();
@@ -1690,9 +1765,7 @@ public class Clowder {
 		ClowderTerritory.TerritoryMeta meta = ClowderTerritory.getMetaFromIntCoords(homeDim, homeX, homeZ);
 		if(meta == null || meta.owner == null)
 			return false;
-		boolean valid = meta.owner.zone == ClowderTerritory.Zone.FACTION && meta.owner.owner == this;
-		if(valid && !homeSet)
-			homeSet = true;
+        boolean valid = isInCapital(homeDim, homeX, homeZ);
 		return valid && homeSet;
 	}
 
@@ -1765,6 +1838,9 @@ public class Clowder {
 		nbt.setInteger(i + "_homeZ", this.homeZ);
 		nbt.setInteger(i + "_homeDim", this.homeDim);
 		nbt.setBoolean(i + "_homeSet", this.homeSet);
+        nbt.setString(i + "_capitalCityId", capitalCityId);
+        nbt.setBoolean(i + "_capitalDesignated", capitalDesignated);
+        nbt.setLong(i + "_capitalChangeAfter", capitalChangeAfter);
 		nbt.setInteger(i + "_allyWarpX", this.allyWarpX);
 		nbt.setInteger(i + "_allyWarpY", this.allyWarpY);
 		nbt.setInteger(i + "_allyWarpZ", this.allyWarpZ);
@@ -1952,6 +2028,9 @@ public class Clowder {
 		if(!nbt.hasKey(i + "_homeDim") && MainRegistry.logger != null) MainRegistry.logger.info("Migrating legacy faction home for " + c.name + " to dimension 0.");
 		c.homeDim = nbt.hasKey(i + "_homeDim") ? nbt.getInteger(i + "_homeDim") : 0;
 		c.homeSet = nbt.hasKey(i + "_homeSet") ? nbt.getBoolean(i + "_homeSet") : false;
+        c.capitalCityId = nbt.getString(i + "_capitalCityId");
+        c.capitalDesignated = nbt.getBoolean(i + "_capitalDesignated");
+        c.capitalChangeAfter = Math.max(0L, nbt.getLong(i + "_capitalChangeAfter"));
 		c.allyWarpX = nbt.getInteger(i + "_allyWarpX");
 		c.allyWarpY = nbt.getInteger(i + "_allyWarpY");
 		c.allyWarpZ = nbt.getInteger(i + "_allyWarpZ");
@@ -2453,7 +2532,8 @@ public class Clowder {
 		c.color = colour;
 		colours.add(colour);
 
-		c.setHome(player.posX, player.posY, player.posZ, player);
+        // The first successfully founded city designates the capital; /c sethome follows it.
+        c.homeSet = false;
 
 		c.setAllyWarp(player.posX, player.posY, player.posZ, player);
 

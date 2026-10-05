@@ -122,6 +122,8 @@ public class PacketDispatcher {
 		wrapper.registerMessage(AdminEditorClosePacket.Handler.class, AdminEditorClosePacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(AdminSelectionSyncPacket.Handler.class, AdminSelectionSyncPacket.class, i++, Side.CLIENT);
 		wrapper.registerMessage(TDMMapOverlayPacket.Handler.class, TDMMapOverlayPacket.class, i++, Side.CLIENT);
+        wrapper.registerMessage(com.hfr.packet.shop.XShopActionPacket.Handler.class, com.hfr.packet.shop.XShopActionPacket.class, i++, Side.SERVER);
+        wrapper.registerMessage(com.hfr.packet.shop.XShopSnapshotPacket.Handler.class, com.hfr.packet.shop.XShopSnapshotPacket.class, i++, Side.CLIENT);
 
 	}
 	

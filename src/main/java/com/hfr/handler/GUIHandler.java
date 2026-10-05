@@ -8,7 +8,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 
 import com.hfr.blocks.ModBlocks;
-import com.hfr.blocks.machine.MachineMarket.TileEntityMarket;
 import com.hfr.inventory.gui.GUIAlloy;
 import com.hfr.inventory.gui.GUIBattery;
 import com.hfr.inventory.gui.GUIBlastFurnace;
@@ -28,7 +27,6 @@ import com.hfr.inventory.gui.GUILaunchPad;
 import com.hfr.inventory.gui.GUIMachineBuilder;
 import com.hfr.inventory.gui.GUIBuilderNPC;
 import com.hfr.inventory.gui.GUIMachineEMP;
-import com.hfr.inventory.gui.GUIMachineMarket;
 import com.hfr.inventory.gui.GUIMachineNet;
 import com.hfr.inventory.gui.GUIMachineOilWell;
 import com.hfr.inventory.gui.GUIMachineRadar;
@@ -668,9 +666,8 @@ public class GUIHandler implements IGuiHandler {
 				
 				case ModBlocks.guiID_market:
 				{
-					if(entity instanceof TileEntityMarket) {
-						return new GUIMachineMarket(player, (TileEntityMarket) entity);
-					}
+					// Shop screens are opened exclusively by validated server snapshots.
+					return null;
 				}
 				
 				case ModBlocks.guiID_efurnace:

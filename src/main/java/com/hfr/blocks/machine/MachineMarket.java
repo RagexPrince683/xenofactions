@@ -1,16 +1,10 @@
 package com.hfr.blocks.machine;
 
-import java.util.List;
-
 import com.hfr.blocks.ModBlocks;
 import com.hfr.data.MarketData;
 import com.hfr.lib.RefStrings;
-import com.hfr.main.MainRegistry;
-import com.hfr.util.XFLog;
-import com.hfr.packet.PacketDispatcher;
-import com.hfr.packet.tile.OfferPacket;
-
-import cpw.mods.fml.common.network.internal.FMLNetworkHandler;
+import com.hfr.shop.FactionMarketRegistry;
+import com.hfr.shop.XShopService;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
@@ -20,132 +14,69 @@ import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Items;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IIcon;
 import net.minecraft.world.World;
 
 public class MachineMarket extends BlockContainer {
+    @SideOnly(Side.CLIENT) private IIcon iconTop;
+    @SideOnly(Side.CLIENT) private IIcon iconBottom;
+    private final boolean factionTerminal;
+    public MachineMarket(Material material) { this(material, false); }
+    public MachineMarket(Material material, boolean factionTerminal) { super(material); this.factionTerminal = factionTerminal; }
+    @Override @SideOnly(Side.CLIENT) public void registerBlockIcons(IIconRegister icons) {
+        iconTop = icons.registerIcon(RefStrings.MODID + ":market_top");
+        iconBottom = icons.registerIcon(RefStrings.MODID + ":market_bottom");
+        blockIcon = icons.registerIcon(RefStrings.MODID + ":market_side");
+    }
+    @Override @SideOnly(Side.CLIENT) public IIcon getIcon(int side, int metadata) {
+        return side == 1 ? iconTop : side == 0 ? iconBottom : blockIcon;
+    }
+    @Override public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player,
+                                             int side, float hitX, float hitY, float hitZ) {
+        if (world.isRemote) return true;
+        TileEntity raw = world.getTileEntity(x, y, z);
+        if (!(raw instanceof TileEntityMarket) || !(player instanceof EntityPlayerMP)) return true;
+        TileEntityMarket tile = (TileEntityMarket)raw;
+        if (!factionTerminal && XShopService.isAdmin(player) && player.getHeldItem() != null
+            && player.getHeldItem().getItem() == Items.name_tag && player.getHeldItem().hasDisplayName()) {
+            MarketData.Shop shop = MarketData.resolve(player.getHeldItem().getDisplayName());
+            if (shop == null) player.addChatMessage(new ChatComponentText("[XShop] Unknown shop. Create it with /xshop create first."));
+            else { tile.link(shop.id); player.addChatMessage(new ChatComponentText("[XShop] Linked to " + shop.displayName)); }
+            return true;
+        }
+        XShopService.openBlock((EntityPlayerMP)player, tile);
+        return true;
+    }
+    @Override public void breakBlock(World world, int x, int y, int z, Block block, int metadata) {
+        TileEntity raw = world.getTileEntity(x, y, z);
+        if (factionTerminal && raw instanceof TileEntityMarket) FactionMarketRegistry.broken(world, (TileEntityMarket)raw);
+        super.breakBlock(world, x, y, z, block, metadata);
+    }
+    @Override public TileEntity createNewTileEntity(World world, int metadata) { return new TileEntityMarket(); }
 
-	//todone: figure out why markets work clientside, but not serverside
-	//todo
-	// add craftable shops so players don't have to go to spawn every time they want to trade with the shops but eh whatever its good as is
-
-	@SideOnly(Side.CLIENT)
-	private IIcon iconTop;
-	@SideOnly(Side.CLIENT)
-	private IIcon iconBottom;
-
-	@Override
-	@SideOnly(Side.CLIENT)
-	public void registerBlockIcons(IIconRegister iconRegister) {
-		this.iconTop = iconRegister.registerIcon(RefStrings.MODID + ":market_top");
-		this.iconBottom = iconRegister.registerIcon(RefStrings.MODID + ":market_bottom");
-		this.blockIcon = iconRegister.registerIcon(RefStrings.MODID + ":market_side");
-	}
-
-	@Override
-	@SideOnly(Side.CLIENT)
-	public IIcon getIcon(int side, int metadata) {
-
-		return side == 1 ? this.iconTop : (side == 0 ? this.iconBottom : this.blockIcon);
-	}
-
-	public MachineMarket(Material p_i45386_1_) {
-		super(p_i45386_1_);
-	}
-
-	public static String name = "";
-
-	@Override
-	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
-		if (!world.isRemote) {
-			XFLog.debug("Market activation is running server-side.");
-			TileEntityMarket market = (TileEntityMarket) world.getTileEntity(x, y, z);
-			if (market == null) return false;
-
-			// Get offers from JSON-based MarketData
-			List<ItemStack[]> offers = MarketData.getOffers(market.name);
-
-			// Create NBTTagCompound to send offer data
-			NBTTagCompound nbt = new NBTTagCompound();
-			nbt.setString("market", market.name);
-			nbt.setInteger("offercount", offers.size());
-
-			//offers do not work serverside, but do work clientside
-
-			for (int i = 0; i < offers.size(); i++) {
-				NBTTagList list = new NBTTagList();
-				ItemStack[] offerArray = offers.get(i);
-
-				for (int j = 0; j < offerArray.length; j++) {
-					if (offerArray[j] != null) {
-						NBTTagCompound itemTag = new NBTTagCompound();
-						offerArray[j].writeToNBT(itemTag);
-						list.appendTag(itemTag);
-					}
-				}
-				nbt.setTag("items" + i, list);
-			}
-
-			// Send updated market offers to client
-			XFLog.debug("Sending market data to client for: " + market.name);
-			PacketDispatcher.wrapper.sendTo(new OfferPacket(x, y, z, market.name, nbt), (EntityPlayerMP) player);
-			//NO DUMBASS SEND TO SERVER AS WELL OR SOME SHIT FUCK GODDAMN BULLSHIT MAN I HATE THIS FUCKING MOD
-			//PacketDispatcher.wrapper.sendToServer(new OfferPacket(market.name, nbt));
-			//NEVERMIND THAT SHIT GAVE A BUNCH OF FUCKING ERRORS WHAT THE ACTUAL FUCK DO I DO I HATE THIS FUCKING SHIT
-
-			// Handle renaming the market with a Name Tag
-			if (player.getHeldItem() != null && player.getHeldItem().getItem() == Items.name_tag && player.getHeldItem().hasDisplayName()) {
-				market.name = player.getHeldItem().getDisplayName();
-				market.markDirty();
-
-				XFLog.info("Market renamed to: " + market.name);
-
-				return true;
-			}
-
-			return true;
-		} else if (!player.isSneaking()) {
-			// Open GUI for Market
-			FMLNetworkHandler.openGui(player, MainRegistry.instance, ModBlocks.guiID_market, world, x, y, z);
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-
-	@Override
-	public TileEntity createNewTileEntity(World p_149915_1_, int p_149915_2_) {
-		return new TileEntityMarket();
-	}
-
-	public static class TileEntityMarket extends TileEntity {
-		//name is working as a market identifier, nothing needs to be changed here?
-
-		public String name = "";
-
-		public void readFromNBT(NBTTagCompound nbt) {
-			super.readFromNBT(nbt);
-			name = nbt.getString("name");
-		}
-
-		public void writeToNBT(NBTTagCompound nbt) {
-			super.writeToNBT(nbt);
-			nbt.setString("name", name);
-		}
-
-		@Override
-		public void updateEntity() {
-			if (!worldObj.isRemote) {
-				markDirty(); // Forces a save
-			}
-		}
-
-	}
-
-
+    /** The legacy tile registration and name tag are retained for lazy world migration. */
+    public static class TileEntityMarket extends TileEntity {
+        private String legacyName = "";
+        public String shopId = "", factionId = "", terminalToken = "";
+        public String resolveShopId() {
+            if (shopId.isEmpty() && !legacyName.isEmpty() && !worldObj.isRemote) {
+                String migrated = MarketData.legacyId(legacyName);
+                if (migrated != null) { shopId = migrated; legacyName = ""; markDirty(); }
+            }
+            return shopId;
+        }
+        public void link(String id) { shopId = id; legacyName = ""; markDirty(); }
+        @Override public boolean canUpdate() { return false; }
+        @Override public void readFromNBT(NBTTagCompound tag) {
+            super.readFromNBT(tag); legacyName = tag.getString("name"); shopId = tag.getString("shopId");
+            factionId = tag.getString("factionId"); terminalToken = tag.getString("terminalToken");
+        }
+        @Override public void writeToNBT(NBTTagCompound tag) {
+            super.writeToNBT(tag); tag.setString("name", legacyName); tag.setString("shopId", shopId);
+            tag.setString("factionId", factionId); tag.setString("terminalToken", terminalToken);
+        }
+    }
 }

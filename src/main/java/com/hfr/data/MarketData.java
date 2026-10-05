@@ -2,228 +2,207 @@ package com.hfr.data;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import com.hfr.util.XFLog;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.util.*;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.JsonToNBT;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTUtil;
+import net.minecraft.nbt.*;
 
+/** Server-owned catalog. Blocks hold IDs, never mutable display-name identities. */
+public final class MarketData {
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Path FILE = Paths.get("config", "marketdata.json");
+    private static State state = new State();
+    private static Map<String, String> names = new HashMap<String, String>();
+    private static Map<String, String> exactNames = new HashMap<String, String>();
+    private static boolean writable;
+    private static long revision;
 
-import java.io.*;
-import java.lang.reflect.Type;
-import java.util.*;
-
-import com.hfr.util.XFLog;
-public class MarketData {
-	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-	private static final File SAVE_FILE = new File("config/marketdata.json");
-
-	public static HashMap<String, List<ItemEntry[]>> offers = new HashMap<String, List<ItemEntry[]>>();
-
-	/**
-	 * Serialize a list of offers (List<ItemStack[]>) into an NBTTagCompound.
-	 */
-	public static NBTTagCompound offersToNBT(List<ItemStack[]> offersList) {
-		NBTTagCompound root = new NBTTagCompound();
-		NBTTagList offersNBT = new NBTTagList();
-
-		if (offersList != null) {
-			for (ItemStack[] offer : offersList) {
-				NBTTagCompound offerComp = new NBTTagCompound();
-				NBTTagList items = new NBTTagList();
-
-				// We'll preserve the positions (0..n-1). Empty slots => empty compound.
-				for (int i = 0; i < offer.length; i++) {
-					ItemStack s = offer[i];
-					NBTTagCompound itemTag = new NBTTagCompound();
-					if (s != null) {
-						s.writeToNBT(itemTag);
-					}
-					items.appendTag(itemTag);
-				}
-				offerComp.setTag("items", items);
-				offersNBT.appendTag(offerComp);
-			}
-		}
-
-		root.setTag("offers", offersNBT);
-		return root;
-	}
-
-	/**
-	 * Deserialize an NBTTagCompound created by offersToNBT back into List<ItemStack[]>.
-	 */
-	public static List<ItemStack[]> offersFromNBT(NBTTagCompound root) {
-		List<ItemStack[]> out = new ArrayList<ItemStack[]>();
-		if (root == null || !root.hasKey("offers")) return out;
-
-		NBTTagList offersNBT = root.getTagList("offers", 10); // 10 = TAG_COMPOUND
-		for (int i = 0; i < offersNBT.tagCount(); i++) {
-			NBTTagCompound offerComp = offersNBT.getCompoundTagAt(i);
-			NBTTagList items = offerComp.getTagList("items", 10);
-			ItemStack[] arr = new ItemStack[items.tagCount()];
-			for (int j = 0; j < items.tagCount(); j++) {
-				NBTTagCompound itemTag = items.getCompoundTagAt(j);
-				if (itemTag != null && !itemTag.hasNoTags()) {
-					try {
-						ItemStack s = ItemStack.loadItemStackFromNBT(itemTag);
-						arr[j] = s;
-					} catch (Exception e) {
-						System.err.println("Failed to load ItemStack from NBT at offer " + i + " slot " + j);
-						XFLog.error("Unexpected exception", e);
-					}
-				} else {
-					arr[j] = null;
-				}
-			}
-			out.add(arr);
-		}
-		return out;
-	}
-
-	public static void saveMarketData() {
-		XFLog.debug("Saving marketdata to: " + SAVE_FILE.getAbsolutePath());
-		FileWriter writer = null;
-		try {
-			writer = new FileWriter(SAVE_FILE);
-			GSON.toJson(offers, writer);
-			XFLog.debug("Market data saved successfully.");
-		} catch (Exception e) {
-			System.err.println("Failed to save market data: " + e.getMessage());
-		} finally {
-			if (writer != null) {
-				try {
-					writer.close();
-					XFLog.debug("FileWriter closed successfully after saving market data.");
-				} catch (Exception e) {
-					System.err.println("Failed to close FileWriter: " + e.getMessage());
-				}
-			}
-		}
-	}
-
-	public static void loadMarketData() {
-		XFLog.debug("Loading marketdata from: " + SAVE_FILE.getAbsolutePath());
-		if (!SAVE_FILE.exists()) {
-			XFLog.debug("MarketData file does not exist. Skipping load.");
-			return; // No file to load
-		}
-
-		FileReader reader = null;
-		try {
-			reader = new FileReader(SAVE_FILE);
-			Type type = new TypeToken<HashMap<String, List<ItemEntry[]>>>() {}.getType();
-			offers = GSON.fromJson(reader, type);
-			XFLog.debug("Market data loaded successfully. Offers: " + offers);
-		} catch (Exception e) {
-			System.err.println("Failed to load market data: " + e.getMessage());
-		} finally {
-			if (reader != null) {
-				try {
-					reader.close();
-					XFLog.debug("FileReader closed successfully after loading market data.");
-				} catch (Exception e) {
-					System.err.println("Failed to close FileReader: " + e.getMessage());
-				}
-			}
-		}
-	}
-
-	public static void addOffer(String market, ItemStack[] items) {
-		XFLog.debug("Adding offer to market: " + market);
-		List<ItemEntry[]> marketOffers = offers.get(market);
-
-		if (marketOffers == null) {
-			marketOffers = new ArrayList<ItemEntry[]>();
-			XFLog.debug("Created new offer list for market: " + market);
-		}
-
-		ItemEntry[] entries = new ItemEntry[items.length];
-
-		for (int i = 0; i < items.length; i++) {
-			if (items[i] != null) {
-				entries[i] = new ItemEntry(items[i]);
-				XFLog.debug("Added item to offer: " + items[i].getDisplayName());
-			}
-		}
-
-		marketOffers.add(entries);
-		offers.put(market, marketOffers);
-		XFLog.debug("Offer added to market: " + market + ". Current offers: " + marketOffers);
-		saveMarketData();
-	}
-
-	public static List<ItemStack[]> getOffers(String market) {
-		XFLog.debug("Fetching offers for market: " + market);
-		loadMarketData(); // Ensure data is loaded each time offers are fetched
-		List<ItemStack[]> result = new ArrayList<ItemStack[]>();
-		List<ItemEntry[]> entryList = offers.get(market);
-
-		if (entryList == null) {
-			XFLog.debug("No offers found for market: " + market);
-			return result;
-		}
-
-		for (ItemEntry[] entryArray : entryList) {
-			ItemStack[] stackArray = new ItemStack[entryArray.length];
-			for (int i = 0; i < entryArray.length; i++) {
-				if (entryArray[i] != null) {
-					stackArray[i] = entryArray[i].toItemStack();
-					XFLog.debug("Converted ItemEntry to ItemStack: " + stackArray[i].getDisplayName());
-				}
-			}
-			result.add(stackArray);
-		}
-		return result;
-	}
-
-	public static List<ItemEntry[]> convertToItemEntryList(List<ItemStack[]> stackOffers) {
-		List<ItemEntry[]> convertedOffers = new ArrayList<ItemEntry[]>();
-
-		for (ItemStack[] stackArray : stackOffers) {
-			ItemEntry[] entryArray = new ItemEntry[stackArray.length];
-			for (int i = 0; i < stackArray.length; i++) {
-				if (stackArray[i] != null) {
-					entryArray[i] = new ItemEntry(stackArray[i]);
-				}
-			}
-			convertedOffers.add(entryArray);
-		}
-
-		return convertedOffers;
-
-	}
-
-	private static class ItemEntry {
-		String itemName;
-		int count;
-		int metadata;
-		String nbtData;
-
-		ItemEntry(ItemStack stack) {
-			this.itemName = Item.itemRegistry.getNameForObject(stack.getItem());
-			this.count = stack.stackSize;
-			this.metadata = stack.getItemDamage();
-			this.nbtData = stack.hasTagCompound() ? stack.getTagCompound().toString() : null;
-		}
-
-		ItemStack toItemStack() {
-			Item item = (Item) Item.itemRegistry.getObject(itemName);
-			//this crashed clientside somehow
-			if (item == null) return null;
-
-			ItemStack stack = new ItemStack(item, count, metadata);
-			if (nbtData != null) {
-				try {
-					stack.setTagCompound((NBTTagCompound) JsonToNBT.func_150315_a(nbtData)); // 1.7.10 NBT Parsing
-				} catch (Exception e) {
-					System.err.println("Failed to parse NBT for item: " + itemName);
-				}
-			}
-			return stack;
-		}
-	}
-
-
+    private static final class State {
+        int schemaVersion = 2;
+        Map<String, Shop> shops = new LinkedHashMap<String, Shop>();
+        // Preserve aliases after rename/deletion so unloaded blocks never bind to a replacement.
+        Map<String, String> legacyNames = new LinkedHashMap<String, String>();
+        State() { }
+        State(State other) { shops.putAll(other.shops); legacyNames.putAll(other.legacyNames); }
+    }
+    public static final class Shop {
+        public String id, displayName;
+        public boolean enabled = true, visibleInFactionTerminal = false, adminOnly = false;
+        public String category = "";
+        public int sortOrder;
+        private List<ItemEntry[]> offers = new ArrayList<ItemEntry[]>();
+        private Shop() { }
+        private Shop(Shop other) {
+            id = other.id; displayName = other.displayName; enabled = other.enabled;
+            visibleInFactionTerminal = other.visibleInFactionTerminal; adminOnly = other.adminOnly;
+            category = other.category; sortOrder = other.sortOrder;
+            offers = new ArrayList<ItemEntry[]>(other.offers);
+        }
+        public boolean marketEligible() { return enabled && visibleInFactionTerminal && !adminOnly; }
+        public int offerCount() { return offers.size(); }
+    }
+    public static long revision() { return revision; }
+    public static Shop get(String id) { return state.shops.get(id); }
+    public static Shop resolve(String reference) {
+        Shop exact = get(reference);
+        if (exact != null) return exact;
+        exact = get(exactNames.get(reference));
+        if (exact != null) return exact;
+        String id = names.get(reference == null ? "" : reference.toLowerCase(Locale.ROOT));
+        if (id == null) id = state.legacyNames.get(reference);
+        return get(id);
+    }
+    public static String legacyId(String name) { return state.legacyNames.get(name); }
+    public static List<Shop> list() {
+        List<Shop> result = new ArrayList<Shop>(state.shops.values());
+        Collections.sort(result, new Comparator<Shop>() {
+            public int compare(Shop a, Shop b) {
+                int order = Integer.compare(a.sortOrder, b.sortOrder);
+                if (order == 0) order = a.displayName.compareToIgnoreCase(b.displayName);
+                return order == 0 ? a.id.compareTo(b.id) : order;
+            }
+        });
+        return result;
+    }
+    private static void index() {
+        names.clear(); exactNames.clear(); Set<String> ambiguous = new HashSet<String>();
+        for (Shop shop : state.shops.values()) {
+            exactNames.put(shop.displayName, shop.id); String key = shop.displayName.toLowerCase(Locale.ROOT);
+            if (names.containsKey(key)) { names.remove(key); ambiguous.add(key); }
+            else if (!ambiguous.contains(key)) names.put(key, shop.id);
+        }
+    }
+    private static String validName(String name) {
+        String value = name == null ? "" : name.trim();
+        if (value.isEmpty() || value.length() > 80 || value.matches(".*[\\p{Cntrl}].*"))
+            throw new IllegalArgumentException("Shop names must contain 1-80 printable characters.");
+        return value;
+    }
+    private static void checkName(String name, String ownId, State catalog) {
+        for (Shop shop : catalog.shops.values())
+            if (!shop.id.equals(ownId) && (shop.displayName.equalsIgnoreCase(name) || shop.id.equalsIgnoreCase(name)))
+                throw new IllegalArgumentException("That shop name or ID is already in use.");
+    }
+    private static void commit(State next) {
+        if (!writable) throw new IllegalStateException("Market catalog failed to load; repair marketdata.json and restart.");
+        try {
+            Files.createDirectories(FILE.getParent());
+            Path temporary = FILE.resolveSibling("marketdata.json.tmp");
+            try (Writer writer = Files.newBufferedWriter(temporary, StandardCharsets.UTF_8)) { GSON.toJson(next, writer); }
+            try { Files.move(temporary, FILE, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE); }
+            catch (AtomicMoveNotSupportedException e) { Files.move(temporary, FILE, StandardCopyOption.REPLACE_EXISTING); }
+        } catch (IOException e) { throw new IllegalStateException("Could not save market catalog.", e); }
+        state = next; index(); revision++;
+    }
+    public static void loadMarketData() {
+        state = new State(); names.clear(); exactNames.clear(); writable = false; revision++;
+        if (!Files.exists(FILE)) { writable = true; return; }
+        try {
+            JsonObject root;
+            try (Reader reader = Files.newBufferedReader(FILE, StandardCharsets.UTF_8)) {
+                root = new JsonParser().parse(reader).getAsJsonObject();
+            }
+            State loaded;
+            boolean migration = !(root.has("schemaVersion") && root.get("schemaVersion").isJsonPrimitive());
+            if (migration) {
+                loaded = new State();
+                Map<String, List<ItemEntry[]>> old = GSON.fromJson(root,
+                    new TypeToken<LinkedHashMap<String, List<ItemEntry[]>>>() { }.getType());
+                for (Map.Entry<String, List<ItemEntry[]>> entry : old.entrySet()) {
+                    Shop shop = new Shop(); shop.displayName = entry.getKey();
+                    shop.id = UUID.nameUUIDFromBytes(("xshop:" + entry.getKey()).getBytes(StandardCharsets.UTF_8)).toString();
+                    if (entry.getValue() != null) shop.offers = entry.getValue();
+                    loaded.shops.put(shop.id, shop); loaded.legacyNames.put(entry.getKey(), shop.id);
+                }
+            } else {
+                if (root.get("schemaVersion").getAsInt() != 2) throw new IOException("Unsupported XShop schema version");
+                loaded = GSON.fromJson(root, State.class);
+            }
+            if (loaded.shops == null || loaded.legacyNames == null) throw new IOException("Missing shop registry");
+            for (Map.Entry<String, Shop> entry : loaded.shops.entrySet()) {
+                Shop shop = entry.getValue();
+                if (shop == null || !entry.getKey().equals(shop.id) || shop.displayName == null || shop.offers == null)
+                    throw new IOException("Invalid shop definition");
+                UUID.fromString(shop.id);
+            }
+            if (migration) {
+                Path backup = FILE.resolveSibling("marketdata.json.legacy.bak");
+                if (!Files.exists(backup)) Files.copy(FILE, backup);
+                writable = true; commit(loaded);
+            } else { state = loaded; index(); writable = true; }
+        } catch (Exception e) { writable = false; XFLog.error("XShop catalog load failed; original file preserved and edits disabled", e); }
+    }
+    public static Shop create(String name) {
+        name = validName(name); checkName(name, "", state);
+        Shop shop = new Shop(); shop.id = UUID.randomUUID().toString(); shop.displayName = name;
+        State next = new State(state); next.shops.put(shop.id, shop); commit(next); return shop;
+    }
+    public static void delete(String id) {
+        require(id); State next = new State(state); next.shops.remove(id); commit(next);
+    }
+    private static Shop require(String id) {
+        Shop shop = get(id); if (shop == null) throw new IllegalArgumentException("Unknown shop."); return shop;
+    }
+    public static void configure(String id, String name, boolean enabled, boolean visible, boolean adminOnly) {
+        Shop shop = new Shop(require(id)); name = validName(name); checkName(name, id, state);
+        shop.displayName = name; shop.enabled = enabled; shop.visibleInFactionTerminal = visible; shop.adminOnly = adminOnly;
+        State next = new State(state); next.shops.put(id, shop); commit(next);
+    }
+    public static void addOffer(String id, ItemStack[] items) {
+        if (items.length != 4 || items[0] == null || items[1] == null) throw new IllegalArgumentException("Hotbar slots 1 and 2 must contain the sold item and currency.");
+        Shop shop = new Shop(require(id)); ItemEntry[] entries = new ItemEntry[4];
+        for (int i = 0; i < 4; i++) if (items[i] != null) entries[i] = new ItemEntry(items[i]);
+        shop.offers.add(entries); State next = new State(state); next.shops.put(id, shop); commit(next);
+    }
+    public static void removeOffer(String id, int index) {
+        Shop shop = new Shop(require(id));
+        if (index < 0 || index >= shop.offers.size()) throw new IllegalArgumentException("Offer index is out of range.");
+        shop.offers.remove(index); State next = new State(state); next.shops.put(id, shop); commit(next);
+    }
+    public static ItemStack[] offer(String id, int index) {
+        Shop shop = get(id);
+        if (shop == null || index < 0 || index >= shop.offers.size()) return null;
+        ItemEntry[] entries = shop.offers.get(index); ItemStack[] result = new ItemStack[4];
+        if (entries == null || entries.length < 2 || entries.length > 4) return null;
+        for (int i = 0; i < entries.length; i++)
+            if (entries[i] != null && (result[i] = entries[i].toItemStack()) == null) return null;
+        return result[0] == null || result[1] == null ? null : result;
+    }
+    public static NBTTagCompound offersToNBT(List<ItemStack[]> offers) {
+        NBTTagCompound root = new NBTTagCompound(); NBTTagList list = new NBTTagList();
+        for (ItemStack[] offer : offers) {
+            NBTTagCompound row = new NBTTagCompound(); NBTTagList items = new NBTTagList();
+            for (ItemStack stack : offer) { NBTTagCompound tag = new NBTTagCompound(); if (stack != null) stack.writeToNBT(tag); items.appendTag(tag); }
+            row.setTag("items", items); list.appendTag(row);
+        }
+        root.setTag("offers", list); return root;
+    }
+    public static List<ItemStack[]> offersFromNBT(NBTTagCompound root) {
+        List<ItemStack[]> result = new ArrayList<ItemStack[]>(); NBTTagList rows = root.getTagList("offers", 10);
+        for (int i = 0; i < rows.tagCount(); i++) {
+            NBTTagList items = rows.getCompoundTagAt(i).getTagList("items", 10); ItemStack[] row = new ItemStack[4];
+            for (int j = 0; j < Math.min(4, items.tagCount()); j++) row[j] = ItemStack.loadItemStackFromNBT(items.getCompoundTagAt(j));
+            result.add(row);
+        }
+        return result;
+    }
+    private static final class ItemEntry {
+        String itemName; int count, metadata; String nbtData;
+        ItemEntry(ItemStack stack) {
+            itemName = Item.itemRegistry.getNameForObject(stack.getItem()); count = stack.stackSize; metadata = stack.getItemDamage();
+            nbtData = stack.hasTagCompound() ? stack.getTagCompound().toString() : null;
+        }
+        ItemStack toItemStack() {
+            Item item = (Item)Item.itemRegistry.getObject(itemName);
+            if (item == null || count <= 0 || count > item.getItemStackLimit()) return null;
+            ItemStack stack = new ItemStack(item, count, metadata);
+            if (nbtData != null) try { stack.setTagCompound((NBTTagCompound)JsonToNBT.func_150315_a(nbtData)); }
+                catch (Exception e) { return null; }
+            return stack;
+        }
+    }
 }

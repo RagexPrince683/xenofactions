@@ -41,6 +41,35 @@ One physical TDM map can offer several voting pairings. New maps start excluded 
 
 `/xc factiontimeoutcreationreset <playername>` is admin-only and resets only the specified player's faction creation cooldown. It does not alter faction membership or any other cooldown, and it supports stored offline players.
 
+## XShops and faction market terminals
+
+XShop offers belong to one server catalog, not to placed blocks. All administration uses permission level 3. `/xshop edit <ID/name>` opens the offer/settings editor; interacting with an admin XShop opens its block configuration panel. Select a shop to link the block, use **Edit** for its settings and offers, or **Unlink block** to clear the reference. Normal players open the linked trading screen. A renamed nametag remains a convenient admin-only way to link an existing block to an existing shop name or ID; it does not create a separate shop.
+
+```text
+/xshop create General Supplies
+/xshop list
+/xshop add <shop ID>
+/xshop edit <shop ID>
+/xshop set <shop ID> visible on
+/xshop link <shop ID> <x> <y> <z>
+```
+
+For **Add offer**, put the sold item and quantity in hotbar slot 1, and one to three currency stacks in slots 2-4. Items are copied into the definition, not consumed during editing. The editor can rename the shop, toggle enabled/market/admin-only settings, and remove zero-based offers. The original item-and-metadata currency matching is retained. Repeated costs for the same currency must be paid in full, and inventory overflow drops only the uninserted purchased items.
+
+New and migrated shops are enabled but excluded from faction terminals until explicitly made visible. Disabled and admin-only shops never appear there. The original admin block remains non-craftable; the separate **Global Market Terminal** is craftable when survival recipes are enabled. Officers and leaders may place one in their own faction's designated capital. Every member of that faction can browse and trade there. Both catalogs and offers use six-row pages; catalog search filters by display name.
+
+The first successfully founded city becomes the designated capital, independently of its upgrade level. `/c capital` reports it; only leaders can run `/c capital set <owned city>`. The `XENOFACTIONS_05_CLAIMS_CITIES.capitalChangeCooldownHours` default is 168 hours between changes. Changing the designation clears the old terminal registration and invalidates an old home outside the new capital; an Officer or leader must run `/c sethome` inside the new capital. Losing the capital does not automatically designate another city. The leader must choose a replacement, subject to the saved cooldown. Moving a City Center preserves its capital identity, but a terminal outside its resulting territory stops functioning.
+
+**Persistence and upgrades:** `config/marketdata.json` now stores schema version 2, UUID-keyed shop definitions, display names, enabled/visible/admin-only flags, offers, and reserved category/sort-order fields. Old name-keyed JSON is backed up to `marketdata.json.legacy.bak` before migration. Existing item definitions, quantities, metadata, and NBT remain stored. Missing mod items leave an unavailable offer rather than creating a free trade or discarding its definition. A malformed/unsupported catalog disables shop edits and preserves the original file. Stop the server before editing JSON manually; the catalog loads at server startup and writes changes through a temporary file and replacement.
+
+Existing admin blocks retain their tile registration and migrate their saved `name` to `shopId` when accessed. Historical name-to-ID aliases survive renames and deletions, so an unloaded block remains linked across a rename and cannot silently attach to a newly created shop with a deleted shop's old name. Unconfigured legacy names remain inactive until explicitly linked.
+
+Faction world data stores the designated `capitalCityId`, designation marker, and `capitalChangeAfter` timestamp, plus a `FactionMarketTerminals` list containing each faction UUID, dimension, block coordinates, registration version, and unique terminal token. Existing factions migrate to the owned city containing their old home, otherwise the first owned city in deterministic dimension/X/Y/Z order; the historical founding city cannot be reconstructed from saves that do not record founding order. Saved city UUIDs now survive claim loading. Legacy capital claim coordinates reconcile with the City Center's saved ID when available.
+
+Terminal validation looks up only that faction's registration and the recorded block. Placement can load that one recorded chunk to distinguish an unloaded terminal from WorldEdit deletion; an unavailable dimension remains unknown and blocks a duplicate until it can be checked. Normal break clears the matching registration. Use and replacement placement clear stale/out-of-capital registrations. A unique token prevents old blocks from becoming active after a replacement, even if the capital later returns. WorldEdit-copied or unregistered terminals stay inactive; break them and place an item normally to register one. Faction disband/merge clears the removed faction's registration.
+
+GUI requests require a server-issued player session and fresh catalog revision. Permissions, distance, dimension, block identity, faction membership, capital ownership, and shop eligibility are checked on the server before navigation, configuration, or trades. Requests run on the server thread. Session state expires after five idle minutes and clears on death, logout, dimension change, or world reset. Update both clients and servers together for the new shop screens.
+
 ## Backups
 
 Back up the world and config directory before:

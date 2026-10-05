@@ -814,3 +814,14 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 
 - Resolve every city, claim, zone, TDM area, border line, and point marker through GTNH/Dynmap's own world naming and normalization APIs. Add automatic dimension mappings and resolve old stock world-name entries automatically while preserving custom overrides and missing/empty dimension suppression.
 - Rebuild markers after server world load/unload so automatic mappings pick up newly loaded dimensions. Preserve marker IDs, geometry, styles, public visibility rules, and nonpersistent publication; support both GTNH 0.3.47's raw-world JSON filter and newer normalized-world filtering.
+
+2026-10-04 22:39 — Manage XShops and faction capital markets
+
+- Create, list, rename, delete, configure, and link shops with /xshop. Administrators can select a shop from a placed XShop's configuration panel, edit offers and access settings, or continue linking with renamed nametags. Shop renames preserve block links and existing shop offers migrate automatically.
+- Craft a separate Global Market Terminal for your faction's designated capital. Officers and leaders may place one active terminal per faction; all faction members can search and browse server-approved shops. Disabled, private, and admin-only shops stay out of the faction market.
+- Designate the founding city as the faction capital, independently of city level. Leaders can change it with /c capital set, with a configurable seven-day cooldown between changes. Set faction homes only inside the designated capital; capital changes deactivate the old terminal and permit a replacement.
+- Recover terminal placement after normal removal or stale world-edit coordinates without searching every chunk. Old terminals cannot become extra active markets after replacement. Require current server permissions and shop access for configuration and trades, and correctly charge repeated currency costs and handle inventory overflow.
+
+2026-10-04 22:39 — Restore normal emerald blocks
+
+- Remove the unused override that made vanilla emerald blocks unbreakable and effectively explosion-proof. Emerald blocks retain their normal mining and blast behavior.

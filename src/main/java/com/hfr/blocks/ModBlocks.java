@@ -13,7 +13,6 @@ import com.hfr.tileentity.TileEntityWallImage;
 import cpw.mods.fml.common.registry.GameRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
-import net.minecraft.init.Blocks;
 
 import static net.minecraft.block.Block.soundTypeWood;
 
@@ -87,6 +86,7 @@ public class ModBlocks {
 	public static Block machine_net;
 	public static final int guiID_net = 10;
 	public static Block machine_market;
+    public static Block faction_market;
 	public static final int guiID_market = 11;
 	//public static Block rbmk_element;
 	public static final int guiID_rbmk = 12;
@@ -259,6 +259,8 @@ public class ModBlocks {
 		//machine_tank = new MachineTank(Material.iron).setStepSound(soundTypeMetal).setBlockName("machine_tank").setHardness(5.0F).setResistance(10.0F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":tank");
 
 		machine_market = new MachineMarket(Material.iron).setStepSound(soundTypeMetal).setBlockName("machine_market").setHardness(Float.POSITIVE_INFINITY).setResistance(Float.POSITIVE_INFINITY).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":market_side");
+        faction_market = new MachineMarket(Material.iron, true).setStepSound(soundTypeMetal).setBlockName("faction_market")
+            .setHardness(3F).setResistance(10F).setCreativeTab(MainRegistry.tab).setBlockTextureName(RefStrings.MODID + ":market_side");
 
 
 		box = new Box(Material.cloth).setStepSound(Block.soundTypeCloth).setBlockName("box").setHardness(5.0F).setResistance(10.0F).setCreativeTab(MainRegistry.tab);
@@ -311,8 +313,6 @@ public class ModBlocks {
 		debug = new BlockDebug(Material.cloth).setStepSound(soundTypeMetal).setBlockName("debug").setHardness(0.0F).setResistance(0.0F).setCreativeTab(null).setBlockTextureName(RefStrings.MODID + ":debug");
 
 		
-		Blocks.emerald_block.setResistance(6000000.0F).setBlockUnbreakable();
-		//wtf is this for???
 	}
 
 	private static void registerBlock() {
@@ -367,6 +367,7 @@ public class ModBlocks {
 		GameRegistry.registerBlock(machine_foundry, machine_foundry.getUnlocalizedName());
 
 		GameRegistry.registerBlock(machine_market, ItemBlockUnstackable.class, machine_market.getUnlocalizedName());
+        GameRegistry.registerBlock(faction_market, ItemBlockFactionMarket.class, faction_market.getUnlocalizedName());
 
 
 		GameRegistry.registerBlock(machine_radar, ItemBlockUnstackable.class, machine_radar.getUnlocalizedName());

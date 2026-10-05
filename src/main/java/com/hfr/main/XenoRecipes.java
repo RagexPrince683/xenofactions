@@ -58,6 +58,8 @@ public final class XenoRecipes {
 
 
 		// Faction utilities.
+        shaped(ModBlocks.faction_market, "IRI", "ECE", "IRI", 'I', Items.iron_ingot,
+            'R', Items.redstone, 'E', Items.emerald, 'C', Blocks.chest);
 		// Four foundations per craft keeps large footprints practical while still requiring ironwork.
 		GameRegistry.addRecipe(new ItemStack(ModBlocks.uni_foundation, 4), "SIS", "III", "SIS",
 				'S', Blocks.stonebrick, 'I', Items.iron_ingot);

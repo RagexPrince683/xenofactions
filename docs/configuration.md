@@ -111,6 +111,7 @@ Category: `XENOFACTIONS_05_CLAIMS_CITIES`
 | `cityRelocationMoveLimit` | `3` | Successful moves allowed per stable city ID in the rolling window. |
 | `cityRelocationWindowHours` | `168` | Rolling move-frequency window (seven days). |
 | `cityRelocationRepeatCooldownMinutes` | `30` | Delay after the second successful move before the third move. |
+| `capitalChangeCooldownHours` | `168` | Hours between leader-only designated-capital changes, independent of city level. Minimum 1 hour. |
 | `cityRelocationPendingMinutes` | `30` | Pending transaction lifetime; expiration leaves the old city unchanged. |
 | `warpCost` | `125` | Legacy alias still read in this category. |
 | `territoryDelay` | `5` | Ticks between territory validation operations. |

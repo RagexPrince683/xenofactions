@@ -153,6 +153,10 @@ public class Flag extends BlockContainer {
 				flag.setMode(1);
 				flag.isClaimed = true;
 				flag.generateClaim();
+                if (!clowder.capitalDesignated) {
+                    clowder.capitalCityId = flag.getCityId(); clowder.capitalDesignated = true;
+                    clowder.save(world);
+                }
 				// This is deliberately post-commit: failed placement paths never receive a contract.
 				if(!flag.builderStarterGranted) {
 					ItemStack contract = new ItemStack(ModItems.builder_contract);

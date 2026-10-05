@@ -200,6 +200,7 @@ public class CommandClowder extends CommandBase {
 		if(cmd.equals("flag")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdFlag(sender, args); return; }
 		if(cmd.equals("retreat")) { cmdRetreat(sender); return; }
 		if(cmd.equals("sethome")) { cmdSethome(sender); return; }
+        if(cmd.equals("capital")) { cmdCapital(sender, args); return; }
 		if(cmd.equals("setallywarp")) { cmdSetAllyWarp(sender); return; }
 		if(cmd.equals("home")) { cmdHome(sender); return; }
 		if(cmd.equals("allywarp")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdAllyWarp(sender, joinArgs(args, 1)); return; }
@@ -355,7 +356,8 @@ public class CommandClowder extends CommandBase {
 
 		if(p == 4) {
 			sender.addChatMessage(new ChatComponentText(TITLE + "Homes, warps & cities"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-sethome" + TITLE + " - Sets the faction home"));
+            sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-sethome" + TITLE + " - Sets home inside the designated capital"));
+            sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-capital [set <city>]" + TITLE + " - Inspect capital; leader-only changes have a long cooldown"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-home" + TITLE + " - Teleports to the faction home"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-setwarp <name>" + TITLE + " - Creates a faction warp"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-delwarp <name>" + TITLE + " - Removes a faction warp"));
@@ -1256,14 +1258,16 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
+        if (clowder != null && !clowder.isInCapital(player.worldObj, (int)Math.floor(player.posX), (int)Math.floor(player.posZ))) {
+            sender.addChatMessage(new ChatComponentText(ERROR + "Set home inside your faction's designated capital. Use /c capital to inspect it."));
+            return;
+        }
 
 		if (clowder != null) {
 			// level 1 member level 2 officer level 3 leader
 			if (clowder.getPermLevel(player) > 1) {
 
-				Ownership owner = ClowderTerritory.getOwnerFromInts(player.worldObj, (int) player.posX, (int) player.posZ);
-
-				if (owner != null && owner.zone == Zone.FACTION && owner.owner == clowder) {
+                if (clowder.isInCapital(player.worldObj, (int)Math.floor(player.posX), (int)Math.floor(player.posZ))) {
 
 					if (clowder.sethomeDelay <= 0)
 					{
@@ -1279,7 +1283,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 				} else {
 					sender.addChatMessage(
-							new ChatComponentText(ERROR + "You can not set the home outside of your claimed land!"));
+                            new ChatComponentText(ERROR + "You can only set the home inside your designated capital!"));
 				}
 
 			} else {
@@ -1339,6 +1343,10 @@ private void cmdCreate(ICommandSender sender, String name) {
 
 		EntityPlayerMP player = getCommandSenderAsPlayer(sender);
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
+        if (clowder != null && (!clowder.homeSet || !clowder.isInCapital(clowder.homeDim, clowder.homeX, clowder.homeZ))) {
+            sender.addChatMessage(new ChatComponentText(ERROR + "Your faction needs a home set inside its designated capital."));
+            return;
+        }
 
 		if(clowder != null) {
 
@@ -1816,6 +1824,27 @@ private void cmdCreate(ICommandSender sender, String name) {
 		if(recover) { com.hfr.clowder.CityCenterRelocationManager.issueToken(player, faction); sender.addChatMessage(new ChatComponentText(INFO + "A replacement relocation token was issued.")); }
 		else { com.hfr.clowder.CityCenterRelocationManager.clear(faction, player.worldObj); sender.addChatMessage(new ChatComponentText(INFO + "City Center move canceled; the city and claims were not changed.")); }
 	}
+    private void cmdCapital(ICommandSender sender, String[] args) {
+        EntityPlayer player = getCommandSenderAsPlayer(sender);
+        Clowder faction = Clowder.getClowderFromPlayer(player);
+        if (faction == null) { sender.addChatMessage(new ChatComponentText(ERROR + "You are not in a faction.")); return; }
+        if (args.length == 1) {
+            String name = faction.capitalCityId.isEmpty() ? "Not founded" : "Missing city (" + faction.capitalCityId + ")";
+            for (TerritoryMeta city : ClowderTerritory.getCityClaims(faction))
+                if (city.cityId.equals(faction.capitalCityId)) name = city.cityName;
+            sender.addChatMessage(new ChatComponentText(INFO + "Capital: " + name + ". Change: /c capital set <owned city>. Cooldown remaining: "
+                + Math.max(0L, (faction.capitalChangeAfter - System.currentTimeMillis() + 59999L) / 60000L) + " minutes."));
+            return;
+        }
+        if (args.length < 3 || !args[1].equalsIgnoreCase("set")) {
+            sender.addChatMessage(new ChatComponentText(ERROR + "Usage: /c capital [set <owned city>]")); return;
+        }
+        try {
+            faction.designateCapital(player, ClowderTerritory.getCityByName(faction, joinArgs(args, 2)));
+            faction.notifyAll(player.worldObj, new ChatComponentText(INFO + "Capital changed to " + joinArgs(args, 2)
+                + ". Set a new home there; the old market terminal is inactive."));
+        } catch (IllegalArgumentException e) { sender.addChatMessage(new ChatComponentText(ERROR + e.getMessage())); }
+    }
 	private void cmdCityUpgrade(ICommandSender sender) {
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
@@ -2254,6 +2283,15 @@ private void cmdCreate(ICommandSender sender, String name) {
 			return getListOfStringsMatchingLastWord(args, getFlagCompletionNames());
 		if(cmd.equals("city") && args.length == 2)
 			return getListOfStringsMatchingLastWord(args, new String[] { "upgrade", "cancelmove", "recovermove" });
+        if(cmd.equals("capital")) {
+            if(args.length == 2) return getListOfStringsMatchingLastWord(args, new String[] { "set" });
+            if(args.length >= 3 && sender instanceof EntityPlayer) {
+                List<String> cityNames = new ArrayList<String>();
+                Clowder faction = Clowder.getClowderFromPlayer((EntityPlayer)sender);
+                if(faction != null) for(TerritoryMeta city : ClowderTerritory.getCityClaims(faction)) cityNames.add(city.cityName);
+                return getListOfStringsFromIterableMatchingLastWord(args, cityNames);
+            }
+        }
 		if(cmd.equals("permissions") || cmd.equals("perms")) {
 			if(args.length == 2) return getListOfStringsMatchingLastWord(args, new String[] { "ally", "neutral" });
 			if(args.length == 3) return getListOfStringsMatchingLastWord(args, new String[] { "build", "destroy", "container", "interact", "switch" });
@@ -2363,7 +2401,7 @@ private void cmdCreate(ICommandSender sender, String name) {
 		return new String[] { "help", "enemy", "unenemy", "stonedrops", "create", "disband", "info", "list", "comrades", "alliance", "allies", "allylist", "permissions", "perms", "leave", "apply",
 				"applicants", "accept", "deny", "kick", "owner", "promote", "demote", "rename", "color", "motd",
 				"listflags", "flag", "gracebuild", "sethome", "home", "setwarp", "addwarp", "delwarp", "warp", "warps",
-				"claim", "city", "nameclaim", "balance", "deposit", "withdraw", "befriend", "ally", "acceptfriend",
+                "claim", "city", "capital", "nameclaim", "balance", "deposit", "withdraw", "befriend", "ally", "acceptfriend",
 				"acceptally", "unfriend", "unally", "setallywarp", "allywarp", "merge", "acceptmerge", "declarewar", "war", "listwars",
 				"peace", "acceptpeace", "ceasefire", "acceptceasefire", "surrender", "acceptsurrender", "defendally" };
 	}

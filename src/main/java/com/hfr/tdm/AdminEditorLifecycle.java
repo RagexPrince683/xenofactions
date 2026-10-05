@@ -34,12 +34,14 @@ public final class AdminEditorLifecycle {
         }
     }
     @SubscribeEvent public void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        com.hfr.shop.XShopService.logout(event.player);
         TDMMapOverlaySync.clear(event.player);
         TDMAdminKitEdit.cancelIfActive(event.player);
         AdminSelectionManager.clear(event.player);
         if (event.player instanceof EntityPlayerMP) AdminEditorSession.clear((EntityPlayerMP)event.player);
     }
     @SubscribeEvent public void onDimensionChange(PlayerEvent.PlayerChangedDimensionEvent event) {
+        com.hfr.shop.XShopService.logout(event.player);
         TDMMapOverlaySync.clear(event.player);
         TDMAdminKitEdit.cancelIfActive(event.player);
         AdminSelectionManager.clear(event.player);
@@ -53,6 +55,7 @@ public final class AdminEditorLifecycle {
     @SubscribeEvent(priority = EventPriority.HIGHEST) public void onDeath(LivingDeathEvent event) {
         if (event.entityLiving.worldObj.isRemote || !(event.entityLiving instanceof EntityPlayer)) return;
         EntityPlayer player = (EntityPlayer)event.entityLiving;
+        com.hfr.shop.XShopService.logout(player);
         TDMAdminKitEdit.cancelIfActive(player);
         AdminSelectionManager.clear(player);
         if (player instanceof EntityPlayerMP) AdminEditorSession.clear((EntityPlayerMP)player);
