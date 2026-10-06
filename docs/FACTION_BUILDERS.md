@@ -2,7 +2,7 @@
 
 ## Starting a Builder
 
-The existing city progression awards a **Builder Contract**. Use it on a valid Builder Depot belonging to that city to create the city's persistent Builder. A Depot owns one Builder assignment; unloading the entity does not create a replacement, while confirmed death allows the normal replacement flow to resume the persistent job.
+**Builder Contracts** are available through creative inventory or administrator distribution; routine gameplay, including city founding and crafting, does not award them automatically. Use a contract on a valid Builder Depot belonging to your faction's city to create the city's persistent Builder. A Depot owns one Builder assignment; unloading the entity does not create a replacement, while confirmed death allows the normal replacement flow to resume the persistent job.
 
 Right-click either the **Builder Depot** or its assigned **Builder NPC** to open the same management screen. The NPC resolves its Depot on the logical server and refuses stale, missing, cross-dimension, or otherwise invalid assignments instead of opening a second copy of job state.
 

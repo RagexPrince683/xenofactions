@@ -40,8 +40,6 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 	public String name = "";
 	public String ownerName = "";
 	public CityLevel cityLevel = CityLevel.SETTLEMENT;
-	/** Idempotence marker for the post-success Builder starter grant. */
-	public boolean builderStarterGranted;
 	private String cityId = "";
 
 	public String getCityId() {
@@ -534,7 +532,6 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 		this.ownerName = owner == null ? "" : owner.name;
 		this.cityLevel = CityLevel.byOrdinal(nbt.getInteger("cityLevel"));
 		this.cityId = nbt.getString("cityId");
-		this.builderStarterGranted = nbt.getBoolean("BuilderStarterGranted");
 		
 		slots = new ItemStack[getSizeInventory()];
 		
@@ -567,7 +564,6 @@ public class TileEntityFlag extends TileEntityMachineBase implements ITerritoryP
 		nbt.setString("name", name);
 		nbt.setInteger("cityLevel", cityLevel.ordinal());
 		nbt.setString("cityId", getCityId());
-		nbt.setBoolean("BuilderStarterGranted", builderStarterGranted);
 		
 		NBTTagList list = new NBTTagList();
 		

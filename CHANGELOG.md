@@ -831,3 +831,8 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 - Open the trading screen when administrators right-click an XShop, with an explicit Configure button for block management. Keep configuration reachable for unlinked and disabled shops while refusing unavailable trades.
 - Move the trading screen's next-page button one pixel right. Rename the Market toggle to Faction: Shown/Hidden and explain that it controls visibility in faction terminals.
 - Clear TDM state on logout without sending a kit-menu packet through the disconnected player's channel.
+
+2026-10-05 01:11 — Stop automatically awarding Builder Contracts
+
+- Remove the Builder Contract reward when a player founds a city and its obsolete saved grant marker. City founding no longer inserts a contract into the player's inventory or drops one when the inventory is full.
+- Keep existing contracts usable and available through creative inventory or administrator distribution.
