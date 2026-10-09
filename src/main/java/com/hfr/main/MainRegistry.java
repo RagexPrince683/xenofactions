@@ -763,6 +763,7 @@ public class MainRegistry
 		//FMLCommonHandler.instance().bus().register(pon4);
 		MinecraftForge.EVENT_BUS.register(handler);
 		MinecraftForge.EVENT_BUS.register(clowder);
+		MinecraftForge.EVENT_BUS.register(new com.hfr.ender.EnderChestInteraction());
 		//MinecraftForge.EVENT_BUS.register(pon4);
 
 		//GameRegistry.registerWorldGenerator(worldGenMoon, 0);
@@ -818,6 +819,7 @@ public class MainRegistry
 
 	@Mod.EventHandler
 	public void postInit(FMLPostInitializationEvent event) {
+		com.hfr.ender.EnderChestRestrictions.validateRegistry();
 		///give RagexPrince683 mcheli:item.ingot_steel
 		Item steelIngot = GameRegistry.findItem("mcheli", "item.ingot_steel");
 		if (steelIngot != null) {

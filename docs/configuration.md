@@ -149,6 +149,41 @@ Category: `XENOFACTIONS_07_NEW_PLAYER_PROTECTION`
 | `graceBuildOneTimeUse` | `true` | Restrict build grace to one use. |
 | `graceBuildDurationHours` | `48` | Build grace duration. |
 
+## Ender chest restrictions
+
+Category: `XENOFACTIONS_21_ENDER_CHEST`. These rules are enforced by the server when a player opens a vanilla ender chest block. They are disabled by default, so existing behavior remains unchanged until `enabled=true`. Configuration changes require a server restart.
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `enabled` | `false` | Enable deposit checks. |
+| `mode` | `blacklist` | `blacklist` rejects `itemRules`; `whitelist` accepts only `itemRules`. |
+| `itemRules` | empty | Registry names, optionally followed by `@metadata`. |
+| `storageDenyList` | HBM portable storage listed below | Always denied, even in whitelist mode. |
+| `maxTotalItems` | `-1` | Maximum sum of stack sizes across all 27 slots. `-1` is unlimited and `0` prevents deposits. |
+| `itemQuantityLimits` | empty | Entries of `registry_name[@metadata]=quantity`, counted across all ender chest slots. `-1` is unlimited and `0` prevents deposits. |
+
+Example Forge configuration entries (retain the generated `storageDenyList` to keep the HBM defaults):
+
+```cfg
+XENOFACTIONS_21_ENDER_CHEST {
+    B:enabled=true
+    S:mode=blacklist
+    S:itemRules <
+        minecraft:diamond
+    >
+    S:maxTotalItems=128
+    S:itemQuantityLimits <
+        minecraft:wool@14=16
+    >
+}
+```
+
+For example, Forge list values can include `minecraft:diamond`, `minecraft:wool@14`, and `minecraft:diamond=16` in `itemQuantityLimits`. Names are exact registry names, including the mod prefix; translated names and numeric IDs are not accepted. An entry without `@metadata` matches every metadata value. When both a general and metadata-specific limit match, both limits apply. The storage deny list takes priority over whitelist entries, followed by item rules and quantity limits. Limits count outer item stacks only; they never decode the contents of bags or crates.
+
+The default `storageDenyList` covers confirmed HBM registry items `hbm:item.plastic_bag`, `hbm:item.containment_box`, `hbm:item.kit_toolbox`, `hbm:item.kit_custom`, and the carried-content block items `hbm:tile.crate_iron`, `hbm:tile.crate_steel`, `hbm:tile.crate_desh`, `hbm:tile.crate_tungsten`, `hbm:tile.crate_template`, and `hbm:tile.safe`. HBM's bags and kits store contents in item NBT; its storage crates and safe write slot NBT to the dropped block item. Their empty and filled forms have the same registry names, so both are blocked. XenoFactions' `hfr:item.crate` is a plain lore item, and the inspected HBM loot crates generate drops rather than carry inventory NBT; neither is on the default storage list. Other modpack portable storage items could not be confirmed from the available source and must be added by their verified registry names.
+
+Saved contents are retained when these settings change. Players may withdraw items that now violate rules and may move contents without increasing restricted quantities. A rejected GUI deposit restores the ender chest, player inventory, and cursor, then sends a reason and a fresh inventory update. The default protection covers vanilla ender chest block interactions; integrations that directly mutate `EntityPlayer.getInventoryEnderChest()` or open their own container are outside this GUI interception path.
+
 ## Custom flags
 
 Category: `XENOFACTIONS_08_CUSTOM_FLAGS`

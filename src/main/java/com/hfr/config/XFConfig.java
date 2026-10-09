@@ -5,6 +5,7 @@ import java.util.Set;
 
 import com.hfr.clowder.CityLevel;
 import com.hfr.command.CommandClowderAdmin;
+import com.hfr.ender.EnderChestRestrictions;
 import com.hfr.main.MainRegistry;
 
 import net.minecraftforge.common.config.Configuration;
@@ -220,6 +221,7 @@ public final class XFConfig {
 
 	public static void load(Configuration config) {
 		commentCategories(config);
+		EnderChestRestrictions.load(config);
 		migrateTdmSoundConfig(config);
 		enableEarthWorldType = bool(config, CAT_EARTH_WORLD, "enableEarthWorldType", true, "Registers the template-backed xf_earth overworld type.");
 		enableFactionBuilders = bool(config, CAT_BUILDERS, "enableFactionBuilders", true, "Enable persistent faction Builder workers.");

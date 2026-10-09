@@ -850,3 +850,8 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 
 - Add a craftable single-offer trader with UUID ownership, separately saved offer templates, sale stock, and collected payments. Owners and existing shop administrators can configure and manage storage; customers can purchase only complete offers.
 - Validate inventory capacity, exact item metadata/NBT, stock, and payment on the server before committing a purchase. Recheck faction interaction permission on every request and reject stale offer revisions. Runtime and in-game validation remain.
+
+2026-10-09 03:08 — Add configurable ender chest deposit restrictions
+
+- Add server-side blacklist or whitelist rules, portable storage denial, a total item cap, and per-item quantity limits using stable registry names and optional metadata. Default rules cover confirmed HBM bags, toolbox, storage crates, and safe; restrictions remain off by default.
+- Validate the resulting vanilla ender chest GUI contents after each click and restore both inventories and the cursor on rejection. Preserve existing ender chest NBT and withdrawal of saved contents. Direct third-party inventory mutation and in-game behavior still require runtime validation.
