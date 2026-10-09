@@ -836,3 +836,7 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 
 - Remove the Builder Contract reward when a player founds a city and its obsolete saved grant marker. City founding no longer inserts a contract into the player's inventory or drops one when the inventory is full.
 - Keep existing contracts usable and available through creative inventory or administrator distribution.
+
+2026-10-07 22:05 — Preserve homes inside relocated city territory
+
+- Keep faction home coordinates unchanged when they remain inside the city's territory after its City Center is relocated. Only move homes that fall outside the rebuilt territory, retaining the existing translated-position and City Center fallback behavior.

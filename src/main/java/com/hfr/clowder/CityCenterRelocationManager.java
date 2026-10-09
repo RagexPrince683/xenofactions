@@ -271,6 +271,8 @@ public final class CityCenterRelocationManager {
     private static void moveHomeIfNeeded(Clowder f, Map<CoordPair,TerritoryMeta> oldClaims, int hx,int hy,int hz,int hd,int nx,int ny,int nz,World world) {
         TerritoryMeta oldHome=oldClaims.get(ClowderTerritory.getCoordPair(hd,hx,hz));
         if(!f.homeSet || oldHome==null || !f.relocationCityId.equals(oldHome.cityId)) return;
+        TerritoryMeta currentHome=ClowderTerritory.getMetaFromIntCoords(hd,hx,hz);
+        if(currentHome!=null && f.relocationCityId.equals(currentHome.cityId)) return;
         int tx=hx+(nx-f.relocationX), tz=hz+(nz-f.relocationZ);
         TerritoryMeta translated=ClowderTerritory.getMetaFromIntCoords(world,tx,tz);
         f.homeX=tx; f.homeY=hy; f.homeZ=tz; f.homeDim=world.provider.dimensionId;
