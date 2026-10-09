@@ -33,3 +33,11 @@ Use `/c permissions` (or `/c perms`) to view both policies. Officers and the lea
 Resolution order is owner member behavior, existing war/enemy handling, the territory owner's ally policy, then its neutral policy. Policies are relationship-wide rather than per faction, so diplomacy changes take effect immediately. City Center relocation/destruction, Officer Chest rank checks, flag-foundation protection, Fallen Nation restrictions, raid/mace rules, safezones, and warzones remain stricter and are evaluated by their existing paths.
 
 Permission keys are stored with each faction in existing Clowder NBT. Missing keys retain constructor defaults, making pre-update saves migrate safely. Every mutation marks Clowder saved data dirty.
+
+## Player Trader
+
+The Player Trader is a craftable, stocked shop with one offer. The player who places it owns it by UUID, so a name change does not affect access. The owner and operators with existing XShop administrator permission can manage it. The owner sets the sale item and payment item from a numbered hotbar slot (1-9), with a positive quantity for each. Setting an offer copies its item identity, metadata, and NBT as a preview; it does not take the hotbar item. Use **Deposit** to move the selected hotbar stack into sale stock. Use a numbered storage slot and **Take stock** or **Take payments** to withdraw collected items. Existing coin and tax items work as ordinary payment items; there is no currency conversion.
+
+Customers see the offer and number of complete offers in stock and use **Buy one** for one transaction. The server checks payment, stock, the customer's inventory capacity, and payment storage capacity before moving any items. A failed purchase leaves every inventory unchanged. Hoppers and other inventory automation cannot access either storage area.
+
+Shop right-clicks use the territory `INTERACT` permission, including purchases. A faction may permit public purchases by granting visitors `INTERACT`; that does not grant `CONTAINER` or `DESTROY`. Block removal follows the existing territory break rules. When removed, the block drops actual stock and collected payments once, while offer previews do not drop.

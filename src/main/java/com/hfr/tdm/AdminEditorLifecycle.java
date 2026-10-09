@@ -35,6 +35,7 @@ public final class AdminEditorLifecycle {
     }
     @SubscribeEvent public void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         com.hfr.shop.XShopService.logout(event.player);
+        com.hfr.shop.PlayerTraderService.logout(event.player);
         TDMMapOverlaySync.clear(event.player);
         TDMAdminKitEdit.cancelIfActive(event.player);
         AdminSelectionManager.clear(event.player);
@@ -56,6 +57,7 @@ public final class AdminEditorLifecycle {
         if (event.entityLiving.worldObj.isRemote || !(event.entityLiving instanceof EntityPlayer)) return;
         EntityPlayer player = (EntityPlayer)event.entityLiving;
         com.hfr.shop.XShopService.logout(player);
+        com.hfr.shop.PlayerTraderService.logout(player);
         TDMAdminKitEdit.cancelIfActive(player);
         AdminSelectionManager.clear(player);
         if (player instanceof EntityPlayerMP) AdminEditorSession.clear((EntityPlayerMP)player);

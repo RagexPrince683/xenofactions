@@ -650,6 +650,8 @@ public void handleChatServer(ServerChatEvent event) {
 	}
 	
 	private boolean canInteract(EntityPlayer player, Clowder clowder, Ownership owner, Block b, PlayerInteractEvent event) {
+		if(b == ModBlocks.player_trader)
+			return com.hfr.shop.PlayerTraderService.mayAccess(player, event.x, event.z);
 		
 		if(player.inventory.hasItem(ModItems.debug))
 			return true;

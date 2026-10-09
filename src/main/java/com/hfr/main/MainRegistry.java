@@ -685,6 +685,7 @@ public class MainRegistry
 		GameRegistry.registerTileEntity(TileEntityConquerer.class, "tileentity_hfr_conquest_flag");
 		GameRegistry.registerTileEntity(TileEntityOfficerChest.class, "tileentity_hfr_chest");
 		GameRegistry.registerTileEntity(TileEntityMarket.class, "tileentity_hfr_shop");
+		GameRegistry.registerTileEntity(com.hfr.blocks.machine.PlayerTrader.Tile.class, "tileentity_hfr_player_trader");
 		GameRegistry.registerTileEntity(TileEntityFoundry.class, "tileentity_hfr_foundry");
 		GameRegistry.registerTileEntity(TileEntityMachineSawmill.class, "tileentity_hfr_sawmill");
 		GameRegistry.registerTileEntity(TileEntityMachineEFurnace.class, "tileentity_hfr_efurnace");

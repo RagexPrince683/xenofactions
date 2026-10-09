@@ -116,6 +116,7 @@ public class ClowderData extends WorldSavedData {
 		com.hfr.journeymap.ClaimOverlaySync.resetWorldState();
 		com.hfr.dynmap.XFDynmapIntegration.markDirty();
         com.hfr.shop.XShopService.clearSessions();
+        com.hfr.shop.PlayerTraderService.clearSessions();
 	}
 
 	public static void release(World world) {

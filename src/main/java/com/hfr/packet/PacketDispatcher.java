@@ -124,6 +124,8 @@ public class PacketDispatcher {
 		wrapper.registerMessage(TDMMapOverlayPacket.Handler.class, TDMMapOverlayPacket.class, i++, Side.CLIENT);
         wrapper.registerMessage(com.hfr.packet.shop.XShopActionPacket.Handler.class, com.hfr.packet.shop.XShopActionPacket.class, i++, Side.SERVER);
         wrapper.registerMessage(com.hfr.packet.shop.XShopSnapshotPacket.Handler.class, com.hfr.packet.shop.XShopSnapshotPacket.class, i++, Side.CLIENT);
+        wrapper.registerMessage(com.hfr.packet.shop.PlayerTraderActionPacket.Handler.class, com.hfr.packet.shop.PlayerTraderActionPacket.class, i++, Side.SERVER);
+        wrapper.registerMessage(com.hfr.packet.shop.PlayerTraderSnapshotPacket.Handler.class, com.hfr.packet.shop.PlayerTraderSnapshotPacket.class, i++, Side.CLIENT);
 
 	}
 	

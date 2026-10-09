@@ -44,6 +44,7 @@ tile.machine_net.name=Fishing Net
 container.machineNet=Fishing Net
 tile.machine_market.name=XShop
 tile.faction_market.name=Global Market Terminal
+tile.player_trader.name=Player Trader
 tile.builder.name=Builder Depot
 container.builder=Schematic Printer
 tile.machine_uni.name=University

@@ -845,3 +845,8 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 
 - Give grain mill multiblock dummies a server-side inventory proxy that forwards valid wheat insertion to the existing core inventory and marks the core dirty for saving. Core inventory NBT and the processing recipe remain unchanged.
 - Expose only the three wheat inputs above and at horizontal faces, and only the three flour outputs below the core. Dummy faces do not extract items. Hopper transfer and in-game processing still require runtime validation.
+
+2026-10-09 02:55 — Add stocked player trader shops
+
+- Add a craftable single-offer trader with UUID ownership, separately saved offer templates, sale stock, and collected payments. Owners and existing shop administrators can configure and manage storage; customers can purchase only complete offers.
+- Validate inventory capacity, exact item metadata/NBT, stock, and payment on the server before committing a purchase. Recheck faction interaction permission on every request and reject stale offer revisions. Runtime and in-game validation remain.
