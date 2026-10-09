@@ -855,3 +855,8 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 
 - Add server-side blacklist or whitelist rules, portable storage denial, a total item cap, and per-item quantity limits using stable registry names and optional metadata. Default rules cover confirmed HBM bags, toolbox, storage crates, and safe; restrictions remain off by default.
 - Validate the resulting vanilla ender chest GUI contents after each click and restore both inventories and the cursor on rejection. Preserve existing ender chest NBT and withdrawal of saved contents. Direct third-party inventory mutation and in-game behavior still require runtime validation.
+
+2026-10-09 16:13 — Fix faction alliance offers and acceptance
+
+- Resolve alliance command targets by faction name first, then by player identity and current faction membership. Store new incoming offers by sending faction UUID, while recognizing existing saved offer keys where they can be resolved.
+- Accept only a matching incoming alliance offer, persist both alliance links, refresh nameplate relationships, and remove the matched offer after success. Show faction names in alliance messages and command suggestions. In-game validation remains.
