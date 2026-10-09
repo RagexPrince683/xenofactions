@@ -860,3 +860,7 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 
 - Resolve alliance command targets by faction name first, then by player identity and current faction membership. Store new incoming offers by sending faction UUID, while recognizing existing saved offer keys where they can be resolved.
 - Accept only a matching incoming alliance offer, persist both alliance links, refresh nameplate relationships, and remove the matched offer after success. Show faction names in alliance messages and command suggestions. In-game validation remains.
+
+2026-10-09 16:47 — Harvest mature rice by right-clicking
+
+- Right-clicking rice at growth stage 7 now leaves the crop planted at stage 0 and drops one rice on the server. Immature rice and normal block-breaking drops are unchanged; faction and interaction cancellation continue through the existing event path. In-game validation remains.
