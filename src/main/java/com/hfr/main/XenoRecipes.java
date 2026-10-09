@@ -71,7 +71,7 @@ public final class XenoRecipes {
 
 		// Developed production/prestige infrastructure; shared components form the progression chain.
 		shaped(ModBlocks.machine_coalmine, "SMS", "MCM", "SIS", 'S', ModItems.components_scaffold,
-				'M', ModItems.components_mechanical, 'C', Blocks.chest, 'I', Items.minecart);
+				'M', ModItems.components_mechanical, 'C', Blocks.chest, 'I', Blocks.iron_block);
 		shaped(ModBlocks.machine_factory, "SCS", "MEM", "SPS", 'S', ModItems.components_steel,
 				'C', Blocks.crafting_table, 'M', ModItems.components_mechanical, 'E', ModItems.components_electronics, 'P', Blocks.piston);
 		shaped(ModBlocks.machine_uni, "BEB", "SDS", "BKB", 'B', Blocks.bookshelf, 'E', Blocks.beacon,
