@@ -840,3 +840,8 @@ Added `/c stonedrops [page]` as a read-only player-accessible command for viewin
 2026-10-07 22:05 — Preserve homes inside relocated city territory
 
 - Keep faction home coordinates unchanged when they remain inside the city's territory after its City Center is relocated. Only move homes that fall outside the rebuilt territory, retaining the existing translated-position and City Center fallback behavior.
+
+2026-10-09 02:46 — Feed grain mills through hopper-facing dummy blocks
+
+- Give grain mill multiblock dummies a server-side inventory proxy that forwards valid wheat insertion to the existing core inventory and marks the core dirty for saving. Core inventory NBT and the processing recipe remain unchanged.
+- Expose only the three wheat inputs above and at horizontal faces, and only the three flour outputs below the core. Dummy faces do not extract items. Hopper transfer and in-game processing still require runtime validation.

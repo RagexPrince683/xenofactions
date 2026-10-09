@@ -10,7 +10,7 @@ Vanilla hoppers satisfy the same central foundation predicate as Foundation/othe
 
 ## Processor automation audit
 
-* **Grain Mill:** wheat inserts into the four processing slots; only completed flour extracts downward.
+* **Grain Mill:** hoppers aimed at the core or a multiblock dummy insert wheat into the three input slots from above or a horizontal side. Only completed flour extracts downward from the core's three output slots; the dummy inventory faces do not extract.
 * **Blast Furnace:** iron/iron ore inserts from the top, coal or coal blocks from a side, and only finished steel extracts downward.
 * **Coal Mine:** miners insert from sides; supplies and canaries insert from above; only produced coal extracts downward. Workers, canaries, and supplies cannot be drained.
 * **Production Line:** it has no item input recipe. Produced cogs extract downward; the jam/status slot remains protected.

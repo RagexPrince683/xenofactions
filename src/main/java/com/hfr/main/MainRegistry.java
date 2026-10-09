@@ -663,6 +663,7 @@ public class MainRegistry
 		GameRegistry.registerTileEntity(TileEntityProp.class, "tileentity_hfr_prop");
 		GameRegistry.registerTileEntity(TileEntityStatue.class, "tileentity_hfr_statue");
 		GameRegistry.registerTileEntity(TileEntityMachineGrainmill.class, "tileentity_hfr_mill");
+		GameRegistry.registerTileEntity(TileEntityGrainmillInputProxy.class, "tileentity_hfr_mill_input_proxy");
 		GameRegistry.registerTileEntity(TileEntityMachineBlastFurnace.class, "tileentity_hfr_furnace");
 		GameRegistry.registerTileEntity(TileEntityBerlin.class, "tileentity_hfr_berlin");
 		GameRegistry.registerTileEntity(TileEntityBox.class, "tileentity_hfr_smelly_box");
