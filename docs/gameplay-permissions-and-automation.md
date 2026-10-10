@@ -10,7 +10,7 @@ Vanilla hoppers satisfy the same central foundation predicate as Foundation/othe
 
 ## Processor automation audit
 
-* **Grain Mill:** wheat inserts into the four processing slots; only completed flour extracts downward.
+* **Grain Mill:** hoppers aimed at the core or a multiblock dummy insert wheat into the three input slots from above or a horizontal side. Only completed flour extracts downward from the core's three output slots; the dummy inventory faces do not extract.
 * **Blast Furnace:** iron/iron ore inserts from the top, coal or coal blocks from a side, and only finished steel extracts downward.
 * **Coal Mine:** miners insert from sides; supplies and canaries insert from above; only produced coal extracts downward. Workers, canaries, and supplies cannot be drained.
 * **Production Line:** it has no item input recipe. Produced cogs extract downward; the jam/status slot remains protected.
@@ -33,3 +33,11 @@ Use `/c permissions` (or `/c perms`) to view both policies. Officers and the lea
 Resolution order is owner member behavior, existing war/enemy handling, the territory owner's ally policy, then its neutral policy. Policies are relationship-wide rather than per faction, so diplomacy changes take effect immediately. City Center relocation/destruction, Officer Chest rank checks, flag-foundation protection, Fallen Nation restrictions, raid/mace rules, safezones, and warzones remain stricter and are evaluated by their existing paths.
 
 Permission keys are stored with each faction in existing Clowder NBT. Missing keys retain constructor defaults, making pre-update saves migrate safely. Every mutation marks Clowder saved data dirty.
+
+## Player Trader
+
+The Player Trader is a craftable, stocked shop with one offer. The player who places it owns it by UUID, so a name change does not affect access. The owner and operators with existing XShop administrator permission can manage it. The owner sets the sale item and payment item from a numbered hotbar slot (1-9), with a positive quantity for each. Setting an offer copies its item identity, metadata, and NBT as a preview; it does not take the hotbar item. Use **Deposit** to move the selected hotbar stack into sale stock. Use a numbered storage slot and **Take stock** or **Take payments** to withdraw collected items. Existing coin and tax items work as ordinary payment items; there is no currency conversion.
+
+Customers see the offer and number of complete offers in stock and use **Buy one** for one transaction. The server checks payment, stock, the customer's inventory capacity, and payment storage capacity before moving any items. A failed purchase leaves every inventory unchanged. Hoppers and other inventory automation cannot access either storage area.
+
+Shop right-clicks use the territory `INTERACT` permission, including purchases. A faction may permit public purchases by granting visitors `INTERACT`; that does not grant `CONTAINER` or `DESTROY`. Block removal follows the existing territory break rules. When removed, the block drops actual stock and collected payments once, while offer previews do not drop.

@@ -16,6 +16,7 @@ import com.hfr.clowder.FactionRole;
 import com.hfr.clowder.FactionPermission;
 import com.hfr.clowder.FactionRelationship;
 import com.hfr.clowder.PlayerIdentityService;
+import com.mojang.authlib.GameProfile;
 import com.hfr.clowder.Clowder.ScheduledTeleport;
 import com.hfr.clowder.ClowderFlag;
 import com.hfr.clowder.flag.CustomFlagService;
@@ -186,7 +187,7 @@ public class CommandClowder extends CommandBase {
 		if(cmd.equals("leave")) { cmdLeave(sender); return; }
 		if(cmd.equals("accept")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdAccept(sender, args[1]); return; }
 		if(cmd.equals("befriend") || cmd.equals("ally")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdBefriend(sender, joinArgs(args, 1)); return; }
-		if(cmd.equals("acceptfriend") || cmd.equals("acceptally")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdAcceptFriend(sender, args[1]); return; }
+		if(cmd.equals("acceptfriend") || cmd.equals("acceptally")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdAcceptFriend(sender, joinArgs(args, 1)); return; }
 		if(cmd.equals("deny")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdDeny(sender, args[1]); return; }
 		if(cmd.equals("applicants")) { cmdApplicants(sender); return; }
 		if(cmd.equals("kick")) { if(!requireArgs(sender, cmd, args, 2)) return; cmdKick(sender, args[1]); return; }
@@ -271,8 +272,8 @@ public class CommandClowder extends CommandBase {
 		if(cmd.equals("owner")) return "/c owner <player>";
 		if(cmd.equals("apply")) return "/c apply <faction>";
 		if(cmd.equals("accept")) return "/c accept <player>";
-		if(cmd.equals("befriend") || cmd.equals("ally")) return "/c befriend <faction>";
-		if(cmd.equals("acceptfriend") || cmd.equals("acceptally")) return "/c acceptfriend <player>";
+		if(cmd.equals("befriend") || cmd.equals("ally")) return "/c befriend <faction|player>";
+		if(cmd.equals("acceptfriend") || cmd.equals("acceptally")) return "/c acceptfriend <faction|player>";
 		if(cmd.equals("deny")) return "/c deny <player>";
 		if(cmd.equals("kick")) return "/c kick <player>";
 		if(cmd.equals("unfriend") || cmd.equals("unally")) return "/c unfriend <faction>";
@@ -374,8 +375,8 @@ public class CommandClowder extends CommandBase {
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-balance" + TITLE + " - Shows faction prestige"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-deposit <amount>" + TITLE + " - Turns prestige items into digiprestige"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-withdraw <amount>" + TITLE + " - Withdraws digiprestige as prestige items"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-befriend <faction>" + TITLE + " - Sends an alliance offer"));
-			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-acceptfriend <player>" + TITLE + " - Accepts an alliance offer"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-befriend <faction|player>" + TITLE + " - Sends an alliance offer"));
+			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-acceptfriend <faction|player>" + TITLE + " - Accepts an alliance offer"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-unfriend <faction>" + TITLE + " - Cancels an alliance"));
 			sender.addChatMessage(new ChatComponentText(COMMAND_LEADER + "-setallywarp" + TITLE + " - Sets the alliance rally point"));
 			sender.addChatMessage(new ChatComponentText(COMMAND + "-allywarp <faction>" + TITLE + " - Teleports to an ally rally point"));
@@ -627,126 +628,149 @@ private void cmdCreate(ICommandSender sender, String name) {
 					sender.addChatMessage(new ChatComponentText(LIST + s.name));
 
 			if(!clowder.potentialFriends.isEmpty())
-				sender.addChatMessage(new ChatComponentText(INFO + "Pending alliance offers from: " + formatStringSet(clowder.potentialFriends)));
+				sender.addChatMessage(new ChatComponentText(INFO + "Pending alliance offers from: " + formatAllianceOffers(clowder)));
 
 		} else {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any clowder!"));
 		}
 	}
 
-	private void cmdBefriend(ICommandSender sender, String name) {
+	private Clowder findAlliancePlayerFaction(String name) {
+		Clowder match = null;
+		for(Clowder faction : Clowder.clowders) {
+			if(faction.findMemberByName(name) == null) continue;
+			if(match != null) return null;
+			match = faction;
+		}
+		return match;
+	}
 
+	private Clowder resolveAllianceTarget(ICommandSender sender, String name) {
+		Clowder faction = Clowder.getClowderFromName(name);
+		if(faction != null) return faction;
+
+		EntityPlayerMP online = MinecraftServer.getServer().getConfigurationManager().func_152612_a(name);
+		if(online != null) {
+			faction = Clowder.getClowderFromPlayer(online);
+			if(faction != null) return faction;
+			sender.addChatMessage(new ChatComponentText(ERROR + "Player " + name + " is not in a faction!"));
+			return null;
+		}
+
+		GameProfile profile = PlayerIdentityService.cachedProfile(name);
+		if(profile != null) {
+			faction = PlayerIdentityService.usesNames() ? findAlliancePlayerFaction(name) : Clowder.getClowderFromPlayerUuid(profile.getId());
+			if(faction != null) return faction;
+			sender.addChatMessage(new ChatComponentText(ERROR + "Player " + name + " is not in a faction!"));
+			return null;
+		}
+
+		faction = findAlliancePlayerFaction(name);
+		if(faction != null) return faction;
+		sender.addChatMessage(new ChatComponentText(ERROR + "No faction or player named " + name + " was found!"));
+		return null;
+	}
+
+	private Clowder resolveStoredAllianceOffer(String key) {
+		Clowder faction = Clowder.getClowderFromUUID(key);
+		if(faction != null) return faction;
+		faction = Clowder.getClowderFromName(key);
+		return faction != null ? faction : findAlliancePlayerFaction(key);
+	}
+
+	private String findAllianceOfferKey(Clowder receiver, Clowder sender) {
+		if(receiver.potentialFriends.contains(sender.uuid)) return sender.uuid;
+		for(String key : receiver.potentialFriends)
+			if(resolveStoredAllianceOffer(key) == sender) return key;
+		return null;
+	}
+
+	private String formatAllianceOffers(Clowder receiver) {
+		LinkedHashSet<String> names = new LinkedHashSet<String>();
+		for(String key : receiver.potentialFriends) {
+			Clowder faction = resolveStoredAllianceOffer(key);
+			names.add(faction == null ? "Unknown faction" : faction.name);
+		}
+		return formatStringSet(names);
+	}
+
+	private void cmdBefriend(ICommandSender sender, String name) {
 		EntityPlayer envoy = getCommandSenderAsPlayer(sender);
 		Clowder diplomat = Clowder.getClowderFromPlayer(envoy);
-
-		if(diplomat != null) {
-
-			//if(diplomat.suzerain == null)
-			//{
-
-				if(diplomat.getPermLevel(envoy) > 1) {
-
-					Clowder toApply = Clowder.getClowderFromName(name);
-
-					if(toApply != null) {
-
-						if(diplomat.allies.get(toApply) == null)
-						{
-
-							diplomat.notifyAll(envoy.worldObj, new ChatComponentText(INFO + sender.getCommandSenderName() + " sent an alliance offer to " + toApply.getDecoratedName() + "!"));
-							toApply.potentialFriends.add(envoy.getDisplayName());
-							toApply.notifyAll(envoy.worldObj, new ChatComponentText(INFO + "Player " + sender.getCommandSenderName() + " of " + diplomat.name + " wishes to form an alliance!"));
-							toApply.notifyAll(envoy.worldObj, new ChatComponentText(INFO + " Use /c acceptfriend " + sender.getCommandSenderName() + " to accept the offer."));
-
-						} else
-							sender.addChatMessage(new ChatComponentText(ERROR + "We are already allies!"));
-
-
-					} else {
-						sender.addChatMessage(new ChatComponentText(ERROR + "There is no clowder with this name!"));
-					}
-				}
-				else
-				{
-					sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions for foreign diplomacy!"));
-				}
-			//} else
-			//{
-			//	sender.addChatMessage(new ChatComponentText(ERROR + "Tributaries cannot form alliances!"));
-			//}
-		}
-		else {
+		if(diplomat == null) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You need to be in a clowder!"));
+			return;
+		}
+		if(diplomat.getPermLevel(envoy) <= 1) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions for foreign diplomacy!"));
+			return;
+		}
+		Clowder target = resolveAllianceTarget(sender, name);
+		if(target == null) return;
+		if(target == diplomat) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "We cannot become our own ally!"));
+		} else if(diplomat.isEnemyFaction(target, envoy.worldObj) || target.isEnemyFaction(diplomat, envoy.worldObj)
+				|| diplomat.enemy == target || target.enemy == diplomat) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "We cannot offer an alliance to an enemy faction!"));
+		} else if(diplomat.allies.containsKey(target) || target.allies.containsKey(diplomat)) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "We are already allies!"));
+		} else if(findAllianceOfferKey(target, diplomat) != null) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "An alliance offer to " + target.name + " is already pending!"));
+		} else {
+			target.potentialFriends.add(diplomat.uuid);
+			target.save(envoy.worldObj);
+			diplomat.notifyAll(envoy.worldObj, new ChatComponentText(INFO + diplomat.name + " sent an alliance offer to " + target.getDecoratedName() + "!"));
+			target.notifyAll(envoy.worldObj, new ChatComponentText(INFO + diplomat.name + " wishes to form an alliance!"));
+			target.notifyAll(envoy.worldObj, new ChatComponentText(INFO + "Use /c acceptfriend " + diplomat.name + " to accept the offer."));
 		}
 	}
 
 	private void cmdAcceptFriend(ICommandSender sender, String name) {
-
 		EntityPlayer player = getCommandSenderAsPlayer(sender);
 		Clowder clowder = Clowder.getClowderFromPlayer(player);
-
-		if(clowder != null) {
-
-			if(clowder.suzerain == null) {
-
-
-				if(clowder.getPermLevel(player) > 1) {
-
-					if(clowder.potentialFriends.contains(name))
-					{ //checks if the name of the guy you typed in command actually applied to become your ALLY
-						//why is it the PERSON, it should be the FACTION. STUPID FUCKING BOB OR WEEDER OR WHOEVER THE FUCK
-
-						if(Clowder.getClowderFromPlayerName(name) != null)
-						{
-
-							Clowder friend = Clowder.getClowderFromPlayerName(name); //clowder of guy who offered to ALLY
-
-
-							if (friend != clowder) //prevent becoming your own tributary
-							{
-								sender.addChatMessage(new ChatComponentText(INFO + "We accepted " + name + "'s offer to make " + friend.name + " our ally!"));
-								friend.notifyAll(player.worldObj, new ChatComponentText(INFO +  clowder.name + " accepted our offer. We are now their ally."));
-
-
-
-								//allah bookmark - install the actual ally shit here
-								clowder.addAlly(player.worldObj, friend);
-								friend.addAlly(player.worldObj, clowder);
-								//friend.addPeaceTreaty(60, player.worldObj);
-
-								//for cancelling wars against the tributary
-								//if(clowder.enemy == friend)
-								//{
-								//	clowder.pussy(player.worldObj);
-								//	friend.notifyAll(player.worldObj, new ChatComponentText(INFO + "Because " + clowder.name + " accepted our alliance offer, their war goals against us were cancelled."));
-								//	clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "Because " + friend.name + " is now our ally, our war goals against them have been cancelled."));
-//
-								//}
-
-
-
-
-
-							}
-							else
-								sender.addChatMessage(new ChatComponentText(ERROR + "We cannot become our own ally"));
-						}
-						else {
-							sender.addChatMessage(new ChatComponentText(ERROR + "This player is not in another clowder!"));
-						}
-
-						clowder.potentialFriends.remove(name);
-
-					}
-					else
-						sender.addChatMessage(new ChatComponentText(ERROR + "This player has no active application!"));
-				} else
-					sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions to manage applications!"));
-			}
-			else
-				sender.addChatMessage(new ChatComponentText(ERROR + "Tributaries cannot form alliances!"));
-		} else
+		if(clowder == null) {
 			sender.addChatMessage(new ChatComponentText(ERROR + "You are not in any clowder!"));
+			return;
+		}
+		if(clowder.suzerain != null) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Tributaries cannot form alliances!"));
+			return;
+		}
+		if(clowder.getPermLevel(player) <= 1) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "You lack the permissions for foreign diplomacy!"));
+			return;
+		}
+		Clowder friend = resolveAllianceTarget(sender, name);
+		if(friend == null) return;
+		if(friend == clowder) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "We cannot become our own ally!"));
+			return;
+		}
+		String offerKey = findAllianceOfferKey(clowder, friend);
+		if(offerKey == null) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "There is no alliance offer from " + friend.name + "!"));
+			return;
+		}
+		if(clowder.isEnemyFaction(friend, player.worldObj) || friend.isEnemyFaction(clowder, player.worldObj)
+				|| clowder.enemy == friend || friend.enemy == clowder) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "We cannot ally with an enemy faction!"));
+			return;
+		}
+		if(clowder.allies.containsKey(friend) && friend.allies.containsKey(clowder)) {
+			sender.addChatMessage(new ChatComponentText(ERROR + "We are already allies!"));
+			return;
+		}
+		if(!clowder.allies.containsKey(friend)) clowder.addAlly(player.worldObj, friend);
+		if(!friend.allies.containsKey(clowder)) friend.addAlly(player.worldObj, clowder);
+		if(clowder.allies.containsKey(friend) && friend.allies.containsKey(clowder)) {
+			clowder.potentialFriends.remove(offerKey);
+			clowder.save(player.worldObj);
+			Clowder.syncNameplateDataAll();
+			clowder.notifyAll(player.worldObj, new ChatComponentText(INFO + "We accepted " + friend.name + "'s alliance offer!"));
+			friend.notifyAll(player.worldObj, new ChatComponentText(INFO + clowder.name + " accepted our alliance offer. We are now allies!"));
+		} else {
+			sender.addChatMessage(new ChatComponentText(ERROR + "Could not complete the alliance with " + friend.name + "."));
+		}
 	}
 
 	private void cmdUnfriend(ICommandSender sender, String kickee) {
@@ -2270,6 +2294,11 @@ private void cmdCreate(ICommandSender sender, String name) {
 			return getListOfStringsMatchingLastWord(args, getPlayerCommandNames());
 
 		String cmd = args[0].toLowerCase();
+		if(cmd.equals("befriend") || cmd.equals("ally") || cmd.equals("acceptfriend") || cmd.equals("acceptally")) {
+			List<String> targets = new ArrayList<String>(Arrays.asList(getFactionCompletionNames()));
+			targets.addAll(Arrays.asList(MinecraftServer.getServer().getAllUsernames()));
+			return getListOfStringsFromIterableMatchingLastWord(args, targets);
+		}
 		if(isPlayerCompletionCommand(cmd))
 			return getListOfStringsMatchingLastWord(args, MinecraftServer.getServer().getAllUsernames());
 
@@ -2407,12 +2436,12 @@ private void cmdCreate(ICommandSender sender, String name) {
 	}
 
 	private boolean isPlayerCompletionCommand(String cmd) {
-		return cmd.equals("owner") || cmd.equals("accept") || cmd.equals("acceptfriend") || cmd.equals("acceptally")
+		return cmd.equals("owner") || cmd.equals("accept")
 				|| cmd.equals("deny") || cmd.equals("kick") || cmd.equals("promote") || cmd.equals("demote");
 	}
 
 	private boolean isFactionCompletionCommand(String cmd) {
-		return cmd.equals("info") || cmd.equals("apply") || cmd.equals("befriend") || cmd.equals("ally")
+		return cmd.equals("info") || cmd.equals("apply")
 				|| cmd.equals("unfriend") || cmd.equals("unally") || cmd.equals("allywarp") || cmd.equals("merge")
 				|| cmd.equals("acceptmerge") || cmd.equals("declarewar") || cmd.equals("war") || cmd.equals("peace") || cmd.equals("acceptpeace")
 				|| cmd.equals("ceasefire") || cmd.equals("acceptceasefire") || cmd.equals("surrender")

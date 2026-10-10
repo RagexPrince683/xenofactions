@@ -6,7 +6,10 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.block.BlockCrops;
 import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.IIcon;
 import net.minecraft.world.World;
 
@@ -57,6 +60,22 @@ public class BlockRice extends BlockCrops {
     public int getRenderType()
     {
         return 1;
+    }
+
+    @Override
+    public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player,
+                                    int side, float hitX, float hitY, float hitZ)
+    {
+        if (world.getBlockMetadata(x, y, z) != 7)
+            return false;
+
+        if (!world.isRemote)
+        {
+            world.setBlockMetadataWithNotify(x, y, z, 0, 2);
+            world.spawnEntityInWorld(new EntityItem(world, x + 0.5D, y + 0.5D, z + 0.5D,
+                    new ItemStack(ModItems.rice)));
+        }
+        return true;
     }
     
     public void dropBlockAsItemWithChance(World p_149690_1_, int p_149690_2_, int p_149690_3_, int p_149690_4_, int p_149690_5_, float p_149690_6_, int p_149690_7_)

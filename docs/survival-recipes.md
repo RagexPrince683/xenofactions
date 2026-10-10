@@ -22,6 +22,7 @@ Each diagram is a 3x3 crafting grid; a space is empty.
 | Conquest Flag | `LWL / GRG / ISI` | L leather, W wool, G gold ingot, R redstone, I iron ingot, S stick | War infrastructure costs gold and iron, but destruction does not demand excessive diamond grinding. |
 | Officer Chest | `I I / ICI / IRI` | I iron ingot, C chest, R redstone | A basic role-gated utility priced near other protected storage. |
 | Global Market Terminal | `IRI / ECE / IRI` | I iron ingot, R redstone, E emerald, C chest | One active terminal per faction, placed by Officers or leaders inside the designated capital. All faction members can use it. |
+| Player Trader | `IRI / ECE / IRI` | I iron ingot, R redstone, E emerald, C trapped chest | A stocked, single-offer player shop that uses existing items, including coins or tax items, as payment. |
 | Medical Tent | `WWW / WRW / S S` | W wool, R golden apple, S stick | Accessible field infrastructure with a meaningful healing ingredient. |
 | Warp Tent | `WWW / PEP / SRS` | W wool, P ender pearl, E eye of ender, S stick, R redstone | Teleport utility appropriately begins after access to Endermen and the Nether. |
 | Coal Mine | `SMS / MCM / SIS` | S scaffold component, M mechanical component, C chest, I minecart | Moderate industrial entry cost aligned with its workforce/supply-driven coal output. |

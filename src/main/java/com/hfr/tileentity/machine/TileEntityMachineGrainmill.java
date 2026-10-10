@@ -18,10 +18,12 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 
 public class TileEntityMachineGrainmill extends TileEntityMachineBase {
-	private static final int[] PROCESS_SLOTS = { 0, 1, 2, 3 };
-	@Override public int[] getAccessibleSlotsFromSide(int side) { return PROCESS_SLOTS; }
-	@Override public boolean isItemValidForSlot(int slot, ItemStack stack) { return stack != null && stack.getItem() == Items.wheat; }
-	@Override public boolean canExtractItem(int slot, ItemStack stack, int side) { return side == 0 && stack != null && stack.getItem() == ModItems.flour; }
+	private static final int[] INPUT_SLOTS = { 0, 1, 2 };
+	private static final int[] OUTPUT_SLOTS = { 3, 4, 5 };
+	@Override public int[] getAccessibleSlotsFromSide(int side) { return side == 0 ? OUTPUT_SLOTS : INPUT_SLOTS; }
+	@Override public boolean isItemValidForSlot(int slot, ItemStack stack) { return slot >= 0 && slot < 3 && stack != null && stack.getItem() == Items.wheat; }
+	@Override public boolean canInsertItem(int slot, ItemStack stack, int side) { return side != 0 && isItemValidForSlot(slot, stack); }
+	@Override public boolean canExtractItem(int slot, ItemStack stack, int side) { return side == 0 && slot >= 3 && slot < 6 && stack != null && stack.getItem() == ModItems.flour; }
 
 	
 	public Clowder owner = null;

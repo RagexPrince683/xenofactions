@@ -11,6 +11,7 @@ import com.hfr.clowder.ClowderTerritory.Zone;
 import com.hfr.handler.MultiblockHandler;
 import com.hfr.main.MainRegistry;
 import com.hfr.tileentity.machine.TileEntityMachineGrainmill;
+import com.hfr.tileentity.machine.TileEntityGrainmillInputProxy;
 
 import cpw.mods.fml.common.network.internal.FMLNetworkHandler;
 import net.minecraft.block.Block;
@@ -35,8 +36,7 @@ public class MachineGrainmill extends BlockDummyable {
 		
 		if(meta >= ForgeDirection.UNKNOWN.ordinal())
 			return new TileEntityMachineGrainmill();
-		
-		return null;
+		return new TileEntityGrainmillInputProxy();
 	}
 	
 	@Override
@@ -91,7 +91,7 @@ public class MachineGrainmill extends BlockDummyable {
     {
         if (!keepInventory)
         {
-        	ISidedInventory tileentityfurnace = (ISidedInventory)world.getTileEntity(x, y, z);
+		ISidedInventory tileentityfurnace = i >= ForgeDirection.UNKNOWN.ordinal() ? (ISidedInventory)world.getTileEntity(x, y, z) : null;
 
             if (tileentityfurnace != null)
             {

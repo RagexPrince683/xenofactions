@@ -1,6 +1,10 @@
 package com.hfr.handler;
 
 import com.hfr.inventory.container.*;
+import com.hfr.ender.EnderChestInteraction;
+import com.hfr.ender.RestrictedEnderChestContainer;
+import net.minecraft.init.Blocks;
+import net.minecraft.tileentity.TileEntityEnderChest;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.ContainerChest;
@@ -55,6 +59,11 @@ public class GUIHandler implements IGuiHandler {
 	@Override
 	public Object getServerGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
 		TileEntity entity = world.getTileEntity(x, y, z);
+		if (ID == EnderChestInteraction.GUI_ID) {
+			if (world.getBlock(x, y, z) != Blocks.ender_chest || !(entity instanceof TileEntityEnderChest)) return null;
+			player.getInventoryEnderChest().func_146031_a((TileEntityEnderChest) entity);
+			return new RestrictedEnderChestContainer(player.inventory, player.getInventoryEnderChest());
+		}
 		switch(ID)
 		{
 			case ModBlocks.guiID_siren:
@@ -375,6 +384,8 @@ public class GUIHandler implements IGuiHandler {
 
 	@Override
 	public Object getClientGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
+		if (ID == EnderChestInteraction.GUI_ID)
+			return new GuiChest(player.inventory, player.getInventoryEnderChest());
 		TileEntity entity = world.getTileEntity(x, y, z);
 		if(entity != null)
 		{
