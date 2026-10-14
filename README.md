@@ -1,3 +1,6 @@
+# NEW REPO
+https://github.com/mchelioverdrive/Xenofactions-Multiversion
+
 # Xenofactions
 
 Xenofactions is a Minecraft Forge **1.7.10** factions-and-warfare mod derived from the older xRadar/HFR codebase. It is built for multiplayer geopolitical, war, towny, and factions servers that want claims, faction diplomacy, prestige economy, radar/defense systems, server shops, custom flags, and optional map/team-gameplay utilities in one legacy Forge mod.
